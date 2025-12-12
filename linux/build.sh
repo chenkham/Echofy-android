@@ -5,11 +5,11 @@ set -e
 flutter build linux
 
 # Prepare AppDir structure
-APPDIR=opentube.AppDir
+APPDIR=echofy.AppDir
 mkdir -p $APPDIR/usr/bin
 cp -r build/linux/x64/release/bundle/* $APPDIR/usr/bin/
-cp linux/opentube.desktop $APPDIR/
-cp linux/opentube.png $APPDIR/
+cp linux/echofy.desktop $APPDIR/
+cp linux/echofy.png $APPDIR/
 
 # Download AppImageTool if not present
 if [ ! -f ./appimagetool-x86_64.AppImage ]; then

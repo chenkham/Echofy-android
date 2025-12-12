@@ -15,7 +15,7 @@ plugins {
 }
 
 
-rootProject.name = "OpenTune"
+rootProject.name = "Echofy"
 include(":app")
 include(":innertube")
 include(":kugou")

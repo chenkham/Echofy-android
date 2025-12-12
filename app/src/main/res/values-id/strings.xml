@@ -1,4 +1,4 @@
-<resources>
+﻿﻿<resources>
     <!-- Bottom navigation -->
     <string name="home">Rumah</string>
     <string name="songs">Lagu</string>
@@ -44,8 +44,8 @@
 
     <!-- Search -->
     <string name="search">Mencari</string>
-    <string name="search_yt_music">Cari musik YouTube…</string>
-    <string name="search_library">Cari Perpustakaan…</string>
+    <string name="search_yt_music">Cari musik YouTubeâ€¦</string>
+    <string name="search_library">Cari Perpustakaanâ€¦</string>
     <string name="filter_library">Perpustakaan</string>
     <string name="filter_liked">Disukai</string>
     <string name="filter_downloaded">Diunduh</string>
@@ -378,7 +378,7 @@
     <string name="restore_failed">Gagal mengembalikan cadangan</string>
 
     <string name="discord_integration">Integrasi Perselisihan</string>
-    <string name="discord_information">OpenTune menggunakan pustaka Kizzyrpc untuk mengatur status akun perselisihan Anda. Ini melibatkan penggunaan koneksi gateway Discord, yang dapat dianggap sebagai pelanggaran tos perselisihan. Namun, tidak ada kasus akun pengguna yang diketahui yang ditangguhkan karena alasan ini. Gunakan dengan risiko Anda sendiri.  OpenTunne hanya akan mengekstrak token Anda, dan yang lainnya disimpan secara lokal.</string>
+    <string name="discord_information">Echofy menggunakan pustaka Kizzyrpc untuk mengatur status akun perselisihan Anda. Ini melibatkan penggunaan koneksi gateway Discord, yang dapat dianggap sebagai pelanggaran tos perselisihan. Namun, tidak ada kasus akun pengguna yang diketahui yang ditangguhkan karena alasan ini. Gunakan dengan risiko Anda sendiri.  OpenTunne hanya akan mengekstrak token Anda, dan yang lainnya disimpan secara lokal.</string>
     <string name="dismiss">Membubarkan</string>
     <string name="options">Opsi</string>
     <string name="preview">Pratinjau</string>
@@ -415,7 +415,7 @@
     <string name="changelogs">Changelogs</string>
     <string name="no_changes">tidak ada perubahan</string>
     <string name="Translate">Menerjemahkan</string>
-    <string name="Redirección">Redirección</string>
+    <string name="redirection">Pengalihan</string>
     <string name="poeditor_redirect">Anda akan diarahkan ke poeditor.com</string>
     <string name="barwar">Perhatian saat memulihkan cadangan, lagu -lagu yang sebelumnya diunduh tidak diunduh. Sangat disarankan untuk memutar lagu yang dipulihkan untuk menghindari kesalahan unduhan.</string>
     <string name="backup_link_title">Cadangan diunggah dengan sukses!</string>

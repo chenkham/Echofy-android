@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿﻿<?xml version="1.0" encoding="utf-8"?>
 <resources>
     <!-- Bottom navigation -->
     <string name="home">Home</string>
@@ -31,17 +31,17 @@
     <string name="local_history">Locale</string>
     <string name="remote_history">Remoto</string>
     <!-- Stats -->
-    <string name="most_played_songs">Brani più ascoltati</string>
-    <string name="most_played_artists">Artisti più ascoltati</string>
-    <string name="most_played_albums">Album più ascoltati</string>
+    <string name="most_played_songs">Brani piÃ¹ ascoltati</string>
+    <string name="most_played_artists">Artisti piÃ¹ ascoltati</string>
+    <string name="most_played_albums">Album piÃ¹ ascoltati</string>
     <string name="weeks">Settimane</string>
     <string name="months">Mesi</string>
     <string name="years">Anni</string>
     <string name="continuous">Continuo</string>
     <!-- Search -->
     <string name="search">Ricerca</string>
-    <string name="search_yt_music">Ricerca YouTube Music…</string>
-    <string name="search_library">Ricerca libreria…</string>
+    <string name="search_yt_music">Ricerca YouTube Musicâ€¦</string>
+    <string name="search_library">Ricerca libreriaâ€¦</string>
     <string name="filter_library">Libreria</string>
     <string name="filter_liked">Piaciuti</string>
     <string name="filter_downloaded">Scaricati</string>
@@ -51,7 +51,7 @@
     <string name="filter_albums">Album</string>
     <string name="filter_artists">Artisti</string>
     <string name="filter_playlists">Playlist</string>
-    <string name="filter_community_playlists">Playlist della comunità</string>
+    <string name="filter_community_playlists">Playlist della comunitÃ </string>
     <string name="filter_featured_playlists">Playlist in primo piano</string>
     <string name="filter_bookmarked">Favoriti</string>
     <string name="no_results_found">Nessun risultato trovato</string>
@@ -71,11 +71,11 @@
     <string name="liked_songs">Brani piaciuti</string>
     <string name="downloaded_songs">Brani scaricati</string>
     <string name="sync_playlist">Sincronizza Playlist</string>
-    <string name="playlist_is_empty">La playlist è vuota</string>
+    <string name="playlist_is_empty">La playlist Ã¨ vuota</string>
     <string name="remove_download_playlist_confirm">Vuoi davvero rimuovere tutti i brani della playlist \"%s\" dallo spazio di archiviazione dei brani scaricati?</string>
     <string name="delete_playlist_confirm">Vuoi davvero eliminare la playlist \"%s\"?</string>
     <string name="elements_selected">%1$d Elementi selezionati</string>
-    <string name="allows_for_sync_witch_youtube">Nota: Questo permette la sincronizzazione con YouTube Music. Non è modificabile in seguito.</string>
+    <string name="allows_for_sync_witch_youtube">Nota: Questo permette la sincronizzazione con YouTube Music. Non Ã¨ modificabile in seguito.</string>
     <!-- Button -->
     <string name="retry">Riprova</string>
     <string name="radio">Radio</string>
@@ -136,23 +136,23 @@
     <string name="edit_song">Modifica brano</string>
     <string name="song_title">Titolo brano</string>
     <string name="song_artists">Artista brano</string>
-    <string name="error_song_title_empty">Il titolo del brano non può essere vuoto.</string>
-    <string name="error_song_artist_empty">L\'artista del brano non può essere vuoto.</string>
+    <string name="error_song_title_empty">Il titolo del brano non puÃ² essere vuoto.</string>
+    <string name="error_song_artist_empty">L\'artista del brano non puÃ² essere vuoto.</string>
     <string name="save">Salva</string>
     <string name="choose_playlist">Scegli playlist</string>
     <string name="edit_playlist">Modifica playlist</string>
     <string name="create_playlist">Crea playlist</string>
     <string name="playlist_name">Titolo playlist</string>
-    <string name="error_playlist_name_empty">Il nome della playlist non può essere vuoto.</string>
-    <string name="already_in_playlist">Già in playlist:</string>
+    <string name="error_playlist_name_empty">Il nome della playlist non puÃ² essere vuoto.</string>
+    <string name="already_in_playlist">GiÃ  in playlist:</string>
     <string name="edit_artist">Modifica artista</string>
     <string name="artist_name">Nome artista</string>
-    <string name="error_artist_name_empty">Il nome dell\'artista non può essere vuoto.</string>
+    <string name="error_artist_name_empty">Il nome dell\'artista non puÃ² essere vuoto.</string>
     <string name="duplicates">Duplicati</string>
     <string name="skip_duplicates">Salta duplicati</string>
     <string name="add_anyway">Aggiungi ugualmente</string>
-    <string name="duplicates_description_single">Il brano è già nella tua playlist</string>
-    <string name="duplicates_description_multiple">%d brani sono già nella tua playlist</string>
+    <string name="duplicates_description_single">Il brano Ã¨ giÃ  nella tua playlist</string>
+    <string name="duplicates_description_multiple">%d brani sono giÃ  nella tua playlist</string>
     <!-- Noun -->
     <plurals name="n_song">
         <item quantity="one">%d brano</item>
@@ -215,7 +215,7 @@
     <string name="action_remove_like">Rimuovi mi piace</string>
     <string name="action_shuffle_on">Casuale attivato</string>
     <string name="action_shuffle_off">Casuale disattivato</string>
-    <string name="repeat_mode_off">Modalità ripetizione disattivata</string>
+    <string name="repeat_mode_off">ModalitÃ  ripetizione disattivata</string>
     <string name="repeat_mode_one">Ripeti il brano corrente</string>
     <string name="repeat_mode_all">Ripeti coda</string>
     <!-- Queue Title -->
@@ -228,7 +228,7 @@
     <string name="settings">Impostazioni</string>
     <string name="login_settings">Impostazioni di accesso</string>
     <string name="use_login_for_browse">Utilizza il login per la navigazione di contenuti premium</string>
-    <string name="use_login_for_browse_desc">Questo può mostrare solo gli album premium se sei connesso con un account Premium</string>
+    <string name="use_login_for_browse_desc">Questo puÃ² mostrare solo gli album premium se sei connesso con un account Premium</string>
     <string name="general_settings">Impostazioni generali</string>
     <string name="appearance">Aspetto</string>
     <string name="theme">Tema</string>
@@ -272,7 +272,7 @@
     <string name="not_logged_in">Accesso non eseguito</string>
     <string name="token_hidden">Tocca per visualizzare il token</string>
     <string name="token_shown">Tocca ancora per copiare o modificare</string>
-    <string name="token_adv_login_description">Si tratta di un metodo di login AVANZATO. In alternativa al portale web, è possibile inserire o aggiornare direttamente il token di login qui. Ad esempio, questo può accelerare il login su più dispositivi. Si prega di notare che con qualsiasi formato token non valido l\'app non riesce ad analizzarlo e non sarà accettato</string>
+    <string name="token_adv_login_description">Si tratta di un metodo di login AVANZATO. In alternativa al portale web, Ã¨ possibile inserire o aggiornare direttamente il token di login qui. Ad esempio, questo puÃ² accelerare il login su piÃ¹ dispositivi. Si prega di notare che con qualsiasi formato token non valido l\'app non riesce ad analizzarlo e non sarÃ  accettato</string>
     <string name="ytm_sync">Sincronizza automaticamente con il tuo account YouTube Music</string>
     <string name="general">Generale</string>
     <string name="content_language">Lingua predefinita contenuto</string>
@@ -296,7 +296,7 @@
     <string name="enable_lrclib">Abilita provider di testi LrcLib</string>
     <string name="set_first_lyrics_provider">Provider di testi preferito</string>
     <string name="player_and_audio">Lettore e audio</string>
-    <string name="audio_quality">Qualità audio</string>
+    <string name="audio_quality">QualitÃ  audio</string>
     <string name="audio_quality_max">Massima (beta)</string>
     <string name="audio_quality_auto">Auto</string>
     <string name="audio_quality_high">Alta</string>
@@ -312,7 +312,7 @@
     <string name="audio_normalization">Normalizzazione audio</string>
     <string name="auto_skip_next_on_error">Passa automaticamente al brano successivo quando si verifica un errore</string>
     <string name="auto_skip_next_on_error_desc">Assicura la tua esperienza continua di riproduzione</string>
-    <string name="stop_music_on_task_clear">Interrompi la musica quando l\'attività è stata eliminata</string>
+    <string name="stop_music_on_task_clear">Interrompi la musica quando l\'attivitÃ  Ã¨ stata eliminata</string>
     <string name="equalizer">Equalizzatore</string>
     <string name="storage">Archiviazione</string>
     <string name="cache">Cache</string>
@@ -336,7 +336,7 @@
     <string name="clear_search_history">Cancella cronologia ricerca</string>
     <string name="clear_search_history_confirm">Sei sicuro di voler cancellare tutta la cronologia della ricerca?</string>
     <string name="disable_screenshot">Disabilita schermata</string>
-    <string name="disable_screenshot_desc">Quando questa opzione è attiva, gli screenshot e la visualizzazione dell\'app in Recenti sono disabilitati.</string>
+    <string name="disable_screenshot_desc">Quando questa opzione Ã¨ attiva, gli screenshot e la visualizzazione dell\'app in Recenti sono disabilitati.</string>
     <string name="hide_explicit">Nascondi contenuti espliciti</string>
     <string name="backup_restore">Backup e ripristino</string>
     <string name="backup">Backup</string>
@@ -345,7 +345,7 @@
     <string name="backup_create_failed">Non posso creare un backup</string>
     <string name="restore_failed">Ripristino backup fallito</string>
     <string name="discord_integration">Integrazione con Discord</string>
-    <string name="discord_information">OpenTune utilizza la libreria KizzyRPC per impostare lo stato del tuo account Discord. Ciò comporta l\'utilizzo della connessione Discord Gateway, che può essere considerata una violazione del TOS di Discord. Tuttavia, non ci sono casi noti di account utente sospesi per questo motivo. Usa a tuo rischio. OpenTunne estrarrà solo il tuo token e tutto il resto verrà memorizzato localmente.</string>
+    <string name="discord_information">Echofy utilizza la libreria KizzyRPC per impostare lo stato del tuo account Discord. CiÃ² comporta l\'utilizzo della connessione Discord Gateway, che puÃ² essere considerata una violazione del TOS di Discord. Tuttavia, non ci sono casi noti di account utente sospesi per questo motivo. Usa a tuo rischio. OpenTunne estrarrÃ  solo il tuo token e tutto il resto verrÃ  memorizzato localmente.</string>
     <string name="dismiss">Scartare</string>
     <string name="options">Opzioni</string>
     <string name="preview">Anteprima</string>
@@ -376,11 +376,11 @@
     <string name="changelogs">note delle versioni</string>
     <string name="no_changes">nessun cambiamento</string>
     <string name="Translate">Traduci</string>
-    <string name="Redirección">Reindirizzamento</string>
+    <string name="redirection">Reindirizzamento</string>
     <string name="poeditor_redirect">Stai per essere reindirizzato su poeditor.com</string>
-    <string name="barwar">Attenzione durante il ripristino dei backup, le canzoni precedentemente scaricate non vengono scaricate. è ALTAMENTE CONSIGLIATO riprodurre le canzoni ripristinate al fine di evitare eventuali errori di download.</string>
+    <string name="barwar">Attenzione durante il ripristino dei backup, le canzoni precedentemente scaricate non vengono scaricate. Ã¨ ALTAMENTE CONSIGLIATO riprodurre le canzoni ripristinate al fine di evitare eventuali errori di download.</string>
     <string name="backup_link_title">Backup caricato con successo!</string>
-    <string name="backup_link_description">Il tuo backup sarà disponibile per 14 giorni.</string>
+    <string name="backup_link_description">Il tuo backup sarÃ  disponibile per 14 giorni.</string>
     <string name="copy_link">Copia Link</string>
     <string name="customize_thumbnail_corner_radius">Personalizza raggio di curvatura miniatura</string>
     <string name="corner_radius_label">Raggio di curvatura: %1$s</string>
@@ -423,7 +423,7 @@
     <string name="info_title">Informazioni</string>
     <string name="info_description">Questa sezione fornisce dettagli chiave sul processo di backup e ripristino, compresa la sicurezza dei vostri dati e come garantire che le vostre informazioni rimangano sicure e facilmente accessibili.</string>
     <string name="backup_info_title">Informazioni Importanti</string>
-    <string name="backup_info_description">Quando esegui il backup dei tuoi dati, i tuoi download non sono inclusi. Si consiglia di cancellare la cache attraverso l\'app per ottenere prestazioni ottimali. Il servizio di backup è sicuro, garantendo che i tuoi dati rimangano privati e protetti.</string>
+    <string name="backup_info_description">Quando esegui il backup dei tuoi dati, i tuoi download non sono inclusi. Si consiglia di cancellare la cache attraverso l\'app per ottenere prestazioni ottimali. Il servizio di backup Ã¨ sicuro, garantendo che i tuoi dati rimangano privati e protetti.</string>
     <string name="backup_description">Crea un file di backup dei tuoi dati correnti</string>
     <string name="restore_description">Recuperare i dati da un file di backup</string>
     <string name="link_copied">Link Copiato</string>
@@ -437,8 +437,8 @@
     <string name="remove_thumbnail">Remove thumbnail</string>
     <string name="add_thumbnail">Aggiungi miniatura</string>
     <string name="storage_overview">Panoramica della memoria</string>
-    <string name="clear_downloads_confirmation">Sei sicuro di voler rimuovere tutte le canzoni scaricate? Questa azione non può essere annullata.</string>
-    <string name="clear_song_cache_confirmation">Sei sicuro di voler cancellare la cache dei brani? Questo libererà spazio ma potrebbe influenzare temporaneamente le prestazioni di riproduzione.</string>
+    <string name="clear_downloads_confirmation">Sei sicuro di voler rimuovere tutte le canzoni scaricate? Questa azione non puÃ² essere annullata.</string>
+    <string name="clear_song_cache_confirmation">Sei sicuro di voler cancellare la cache dei brani? Questo libererÃ  spazio ma potrebbe influenzare temporaneamente le prestazioni di riproduzione.</string>
     <string name="clear_image_cache_confirmation">Sei sicuro di voler cancellare la cache dell\'immagine? L\'arte dell\'album e le immagini dell\'artista dovranno essere riscaricate.</string>
     <string name="confirm">Conferma</string>
 </resources>

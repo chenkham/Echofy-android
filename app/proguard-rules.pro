@@ -89,3 +89,34 @@
 -dontwarn java.beans.Introspector
 -dontwarn java.beans.PropertyDescriptor
 -dontwarn okhttp3.internal.Util
+
+# Additional optimizations for smaller APK size
+-optimizationpasses 5
+-allowaccessmodification
+-repackageclasses ''
+
+# Remove unused code more aggressively
+-assumenosideeffects class kotlin.jvm.internal.Intrinsics {
+    static void checkNotNull(...);
+    static void checkNotNullParameter(...);
+    static void checkParameterIsNotNull(...);
+    static void checkNotNullExpressionValue(...);
+    static void checkExpressionValueIsNotNull(...);
+    static void checkReturnedValueIsNotNull(...);
+    static void throwUninitializedPropertyAccessException(...);
+}
+
+# Remove debug info in release
+-assumenosideeffects class timber.log.Timber {
+    public static *** v(...);
+    public static *** d(...);
+    public static *** i(...);
+}
+
+# Coil optimizations
+-dontwarn coil.**
+
+# Ktor optimizations
+-dontwarn io.ktor.**
+-keep class io.ktor.** { *; }
+

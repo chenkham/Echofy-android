@@ -7,6 +7,10 @@ java {
     targetCompatibility = JavaVersion.VERSION_21
 }
 
+kotlin {
+    jvmToolchain(21)
+}
+
 dependencies {
 
     // OkHttp (to JossRedClient)

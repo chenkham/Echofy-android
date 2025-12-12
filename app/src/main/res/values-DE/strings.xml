@@ -1,17 +1,17 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿﻿<?xml version="1.0" encoding="utf-8"?>
 <resources>
 
     <!-- Bottom navigation -->
     <string name="home">"Startseite"</string>
     <string name="songs">"Titel"</string>
-    <string name="artists">"Künstler"</string>
+    <string name="artists">"KÃ¼nstler"</string>
     <string name="albums">"Alben"</string>
     <string name="playlists">"Wiedergabelisten"</string>
 
     <!-- Top bar -->
     <plurals name="n_selected">
-        <item quantity="one">"%d ausgewählt"</item>
-        <item quantity="other">"%d ausgewählt"</item>
+        <item quantity="one">"%d ausgewÃ¤hlt"</item>
+        <item quantity="other">"%d ausgewÃ¤hlt"</item>
     </plurals>
 
     <!-- Home -->
@@ -20,10 +20,10 @@
     <string name="mood_and_genres">"Stimmungen und Genres"</string>
     <string name="account">"Konto"</string>
     <string name="quick_picks">"Schnellauswahl"</string>
-    <string name="quick_picks_empty">"Höre Musik, um deine Schnellauswahl zu erhalten"</string>
-    <string name="new_release_albums">"Neu veröffentlichte Alben"</string>
+    <string name="quick_picks_empty">"HÃ¶re Musik, um deine Schnellauswahl zu erhalten"</string>
+    <string name="new_release_albums">"Neu verÃ¶ffentlichte Alben"</string>
     <string name="forgotten_favorites">"Vergessene Favoriten"</string>
-    <string name="similar_to">"Ähnlich zu"</string>
+    <string name="similar_to">"Ã„hnlich zu"</string>
     <string name="your_ytb_playlists">"Deine YouTube Wiedergabelisten"</string>
 
     <!-- History -->
@@ -36,7 +36,7 @@
 
     <!-- Stats -->
     <string name="most_played_songs">"Meist gespielte Titel"</string>
-    <string name="most_played_artists">"Meist gespielte Künstler"</string>
+    <string name="most_played_artists">"Meist gespielte KÃ¼nstler"</string>
     <string name="most_played_albums">"Meist gespielte Alben"</string>
     <string name="weeks">"Wochen"</string>
     <string name="months">"Monate"</string>
@@ -45,8 +45,8 @@
 
     <!-- Search -->
     <string name="search">"Suche"</string>
-    <string name="search_yt_music">"YouTube Music durchsuchen…"</string>
-    <string name="search_library">"Bibliothek durchsuchen…"</string>
+    <string name="search_yt_music">"YouTube Music durchsuchenâ€¦"</string>
+    <string name="search_library">"Bibliothek durchsuchenâ€¦"</string>
     <string name="filter_library">"Bibliothek"</string>
     <string name="filter_liked">"Favoriten"</string>
     <string name="filter_downloaded">"Offline"</string>
@@ -54,10 +54,10 @@
     <string name="filter_songs">"Titel"</string>
     <string name="filter_videos">"Videos"</string>
     <string name="filter_albums">"Alben"</string>
-    <string name="filter_artists">"Künstler"</string>
+    <string name="filter_artists">"KÃ¼nstler"</string>
     <string name="filter_playlists">"Wiedergabelisten"</string>
     <string name="filter_community_playlists">"Community-Wiedergabelisten"</string>
-    <string name="filter_featured_playlists">"Ausgewählte Wiedergabelisten"</string>
+    <string name="filter_featured_playlists">"AusgewÃ¤hlte Wiedergabelisten"</string>
     <string name="filter_bookmarked">"Gemerkt"</string>
     <string name="no_results_found">"Keine Ergebnisse gefunden"</string>
 
@@ -72,7 +72,7 @@
     <string name="offline">"Heruntergeladen"</string>
     <string name="my_top">"Meine Top"</string>
     <string name="library_song_empty">"Titel aus der Bibliothek werden hier angezeigt"</string>
-    <string name="library_artist_empty">"Künstler aus der Bibliothek werden hier angezeigt"</string>
+    <string name="library_artist_empty">"KÃ¼nstler aus der Bibliothek werden hier angezeigt"</string>
     <string name="library_album_empty">"Alben aus der Bibliothek werden hier angezeigt"</string>
     <string name="library_playlist_empty">"Deine Wiedergabelisten werden hier angezeigt"</string>
 
@@ -81,54 +81,54 @@
     <string name="downloaded_songs">"Heruntergeladene Titel"</string>
     <string name="sync_playlist">"Wiedergabeliste synchronisieren"</string>
     <string name="playlist_is_empty">"Die Wiedergabeliste ist leer"</string>
-    <string name="remove_download_playlist_confirm">"Bist du dir sicher, dass du alle \"%s\" Lieder der Wiedergabeliste aus dem Speicher der heruntergeladenen Titel löschen willst?"</string>
-    <string name="delete_playlist_confirm">"Bist du dir sicher, dass du die Wiedergabeliste \"%s\" löschen willst?"</string>
-    <string name="elements_selected">"%1$d Elemente ausgewählt"</string>
-    <string name="allows_for_sync_witch_youtube">"Hinweis: Dies ermöglicht die Synchronisierung mit YouTube Music. Dies ist später NICHT änderbar."</string>
+    <string name="remove_download_playlist_confirm">"Bist du dir sicher, dass du alle \"%s\" Lieder der Wiedergabeliste aus dem Speicher der heruntergeladenen Titel lÃ¶schen willst?"</string>
+    <string name="delete_playlist_confirm">"Bist du dir sicher, dass du die Wiedergabeliste \"%s\" lÃ¶schen willst?"</string>
+    <string name="elements_selected">"%1$d Elemente ausgewÃ¤hlt"</string>
+    <string name="allows_for_sync_witch_youtube">"Hinweis: Dies ermÃ¶glicht die Synchronisierung mit YouTube Music. Dies ist spÃ¤ter NICHT Ã¤nderbar."</string>
 
     <!-- Button -->
     <string name="retry">"Wiederholen"</string>
     <string name="radio">"Radio"</string>
     <string name="shuffle">"Shuffle"</string>
-    <string name="reset">"Zurücksetzen"</string>
+    <string name="reset">"ZurÃ¼cksetzen"</string>
 
     <!-- Menu -->
     <string name="details">"Details"</string>
     <string name="edit">"Bearbeiten"</string>
     <string name="start_radio">"Radio starten"</string>
     <string name="play">"Wiedergegeben"</string>
-    <string name="play_next">"Als nächstes wiedergeben"</string>
-    <string name="add_to_queue">"Zur Warteschlange hinzufügen"</string>
-    <string name="add_to_library">"Zur Bibliothek hinzufügen"</string>
+    <string name="play_next">"Als nÃ¤chstes wiedergeben"</string>
+    <string name="add_to_queue">"Zur Warteschlange hinzufÃ¼gen"</string>
+    <string name="add_to_library">"Zur Bibliothek hinzufÃ¼gen"</string>
     <string name="remove_from_library">"Aus der Bibliothek entfernen"</string>
     <string name="remove_from_playlist">"Aus Wiedergabeliste entfernen"</string>
     <string name="download">"Herunterladen"</string>
     <string name="downloading">"Lade herunter"</string>
     <string name="remove_download">"Download entfernen"</string>
     <string name="import_playlist">"Wiedergabeliste importieren"</string>
-    <string name="add_to_playlist">"Zur Wiedergabeliste hinzufügen"</string>
-    <string name="view_artist">"Künstler ansehen"</string>
+    <string name="add_to_playlist">"Zur Wiedergabeliste hinzufÃ¼gen"</string>
+    <string name="view_artist">"KÃ¼nstler ansehen"</string>
     <string name="view_album">"Album ansehen"</string>
     <string name="refetch">"Neu laden"</string>
     <string name="share">"Teilen"</string>
-    <string name="delete">"Löschen"</string>
+    <string name="delete">"LÃ¶schen"</string>
     <string name="remove_from_history">"aus dem Wiedergabeverlauf entfernen"</string>
     <string name="search_online">"Online-Suche"</string>
     <string name="sync">"Sync"</string>
     <string name="advanced">"Erweitert"</string>
-    <string name="select">"Alles auswählen"</string>
+    <string name="select">"Alles auswÃ¤hlen"</string>
     <string name="like_all">"Alles favorisieren"</string>
     <string name="dislike_all">"Alles ent-favorisieren"</string>
     <string name="tempo_and_pitch">"Tempo und Tonlage"</string>
 
     <!-- Sort menu -->
-    <string name="sort_by_create_date">"Datum hinzugefügt"</string>
+    <string name="sort_by_create_date">"Datum hinzugefÃ¼gt"</string>
     <string name="sort_by_last_updated">"Datum aktualisiert"</string>
     <string name="sort_by_name">"Name"</string>
-    <string name="sort_by_artist">"Künstler"</string>
+    <string name="sort_by_artist">"KÃ¼nstler"</string>
     <string name="sort_by_year">"Jahr"</string>
     <string name="sort_by_song_count">"Anzahl der Lieder"</string>
-    <string name="sort_by_length">"Länge"</string>
+    <string name="sort_by_length">"LÃ¤nge"</string>
     <string name="sort_by_play_time">"Wiedergabedauer"</string>
     <string name="sort_by_custom">"Individuelle Reinfolge"</string>
 
@@ -138,9 +138,9 @@
     <string name="codecs">"Codecs"</string>
     <string name="bitrate">"Bitrate"</string>
     <string name="sample_rate">"Abtastfrequenz"</string>
-    <string name="loudness">"Lautstärke"</string>
+    <string name="loudness">"LautstÃ¤rke"</string>
     <string name="volume">"Klangvolumen"</string>
-    <string name="file_size">"Dateigröße"</string>
+    <string name="file_size">"DateigrÃ¶ÃŸe"</string>
     <string name="unknown">"Unbekannt"</string>
     <string name="copied">"In die Zwischenablage kopiert"</string>
     <string name="edit_lyrics">"Text bearbeiten"</string>
@@ -148,22 +148,22 @@
     <string name="lyrics">"Liedtext"</string>
     <string name="edit_song">"Titel bearbeiten"</string>
     <string name="song_title">"Songtitel"</string>
-    <string name="song_artists">"Song-Künstler"</string>
+    <string name="song_artists">"Song-KÃ¼nstler"</string>
     <string name="error_song_title_empty">"Der Songtitel darf nicht leer sein."</string>
     <string name="error_song_artist_empty">"Songinterpret darf nicht leer sein."</string>
     <string name="save">"Speichern"</string>
-    <string name="choose_playlist">"Wiedergabeliste auswählen"</string>
+    <string name="choose_playlist">"Wiedergabeliste auswÃ¤hlen"</string>
     <string name="edit_playlist">"Wiedergabeliste bearbeiten"</string>
     <string name="create_playlist">"Wiedergabeliste erstellen"</string>
     <string name="playlist_name">"Name der Wiedergabeliste"</string>
     <string name="error_playlist_name_empty">"Der Name der Wiedergabeliste darf nicht leer sein."</string>
     <string name="already_in_playlist">"Bereits in Wiedergabeliste:"</string>
-    <string name="edit_artist">"Künstler bearbeiten"</string>
-    <string name="artist_name">"Name des Künstlers"</string>
-    <string name="error_artist_name_empty">"Der Name des Künstlers darf nicht leer sein."</string>
+    <string name="edit_artist">"KÃ¼nstler bearbeiten"</string>
+    <string name="artist_name">"Name des KÃ¼nstlers"</string>
+    <string name="error_artist_name_empty">"Der Name des KÃ¼nstlers darf nicht leer sein."</string>
     <string name="duplicates">"Duplikate"</string>
-    <string name="skip_duplicates">"Duplikate überspringen"</string>
-    <string name="add_anyway">"trotzdem hinzufügen"</string>
+    <string name="skip_duplicates">"Duplikate Ã¼berspringen"</string>
+    <string name="add_anyway">"trotzdem hinzufÃ¼gen"</string>
     <string name="duplicates_description_single">"Dieser Titel ist bereits in deiner Wiedergabeliste"</string>
     <string name="duplicates_description_multiple">"%d Titel sind bereits in deiner Wiedergabeliste"</string>
 
@@ -173,8 +173,8 @@
         <item quantity="other">"%d Lieder"</item>
     </plurals>
     <plurals name="n_artist">
-        <item quantity="one">"%d Künstler"</item>
-        <item quantity="other">"%d Künstler"</item>
+        <item quantity="one">"%d KÃ¼nstler"</item>
+        <item quantity="other">"%d KÃ¼nstler"</item>
     </plurals>
     <plurals name="n_album">
         <item quantity="one">"%d Album"</item>
@@ -210,7 +210,7 @@
     <string name="imported_playlist">"Importierte Wiedergabeliste"</string>
     <string name="removed_song_from_playlist">"\"%s\" aus der Wiedergabeliste entfernt"</string>
     <string name="playlist_synced">"Wiedergabeliste synchronisiert"</string>
-    <string name="undo">"Rückgängig machen"</string>
+    <string name="undo">"RÃ¼ckgÃ¤ngig machen"</string>
 
     <!-- Player -->
     <string name="lyrics_not_found">"Liedtext nicht gefunden"</string>
@@ -220,12 +220,12 @@
         <item quantity="one">"1 Minute"</item>
         <item quantity="other">"%d Minuten"</item>
     </plurals>
-    <string name="error_no_stream">"Kein Stream verfügbar"</string>
+    <string name="error_no_stream">"Kein Stream verfÃ¼gbar"</string>
     <string name="error_no_internet">"Keine Netzverbindung"</string>
-    <string name="error_timeout">"Zeitüberschreitung"</string>
+    <string name="error_timeout">"ZeitÃ¼berschreitung"</string>
     <string name="error_unknown">"Unbekannter Fehler"</string>
     <string name="seek_backward">"5 Sekunden vorspulen"</string>
-    <string name="seek_forward">"5 Sekunden zurückspulen"</string>
+    <string name="seek_forward">"5 Sekunden zurÃ¼ckspulen"</string>
 
     <!-- Player action -->
     <string name="action_like">"Favoriten"</string>
@@ -239,7 +239,7 @@
     <!-- Queue Title -->
     <string name="queue_all_songs">"Alle Titel"</string>
     <string name="queue_searched_songs">"Gesuchte Titel"</string>
-    <string name="similar_content">"Ähnlicher Kontext"</string>
+    <string name="similar_content">"Ã„hnlicher Kontext"</string>
 
     <!-- Notification name -->
     <string name="music_player">"Musik-Player"</string>
@@ -248,7 +248,7 @@
     <string name="settings">"Einstellungen"</string>
     <string name="login_settings">"Anmelde-Einstellungen"</string>
     <string name="use_login_for_browse">"Benutze Login, um Premium Inhalte zu  durchsuchen"</string>
-    <string name="use_login_for_browse_desc">"Esto puede mostrar álbumes sólo premium si está conectado con una cuenta Premium"</string>
+    <string name="use_login_for_browse_desc">"Esto puede mostrar Ã¡lbumes sÃ³lo premium si estÃ¡ conectado con una cuenta Premium"</string>
     <string name="general_settings">"Allgemeine Einstellungen"</string>
     <string name="appearance">"Erscheinungsbild"</string>
     <string name="theme">"Thema"</string>
@@ -273,15 +273,15 @@
     <string name="center">"Zentriert"</string>
     <string name="right">"Rechts"</string>
     <string name="lyrics_click_change">"Liedtext bei Klick umschalten"</string>
-    <string name="grid_cell_size">"Gitterzellengröße"</string>
+    <string name="grid_cell_size">"GitterzellengrÃ¶ÃŸe"</string>
     <string name="small">"klein"</string>
-    <string name="big">"Groß"</string>
+    <string name="big">"GroÃŸ"</string>
     <string name="player_slider_style">"Player-Schieberegler"</string>
     <string name="default_">"Standard"</string>
     <string name="squiggly">"Wellig"</string>
     <string name="slim">"Schlank"</string>
     <string name="misc">"Sonstige"</string>
-    <string name="default_open_tab">"Standardmäßig geöffnete Registerkarte"</string>
+    <string name="default_open_tab">"StandardmÃ¤ÃŸig geÃ¶ffnete Registerkarte"</string>
     <string name="slim_navbar">"Beschriftungen auf Navigationsleiste verstecken"</string>
     <string name="content">"Inhalt"</string>
     <string name="google">"Google"</string>
@@ -292,7 +292,7 @@
     <string name="not_logged_in">"Nicht angemeldet"</string>
     <string name="token_hidden">"Tippen um token anzuzeigen"</string>
     <string name="token_shown">"Nochmal tippen um zu kopieren oder zu bearbeiten"</string>
-    <string name="token_adv_login_description">"Dies ist eine FORTGESCHRITTENE Anmeldemethode. Als Alternative zum Webportal kannst du dein Anmelde-Token hier direkt eingeben oder aktualisieren. Dies kann zum Beispiel das Anmelden auf mehreren Geräten beschleunigen. Bitte beachte, dass alle ungültigen Token-Formate, die von der App nicht analysiert werden können, nicht akzeptiert werden."</string>
+    <string name="token_adv_login_description">"Dies ist eine FORTGESCHRITTENE Anmeldemethode. Als Alternative zum Webportal kannst du dein Anmelde-Token hier direkt eingeben oder aktualisieren. Dies kann zum Beispiel das Anmelden auf mehreren GerÃ¤ten beschleunigen. Bitte beachte, dass alle ungÃ¼ltigen Token-Formate, die von der App nicht analysiert werden kÃ¶nnen, nicht akzeptiert werden."</string>
     <string name="ytm_sync">"Automatischer Abgleich mit deinem YouTube Music Konto"</string>
     <string name="general">"Allgemein"</string>
     <string name="content_language">"Standard-Inhaltssprache"</string>
@@ -302,61 +302,61 @@
     <string name="enable_proxy">"Proxy einschalten"</string>
     <string name="proxy_type">"Proxy-Typ"</string>
     <string name="proxy_url">"Proxy-URL"</string>
-    <string name="default_lib_chips">"Ändere Standard-Bibliothekschip"</string>
+    <string name="default_lib_chips">"Ã„ndere Standard-Bibliothekschip"</string>
     <string name="set_quick_picks">"Setze Quick Picks"</string>
-    <string name="last_song_listened">"Basierend auf zuletzt gehörtes Lied"</string>
-    <string name="restart_to_take_effect">"Neustart, damit Änderungen wirksam werden"</string>
+    <string name="last_song_listened">"Basierend auf zuletzt gehÃ¶rtes Lied"</string>
+    <string name="restart_to_take_effect">"Neustart, damit Ã„nderungen wirksam werden"</string>
     <string name="app_language">"App-Sprache (Beta)"</string>
     <string name="configure_app_language">"App-Sprachen konfigurieren"</string>
     <string name="intent_app_language_not_found">"Die Spracheinstellungen der App konnten nicht gefunden werden, bitte konfiguriere sie manuell"</string>
-    <string name="open_supported_links">"Unterstützte Links standardmäßig öffnen"</string>
-    <string name="configure_supported_links">"Unterstützte Links konfigurieren"</string>
-    <string name="intent_supported_links_not_found">"Die Einstellungen für Linkunterstützung der App konnten nicht gefunden werden, bitte konfiguriere sie manuell"</string>
+    <string name="open_supported_links">"UnterstÃ¼tzte Links standardmÃ¤ÃŸig Ã¶ffnen"</string>
+    <string name="configure_supported_links">"UnterstÃ¼tzte Links konfigurieren"</string>
+    <string name="intent_supported_links_not_found">"Die Einstellungen fÃ¼r LinkunterstÃ¼tzung der App konnten nicht gefunden werden, bitte konfiguriere sie manuell"</string>
     <string name="enable_kugou">"KuGou-Liedtextanbieter aktivieren"</string>
     <string name="enable_lrclib">"LrcLib-Liedtextanbieter aktivieren"</string>
     <string name="set_first_lyrics_provider">"Bevorzugter Liedtextanbieter"</string>
     <string name="player_and_audio">"Player und Audio"</string>
-    <string name="audio_quality">"Tonqualität"</string>
+    <string name="audio_quality">"TonqualitÃ¤t"</string>
     <string name="audio_quality_max">"Maximum (beta)"</string>
     <string name="audio_quality_auto">"Automatisch"</string>
     <string name="audio_quality_high">"Hoch"</string>
     <string name="audio_quality_low">"Niedrig"</string>
     <string name="queue">"Warteschlange"</string>
     <string name="persistent_queue">"Dauerhafte Warteschlange"</string>
-    <string name="persistent_queue_desc">"Letzte Wiedergabeliste beim öffnen der App wiederherstellen"</string>
+    <string name="persistent_queue_desc">"Letzte Wiedergabeliste beim Ã¶ffnen der App wiederherstellen"</string>
     <string name="auto_load_more">"Automatisch weitere Titel laden"</string>
-    <string name="auto_load_more_desc">"Automatisches Hinzufügen weiterer Lieder, wenn das Ende der Warteschlange erreicht ist, wenn möglich"</string>
-    <string name="enable_similar_content">"Ähnliche Titel aktivieren"</string>
-    <string name="similar_content_desc">"Automatisches Hinzufügen weiterer ähnlicher Lieder, wenn das Ende der Warteschlange erreicht ist, wenn möglich"</string>
-    <string name="skip_silence">"Stille überspringen"</string>
+    <string name="auto_load_more_desc">"Automatisches HinzufÃ¼gen weiterer Lieder, wenn das Ende der Warteschlange erreicht ist, wenn mÃ¶glich"</string>
+    <string name="enable_similar_content">"Ã„hnliche Titel aktivieren"</string>
+    <string name="similar_content_desc">"Automatisches HinzufÃ¼gen weiterer Ã¤hnlicher Lieder, wenn das Ende der Warteschlange erreicht ist, wenn mÃ¶glich"</string>
+    <string name="skip_silence">"Stille Ã¼berspringen"</string>
     <string name="audio_normalization">"Audio-Normalisierung"</string>
-    <string name="auto_skip_next_on_error">"Bei Fehler automatisch zum nächsten Lied springen"</string>
+    <string name="auto_skip_next_on_error">"Bei Fehler automatisch zum nÃ¤chsten Lied springen"</string>
     <string name="auto_skip_next_on_error_desc">"Wiedergabe ohne Unterbrechung sicherstellen"</string>
-    <string name="stop_music_on_task_clear">"Musik beim Schließen der App stoppen"</string>
+    <string name="stop_music_on_task_clear">"Musik beim SchlieÃŸen der App stoppen"</string>
     <string name="equalizer">"Equalizer"</string>
     <string name="storage">"Speicher"</string>
     <string name="cache">"Zwischenspeicher"</string>
     <string name="image_cache">"Bild-Cache"</string>
     <string name="song_cache">"Song-Cache"</string>
-    <string name="max_cache_size">"Maximale Cache-Größe"</string>
+    <string name="max_cache_size">"Maximale Cache-GrÃ¶ÃŸe"</string>
     <string name="unlimited">"Unbegrenzt"</string>
     <string name="clear_all_downloads">"Alle Downloads entfernen"</string>
-    <string name="max_image_cache_size">"Maximale Größe des Bild-Caches"</string>
-    <string name="clear_image_cache">"Bild-Cache löschen"</string>
-    <string name="max_song_cache_size">"Maximale Größe des Song-Cache"</string>
-    <string name="clear_song_cache">"Song-Cache löschen"</string>
+    <string name="max_image_cache_size">"Maximale GrÃ¶ÃŸe des Bild-Caches"</string>
+    <string name="clear_image_cache">"Bild-Cache lÃ¶schen"</string>
+    <string name="max_song_cache_size">"Maximale GrÃ¶ÃŸe des Song-Cache"</string>
+    <string name="clear_song_cache">"Song-Cache lÃ¶schen"</string>
     <string name="size_used">"%s verwendet"</string>
-    <string name="privacy">"Privatsphäre"</string>
-    <string name="listen_history">"Hörverlauf"</string>
+    <string name="privacy">"PrivatsphÃ¤re"</string>
+    <string name="listen_history">"HÃ¶rverlauf"</string>
     <string name="search_history">"Suchverlauf"</string>
-    <string name="pause_listen_history">"Pausieren des Hörverlaufs"</string>
-    <string name="clear_listen_history">"Hörverlauf löschen"</string>
-    <string name="clear_listen_history_confirm">"Sind Sie sicher, dass Sie den gesamten Hörverlauf löschen wollen?"</string>
+    <string name="pause_listen_history">"Pausieren des HÃ¶rverlaufs"</string>
+    <string name="clear_listen_history">"HÃ¶rverlauf lÃ¶schen"</string>
+    <string name="clear_listen_history_confirm">"Sind Sie sicher, dass Sie den gesamten HÃ¶rverlauf lÃ¶schen wollen?"</string>
     <string name="pause_search_history">"Suchverlauf anhalten"</string>
-    <string name="clear_search_history">"Suchverlauf löschen"</string>
-    <string name="clear_search_history_confirm">"Sind Sie sicher, dass Sie den gesamten Suchverlauf löschen wollen?"</string>
+    <string name="clear_search_history">"Suchverlauf lÃ¶schen"</string>
+    <string name="clear_search_history_confirm">"Sind Sie sicher, dass Sie den gesamten Suchverlauf lÃ¶schen wollen?"</string>
     <string name="disable_screenshot">"Screenshot verhindern"</string>
-    <string name="disable_screenshot_desc">"Wenn diese Option aktiv ist, werden Screenshots verhindert und die Vorschau in der App-Übersicht deaktiviert."</string>
+    <string name="disable_screenshot_desc">"Wenn diese Option aktiv ist, werden Screenshots verhindert und die Vorschau in der App-Ãœbersicht deaktiviert."</string>
     <string name="hide_explicit">"Explizite Inhalte ausblenden"</string>
     <string name="backup_restore">"Sichern und Wiederherstellen"</string>
     <string name="backup">"Datensicherung"</string>
@@ -365,42 +365,42 @@
     <string name="backup_create_failed">"Konnte keine Sicherung erstellen"</string>
     <string name="restore_failed">"Wiederherstellung der Sicherung fehlgeschlagen"</string>
     <string name="discord_integration">"Discors-Integration"</string>
-    <string name="discord_information">"OpenTune verwendet die KizzyRPC-Bibliothek, um den Status deines Discord-Kontos zu setzen. Dabei wird die Discord-Gateway-Verbindung verwendet, was als Verstoß gegen die AGB von Discord angesehen werden kann. Es sind jedoch keine Fälle bekannt, in denen Benutzerkonten aus diesem Grund gesperrt wurden. Die Verwendung erfolgt auf eigene Gefahr. OpenTune extrahiert nur dein Token, alles andere wird lokal gespeichert."</string>
+    <string name="discord_information">"Echofy verwendet die KizzyRPC-Bibliothek, um den Status deines Discord-Kontos zu setzen. Dabei wird die Discord-Gateway-Verbindung verwendet, was als VerstoÃŸ gegen die AGB von Discord angesehen werden kann. Es sind jedoch keine FÃ¤lle bekannt, in denen Benutzerkonten aus diesem Grund gesperrt wurden. Die Verwendung erfolgt auf eigene Gefahr. Echofy extrahiert nur dein Token, alles andere wird lokal gespeichert."</string>
     <string name="dismiss">"Ignorieren"</string>
     <string name="options">"Optionen"</string>
     <string name="preview">"Vorschau"</string>
     <string name="login_failed">"Anmeldung fehlgeschlagen"</string>
     <string name="enable_discord_rpc">"Rich Presence aktivieren"</string>
-    <string name="default_links">"Unterstützte Links öffnen"</string>
-    <string name="open_app_settings_error">"App-Einstellungen konnten nicht geöffnet werden"</string>
+    <string name="default_links">"UnterstÃ¼tzte Links Ã¶ffnen"</string>
+    <string name="open_app_settings_error">"App-Einstellungen konnten nicht geÃ¶ffnet werden"</string>
     <string name="release_notes">"Versionshinweise"</string>
-    <string name="about">"Über"</string>
+    <string name="about">"Ãœber"</string>
     <string name="app_version">"App-Version"</string>
-    <string name="new_version_available">"Neue Version verfügbar"</string>
-    <string name="translation_models">"Übersetzungsmodelle"</string>
-    <string name="clear_translation_models">"Lösche Übersetzungsmodelle"</string>
+    <string name="new_version_available">"Neue Version verfÃ¼gbar"</string>
+    <string name="translation_models">"Ãœbersetzungsmodelle"</string>
+    <string name="clear_translation_models">"LÃ¶sche Ãœbersetzungsmodelle"</string>
     <string name="all_time">"Gesamte Zeit"</string>
     <string name="past_24_hours">"Letzte 24 Stunden"</string>
     <string name="past_week">"Letzte Woche"</string>
     <string name="past_month">"Letzter Monat"</string>
     <string name="past_year">"Letztes Jahr"</string>
-    <string name="top_length">"Meine Top-Listen Länge"</string>
-    <string name="history_duration">"Verlaufslänge"</string>
+    <string name="top_length">"Meine Top-Listen LÃ¤nge"</string>
+    <string name="history_duration">"VerlaufslÃ¤nge"</string>
     <string name="contributors">"Beitragende"</string>
     <string name="Donate">"Spenden"</string>
     <string name="Telegramchanel">"Telegram-Kanal"</string>
     <string name="contribution">"Beitrag"</string>
     <string name="Hi">"Hi"</string>
     <string name="NewVersion">"Neue Version"</string>
-    <string name="Changelog">"Änderungsprotokoll"</string>
-    <string name="changelogs">"Änderungsprotokolle"</string>
-    <string name="no_changes">"keine Änderungen"</string>
-    <string name="Translate">"Übersetzen"</string>
-    <string name="Redirección">"Umleitung"</string>
+    <string name="Changelog">"Ã„nderungsprotokoll"</string>
+    <string name="changelogs">"Ã„nderungsprotokolle"</string>
+    <string name="no_changes">"keine Ã„nderungen"</string>
+    <string name="Translate">"Ãœbersetzen"</string>
+    <string name="redirection">"Umleitung"</string>
     <string name="poeditor_redirect">"Du wirst gleich auf poeditor.com weitergeleitet"</string>
     <string name="barwar">"Achtung: Beim Wiederherstellen von Sicherungen werden die zuvor heruntergeladenen Titel nicht heruntergeladen. Es wird DRINGEND empfohlen, die wiederhergestellten Titel abzuspielen, um Fehler beim Herunterladen zu vermeiden."</string>
     <string name="backup_link_title">"Sicherung erfolgreich hochgeladen!"</string>
-    <string name="backup_link_description">"Deine Sicherung wird für die nächsten 14 Tage verfügbar sein."</string>
+    <string name="backup_link_description">"Deine Sicherung wird fÃ¼r die nÃ¤chsten 14 Tage verfÃ¼gbar sein."</string>
     <string name="copy_link">"Link kopieren"</string>
     <string name="customize_thumbnail_corner_radius">"Eckradius der Titelbilder anpassen"</string>
     <string name="corner_radius_label">"Eckenradius: %1$s"</string>
@@ -413,7 +413,7 @@
     <string name="explore">"Entdecken"</string>
     <string name="custom_avatar">"Benutzerdefinierter Avatar (BETA)"</string>
     <string name="custom_avatar_beta">"Benutzerdefinierter Avatar (BETA)"</string>
-    <string name="select_image">"Bild auswählen"</string>
+    <string name="select_image">"Bild auswÃ¤hlen"</string>
     <string name="default_avatar">"Standard-Avatar"</string>
     <string name="restore_default_avatar">"Standard-Avatar wiederherstellen"</string>
     <string name="SearchResutls">"Suchergebnisse"</string>
@@ -421,17 +421,17 @@
     <string name="SearchHistory">"Suchverlauf"</string>
     <string name="collapse">"Einklappen"</string>
     <string name="expand">"Ausklappen"</string>
-    <string name="reset_to_default">"Auf Standard zurücksetzen"</string>
+    <string name="reset_to_default">"Auf Standard zurÃ¼cksetzen"</string>
     <string name="Presets">"Voreinstellungen"</string>
     <string name="custom">"Benutzerdefiniert"</string>
-    <string name="close">"Schließen"</string>
+    <string name="close">"SchlieÃŸen"</string>
     <string name="custom_value">"Benutzerdefinierter Wert"</string>
-    <string name="adjust_radius">"Radius ändern"</string>
+    <string name="adjust_radius">"Radius Ã¤ndern"</string>
     <string name="cancel">"Abbrechen"</string>
     <string name="apply">"Anwenden"</string>
-    <string name="player_buttons_style">"Spielerknöpfe-Stil"</string>
+    <string name="player_buttons_style">"SpielerknÃ¶pfe-Stil"</string>
     <string name="default_style">"Standard-Stil"</string>
-    <string name="secondary_color_style">"Senkundärer Farbstil"</string>
+    <string name="secondary_color_style">"SenkundÃ¤rer Farbstil"</string>
     <string name="update_version">"Aktualisierung v%1$s"</string>
     <string name="download_question">"Willst du die neue Version herunterladen?"</string>
     <string name="downloadup">"Herunterladen"</string>
@@ -441,9 +441,9 @@
     <string name="download_errorup">"Fehler beim Herunterladen der Aktualisierung"</string>
     <string name="tap_to_update">"Tippen um zu aktualisieren"</string>
     <string name="info_title">"Information"</string>
-    <string name="info_description">"In diesem Abschnitt findest du wichtige Informationen über den Sicherungs- und Wiederherstellungsprozess, einschließlich der Sicherheit deiner Daten und wie du sicherstellen kannst, dass deine Daten sicher und leicht zugänglich bleiben."</string>
+    <string name="info_description">"In diesem Abschnitt findest du wichtige Informationen Ã¼ber den Sicherungs- und Wiederherstellungsprozess, einschlieÃŸlich der Sicherheit deiner Daten und wie du sicherstellen kannst, dass deine Daten sicher und leicht zugÃ¤nglich bleiben."</string>
     <string name="backup_info_title">"Wichtige Informationen"</string>
-    <string name="backup_info_description">"Wenn du deine Daten sicherst, sind deine Downloads nicht enthalten. Es wird empfohlen, den Cache der App zu leeren, um die optimale Leistung zu erzielen. Der Sicherungsdienst ist sicher und gewährleistet, dass deine Daten privat und geschützt bleiben."</string>
+    <string name="backup_info_description">"Wenn du deine Daten sicherst, sind deine Downloads nicht enthalten. Es wird empfohlen, den Cache der App zu leeren, um die optimale Leistung zu erzielen. Der Sicherungsdienst ist sicher und gewÃ¤hrleistet, dass deine Daten privat und geschÃ¼tzt bleiben."</string>
     <string name="backup_description">"Erstelle eine Sicherungsdatei deiner aktuellen Daten"</string>
     <string name="restore_description">"Stelle deine Daten aus einer Sicherungsdatei wieder her"</string>
     <string name="keep_listening">"seguir_escucha"</string>
@@ -452,32 +452,32 @@
     <string name="Version">"Version"</string>
     <string name="notification">"benachrichtigung"</string>
     <string name="cached_playlist">"listas en cache"</string>
-    <string name="added_to_queue">"zur Warteschleife hinzugefügt"</string>
+    <string name="added_to_queue">"zur Warteschleife hinzugefÃ¼gt"</string>
     <string name="warn">"warnung"</string>
     <string name="edit_thumbnail">"Editar miniatura"</string>
     <string name="remove_thumbnail">"Borrar miniatura"</string>
-    <string name="add_thumbnail">"Añadir miniatura"</string>
-    <string name="storage_overview">"visión general del almacenamiento"</string>
-    <string name="clear_downloads_confirmation">"confirmación para borrar las descargas"</string>
-    <string name="clear_song_cache_confirmation">"confirmación para borrar la caché de canciones"</string>
-    <string name="clear_image_cache_confirmation">"confirmación para borrar la caché de imágenes"</string>
-    <string name="confirm">"bestätigen"</string>
+    <string name="add_thumbnail">"AÃ±adir miniatura"</string>
+    <string name="storage_overview">"visiÃ³n general del almacenamiento"</string>
+    <string name="clear_downloads_confirmation">"confirmaciÃ³n para borrar las descargas"</string>
+    <string name="clear_song_cache_confirmation">"confirmaciÃ³n para borrar la cachÃ© de canciones"</string>
+    <string name="clear_image_cache_confirmation">"confirmaciÃ³n para borrar la cachÃ© de imÃ¡genes"</string>
+    <string name="confirm">"bestÃ¤tigen"</string>
     <string name="problem_solver">"Solucionador de problemas"</string>
-    <string name="action_login">"Iniciar sesión"</string>
+    <string name="action_login">"Iniciar sesiÃ³n"</string>
     <string name="generating_image">"Generando imagen"</string>
     <string name="please_wait">"Por favor espere"</string>
     <string name="share_lyrics">"Teile Liedtext"</string>
     <string name="share_as_text">"Compartir como texto"</string>
     <string name="share_as_image">"Compartir como imagen"</string>
-    <string name="max_selection_limit">"Límite máximo de selección"</string>
+    <string name="max_selection_limit">"LÃ­mite mÃ¡ximo de selecciÃ³n"</string>
     <string name="share_selected">"Compartir elementos seleccionados"</string>
     <string name="customize_colors">"Personalizar colores"</string>
     <string name="more_options">"mehr_optionen"</string>
     <string name="text_color">"Color del texto"</string>
     <string name="secondary_text_color">"Color del texto secundario"</string>
     <string name="background_color">"Hintergrund Farbe"</string>
-    <string name="back">"zurück"</string>
-    <string name="navigation_error">"Error de navegación"</string>
+    <string name="back">"zurÃ¼ck"</string>
+    <string name="navigation_error">"Error de navegaciÃ³n"</string>
     <string name="notifications_enabled">"Notificaciones habilitadas"</string>
     <string name="notifications_disabled">"Notificaciones desabilitadas"</string>
     <string name="visitor_data_title"></string>

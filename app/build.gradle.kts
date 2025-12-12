@@ -1,5 +1,7 @@
 @file:Suppress("UnstableApiUsage")
 
+import java.util.Properties
+
 plugins {
     id("com.android.application")
     kotlin("android")
@@ -11,32 +13,17 @@ plugins {
 }
 
 android {
-    namespace = "com.arturo254.opentune"
+    namespace = "com.Chenkham.Echofy"
     //noinspection GradleDependency
     compileSdk = 35
 
     defaultConfig {
-        applicationId = "com.Arturo254.opentune"
+        applicationId = "com.Chenkham.Echofy"
         minSdk = 24
         targetSdk = 35
-        versionCode = 124
-        versionName = "2.0.10"
+        versionCode = 1
+        versionName = "2.0.0"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
-    }
-
-    buildTypes {
-        release {
-            isMinifyEnabled = true
-            isShrinkResources = true
-            isCrunchPngs = false
-            proguardFiles(
-                getDefaultProguardFile("proguard-android-optimize.txt"),
-                "proguard-rules.pro"
-            )
-        }
-        debug {
-            applicationIdSuffix = ".debug"
-        }
     }
 
     signingConfigs {
@@ -48,6 +35,90 @@ android {
                 keyPassword = System.getenv("MUSIC_DEBUG_SIGNING_KEY_PASSWORD")
             }
         }
+        create("release") {
+            // Use keystore.properties for release signing
+            val keystorePropertiesFile = rootProject.file("keystore.properties")
+            if (keystorePropertiesFile.exists()) {
+                val props = Properties()
+                props.load(keystorePropertiesFile.inputStream())
+                storeFile = file(props.getProperty("storeFile"))
+                storePassword = props.getProperty("storePassword")
+                keyAlias = props.getProperty("keyAlias")
+                keyPassword = props.getProperty("keyPassword")
+                enableV1Signing = true
+                enableV2Signing = true
+                enableV3Signing = true  // Android 9+ APK Signature Scheme v3
+                enableV4Signing = true  // Android 11+ incremental installs
+            }
+        }
+    }
+
+    buildTypes {
+        release {
+            isMinifyEnabled = true
+            isShrinkResources = true
+            isCrunchPngs = true
+            proguardFiles(
+                getDefaultProguardFile("proguard-android-optimize.txt"),
+                "proguard-rules.pro"
+            )
+            // Use release signing if available, otherwise use debug
+            signingConfig = if (rootProject.file("keystore.properties").exists()) {
+                signingConfigs.getByName("release")
+            } else {
+                signingConfigs.getByName("debug")
+            }
+        }
+        debug {
+            // Enable minification for smaller debug APKs too
+            isMinifyEnabled = true
+            isShrinkResources = true
+            proguardFiles(
+                getDefaultProguardFile("proguard-android-optimize.txt"),
+                "proguard-rules.pro"
+            )
+            applicationIdSuffix = ""  // Remove .debug suffix
+            versionNameSuffix = ""    // Remove -debug suffix
+        }
+    }
+
+    // Split APKs by ABI for smaller size
+    splits {
+        abi {
+            isEnable = true
+            reset()
+            // Only include common architectures
+            include("armeabi-v7a", "arm64-v8a", "x86_64")
+            isUniversalApk = true  // Enable universal APK for sharing
+        }
+    }
+
+    // Aggressive packaging options for smaller size
+    packaging {
+        resources {
+            excludes += "/META-INF/{AL2.0,LGPL2.1}"
+            excludes += "/META-INF/DEPENDENCIES"
+            excludes += "/META-INF/LICENSE"
+            excludes += "/META-INF/LICENSE.txt"
+            excludes += "/META-INF/NOTICE"
+            excludes += "/META-INF/NOTICE.txt"
+            excludes += "/META-INF/*.kotlin_module"
+            excludes += "/META-INF/*.version"
+            excludes += "/META-INF/proguard/*"
+            excludes += "DebugProbesKt.bin"
+            excludes += "kotlin/**"
+            excludes += "**/*.proto"
+            excludes += "**/*.properties"
+        }
+        jniLibs {
+            useLegacyPackaging = false
+        }
+    }
+
+    // Disable lint for faster builds
+    lint {
+        checkReleaseBuilds = false
+        abortOnError = false
     }
 
     buildFeatures {
@@ -55,7 +126,7 @@ android {
         compose = true
     }
 
-    // ✅ Alineamos TODO a Java 21
+    // ✅  TODO a Java 21
     compileOptions {
         isCoreLibraryDesugaringEnabled = true
         sourceCompatibility = JavaVersion.VERSION_21
@@ -71,6 +142,13 @@ android {
         jvmTarget = "21"
     }
 
+    // Compose compiler optimizations for smoother performance
+    composeCompiler {
+        featureFlags.addAll(
+            org.jetbrains.kotlin.compose.compiler.gradle.ComposeFeatureFlag.StrongSkipping,
+            org.jetbrains.kotlin.compose.compiler.gradle.ComposeFeatureFlag.IntrinsicRemember
+        )
+    }
     testOptions {
         unitTests.isIncludeAndroidResources = true
         unitTests.isReturnDefaultValues = true
@@ -128,7 +206,7 @@ dependencies {
     implementation(libs.blurry)
     implementation(libs.material.ripple)
     implementation(libs.room.runtime.android)
-    implementation(libs.material.icons.extended)
+    // Removed material-icons-extended - it adds ~20MB. Use drawable resources instead.
     implementation(libs.glance.appwidget)
     implementation(libs.glance.material3)
     implementation(libs.graphics.shapes)

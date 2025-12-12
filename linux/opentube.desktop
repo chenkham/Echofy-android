@@ -1,8 +1,8 @@
 [Desktop Entry]
-Name=OpenTube
+Name=Echofy
 Comment=Lightweight YouTube client
-Exec=opentube
-Icon=opentube
+Exec=echofy
+Icon=echofy
 Terminal=false
 Type=Application
 Categories=AudioVideo;Player;Network;

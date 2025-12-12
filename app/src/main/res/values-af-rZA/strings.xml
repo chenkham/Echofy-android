@@ -1,4 +1,4 @@
-<resources>
+﻿﻿<resources>
     <!-- Bottom navigation -->
     <string name="home">Tuiste</string>
     <string name="songs">Liedjies</string>
@@ -44,8 +44,8 @@
 
     <!-- Search -->
     <string name="search">Soek</string>
-    <string name="search_yt_music">Soek YouTube -musiek …</string>
-    <string name="search_library">Soekbiblioteek …</string>
+    <string name="search_yt_music">Soek YouTube -musiek â€¦</string>
+    <string name="search_library">Soekbiblioteek â€¦</string>
     <string name="filter_library">Biblioteek</string>
     <string name="filter_liked">Hou van</string>
     <string name="filter_downloaded">Afgelaai</string>
@@ -139,9 +139,9 @@
     <string name="sample_rate">Steekproefstempo</string>
     <string name="loudness">Luidheid</string>
     <string name="volume">Volume</string>
-    <string name="file_size">Lêergrootte</string>
+    <string name="file_size">LÃªergrootte</string>
     <string name="unknown">Onbekend</string>
-    <string name="copied">Gekopieër na knipbord</string>
+    <string name="copied">GekopieÃ«r na knipbord</string>
 
     <string name="edit_lyrics">Wysig lirieke</string>
     <string name="search_lyrics">Soek lirieke</string>
@@ -265,7 +265,7 @@
     <string name="dark_theme_follow_system">Volgstelsel</string>
     <string name="player_background_style">Speler -agtergrondstyl</string>
     <string name="follow_theme">Volg tema</string>
-    <string name="gradient">Gradiënt</string>
+    <string name="gradient">GradiÃ«nt</string>
     <string name="player_background_blur">Vervaag</string>
     <string name="enable_squiggly_slider">Aktiveer Squiggly Slider</string>
     <string name="enable_swipe_thumbnail">Stel Swipe in staat om liedjie te verander</string>
@@ -378,7 +378,7 @@
     <string name="restore_failed">Kon nie die rugsteun herstel nie</string>
 
     <string name="discord_integration">Onenigheidsintegrasie</string>
-    <string name="discord_information">Opentune gebruik die KizzyRPC -biblioteek om u status van u Discord -rekening in te stel. Dit behels die gebruik van die Discord Gateway -verbinding, wat beskou kan word as "n oortreding van die TOS van Discord. Daar is egter geen bekende gevalle van gebruikersrekeninge wat om hierdie rede opgeskort word nie. Gebruik u eie risiko.  Opentunne sal net u teken uittrek, en alles anders word plaaslik geberg.</string>
+    <string name="discord_information">Echofy gebruik die KizzyRPC -biblioteek om u status van u Discord -rekening in te stel. Dit behels die gebruik van die Discord Gateway -verbinding, wat beskou kan word as "n oortreding van die TOS van Discord. Daar is egter geen bekende gevalle van gebruikersrekeninge wat om hierdie rede opgeskort word nie. Gebruik u eie risiko.  Opentunne sal net u teken uittrek, en alles anders word plaaslik geberg.</string>
     <string name="dismiss">Afdank</string>
     <string name="options">Opsies</string>
     <string name="preview">Voorskou</string>
@@ -415,7 +415,7 @@
     <string name="changelogs">Changelogs</string>
     <string name="no_changes">Geen veranderinge nie</string>
     <string name="Translate">Vertaal</string>
-    <string name="Redirección">Redirección</string>
+    <string name="redirection">Redirection</string>
     <string name="poeditor_redirect">U is op die punt om na peditor.com herlei te word</string>
     <string name="barwar">Aandag wanneer u die rugsteun herstel, word die voorheen afgelaaide liedjies nie afgelaai nie. Dit word sterk aanbeveel om die herstelde liedjies te speel om enige aflaaifoute te vermy.</string>
     <string name="backup_link_title">Rugsteun suksesvol opgelaai!</string>
@@ -450,11 +450,11 @@
     <string name="apply">Aansoek doen</string>
     <string name="player_buttons_style">Spelerknoppies styl</string>
     <string name="default_style">Standaardstyl</string>
-    <string name="secondary_color_style">Sekondêre kleurstyl</string>
+    <string name="secondary_color_style">SekondÃªre kleurstyl</string>
     <string name="update_version">UPDATE V%1 $ S</string>
     <string name="download_question">Wil u die nuwe weergawe aflaai?</string>
     <string name="downloadup">Aflaai</string>
-    <string name="downloadingup">Aflaai -opdatering …</string>
+    <string name="downloadingup">Aflaai -opdatering â€¦</string>
     <string name="download_completed">Aflaai voltooi</string>
     <string name="install">Installeer</string>
     <string name="download_errorup">Fout met die aflaai van die opdatering</string>
@@ -464,9 +464,9 @@
     <string name="backup_info_title">Belangrike inligting</string>
     <string name="backup_info_description">As u u data rugsteun, is u aflaaie nie ingesluit nie. Dit word aanbeveel om u kas deur die app skoon te maak vir optimale prestasie. Die rugsteundiens is veilig en verseker dat u data privaat en beskerm bly.</string>
 
-    <string name="backup_description">Skep "n rugsteunlêer van u huidige data</string>
-    <string name="restore_description">Herstel u data uit "n rugsteunlêer</string>
-    <string name="link_copied">Skakel gekopieër</string>
+    <string name="backup_description">Skep "n rugsteunlÃªer van u huidige data</string>
+    <string name="restore_description">Herstel u data uit "n rugsteunlÃªer</string>
+    <string name="link_copied">Skakel gekopieÃ«r</string>
     <string name="redireccion">Herleiding</string>
     <string name="Version">Weergawe</string>
     <string name="notification">Aktiveer kennisgewings</string>
