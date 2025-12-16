@@ -59,6 +59,9 @@ fun NavGraphBuilder.navigationBuilder(
     composable(Screens.Explore.route) {
         ExploreScreen(navController,scrollBehavior)
     }
+    composable(Screens.ListenTogether.route) {
+        ListenTogetherScreen(navController)
+    }
     composable("history") {
         HistoryScreen(navController)
     }
@@ -70,6 +73,9 @@ fun NavGraphBuilder.navigationBuilder(
     }
     composable("new_release") {
         NewReleaseScreen(navController, scrollBehavior)
+    }
+    composable("notifications") {
+        NotificationsScreen(navController)
     }
 
 

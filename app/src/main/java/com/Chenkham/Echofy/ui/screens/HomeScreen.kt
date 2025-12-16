@@ -629,13 +629,11 @@ fun HomeScreen(
                 }
             }
 
-            explorePage?.newReleaseAlbums?.let { newReleaseAlbums ->
+            // New Releases section from explorePage
+            explorePage?.newReleaseAlbums?.takeIf { it.isNotEmpty() }?.let { newReleases ->
                 item {
                     NavigationTitle(
                         title = stringResource(R.string.new_release_albums),
-                        onClick = {
-                            navController.navigate("new_release")
-                        },
                         modifier = Modifier.animateItem()
                     )
                 }
@@ -647,33 +645,8 @@ fun HomeScreen(
                             .asPaddingValues(),
                         modifier = Modifier.animateItem()
                     ) {
-                        items(
-                            items = newReleaseAlbums,
-                            key = { it.id }
-                        ) { album ->
-                            YouTubeGridItem(
-                                item = album,
-                                isActive = mediaMetadata?.album?.id == album.id,
-                                isPlaying = isPlaying,
-                                coroutineScope = scope,
-                                modifier = Modifier
-                                    .combinedClickable(
-                                        onClick = {
-                                            navController.navigate("album/${album.id}")
-                                        },
-                                        onLongClick = {
-                                            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                                            menuState.show {
-                                                YouTubeAlbumMenu(
-                                                    albumItem = album,
-                                                    navController = navController,
-                                                    onDismiss = menuState::dismiss
-                                                )
-                                            }
-                                        }
-                                    )
-                                    .animateItem()
-                            )
+                        items(newReleases) { album ->
+                            ytGridItem(album)
                         }
                     }
                 }

@@ -16,6 +16,13 @@ val SlimNavBarKey = booleanPreferencesKey("slimNavBar")
 val GridItemsSizeKey = stringPreferencesKey("gridItemSize")
 val SliderStyleKey = stringPreferencesKey("sliderStyle")
 val PipEnabledKey = booleanPreferencesKey("pipEnabled")
+val DynamicEchoEnabledKey = booleanPreferencesKey("dynamicEchoEnabled")
+val DynamicEchoStyleKey = stringPreferencesKey("dynamicEchoStyle")
+
+enum class DynamicEchoStyle {
+    WAVE,
+    GLOW
+}
 
 enum class SliderStyle {
     DEFAULT,

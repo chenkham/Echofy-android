@@ -188,8 +188,121 @@ class PlayerConnection(
             }
         })
 
+        // Setup Listen Together sync handler
+        setupJamSessionSync()
+
         Log.d(TAG, "PlayerConnection initialized successfully")
     }
+
+    /**
+     * Setup JamSessionManager sync callback.
+     * Handles Play, Pause, and DriftCheck events from Realtime.
+     * All player operations MUST run on main thread.
+     */
+    private fun setupJamSessionSync() {
+        com.Chenkham.Echofy.data.remote.JamSessionManager.setOnSyncRequired { event ->
+            // CRITICAL: Player must be accessed on main thread
+            updateScope.launch(kotlinx.coroutines.Dispatchers.Main) {
+                try {
+                    // Skip sync if user is the host - host broadcasts but shouldn't receive their own events
+                    if (com.Chenkham.Echofy.data.repository.ListenTogetherRepository.isCurrentUserHost) {
+                        Log.d(TAG, "[Jam] Skipping sync - user is host")
+                        return@launch
+                    }
+                    
+                    when (event) {
+                        is com.Chenkham.Echofy.data.remote.SyncEvent.Play -> {
+                            Log.d(TAG, "[Jam] Play sync: track=${event.trackId}, pos=${event.expectedPosition}")
+                            handleJamPlaySync(event)
+                        }
+                        is com.Chenkham.Echofy.data.remote.SyncEvent.Pause -> {
+                            Log.d(TAG, "[Jam] Pause sync")
+                            if (player.isPlaying) {
+                                player.pause()
+                            }
+                        }
+                        is com.Chenkham.Echofy.data.remote.SyncEvent.DriftCheck -> {
+                            Log.d(TAG, "[Jam] Drift check: expected=${event.expectedPosition}")
+                            handleDriftCorrection(event.expectedPosition, event.threshold)
+                        }
+                        is com.Chenkham.Echofy.data.remote.SyncEvent.TrackChange -> {
+                            Log.d(TAG, "[Jam] Track change: ${event.trackId}")
+                            // Track change handled by Play event
+                        }
+                    }
+                } catch (e: Exception) {
+                    Log.e(TAG, "[Jam] Sync error: ${e.message}")
+                }
+            }
+        }
+    }
+
+    /**
+     * Handle play sync from Jam session.
+     * Calculates position from started_at and snaps if needed.
+     */
+    private fun handleJamPlaySync(event: com.Chenkham.Echofy.data.remote.SyncEvent.Play) {
+        val currentTrackId = player.currentMediaItem?.mediaId
+        
+        // Check if we need to load a new track
+        if (event.trackId != null && event.trackId != currentTrackId) {
+            // Load new track
+            val metadata = com.Chenkham.Echofy.models.MediaMetadata(
+                id = event.trackId,
+                title = event.trackTitle ?: "Unknown",
+                artists = listOf(
+                    com.Chenkham.Echofy.models.MediaMetadata.Artist(
+                        id = null,
+                        name = event.trackArtist ?: ""
+                    )
+                ),
+                duration = -1,
+                thumbnailUrl = event.trackThumbnail
+            )
+            service.playQueue(
+                com.Chenkham.Echofy.playback.queues.YouTubeQueue(
+                    com.Chenkham.innertube.models.WatchEndpoint(event.trackId),
+                    metadata
+                )
+            )
+            // Delay seek to allow track to load - MUST be on main thread
+            updateScope.launch(kotlinx.coroutines.Dispatchers.Main) {
+                kotlinx.coroutines.delay(500)
+                player.seekTo(event.expectedPosition)
+                if (!player.isPlaying) player.play()
+            }
+        } else {
+            // Same track - check drift and sync
+            val drift = kotlin.math.abs(player.currentPosition - event.expectedPosition)
+            if (drift > 200) { // Snap sync threshold: 200ms
+                Log.d(TAG, "[Jam] Snap sync: drift=${drift}ms")
+                player.seekTo(event.expectedPosition)
+            }
+            if (!player.isPlaying) {
+                player.play()
+            }
+        }
+    }
+
+    /**
+     * Handle periodic drift correction.
+     * DISABLED: Causing auto-skip issues. Host controls playback directly.
+     */
+    private fun handleDriftCorrection(expectedPosition: Long, threshold: Long) {
+        // DISABLED - drift correction was causing auto-skip issues
+        Log.d(TAG, "[Jam] Drift check: expected=$expectedPosition (correction disabled)")
+        return
+        
+        // Original code disabled:
+        // if (!player.isPlaying) return
+        // val actualPosition = player.currentPosition
+        // val drift = kotlin.math.abs(actualPosition - expectedPosition)
+        // if (drift > threshold) {
+        //     Log.d(TAG, "[Jam] Drift correction: drift=${drift}ms, correcting to $expectedPosition")
+        //     player.seekTo(expectedPosition)
+        // }
+    }
+
 
     private fun initializeStates() {
         try {
@@ -520,6 +633,7 @@ class PlayerConnection(
         if (lastPlayWhenReady != newPlayWhenReady) {
             lastPlayWhenReady = newPlayWhenReady
             scheduleWidgetUpdate()
+            syncPlaybackToSession() // Sync to Listen Together
         }
     }
 
@@ -538,6 +652,50 @@ class PlayerConnection(
             lastMediaItemIndex = player.currentMediaItemIndex
             updateCanSkipPreviousAndNext()
             scheduleWidgetUpdate()
+            syncPlaybackToSession() // Sync to Listen Together
+        }
+    }
+
+    /**
+     * Syncs current playback to Listen Together session.
+     * NOTE: Skip this for hosts - they sync directly via MusicService auto-sync.
+     * Only listeners should sync via this method (when in "EVERYONE" control mode).
+     */
+    private fun syncPlaybackToSession() {
+        val room = com.Chenkham.Echofy.data.repository.ListenTogetherRepository.currentRoom.value ?: return
+        val prefs = context.getSharedPreferences("listen_together", Context.MODE_PRIVATE)
+        val userId = prefs.getString("current_user_id", null) ?: return
+        
+        // Skip if user is host - they sync via MusicService.onPlayWhenReadyChanged/onMediaItemTransition
+        val isHost = room.hostId == userId
+        if (isHost) {
+            Log.d(TAG, "Skipping syncPlaybackToSession - host syncs via MusicService")
+            return
+        }
+        
+        // Only non-host users in "EVERYONE" mode can sync
+        val canControl = room.controlMode == "EVERYONE"
+        if (!canControl) return
+        
+        val currentMedia = player.currentMediaItem ?: return
+        val metadata = currentMedia.metadata ?: return
+        
+        CoroutineScope(Dispatchers.IO).launch {
+            try {
+                com.Chenkham.Echofy.data.repository.ListenTogetherRepository.updatePlaybackState(
+                    roomCode = room.roomCode,
+                    userId = userId,
+                    trackId = metadata.id,
+                    trackTitle = metadata.title,
+                    trackArtist = metadata.artists.firstOrNull()?.name,
+                    trackThumbnail = metadata.thumbnailUrl,
+                    playbackPosition = player.currentPosition,
+                    isPlaying = player.playWhenReady
+                )
+                Log.d(TAG, "Synced to Together: ${metadata.title}")
+            } catch (e: Exception) {
+                Log.e(TAG, "Sync failed: ${e.message}")
+            }
         }
     }
 

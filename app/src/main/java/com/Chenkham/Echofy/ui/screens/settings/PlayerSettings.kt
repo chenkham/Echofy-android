@@ -173,7 +173,66 @@ fun PlayerSettings(
                     checked = pipEnabled,
                     onCheckedChange = onPipEnabledChange
                 )},
+                {DynamicEchoPreference()},
             )
         )
+    }
+}
+
+@Composable
+private fun DynamicEchoPreference() {
+    val context = androidx.compose.ui.platform.LocalContext.current
+    val (dynamicEchoEnabled, onDynamicEchoEnabledChange) = rememberPreference(
+        com.Chenkham.Echofy.constants.DynamicEchoEnabledKey,
+        defaultValue = false
+    )
+    val (echoStyle, onEchoStyleChange) = rememberEnumPreference(
+        com.Chenkham.Echofy.constants.DynamicEchoStyleKey,
+        defaultValue = com.Chenkham.Echofy.constants.DynamicEchoStyle.WAVE
+    )
+    
+    androidx.compose.foundation.layout.Column {
+        SwitchPreference(
+            title = { Text(stringResource(R.string.dynamic_echo)) },
+            description = stringResource(R.string.dynamic_echo_desc),
+            icon = { Icon(painterResource(R.drawable.graphic_eq), null) },
+            checked = dynamicEchoEnabled,
+            onCheckedChange = { enabled ->
+                if (enabled) {
+                    if (android.provider.Settings.canDrawOverlays(context)) {
+                        onDynamicEchoEnabledChange(true)
+                        com.Chenkham.Echofy.playback.DynamicEchoService.start(context)
+                    } else {
+                        // Request overlay permission
+                        val intent = android.content.Intent(
+                            android.provider.Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
+                            android.net.Uri.parse("package:${context.packageName}")
+                        )
+                        context.startActivity(intent)
+                    }
+                } else {
+                    onDynamicEchoEnabledChange(false)
+                    com.Chenkham.Echofy.playback.DynamicEchoService.stop(context)
+                }
+            }
+        )
+        
+        if (dynamicEchoEnabled) {
+            EnumListPreference(
+                title = { Text(stringResource(R.string.echo_style)) },
+                icon = { Icon(painterResource(R.drawable.music_note), null) },
+                selectedValue = echoStyle,
+                onValueSelected = { style ->
+                    onEchoStyleChange(style)
+                    com.Chenkham.Echofy.playback.DynamicEchoService.updateStyle(style)
+                },
+                valueText = {
+                    when (it) {
+                        com.Chenkham.Echofy.constants.DynamicEchoStyle.WAVE -> stringResource(R.string.echo_style_wave)
+                        com.Chenkham.Echofy.constants.DynamicEchoStyle.GLOW -> stringResource(R.string.echo_style_glow)
+                    }
+                }
+            )
+        }
     }
 }

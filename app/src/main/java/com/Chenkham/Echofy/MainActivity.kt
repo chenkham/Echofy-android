@@ -1,6 +1,11 @@
 ﻿package com.Chenkham.Echofy
 
 import android.Manifest
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.Button
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.CircularProgressIndicator
 import android.annotation.SuppressLint
 import android.app.PendingIntent
 import android.app.PictureInPictureParams
@@ -201,6 +206,7 @@ import com.Chenkham.Echofy.ui.menu.YouTubeSongMenu
 import com.Chenkham.Echofy.ui.player.BottomSheetPlayer
 import com.Chenkham.Echofy.ui.screens.Screens
 import com.Chenkham.Echofy.ui.screens.navigationBuilder
+import com.Chenkham.Echofy.ui.components.FloatingChatOverlay
 import com.Chenkham.Echofy.ui.screens.search.LocalSearchScreen
 import com.Chenkham.Echofy.ui.screens.search.OnlineSearchScreen
 import com.Chenkham.Echofy.ui.screens.settings.DarkMode
@@ -236,6 +242,7 @@ import java.net.URLDecoder
 import java.net.URLEncoder
 import javax.inject.Inject
 import kotlin.time.Duration.Companion.days
+import com.google.firebase.inappmessaging.FirebaseInAppMessaging
 
 // El codigo original de la aplicacion pertenece a : Arturo Cervantes Galindo (Arturo254) Cualquier parecido es copia y pega de mi codigo original
 
@@ -320,6 +327,70 @@ class MainActivity : ComponentActivity() {
             @Suppress("UnspecifiedRegisterReceiverFlag")
             registerReceiver(pipBroadcastReceiver, IntentFilter(ACTION_PIP_CONTROL))
         }
+        
+        // Handle deep links from push notifications
+        handleNotificationDeepLink(intent)
+    }
+    
+    /**
+     * Handle deep links from push notifications (album, etc.)
+     * Also saves the notification to local history when opened from tap.
+     */
+    private fun handleNotificationDeepLink(intent: Intent?) {
+        intent ?: return
+        
+        val navigateTo = intent.getStringExtra("navigate_to")
+        val albumId = intent.getStringExtra("albumId")
+        
+        // Check if this is from a notification (FCM adds google.message_id)
+        val messageId = intent.getStringExtra("google.message_id")
+        val fcmTitle = intent.getStringExtra("gcm.notification.title")
+        val fcmBody = intent.getStringExtra("gcm.notification.body")
+        
+        // Save notification to local history if it came from FCM
+        if (messageId != null || fcmTitle != null) {
+            val title = fcmTitle ?: intent.getStringExtra("title") ?: "Notification"
+            val body = fcmBody ?: intent.getStringExtra("body") ?: ""
+            val type = intent.getStringExtra("type") ?: "general"
+            saveNotificationToHistory(title, body, type)
+        }
+        
+        if (navigateTo == "album" && albumId != null) {
+            Log.d("MainActivity", "Deep link to album: $albumId")
+            pendingNotificationAlbumId = albumId
+        }
+    }
+    
+    /**
+     * Save notification to local SharedPreferences for in-app display.
+     */
+    private fun saveNotificationToHistory(title: String, body: String, type: String) {
+        try {
+            val prefs = getSharedPreferences("echofy_notifications", Context.MODE_PRIVATE)
+            val notifications = prefs.getStringSet("notifications", mutableSetOf())?.toMutableSet() ?: mutableSetOf()
+            
+            // Check if this notification was already saved (avoid duplicates)
+            val exists = notifications.any { it.contains("|$title|$body|") }
+            if (exists) return
+            
+            notifications.add("${System.currentTimeMillis()}|$title|$body|$type|false")
+            prefs.edit().putStringSet("notifications", notifications.take(50).toSet()).apply()
+            Log.d("MainActivity", "Saved notification to history: $title")
+        } catch (e: Exception) {
+            Log.e("MainActivity", "Failed to save notification: ${e.message}")
+        }
+    }
+    
+    // Store pending album navigation from notification
+    private var pendingNotificationAlbumId: String? = null
+    
+    /**
+     * Called by navigation composable when navController is ready
+     */
+    fun consumePendingNotificationNavigation(): String? {
+        val albumId = pendingNotificationAlbumId
+        pendingNotificationAlbumId = null
+        return albumId
     }
 
     override fun onStop() {
@@ -484,12 +555,70 @@ class MainActivity : ComponentActivity() {
         intent?.let { handlevideoIdIntent(it) }
 
         setContent {
+            // Request notification permission on Android 13+
+            val notificationPermissionLauncher = rememberLauncherForActivityResult(
+                contract = ActivityResultContracts.RequestPermission()
+            ) { isGranted ->
+                if (isGranted) {
+                    Log.d("MainActivity", "Notification permission granted")
+                } else {
+                    Log.d("MainActivity", "Notification permission denied")
+                }
+            }
+            
             LaunchedEffect(Unit) {
-                if (System.currentTimeMillis() - Updater.lastCheckTime > 1.days.inWholeMilliseconds) {
-                    Updater.getLatestVersionName().onSuccess {
-                        latestVersionName = it
+                // Request notification permission for Android 13+
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                    if (checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
+                        notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
                     }
                 }
+            }
+            
+            // Initialize Firebase In-App Messaging to trigger on every app open
+            LaunchedEffect(Unit) {
+                try {
+                    // Enable data collection for In-App Messaging (required for images)
+                    FirebaseInAppMessaging.getInstance().isAutomaticDataCollectionEnabled = true
+                    // Ensure messages are NOT suppressed
+                    FirebaseInAppMessaging.getInstance().setMessagesSuppressed(false)
+                    
+                    // Trigger the "app_open" event to show In-App Messages on every launch
+                    FirebaseInAppMessaging.getInstance().triggerEvent("app_open")
+                    // Also trigger for welcome and promotion events
+                    FirebaseInAppMessaging.getInstance().triggerEvent("promotion")
+                    FirebaseInAppMessaging.getInstance().triggerEvent("welcome_back")
+                    Log.d("MainActivity", "Firebase In-App Messaging triggered")
+                } catch (e: Exception) {
+                    Log.e("MainActivity", "Firebase FIAM error: ${e.message}")
+                }
+            }
+            
+            // Check for updates and show dialog if new version available
+            var showUpdateDialog by remember { mutableStateOf(false) }
+            var latestVersion by remember { mutableStateOf<String?>(null) }
+            
+            LaunchedEffect(Unit) {
+                if (System.currentTimeMillis() - Updater.lastCheckTime > 1.days.inWholeMilliseconds) {
+                    Updater.getLatestVersionName().onSuccess { version ->
+                        latestVersionName = version
+                        latestVersion = version
+                        // Show dialog if new version available
+                        if (isNewerVersion(version, BuildConfig.VERSION_NAME)) {
+                            showUpdateDialog = true
+                        }
+                    }
+                }
+            }
+            
+            // Update Available Dialog
+            if (showUpdateDialog && latestVersion != null) {
+                UpdateAvailableDialog(
+                    context = this@MainActivity,
+                    currentVersion = BuildConfig.VERSION_NAME,
+                    newVersion = latestVersion!!,
+                    onDismiss = { showUpdateDialog = false }
+                )
             }
 
             var showFullscreenLyrics by remember { mutableStateOf(false) }
@@ -589,6 +718,7 @@ class MainActivity : ComponentActivity() {
                             Screens.Home.route,
                             Screens.Explore.route,
                             Screens.Library.route,
+                            Screens.ListenTogether.route,
                             "settings",
                         )
 
@@ -964,19 +1094,27 @@ class MainActivity : ComponentActivity() {
                                                     verticalAlignment = Alignment.CenterVertically
                                                 ) {
                                                     val context = LocalContext.current
-                                                    val viewModel: NewReleaseViewModel = hiltViewModel()
-                                                    val hasNewReleases by viewModel.hasNewReleases.collectAsState()
-
-                                                    // Ãcono de notificaciÃ³n para nuevos lanzamientos
+                                                    
+                                                    // Check for unread notifications
+                                                    val hasUnreadNotifications = remember {
+                                                        mutableStateOf(false)
+                                                    }
+                                                    LaunchedEffect(Unit) {
+                                                        val prefs = context.getSharedPreferences("echofy_notifications", Context.MODE_PRIVATE)
+                                                        val notifications = prefs.getStringSet("notifications", emptySet()) ?: emptySet()
+                                                        hasUnreadNotifications.value = notifications.any { 
+                                                            it.contains("|false") // Check for unread (isRead = false)
+                                                        }
+                                                    }
+                                                    
+                                                    // Notifications icon with badge
                                                     Box(
                                                         modifier = Modifier.size(48.dp)
                                                     ) {
                                                         IconButton(
                                                             onClick = {
                                                                 try {
-                                                                    // Marcar como vistos al navegar
-                                                                    viewModel.markNewReleasesAsSeen()
-                                                                    navController.navigate("new_release")
+                                                                    navController.navigate("notifications")
                                                                 } catch (e: Exception) {
                                                                     e.printStackTrace()
                                                                     Toast.makeText(
@@ -989,25 +1127,20 @@ class MainActivity : ComponentActivity() {
                                                         ) {
                                                             Icon(
                                                                 painter = painterResource(R.drawable.notification_on),
-                                                                contentDescription = stringResource(R.string.new_release_albums),
+                                                                contentDescription = stringResource(R.string.notification),
                                                                 tint = MaterialTheme.colorScheme.onSurfaceVariant
                                                             )
                                                         }
-
-                                                        // Badge para nuevos lanzamientos
-                                                        if (hasNewReleases) {
+                                                        
+                                                        // Red dot badge for unread notifications
+                                                        if (hasUnreadNotifications.value) {
                                                             Box(
                                                                 modifier = Modifier
-                                                                    .align(Alignment.TopEnd)
                                                                     .size(10.dp)
-                                                                    .clip(CircleShape)
+                                                                    .align(Alignment.TopEnd)
+                                                                    .offset(x = (-8).dp, y = 8.dp)
                                                                     .background(
-                                                                        color = MaterialTheme.colorScheme.primary,
-                                                                        shape = CircleShape
-                                                                    )
-                                                                    .border(
-                                                                        width = 1.dp,
-                                                                        color = MaterialTheme.colorScheme.background,
+                                                                        color = Color.Red,
                                                                         shape = CircleShape
                                                                     )
                                                             )
@@ -1743,7 +1876,7 @@ private fun openNotificationSettings(context: Context) {
 
 suspend fun checkForUpdates(): String? = withContext(Dispatchers.IO) {
     try {
-        val url = URL("https://api.github.com/repos/Arturo254/Echofy/releases/latest")
+        val url = URL("https://api.github.com/repos/chenkham/Echofy-android/releases/latest")
         val connection = url.openConnection()
         connection.connect()
         val json = connection.getInputStream().bufferedReader().use { it.readText() }
@@ -1920,4 +2053,154 @@ fun ProfileIconWithUpdateBadge(
             }
         }
     }
+}
+
+/**
+ * Dialog shown when a new app version is available.
+ */
+@Composable
+fun UpdateAvailableDialog(
+    context: Context,
+    currentVersion: String,
+    newVersion: String,
+    onDismiss: () -> Unit
+) {
+    var isDownloading by remember { mutableStateOf(false) }
+    var downloadError by remember { mutableStateOf<String?>(null) }
+    val scope = rememberCoroutineScope()
+    
+    AlertDialog(
+        onDismissRequest = { if (!isDownloading) onDismiss() },
+        icon = {
+            if (isDownloading) {
+                CircularProgressIndicator(
+                    modifier = Modifier.size(48.dp),
+                    color = MaterialTheme.colorScheme.primary
+                )
+            } else {
+                Icon(
+                    painter = painterResource(R.drawable.update),
+                    contentDescription = null,
+                    modifier = Modifier.size(48.dp),
+                    tint = MaterialTheme.colorScheme.primary
+                )
+            }
+        },
+        title = {
+            Text(
+                text = if (isDownloading) "Downloading Update..." else "Update Available! 🚀",
+                style = MaterialTheme.typography.headlineSmall,
+                fontWeight = FontWeight.Bold
+            )
+        },
+        text = {
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                if (isDownloading) {
+                    Text(
+                        text = "Please wait while the update downloads.\nInstallation will start automatically.",
+                        style = MaterialTheme.typography.bodyMedium,
+                        textAlign = TextAlign.Center,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    if (downloadError != null) {
+                        Spacer(Modifier.height(8.dp))
+                        Text(
+                            text = downloadError!!,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.error
+                        )
+                    }
+                } else {
+                    Text(
+                        text = "A new version of Echofy is available",
+                        style = MaterialTheme.typography.bodyMedium,
+                        textAlign = TextAlign.Center
+                    )
+                    Spacer(Modifier.height(16.dp))
+                    Row(
+                        horizontalArrangement = Arrangement.Center,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            Text(
+                                text = "Current",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                            Text(
+                                text = currentVersion,
+                                style = MaterialTheme.typography.titleMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                        Spacer(Modifier.width(32.dp))
+                        Icon(
+                            painter = painterResource(R.drawable.arrow_forward),
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.primary
+                        )
+                        Spacer(Modifier.width(32.dp))
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            Text(
+                                text = "New",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.primary
+                            )
+                            Text(
+                                text = newVersion,
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.primary
+                            )
+                        }
+                    }
+                }
+            }
+        },
+        dismissButton = {
+            if (!isDownloading) {
+                TextButton(onClick = onDismiss) {
+                    Text("Later")
+                }
+            } else {
+                TextButton(onClick = {
+                    isDownloading = false
+                    downloadError = null
+                }) {
+                    Text("Cancel")
+                }
+            }
+        },
+        confirmButton = {
+            if (!isDownloading) {
+                Button(
+                    onClick = {
+                        isDownloading = true
+                        downloadError = null
+                        scope.launch {
+                            try {
+                                val urlResult = com.Chenkham.Echofy.utils.InAppUpdater.getApkDownloadUrl()
+                                urlResult.onSuccess { downloadUrl ->
+                                    // Use DownloadManager for reliable download with system notification
+                                    com.Chenkham.Echofy.utils.InAppUpdater.downloadWithManager(context, downloadUrl)
+                                    onDismiss()
+                                }.onFailure { error ->
+                                    downloadError = error.message ?: "Failed to get download URL"
+                                    isDownloading = false
+                                }
+                            } catch (e: Exception) {
+                                downloadError = e.message ?: "Download failed"
+                                isDownloading = false
+                            }
+                        }
+                    }
+                ) {
+                    Text("Update Now")
+                }
+            }
+        }
+    )
 }

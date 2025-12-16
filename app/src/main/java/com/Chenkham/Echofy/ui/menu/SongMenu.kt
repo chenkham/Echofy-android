@@ -94,11 +94,16 @@ fun SongMenu(
 ) {
     val context = LocalContext.current
     val database = LocalDatabase.current
+    val downloadUtil = LocalDownloadUtil.current
     val playerConnection = LocalPlayerConnection.current ?: return
-    val songState = database.song(originalSong.id).collectAsState(initial = originalSong)
+    // Optimized: use remember to avoid recomposition lag
+    val songState = remember(originalSong.id) { 
+        database.song(originalSong.id) 
+    }.collectAsState(initial = originalSong)
     val song = songState.value ?: originalSong
-    val download by LocalDownloadUtil.current.getDownload(originalSong.id)
-        .collectAsState(initial = null)
+    val download by remember(originalSong.id) { 
+        downloadUtil.getDownload(originalSong.id) 
+    }.collectAsState(initial = null)
     val coroutineScope = rememberCoroutineScope()
     val syncUtils = LocalSyncUtils.current
     val scope = rememberCoroutineScope()
@@ -388,6 +393,9 @@ fun SongMenu(
                 }
             )
         }
+        
+        // Queue feature removed - only synced music now
+        
         item {
             ListItem(
                 headlineContent = { Text(text = stringResource(R.string.edit)) },
@@ -416,6 +424,51 @@ fun SongMenu(
                     playerConnection.addToQueue(song.toMediaItem())
                 }
             )
+        }
+        // Sync with Listen Together session - HOST ONLY
+        item {
+            val room = com.Chenkham.Echofy.data.repository.ListenTogetherRepository.currentRoom.collectAsState().value
+            
+            // Only show if there's an active session AND user is host
+            // Check is_host from SharedPreferences (set during create/join)
+            val prefs = context.getSharedPreferences("listen_together", android.content.Context.MODE_PRIVATE)
+            val isHost = prefs.getBoolean("is_host", false)
+            
+            if (room != null && isHost) {
+                ListItem(
+                    headlineContent = { Text(text = stringResource(R.string.sync_with_session)) },
+                    leadingContent = {
+                        Icon(
+                            painter = painterResource(R.drawable.people_filled),
+                            contentDescription = null,
+                        )
+                    },
+                    modifier = Modifier.clickable {
+                        scope.launch(Dispatchers.IO) {
+                            try {
+                                com.Chenkham.Echofy.data.repository.ListenTogetherRepository.updatePlaybackState(
+                                    roomCode = room.roomCode,
+                                    userId = room.hostId,
+                                    trackId = song.id,
+                                    trackTitle = song.song.title,
+                                    trackArtist = song.artists.firstOrNull()?.name,
+                                    trackThumbnail = song.song.thumbnailUrl,
+                                    playbackPosition = 0L,
+                                    isPlaying = true
+                                )
+                                kotlinx.coroutines.withContext(Dispatchers.Main) {
+                                    android.widget.Toast.makeText(context, context.getString(R.string.song_synced), android.widget.Toast.LENGTH_SHORT).show()
+                                }
+                            } catch (e: Exception) {
+                                kotlinx.coroutines.withContext(Dispatchers.Main) {
+                                    android.widget.Toast.makeText(context, "Sync failed", android.widget.Toast.LENGTH_SHORT).show()
+                                }
+                            }
+                        }
+                        onDismiss()
+                    }
+                )
+            }
         }
         item {
             ListItem(

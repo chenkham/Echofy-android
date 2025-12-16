@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "1033902318161",
+    "project_id": "tai-khamyang-app",
+    "storage_bucket": "tai-khamyang-app.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1033902318161:android:841f7f5d3944d5e1278e70",
+        "android_client_info": {
+          "package_name": "com.Chenkham.Echofy"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "1033902318161-c6qh9nvnnrvc5nql7031b4bcjotp07v6.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBqmwCp4_UntGkzF4GjWaiTMv9drz9Yios"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "1033902318161-c6qh9nvnnrvc5nql7031b4bcjotp07v6.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

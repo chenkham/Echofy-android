@@ -105,6 +105,40 @@ import kotlinx.coroutines.withContext
 import org.json.JSONObject
 import java.io.File
 import java.net.URL
+import androidx.compose.material3.Switch
+import com.Chenkham.Echofy.constants.DynamicEchoEnabledKey
+import com.Chenkham.Echofy.playback.DynamicEchoService
+
+@Composable
+fun DynamicEchoToggle() {
+    val context = LocalContext.current
+    val (dynamicEchoEnabled, onDynamicEchoEnabledChange) = rememberPreference(
+        DynamicEchoEnabledKey,
+        defaultValue = false
+    )
+    
+    Switch(
+        checked = dynamicEchoEnabled,
+        onCheckedChange = { enabled ->
+            if (enabled) {
+                if (android.provider.Settings.canDrawOverlays(context)) {
+                    onDynamicEchoEnabledChange(true)
+                    DynamicEchoService.start(context)
+                } else {
+                    // Request overlay permission
+                    val intent = android.content.Intent(
+                        android.provider.Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
+                        android.net.Uri.parse("package:${context.packageName}")
+                    )
+                    context.startActivity(intent)
+                }
+            } else {
+                onDynamicEchoEnabledChange(false)
+                DynamicEchoService.stop(context)
+            }
+        }
+    )
+}
 
 
 @SuppressLint("ObsoleteSdkInt")
@@ -168,6 +202,207 @@ fun VersionCard(uriHandler: UriHandler) {
             )
         )
     )
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@RequiresApi(Build.VERSION_CODES.TIRAMISU)
+@Composable
+fun BugReportCard() {
+    val context = LocalContext.current
+    var showReportDialog by remember { mutableStateOf(false) }
+    var bugDescription by remember { mutableStateOf("") }
+    var bugCategory by remember { mutableStateOf("General Bug") }
+    val appVersion = remember { getAppVersion(context) }
+    
+    val categories = listOf(
+        "General Bug",
+        "Playback Issue",
+        "UI/Display Problem",
+        "Crash/Freeze",
+        "Listen Together Issue",
+        "Feature Request",
+        "Other"
+    )
+    
+    Spacer(Modifier.height(16.dp))
+
+    SettingsCategory(
+        title = stringResource(R.string.feedback),
+        items = listOf(
+            SettingsCategoryItem(
+                icon = painterResource(R.drawable.bug_report),
+                title = {
+                    Column {
+                        Text(
+                            text = stringResource(R.string.report_bug),
+                            style = MaterialTheme.typography.titleMedium
+                        )
+                        Text(
+                            text = stringResource(R.string.report_bug_description),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                },
+                trailingContent = {
+                    Icon(
+                        painter = painterResource(R.drawable.arrow_forward),
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.size(20.dp)
+                    )
+                },
+                onClick = { showReportDialog = true }
+            )
+        )
+    )
+    
+    if (showReportDialog) {
+        var expanded by remember { mutableStateOf(false) }
+        
+        AlertDialog(
+            onDismissRequest = { showReportDialog = false },
+            title = {
+                Text(
+                    text = stringResource(R.string.report_bug),
+                    style = MaterialTheme.typography.headlineSmall,
+                    fontWeight = FontWeight.Bold
+                )
+            },
+            text = {
+                Column(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalArrangement = Arrangement.spacedBy(16.dp)
+                ) {
+                    // Category selector
+                    Text(
+                        text = stringResource(R.string.bug_category),
+                        style = MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    
+                    Box {
+                        Surface(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(12.dp)),
+                            color = MaterialTheme.colorScheme.surfaceVariant,
+                            onClick = { expanded = true }
+                        ) {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(16.dp),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text(bugCategory, style = MaterialTheme.typography.bodyMedium)
+                                Icon(
+                                    painter = painterResource(R.drawable.expand_more),
+                                    contentDescription = null,
+                                    modifier = Modifier.size(20.dp)
+                                )
+                            }
+                        }
+                        
+                        androidx.compose.material3.DropdownMenu(
+                            expanded = expanded,
+                            onDismissRequest = { expanded = false }
+                        ) {
+                            categories.forEach { category ->
+                                androidx.compose.material3.DropdownMenuItem(
+                                    text = { Text(category) },
+                                    onClick = {
+                                        bugCategory = category
+                                        expanded = false
+                                    }
+                                )
+                            }
+                        }
+                    }
+                    
+                    // Bug description
+                    Text(
+                        text = stringResource(R.string.bug_description),
+                        style = MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    
+                    androidx.compose.material3.OutlinedTextField(
+                        value = bugDescription,
+                        onValueChange = { bugDescription = it },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(120.dp),
+                        placeholder = { Text(stringResource(R.string.bug_description_placeholder)) },
+                        shape = RoundedCornerShape(12.dp),
+                        maxLines = 5
+                    )
+                    
+                    // Device info preview
+                    Text(
+                        text = stringResource(R.string.device_info_included),
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
+                    )
+                }
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        // Compose email with bug report
+                        val deviceInfo = """
+                            |
+                            |--- Device Information ---
+                            |App Version: $appVersion
+                            |Android Version: ${Build.VERSION.RELEASE} (API ${Build.VERSION.SDK_INT})
+                            |Device: ${Build.MANUFACTURER} ${Build.MODEL}
+                            |Product: ${Build.PRODUCT}
+                        """.trimMargin()
+                        
+                        val emailBody = """
+                            |Bug Category: $bugCategory
+                            |
+                            |Description:
+                            |$bugDescription
+                            |$deviceInfo
+                        """.trimMargin()
+                        
+                        val emailIntent = Intent(Intent.ACTION_SENDTO).apply {
+                            data = Uri.parse("mailto:")
+                            putExtra(Intent.EXTRA_EMAIL, arrayOf("chenkhamechofy@gmail.com"))
+                            putExtra(Intent.EXTRA_SUBJECT, "[Echofy Bug Report] $bugCategory")
+                            putExtra(Intent.EXTRA_TEXT, emailBody)
+                        }
+                        
+                        try {
+                            context.startActivity(Intent.createChooser(emailIntent, "Send Bug Report"))
+                            showReportDialog = false
+                            bugDescription = ""
+                            bugCategory = "General Bug"
+                        } catch (e: Exception) {
+                            android.widget.Toast.makeText(
+                                context,
+                                "No email app found",
+                                android.widget.Toast.LENGTH_SHORT
+                            ).show()
+                        }
+                    },
+                    enabled = bugDescription.isNotBlank()
+                ) {
+                    Text(stringResource(R.string.send_report))
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { 
+                    showReportDialog = false
+                    bugDescription = ""
+                }) {
+                    Text(stringResource(R.string.cancel))
+                }
+            }
+        )
+    }
 }
 
 @Composable
@@ -855,6 +1090,9 @@ fun SettingsScreen(
 
         // Version card
         VersionCard(uriHandler)
+        
+        // Bug Report Card
+        BugReportCard()
 
         Spacer(Modifier.height(16.dp))
     }

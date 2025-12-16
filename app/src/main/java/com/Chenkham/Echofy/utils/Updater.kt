@@ -13,7 +13,7 @@ object Updater {
     suspend fun getLatestVersionName(): Result<String> =
         runCatching {
             val response =
-                client.get("https://api.github.com/repos/Arturo254/Echofy/releases/latest")
+                client.get("https://api.github.com/repos/chenkham/Echofy-android/releases/latest")
                     .bodyAsText()
             val json = JSONObject(response)
             val versionName = json.getString("name")

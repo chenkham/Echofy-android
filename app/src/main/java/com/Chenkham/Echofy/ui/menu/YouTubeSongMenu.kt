@@ -233,6 +233,34 @@ fun YouTubeSongMenu(
             playerConnection.addToQueue((song.toMediaItem()))
             onDismiss()
         }
+        // Sync with Listen Together session - HOST ONLY
+        val room = com.Chenkham.Echofy.data.repository.ListenTogetherRepository.currentRoom.value
+        val prefs = context.getSharedPreferences("listen_together", android.content.Context.MODE_PRIVATE)
+        val isHost = prefs.getBoolean("is_host", false)
+        
+        if (room != null && isHost) {
+            GridMenuItem(
+                icon = R.drawable.people_filled,
+                title = R.string.sync_with_session,
+            ) {
+                coroutineScope.launch(Dispatchers.IO) {
+                    com.Chenkham.Echofy.data.repository.ListenTogetherRepository.updatePlaybackState(
+                        roomCode = room.roomCode,
+                        userId = room.hostId,
+                        trackId = song.id,
+                        trackTitle = song.title,
+                        trackArtist = song.artists.firstOrNull()?.name,
+                        trackThumbnail = song.thumbnail,
+                        playbackPosition = 0L,
+                        isPlaying = true
+                    )
+                    kotlinx.coroutines.withContext(Dispatchers.Main) {
+                        android.widget.Toast.makeText(context, context.getString(R.string.song_synced), android.widget.Toast.LENGTH_SHORT).show()
+                    }
+                }
+                onDismiss()
+            }
+        }
         GridMenuItem(
             icon = R.drawable.playlist_add,
             title = R.string.add_to_playlist,

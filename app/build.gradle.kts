@@ -10,6 +10,7 @@ plugins {
     alias(libs.plugins.hilt)
     alias(libs.plugins.kotlin.ksp)
     alias(libs.plugins.compose.compiler)
+    id("com.google.gms.google-services")
 }
 
 android {
@@ -21,8 +22,8 @@ android {
         applicationId = "com.Chenkham.Echofy"
         minSdk = 24
         targetSdk = 35
-        versionCode = 1
-        versionName = "2.0.0"
+        versionCode = 3
+        versionName = "2.2.0"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
@@ -70,15 +71,10 @@ android {
             }
         }
         debug {
-            // Enable minification for smaller debug APKs too
-            isMinifyEnabled = true
-            isShrinkResources = true
-            proguardFiles(
-                getDefaultProguardFile("proguard-android-optimize.txt"),
-                "proguard-rules.pro"
-            )
-            applicationIdSuffix = ""  // Remove .debug suffix
-            versionNameSuffix = ""    // Remove -debug suffix
+            isMinifyEnabled = false
+            isShrinkResources = false
+            applicationIdSuffix = ""
+            versionNameSuffix = ""
         }
     }
 
@@ -90,6 +86,17 @@ android {
             // Only include common architectures
             include("armeabi-v7a", "arm64-v8a", "x86_64")
             isUniversalApk = true  // Enable universal APK for sharing
+        }
+    }
+    
+    // Custom APK naming: Echofy_version_abi.apk
+    applicationVariants.all {
+        val variant = this
+        variant.outputs.all {
+            val output = this as com.android.build.gradle.internal.api.BaseVariantOutputImpl
+            val abi = output.getFilter(com.android.build.api.variant.FilterConfiguration.FilterType.ABI.name) ?: "universal"
+            val versionName = variant.versionName
+            output.outputFileName = "Echofy_${versionName}_${abi}.apk"
         }
     }
 
@@ -146,8 +153,11 @@ android {
     composeCompiler {
         featureFlags.addAll(
             org.jetbrains.kotlin.compose.compiler.gradle.ComposeFeatureFlag.StrongSkipping,
-            org.jetbrains.kotlin.compose.compiler.gradle.ComposeFeatureFlag.IntrinsicRemember
+            org.jetbrains.kotlin.compose.compiler.gradle.ComposeFeatureFlag.IntrinsicRemember,
+            org.jetbrains.kotlin.compose.compiler.gradle.ComposeFeatureFlag.OptimizeNonSkippingGroups
         )
+        // Additional Compose performance options
+        stabilityConfigurationFiles.add(rootProject.layout.projectDirectory.file("compose_compiler_config.conf"))
     }
     testOptions {
         unitTests.isIncludeAndroidResources = true
@@ -164,8 +174,25 @@ android {
     }
 }
 
+
+
 ksp {
     arg("room.schemaLocation", "$projectDir/schemas")
+}
+
+// Force consistent OkHttp version to fix Appwrite Realtime WebSocket crash
+// Also force protobuf-javalite to fix Firebase In-App Messaging conflict
+configurations.all {
+    resolutionStrategy {
+        force("com.squareup.okhttp3:okhttp:4.12.0")
+        force("com.squareup.okhttp3:okhttp-bom:4.12.0")
+        force("com.google.protobuf:protobuf-javalite:3.21.7")
+    }
+}
+
+// Exclude protobuf-java to prevent conflict with protobuf-javalite
+configurations.configureEach {
+    exclude(group = "com.google.protobuf", module = "protobuf-java")
 }
 
 dependencies {
@@ -232,4 +259,15 @@ dependencies {
     coreLibraryDesugaring(libs.desugaring)
 
     implementation(libs.timber)
+    
+    // Appwrite SDK for Listen Together feature (v5.1.0 fixes OkHttp conflicts)
+    implementation("io.appwrite:sdk-for-android:5.1.0")
+    
+    // Firebase for push notifications via Appwrite Messaging
+    implementation(platform("com.google.firebase:firebase-bom:32.7.0"))
+    implementation("com.google.firebase:firebase-messaging-ktx")
+    // Firebase In-App Messaging for modal cards and banners
+    implementation("com.google.firebase:firebase-inappmessaging-display-ktx")
+    // Firebase Analytics (REQUIRED for In-App Messaging to work properly)
+    implementation("com.google.firebase:firebase-analytics-ktx")
 }

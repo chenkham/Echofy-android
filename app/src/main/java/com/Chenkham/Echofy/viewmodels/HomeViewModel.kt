@@ -169,22 +169,31 @@ class HomeViewModel @Inject constructor(
 
     init {
         viewModelScope.launch(Dispatchers.IO) {
-            // Add small delay to ensure network is ready on first launch
-            kotlinx.coroutines.delay(100)
+            // Add longer delay to ensure network is ready on first launch (especially fresh installs)
+            kotlinx.coroutines.delay(300)
             load()
 
-            // If home page failed to load, retry once after a delay
-            if (homePage.value == null) {
-                kotlinx.coroutines.delay(1000)
+            // If home page failed to load, retry with exponential backoff
+            var retryCount = 0
+            while (homePage.value == null && retryCount < 3) {
+                retryCount++
+                kotlinx.coroutines.delay(1000L * retryCount) // 1s, 2s, 3s delays
                 YouTube.home().onSuccess { page ->
                     homePage.value = page
+                    // Update allYtItems when home page loads successfully
+                    allYtItems.value = similarRecommendations.value?.flatMap { it.items }.orEmpty() +
+                            page.sections.flatMap { it.items } +
+                            explorePage.value?.newReleaseAlbums.orEmpty()
                 }.onFailure {
                     reportException(it)
                 }
             }
 
-            // If explore page failed to load, retry once
-            if (explorePage.value == null) {
+            // If explore page failed to load, retry
+            retryCount = 0
+            while (explorePage.value == null && retryCount < 3) {
+                retryCount++
+                kotlinx.coroutines.delay(1000L * retryCount)
                 YouTube.explore().onSuccess { page ->
                     val artists: Set<String>
                     val favouriteArtists: Set<String>
@@ -203,6 +212,10 @@ class HomeViewModel @Inject constructor(
                                 else 2
                             }
                     )
+                    // Update allYtItems when explore page loads successfully
+                    allYtItems.value = similarRecommendations.value?.flatMap { it.items }.orEmpty() +
+                            homePage.value?.sections?.flatMap { it.items }.orEmpty() +
+                            explorePage.value?.newReleaseAlbums.orEmpty()
                 }.onFailure {
                     reportException(it)
                 }

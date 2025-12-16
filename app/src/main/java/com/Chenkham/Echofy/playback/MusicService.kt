@@ -53,7 +53,6 @@ import androidx.media3.extractor.ExtractorsFactory
 import androidx.media3.extractor.mkv.MatroskaExtractor
 import androidx.media3.extractor.mp4.FragmentedMp4Extractor
 import androidx.media3.session.CommandButton
-import androidx.media3.session.DefaultMediaNotificationProvider
 import androidx.media3.session.MediaController
 import androidx.media3.session.MediaLibraryService
 import androidx.media3.session.MediaSession
@@ -116,6 +115,8 @@ import com.Chenkham.Echofy.utils.dataStore
 import com.Chenkham.Echofy.utils.enumPreference
 import com.Chenkham.Echofy.utils.get
 import com.Chenkham.Echofy.utils.reportException
+import com.Chenkham.Echofy.data.repository.ListenTogetherRepository
+import com.Chenkham.Echofy.data.remote.JamSessionManager
 import com.google.common.util.concurrent.MoreExecutors
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.CoroutineScope
@@ -232,16 +233,9 @@ class MusicService :
     @RequiresApi(Build.VERSION_CODES.O)
     override fun onCreate() {
         super.onCreate()
+        EchofyMediaNotificationProvider.createNotificationChannel(this, CHANNEL_ID, R.string.music_player)
         setMediaNotificationProvider(
-            DefaultMediaNotificationProvider(
-                this,
-                { NOTIFICATION_ID },
-                CHANNEL_ID,
-                R.string.music_player
-            )
-                .apply {
-                    setSmallIcon(R.drawable.echofy_monochrome)
-                },
+            EchofyMediaNotificationProvider(this),
         )
         player =
             ExoPlayer
@@ -1070,8 +1064,29 @@ class MusicService :
         // Save state when media item changes
         if (dataStore.get(PersistentQueueKey, true)) {
             scope.launch {
-                delay(500) // PequeÃ±o delay para asegurar que el estado estÃ© estable
+                delay(500) // Pequeño delay para asegurar que el estado esté estable
                 saveQueueToDisk()
+            }
+        }
+        
+        // Listen Together: Auto-sync track change to listeners when host
+        if (ListenTogetherRepository.isCurrentUserHost && ListenTogetherRepository.currentRoom.value != null) {
+            val metadata = mediaItem?.mediaMetadata
+            scope.launch {
+                try {
+                    val room = ListenTogetherRepository.currentRoom.value ?: return@launch
+                    JamSessionManager.updateSessionState(
+                        sessionId = room.roomCode,
+                        trackId = mediaItem?.mediaId,
+                        trackTitle = metadata?.title?.toString(),
+                        trackArtist = metadata?.artist?.toString(),
+                        trackThumbnail = metadata?.artworkUri?.toString(),
+                        isPlaying = player.isPlaying
+                    )
+                    Log.d(TAG, "Listen Together: Auto-synced track change to ${room.roomCode}")
+                } catch (e: Exception) {
+                    Log.e(TAG, "Listen Together: Failed to auto-sync track: ${e.message}")
+                }
             }
         }
     }
@@ -1108,6 +1123,27 @@ class MusicService :
         scope.launch {
             delay(300)
             updateNotification()
+        }
+        
+        // Listen Together: Auto-sync play/pause state to listeners when host
+        if (ListenTogetherRepository.isCurrentUserHost && ListenTogetherRepository.currentRoom.value != null) {
+            val metadata = player.currentMediaItem?.mediaMetadata
+            scope.launch {
+                try {
+                    val room = ListenTogetherRepository.currentRoom.value ?: return@launch
+                    JamSessionManager.updateSessionState(
+                        sessionId = room.roomCode,
+                        trackId = player.currentMediaItem?.mediaId,
+                        trackTitle = metadata?.title?.toString(),
+                        trackArtist = metadata?.artist?.toString(),
+                        trackThumbnail = metadata?.artworkUri?.toString(),
+                        isPlaying = playWhenReady && player.playbackState == Player.STATE_READY
+                    )
+                    Log.d(TAG, "Listen Together: Auto-synced ${if (playWhenReady) "play" else "pause"} to ${room.roomCode}")
+                } catch (e: Exception) {
+                    Log.e(TAG, "Listen Together: Failed to auto-sync play state: ${e.message}")
+                }
+            }
         }
     }
 

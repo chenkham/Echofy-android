@@ -120,3 +120,71 @@
 -dontwarn io.ktor.**
 -keep class io.ktor.** { *; }
 
+# ==============================================================================
+# SPOTIFY-LIKE PERFORMANCE OPTIMIZATIONS
+# ==============================================================================
+
+# Compose performance optimizations
+-keep class androidx.compose.** { *; }
+-dontwarn androidx.compose.**
+-keepclassmembers class * {
+    @androidx.compose.runtime.Composable <methods>;
+}
+
+# Optimize Compose recomposition
+-assumenosideeffects class androidx.compose.runtime.Loom* { *; }
+
+# Keep Coil for fast image loading
+-keep class coil.** { *; }
+-keep class coil.compose.** { *; }
+
+# Media3/ExoPlayer optimizations for smooth playback
+-keep class androidx.media3.** { *; }
+-dontwarn androidx.media3.**
+-keep class com.google.android.exoplayer2.** { *; }
+
+# Room database optimizations
+-keep class * extends androidx.room.RoomDatabase { *; }
+-keep @androidx.room.Entity class * { *; }
+
+# Kotlin coroutines optimizations (faster async operations)
+-keepnames class kotlinx.coroutines.internal.MainDispatcherFactory {}
+-keepnames class kotlinx.coroutines.CoroutineExceptionHandler {}
+-keepclassmembers class kotlinx.coroutines.** {
+    volatile <fields>;
+}
+
+# Remove all debugs for release performance
+-assumenosideeffects class android.util.Log {
+    public static int v(...);
+    public static int d(...);
+    public static int i(...);
+}
+
+# Optimize startup - don't obfuscate startup-critical classes
+-keep class com.Chenkham.Echofy.App { *; }
+-keep class com.Chenkham.Echofy.MainActivity { *; }
+-keep class com.Chenkham.Echofy.playback.MusicService { *; }
+
+# Firebase optimizations
+-keep class com.google.firebase.** { *; }
+-dontwarn com.google.firebase.**
+
+# Appwrite optimizations
+-keep class io.appwrite.** { *; }
+-dontwarn io.appwrite.**
+
+# OkHttp optimizations for network performance
+-dontwarn okhttp3.**
+-dontwarn okio.**
+-keep class okhttp3.** { *; }
+-keep interface okhttp3.** { *; }
+
+# Optimization flags for R8
+-optimizations !code/simplification/arithmetic,!code/simplification/cast,!field/*,!class/merging/*
+-dontskipnonpubliclibraryclassmembers
+
+# Aggressive inlining for faster execution
+-allowaccessmodification
+-repackageclasses ''
+-flattenpackagehierarchy

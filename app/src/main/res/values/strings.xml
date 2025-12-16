@@ -5,6 +5,25 @@
     <string name="artists">Artists</string>
     <string name="albums">Albums</string>
     <string name="playlists">Playlists</string>
+    <string name="listen_together">Together</string>
+    <string name="sync_with_session">Sync with Session</string>
+    <string name="no_active_session">No active session. Join or create one first.</string>
+    <string name="song_synced">Song synced with session!</string>
+    <string name="add_to_session_queue">Add to Session Queue</string>
+    <string name="song_added_to_queue">Song added to queue!</string>
+    <string name="session_queue">Session Queue</string>
+    <string name="queue_empty">Queue is empty</string>
+    <string name="added_by">Added by %s</string>
+    <string name="remove_from_queue">Remove from queue</string>
+    <string name="play_next_in_queue">Play Next in Queue</string>
+    <string name="transfer_host">Transfer Host</string>
+    <string name="transfer_host_title">Transfer Host Controls</string>
+    <string name="transfer_host_message">Choose who should control playback:</string>
+    <string name="host_transferred">Host controls transferred!</string>
+    <string name="you_are_host">You are now the host!</string>
+    <string name="synced_with_host">Synced with host</string>
+
+
 
     <!-- Top bar -->
     <plurals name="n_selected">
@@ -247,6 +266,16 @@
 
     <!-- Notification name -->
     <string name="music_player">Music Player</string>
+    <string name="music_player_description">Controls for Echofy music playback</string>
+    <string name="dynamic_island">Dynamic Echo</string>
+    <string name="dynamic_island_desc">Edge visualizations that react to music</string>
+    <string name="dynamic_island_permission">Overlay permission required</string>
+    <string name="dynamic_island_permission_desc">To show floating controls, please grant \"Display over other apps\" permission in settings.</string>
+    <string name="dynamic_echo">Dynamic Echo</string>
+    <string name="dynamic_echo_desc">Edge visualizations that react to music beats</string>
+    <string name="echo_style">Visualization Style</string>
+    <string name="echo_style_wave">Wave</string>
+    <string name="echo_style_glow">Glow</string>
 
     <!-- Settings -->
     <string name="settings">Settings</string>
@@ -470,6 +499,9 @@
     <string name="redireccion">Redireccion</string>
     <string name="Version">Version</string>
     <string name="notification">Activate Notifications</string>
+    <string name="notifications">Notifications</string>
+    <string name="no_notifications">No notifications yet</string>
+    <string name="mark_all_read">Mark all as read</string>
     <string name="cached_playlist">Cached</string>
     <string name="added_to_queue">added to queue</string>
     <string name="warn">Note: The APK is being downloaded from the official GitHub repository, not from F-Droid.</string>
@@ -590,5 +622,15 @@
     <string name="tap_to_open">Tap to open</string>
     <string name="animate_lyrics">Animate lyrics</string>
     <string name="animate_lyrics_desc">Smoothly transition between lyrics</string>
-    <string name="changing_language">Changing languageâ€¦</string>
+    <string name="changing_language">Changing language…</string>
+    
+    <!-- Bug Report / Feedback -->
+    <string name="feedback">Feedback</string>
+    <string name="report_bug">Report a Bug</string>
+    <string name="report_bug_description">Help us improve by reporting issues</string>
+    <string name="bug_category">Bug Category</string>
+    <string name="bug_description">Description</string>
+    <string name="bug_description_placeholder">Describe the issue in detail…</string>
+    <string name="device_info_included">Device info will be included automatically</string>
+    <string name="send_report">Send Report</string>
 </resources>
