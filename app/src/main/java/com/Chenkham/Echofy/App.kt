@@ -33,6 +33,7 @@ import com.Chenkham.Echofy.extensions.toEnum
 import com.Chenkham.Echofy.extensions.toInetSocketAddress
 import com.Chenkham.Echofy.utils.dataStore
 import com.Chenkham.Echofy.utils.get
+import kotlinx.coroutines.flow.first
 import com.Chenkham.Echofy.utils.reportException
 import dagger.hilt.android.HiltAndroidApp
 import kotlinx.coroutines.DelicateCoroutinesApi
@@ -60,11 +61,11 @@ class App : Application(), ImageLoaderFactory {
         YouTube.locale = YouTubeLocale(
             gl = dataStore[ContentCountryKey]?.takeIf { it != SYSTEM_DEFAULT }
                 ?: locale.country.takeIf { it in CountryCodeToName }
-                ?: "GB",
+                ?: "US",
             hl = dataStore[ContentLanguageKey]?.takeIf { it != SYSTEM_DEFAULT }
                 ?: locale.language.takeIf { it in LanguageCodeToName }
                 ?: languageTag.takeIf { it in LanguageCodeToName }
-                ?: "en-GB"
+                ?: "en"
         )
         if (languageTag == "zh-TW") {
             KuGou.useTraditionalChinese = true
@@ -86,6 +87,20 @@ class App : Application(), ImageLoaderFactory {
             YouTube.useLoginForBrowse = true
         }
 
+        // CRITICAL FIX: Clear any stale visitorData that might have been cached with different locale
+        // This ensures visitorData is regenerated to match current locale settings
+        // Without this, a mismatch between visitorData's embedded location and locale causes 400 errors
+        GlobalScope.launch {
+            val savedVisitorData = dataStore.data.first()[VisitorDataKey]
+            if (savedVisitorData != null && savedVisitorData != "null") {
+                // Clear it to force regeneration with current locale
+                android.util.Log.d("App", "Clearing cached visitorData to force refresh with current locale")
+                dataStore.edit { settings ->
+                    settings.remove(VisitorDataKey)
+                }
+            }
+        }
+        
         GlobalScope.launch {
             dataStore.data
                 .map { it[VisitorDataKey] }
@@ -100,12 +115,14 @@ class App : Application(), ImageLoaderFactory {
                             }
                             reportException(it)
                         }.getOrNull()?.also { newVisitorData ->
+                            android.util.Log.d("App", "New visitorData generated: ${newVisitorData.take(30)}...")
                             dataStore.edit { settings ->
                                 settings[VisitorDataKey] = newVisitorData
                             }
                         }
                 }
         }
+
         GlobalScope.launch {
             dataStore.data
                 .map { it[DataSyncIdKey] }

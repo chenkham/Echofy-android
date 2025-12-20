@@ -53,6 +53,15 @@ class HomeViewModel @Inject constructor(
     private suspend fun load() {
         isLoading.value = true
 
+        // Wait for visitorData to be available before making API calls
+        // This fixes the race condition where HomeViewModel runs before App.kt's
+        // async visitorData fetch completes (especially with heavy Firebase/etc init)
+        var maxWaitAttempts = 30 // Wait up to 3 seconds
+        while (YouTube.visitorData == null && maxWaitAttempts > 0) {
+            kotlinx.coroutines.delay(100)
+            maxWaitAttempts--
+        }
+
         quickPicks.value = database.quickPicks()
             .first().shuffled().take(20)
 
@@ -123,11 +132,21 @@ class HomeViewModel @Inject constructor(
                 }
         similarRecommendations.value = (artistRecommendations + songRecommendations).shuffled()
 
+        // DEBUG: Log API values before making the call
+        android.util.Log.d("HomeViewModel", "=== API DEBUG ===")
+        android.util.Log.d("HomeViewModel", "visitorData: ${YouTube.visitorData}")
+        android.util.Log.d("HomeViewModel", "locale.gl: ${YouTube.locale.gl}")
+        android.util.Log.d("HomeViewModel", "locale.hl: ${YouTube.locale.hl}")
+        android.util.Log.d("HomeViewModel", "cookie: ${YouTube.cookie?.take(50) ?: "null"}")
+
         YouTube.home().onSuccess { page ->
+            android.util.Log.d("HomeViewModel", "YouTube.home() SUCCESS")
             homePage.value = page
         }.onFailure {
+            android.util.Log.e("HomeViewModel", "YouTube.home() FAILED: ${it.message}")
             reportException(it)
         }
+
 
         YouTube.explore().onSuccess { page ->
             val artists: Set<String>
@@ -169,57 +188,7 @@ class HomeViewModel @Inject constructor(
 
     init {
         viewModelScope.launch(Dispatchers.IO) {
-            // Add longer delay to ensure network is ready on first launch (especially fresh installs)
-            kotlinx.coroutines.delay(300)
             load()
-
-            // If home page failed to load, retry with exponential backoff
-            var retryCount = 0
-            while (homePage.value == null && retryCount < 3) {
-                retryCount++
-                kotlinx.coroutines.delay(1000L * retryCount) // 1s, 2s, 3s delays
-                YouTube.home().onSuccess { page ->
-                    homePage.value = page
-                    // Update allYtItems when home page loads successfully
-                    allYtItems.value = similarRecommendations.value?.flatMap { it.items }.orEmpty() +
-                            page.sections.flatMap { it.items } +
-                            explorePage.value?.newReleaseAlbums.orEmpty()
-                }.onFailure {
-                    reportException(it)
-                }
-            }
-
-            // If explore page failed to load, retry
-            retryCount = 0
-            while (explorePage.value == null && retryCount < 3) {
-                retryCount++
-                kotlinx.coroutines.delay(1000L * retryCount)
-                YouTube.explore().onSuccess { page ->
-                    val artists: Set<String>
-                    val favouriteArtists: Set<String>
-                    database.artistsBookmarkedByCreateDateAsc().first().let { list ->
-                        artists = list.map(Artist::id).toHashSet()
-                        favouriteArtists = list
-                            .filter { it.artist.bookmarkedAt != null }
-                            .map { it.id }
-                            .toHashSet()
-                    }
-                    explorePage.value = page.copy(
-                        newReleaseAlbums = page.newReleaseAlbums
-                            .sortedBy { album ->
-                                if (album.artists.orEmpty().any { it.id in favouriteArtists }) 0
-                                else if (album.artists.orEmpty().any { it.id in artists }) 1
-                                else 2
-                            }
-                    )
-                    // Update allYtItems when explore page loads successfully
-                    allYtItems.value = similarRecommendations.value?.flatMap { it.items }.orEmpty() +
-                            homePage.value?.sections?.flatMap { it.items }.orEmpty() +
-                            explorePage.value?.newReleaseAlbums.orEmpty()
-                }.onFailure {
-                    reportException(it)
-                }
-            }
         }
     }
 }
