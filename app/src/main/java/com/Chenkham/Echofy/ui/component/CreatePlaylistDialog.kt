@@ -28,6 +28,15 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import java.time.LocalDateTime
 
+import android.widget.Toast
+import androidx.compose.ui.platform.LocalContext
+import androidx.datastore.preferences.core.booleanPreferencesKey
+import androidx.datastore.preferences.core.stringPreferencesKey
+import kotlinx.coroutines.flow.map
+import androidx.compose.runtime.collectAsState
+import com.Chenkham.Echofy.constants.InnerTubeCookieKey
+import com.Chenkham.Echofy.utils.dataStore
+
 @Composable
 fun CreatePlaylistDialog(
     onDismiss: () -> Unit,
@@ -37,6 +46,13 @@ fun CreatePlaylistDialog(
     val database = LocalDatabase.current
     val coroutineScope = rememberCoroutineScope()
     var syncedPlaylist by remember { mutableStateOf(false) }
+    
+    val context = LocalContext.current
+    val innerTubeCookie by context.dataStore.data
+        .map { it[InnerTubeCookieKey] }
+        .collectAsState(initial = null)
+    
+    val isLoggedIn = !innerTubeCookie.isNullOrEmpty()
     TextFieldDialog(
         icon = { Icon(painter = painterResource(R.drawable.add), contentDescription = null) },
         title = { Text(text = stringResource(R.string.create_playlist)) },
@@ -44,14 +60,21 @@ fun CreatePlaylistDialog(
         onDismiss = onDismiss,
         onDone = { playlistName ->
             coroutineScope.launch(Dispatchers.IO) {
-                val browseId = if (syncedPlaylist)
-                    YouTube.createPlaylist(playlistName)
-                else null
+                val browseId = if (syncedPlaylist && isLoggedIn) {
+                    val result = YouTube.createPlaylist(playlistName)
+                    if (result.isFailure) {
+                        launch(Dispatchers.Main) {
+                            Toast.makeText(context, "Error creating playlist", Toast.LENGTH_SHORT).show()
+                        }
+                    }
+                    result.getOrNull()
+                } else null
+                
                 database.query {
                     insert(
                         PlaylistEntity(
                             name = playlistName,
-                            browseId = browseId.toString(),
+                            browseId = browseId?.toString(),
                             bookmarkedAt = LocalDateTime.now(),
                             isEditable = true,
                         )
@@ -80,9 +103,17 @@ fun CreatePlaylistDialog(
                         horizontalArrangement = Arrangement.End
                     ) {
                         Switch(
-                            checked = syncedPlaylist,
+                            checked = syncedPlaylist && isLoggedIn,
                             onCheckedChange = {
-                                syncedPlaylist = !syncedPlaylist
+                                if (isLoggedIn) {
+                                    syncedPlaylist = !syncedPlaylist
+                                } else {
+                                    Toast.makeText(
+                                        context,
+                                        context.getString(R.string.login_to_youtube_music_first),
+                                        Toast.LENGTH_SHORT
+                                    ).show()
+                                }
                             },
                         )
                     }

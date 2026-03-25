@@ -1,4 +1,6 @@
-﻿package com.Chenkham.Echofy.ui.component
+package com.Chenkham.Echofy.ui.component
+
+import com.Chenkham.Echofy.db.getLyrics
 
 import android.annotation.SuppressLint
 import android.content.Intent
@@ -57,9 +59,14 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.BasicAlertDialog
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.RadioButton
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.material3.FilledTonalIconButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -69,6 +76,7 @@ import androidx.compose.material3.Slider
 import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -90,9 +98,11 @@ import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
 import androidx.compose.ui.input.nestedscroll.NestedScrollSource
 import androidx.compose.ui.input.nestedscroll.nestedScroll
@@ -120,6 +130,7 @@ import coil.compose.AsyncImage
 import com.Chenkham.Echofy.LocalDatabase
 import com.Chenkham.Echofy.LocalPlayerConnection
 import com.Chenkham.Echofy.R
+import com.Chenkham.Echofy.constants.BackpaperScreen
 import com.Chenkham.Echofy.constants.AnimateLyricsKey
 import com.Chenkham.Echofy.constants.DarkModeKey
 import com.Chenkham.Echofy.constants.LyricsClickKey
@@ -136,10 +147,12 @@ import com.Chenkham.Echofy.db.entities.LyricsEntity.Companion.LYRICS_NOT_FOUND
 import com.Chenkham.Echofy.extensions.togglePlayPause
 import com.Chenkham.Echofy.extensions.toggleRepeatMode
 import com.Chenkham.Echofy.lyrics.LyricsEntry
+import com.Chenkham.Echofy.lyrics.LyricsResult
 import com.Chenkham.Echofy.lyrics.LyricsUtils.findCurrentLineIndex
 import com.Chenkham.Echofy.lyrics.LyricsUtils.parseLyrics
 import com.Chenkham.Echofy.ui.component.shimmer.ShimmerHost
 import com.Chenkham.Echofy.ui.component.shimmer.TextPlaceholder
+import com.Chenkham.Echofy.utils.LyricsTranslationService
 import com.Chenkham.Echofy.ui.menu.LyricsMenu
 import com.Chenkham.Echofy.ui.screens.settings.DarkMode
 import com.Chenkham.Echofy.ui.screens.settings.LyricsPosition
@@ -161,7 +174,6 @@ import kotlin.time.Duration.Companion.seconds
 @SuppressLint("UnusedBoxWithConstraintsScope", "StringFormatInvalid")
 @Composable
 fun Lyrics(
-    sliderPositionProvider: () -> Long?,
     onNavigateBack: (() -> Unit)? = null,
     @SuppressLint("ModifierParameter") modifier: Modifier = Modifier,
 ) {
@@ -226,9 +238,18 @@ fun Lyrics(
     var showProgressDialog by remember { mutableStateOf(false) }
     var showShareDialog by remember { mutableStateOf(false) }
     var shareDialogData by remember { mutableStateOf<Triple<String, String, String>?>(null) }
+    
+    // Translation state
+    var translatedLyrics by remember(currentSongId) { mutableStateOf<String?>(null) }
+    var translatedLines by remember(currentSongId) { mutableStateOf<Map<Int, String>>(emptyMap()) }
+    var showTranslation by remember(currentSongId) { mutableStateOf(false) }
+    var isTranslating by remember { mutableStateOf(false) }
+    var showLanguageDialog by remember { mutableStateOf(false) }
+    var selectedTranslationLang by remember { mutableStateOf("en") }
 
     val lazyListState = rememberLazyListState()
     var isAnimating by remember { mutableStateOf(false) }
+    var isUserScrolling by remember { mutableStateOf(false) }
     val maxSelectionLimit = 5
 
     // Optimized cache system
@@ -237,10 +258,16 @@ fun Lyrics(
         mutableStateOf<LyricsEntity?>(lyricsCache[currentSongId])
     }
     var isLoadingLyrics by remember(currentSongId) { mutableStateOf(false) }
+    var refetchTrigger by remember { mutableIntStateOf(0) } // Increment to trigger refetch
+    var showProviderDialog by remember { mutableStateOf(false) } // Provider selector dialog
+    var showLyricsMenuDialog by remember { mutableStateOf(false) } // 3-dot lyrics menu dialog
+    var selectedProviderIndex by rememberSaveable { mutableIntStateOf(0) } // Current provider
+    val providerNames = remember { listOf("Musixmatch", "LrcLib", "KuGou", "YouTube") }
 
 
     val lyricsEntity by playerConnection.currentLyrics.collectAsState(initial = null)
     val lyrics = remember(lyricsEntity) { lyricsEntity?.lyrics?.trim() }
+
 
     val playbackState by playerConnection.playbackState.collectAsState()
     val isPlaying by playerConnection.isPlaying.collectAsState()
@@ -260,68 +287,147 @@ fun Lyrics(
         if (darkTheme == DarkMode.AUTO) isSystemInDarkTheme else darkTheme == DarkMode.ON
     }
 
-    LaunchedEffect(currentSongId) {
+    // Streaming lyrics loading with progressive updates
+    var streamingResults by remember(currentSongId) { mutableStateOf<List<LyricsResult>>(emptyList()) }
+    var currentProvider by remember(currentSongId) { mutableStateOf<String?>(null) }
+
+    // When the database entity changes (e.g. user picks a different provider via LyricsMenu),
+    // clear the in-memory cache so it does NOT override the newly saved lyrics.
+    LaunchedEffect(lyricsEntity) {
+        val songId = lyricsEntity?.id ?: return@LaunchedEffect
+        val cached = lyricsCache[songId]
+        if (cached != null && lyricsEntity != null && cached.lyrics != lyricsEntity!!.lyrics) {
+            lyricsCache = lyricsCache.toMutableMap().also { it.remove(songId) }
+            currentLyricsEntity = lyricsEntity
+            currentProvider = lyricsEntity?.providerName ?: "Manual"
+        }
+    }
+
+    LaunchedEffect(currentSongId, refetchTrigger) {
         currentSongId?.let { songId ->
-            if (lyricsCache.containsKey(songId)) {
+            // Check cache first (unless refetching)
+            if (lyricsCache.containsKey(songId) && refetchTrigger == 0) {
                 currentLyricsEntity = lyricsCache[songId]
+                if (currentProvider == null) currentProvider = "Cached"
                 return@LaunchedEffect
             }
 
             isLoadingLyrics = true
+            streamingResults = emptyList()
 
-            withContext(Dispatchers.IO) {
+           withContext(Dispatchers.IO) {
                 try {
-                    // First, attempt to load from the database.
-                    val existingLyrics = try {
-                        database.getLyrics(songId)
-                    } catch (e: Throwable) {
-                        null
+                    // If refetching, skip database cache
+                    val existingLyrics = if (refetchTrigger == 0) {
+                        try {
+                            database.getLyrics(songId)
+                        } catch (e: Throwable) {
+                            null
+                        }
+                    } else {
+                        null // Force fresh fetch
                     }
 
-                    if (existingLyrics != null) {
+                    if (existingLyrics != null && existingLyrics.lyrics != LYRICS_NOT_FOUND) {
                         val newCache = lyricsCache.toMutableMap().apply {
                             put(songId, existingLyrics)
                         }
                         lyricsCache = newCache
                         currentLyricsEntity = existingLyrics
+                        // Use stored provider name, fall back to "Saved" for legacy entries
+                        currentProvider = existingLyrics.providerName ?: "Saved"
+                        isLoadingLyrics = false
                     } else {
-                        // If not in the database, try to obtain from the API using LyricsHelper.
+                        // Use streaming lyrics fetch for progressive loading
                         try {
                             val entryPoint = EntryPointAccessors.fromApplication(
                                 context.applicationContext,
                                 com.Chenkham.Echofy.di.LyricsHelperEntryPoint::class.java
                             )
                             val lyricsHelper = entryPoint.lyricsHelper()
-                            val fetchedLyrics: String? = mediaMetadata?.let { lyricsHelper.getLyrics(it) }
-
-                            val entity = if (!fetchedLyrics.isNullOrBlank()) {
-                                LyricsEntity(songId, fetchedLyrics)
-                            } else {
-                                LyricsEntity(songId, LYRICS_NOT_FOUND)
-                            }
-
-                            // Save/upsert to database for cache
-                            try {
-                                database.query {
-                                    upsert(entity)
+                            
+                            var firstResult = true
+                            val allResults = mutableListOf<LyricsResult>()
+                            
+                            mediaMetadata?.let { metadata ->
+                                lyricsHelper.getLyricsStreaming(
+                                    mediaMetadata = metadata,
+                                    forceRefresh = refetchTrigger > 0
+                                ) { result ->
+                                    allResults.add(result)
+                                    streamingResults = allResults.toList()
+                                    
+                                    // Show first result immediately
+                                    if (firstResult && result.lyrics != LYRICS_NOT_FOUND) {
+                                        firstResult = false
+                                        currentProvider = result.providerName
+                                        
+                                        val entity = LyricsEntity(songId, result.lyrics)
+                                        
+                                        // Update UI state (will be composed on main thread)
+                                        val newCache = lyricsCache.toMutableMap().apply {
+                                            put(songId, entity)
+                                        }
+                                        lyricsCache = newCache
+                                        currentLyricsEntity = entity
+                                        isLoadingLyrics = false
+                                        
+                                        // Save to database in background
+                                        scope.launch(Dispatchers.IO) {
+                                            try {
+                                                database.query {
+                                                    upsert(entity)
+                                                }
+                                            } catch (e: Throwable) {
+                                                // Ignore save errors
+                                            }
+                                        }
+                                    }
+                                    // Upgrade to synced lyrics if available
+                                    else if (!firstResult && result.lyrics.startsWith("[") && 
+                                             currentLyricsEntity?.lyrics?.startsWith("[") != true) {
+                                        currentProvider = result.providerName
+                                        val entity = LyricsEntity(songId, result.lyrics)
+                                        
+                                        val newCache = lyricsCache.toMutableMap().apply {
+                                            put(songId, entity)
+                                        }
+                                        lyricsCache = newCache
+                                        currentLyricsEntity = entity
+                                        
+                                        scope.launch(Dispatchers.IO) {
+                                            try {
+                                                database.query {
+                                                    upsert(entity)
+                                                }
+                                            } catch (e: Throwable) {
+                                                // Ignore
+                                            }
+                                        }
+                                    }
                                 }
-                            } catch (e: Throwable) {
-                                // If the upsert fails, do not block the flow: continue with temporary cache
                             }
-
-                            val newCache = lyricsCache.toMutableMap().apply {
-                                put(songId, entity)
+                            
+                            // If no results found, mark as not found
+                            if (allResults.isEmpty()) {
+                                val errorEntity = LyricsEntity(songId, LYRICS_NOT_FOUND)
+                                val newCache = lyricsCache.toMutableMap().apply {
+                                    put(songId, errorEntity)
+                                }
+                                lyricsCache = newCache
+                                currentLyricsEntity = errorEntity
                             }
-                            lyricsCache = newCache
-                            currentLyricsEntity = entity
+                            
                         } catch (e: Throwable) {
-                            // If retrieval via network/entry point fails, save â€œnot foundâ€ marker.
+                            // If retrieval fails, save "not found" marker
                             val errorEntity = LyricsEntity(songId, LYRICS_NOT_FOUND)
                             val newCache = lyricsCache.toMutableMap().apply {
                                 put(songId, errorEntity)
                             }
                             lyricsCache = newCache
                             currentLyricsEntity = errorEntity
+                        } finally {
+                            isLoadingLyrics = false
                         }
                     }
                 } catch (e: Exception) {
@@ -331,7 +437,6 @@ fun Lyrics(
                     }
                     lyricsCache = newCache
                     currentLyricsEntity = errorEntity
-                } finally {
                     isLoadingLyrics = false
                 }
             }
@@ -458,7 +563,7 @@ fun Lyrics(
         }
         while (isActive) {
             delay(50)
-            val sliderPos = sliderPositionProvider()
+            val sliderPos: Long? = null // Scrubbing support removed for performance isolation
             isSeeking = sliderPos != null
             currentLineIndex = findCurrentLineIndex(
                 lines,
@@ -477,9 +582,12 @@ fun Lyrics(
     }
 
 
-    // REPLACE your LaunchedEffect(currentLineIndex...) with:
+    // Auto-scroll: suppressed while user is manually scrolling
     LaunchedEffect(currentLineIndex, lastPreviewTime, initialScrollDone) {
         if (!isSynced) return@LaunchedEffect
+
+        // Don't auto-scroll while user is scrolling manually
+        if (isUserScrolling) return@LaunchedEffect
 
         suspend fun performSmoothPageScroll(targetIndex: Int, duration: Int = 1500) {
             if (isAnimating) return
@@ -552,6 +660,11 @@ fun Lyrics(
             )
     ) {
         if (isFullscreen) {
+            // Apply Backpaper background only in full screen
+            BackpaperBackground(screen = BackpaperScreen.LYRICS) {
+                // Content inside Backpaper
+            }
+
             mediaMetadata?.let { metadata ->
                 if (playerBackground == PlayerBackgroundStyle.BLUR) {
                     AsyncImage(
@@ -560,7 +673,7 @@ fun Lyrics(
                         contentScale = ContentScale.Crop,
                         modifier = Modifier
                             .fillMaxSize()
-                            .blur(50.dp) // Blur BEFORE the graphicsLayer
+                            .blur(15.dp) // Optimized: reduced from 50dp
                             .graphicsLayer {
                                 // Much more aggressive scaling to compensate for blur and rotation
                                 scaleX = 2.5f
@@ -643,6 +756,8 @@ fun Lyrics(
                                     maxLines = 1,
                                     overflow = TextOverflow.Ellipsis
                                 )
+                                
+
                             }
                         }
 
@@ -664,6 +779,35 @@ fun Lyrics(
                                 tint = MaterialTheme.colorScheme.onSurface
                             )
                         }
+                        
+                        // Translate button
+                        if (!lyrics.isNullOrEmpty()) {
+                            IconButton(
+                                onClick = { showLanguageDialog = true },
+                                enabled = !isTranslating,
+                                colors = IconButtonDefaults.iconButtonColors(
+                                    containerColor = Color.Transparent
+                                )
+                            ) {
+                                if (isTranslating) {
+                                    CircularProgressIndicator(
+                                        modifier = Modifier.size(20.dp),
+                                        strokeWidth = 2.dp,
+                                        color = MaterialTheme.colorScheme.primary
+                                    )
+                                } else {
+                                    Icon(
+                                        painter = painterResource(R.drawable.translate),
+                                        contentDescription = "Translate lyrics",
+                                        tint = if (translatedLyrics != null)
+                                            MaterialTheme.colorScheme.primary
+                                        else
+                                            MaterialTheme.colorScheme.onSurface
+                                    )
+                                }
+                            }
+                        }
+
 
                         if (isSelectionModeActive) {
                             IconButton(
@@ -704,15 +848,7 @@ fun Lyrics(
                         } else {
                             IconButton(
                                 onClick = {
-                                    mediaMetadata?.let { metadata ->
-                                        menuState.show {
-                                            LyricsMenu(
-                                                lyricsProvider = { currentLyricsEntity },
-                                                mediaMetadataProvider = { metadata },
-                                                onDismiss = menuState::dismiss
-                                            )
-                                        }
-                                    }
+                                    showLyricsMenuDialog = true
                                 },
                                 colors = IconButtonDefaults.iconButtonColors(
                                     containerColor = Color.Transparent
@@ -725,6 +861,19 @@ fun Lyrics(
                                 )
                             }
                         }
+                    }
+
+                    // Provider attribution (Moved to bottom of card)
+                    currentProvider?.let { provider ->
+                        Text(
+                            text = "Provided by $provider",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.primary.copy(alpha = 0.8f),
+                            maxLines = 1,
+                            modifier = Modifier
+                                .align(Alignment.CenterHorizontally)
+                                .padding(bottom = 12.dp)
+                        )
                     }
                 }
             }
@@ -937,8 +1086,8 @@ fun Lyrics(
                             ) {
                                 Icon(
                                     painter = painterResource(
-                                        if (currentSong?.song?.liked == true) R.drawable.favorite
-                                        else R.drawable.favorite_border
+                                        if (currentSong?.song?.liked == true) R.drawable.heart_fill
+                                        else R.drawable.heart
                                     ),
                                     contentDescription = "Like",
                                     tint = if (currentSong?.song?.liked == true)
@@ -1097,6 +1246,18 @@ fun Lyrics(
                         .fadingEdge(vertical = if (isFullscreen) 32.dp else 64.dp)
                         .nestedScroll(remember {
                             object : NestedScrollConnection {
+                                override fun onPreScroll(
+                                    available: Offset,
+                                    source: NestedScrollSource
+                                ): Offset {
+                                    // Mark user as actively scrolling as soon as finger moves
+                                    if (source == NestedScrollSource.UserInput && !isSelectionModeActive) {
+                                        isUserScrolling = true
+                                        lastPreviewTime = System.currentTimeMillis()
+                                    }
+                                    return Offset.Zero
+                                }
+
                                 override fun onPostScroll(
                                     consumed: Offset,
                                     available: Offset,
@@ -1114,6 +1275,9 @@ fun Lyrics(
                                 ): Velocity {
                                     if (!isSelectionModeActive) {
                                         lastPreviewTime = System.currentTimeMillis()
+                                        // After fling settles, wait 4 seconds then re-enable auto-scroll
+                                        kotlinx.coroutines.delay(4_000)
+                                        isUserScrolling = false
                                     }
                                     return super.onPostFling(consumed, available)
                                 }
@@ -1142,6 +1306,34 @@ fun Lyrics(
                                     ) {
                                         TextPlaceholder()
                                     }
+                                }
+                            }
+                        }
+                    } else if (lines.isEmpty()) {
+                        // No lyrics available
+                        item {
+                            Box(
+                                contentAlignment = Alignment.Center,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(32.dp)
+                            ) {
+                                Column(
+                                    horizontalAlignment = Alignment.CenterHorizontally
+                                ) {
+                                    Icon(
+                                        painter = painterResource(R.drawable.lyrics),
+                                        contentDescription = null,
+                                        modifier = Modifier.size(48.dp),
+                                        tint = textColor.copy(alpha = 0.5f)
+                                    )
+                                    Spacer(modifier = Modifier.height(16.dp))
+                                    Text(
+                                        text = stringResource(R.string.no_lyrics_available),
+                                        style = MaterialTheme.typography.bodyLarge,
+                                        color = textColor.copy(alpha = 0.7f),
+                                        textAlign = TextAlign.Center
+                                    )
                                 }
                             }
                         }
@@ -1241,31 +1433,72 @@ fun Lyrics(
                                     scaleY = animatedScale
                                 }
 
-                            Text(
-                                text = item.text,
-                                fontSize = 25.sp,
-                                color = animateColorAsState(if (index == displayedCurrentLineIndex && isSynced) {
-                                    if (isFullscreen)
-                                        MaterialTheme.colorScheme.primary
-                                    else
-                                        textColor
-                                } else {
+                            Column(
+                                modifier = itemModifier
+                            ) {
+                                // Show translation above original line
+                                if (showTranslation && translatedLines.containsKey(index)) {
+                                    Text(
+                                        text = translatedLines[index] ?: "",
+                                        fontSize = 16.sp,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
+                                        textAlign = when (lyricsTextPosition) {
+                                            LyricsPosition.LEFT -> TextAlign.Left
+                                            LyricsPosition.CENTER -> TextAlign.Center
+                                            LyricsPosition.RIGHT -> TextAlign.Right
+                                        },
+                                        fontWeight = FontWeight.Normal,
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .padding(bottom = 2.dp)
+                                    )
+                                }
+                                
+                                // Original lyrics (highlighted with gradient for active line)
+                                val isActiveLine = index == displayedCurrentLineIndex && isSynced
+                                val lyricsGradientBrush = Brush.linearGradient(
+                                    colors = listOf(
+                                        Color(0xFFB06AFF), // violet
+                                        Color(0xFF00CFFF), // cyan
+                                        Color(0xFF6A82FF), // blue-purple
+                                    )
+                                )
+                                val inactiveColor = animateColorAsState(
                                     if (isFullscreen)
                                         MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f)
                                     else
-                                        textColor.copy(alpha = 0.8f)
-                                }, animationSpec = tween(if (animateLyrics) 250 else 0)).value,
-                                textAlign = when (lyricsTextPosition) {
-                                    LyricsPosition.LEFT -> TextAlign.Left
-                                    LyricsPosition.CENTER -> TextAlign.Center
-                                    LyricsPosition.RIGHT -> TextAlign.Right
-                                },
-                                fontWeight = if (index == displayedCurrentLineIndex && isSynced)
-                                    FontWeight.ExtraBold
-                                else
-                                    FontWeight.Bold,
-                                modifier = itemModifier
-                            )
+                                        textColor.copy(alpha = 0.8f),
+                                    animationSpec = tween(if (animateLyrics) 250 else 0)
+                                ).value
+                                Text(
+                                    text = item.text,
+                                    fontSize = 25.sp,
+                                    style = if (isActiveLine) {
+                                        TextStyle(
+                                            brush = lyricsGradientBrush,
+                                            fontSize = 25.sp,
+                                            fontWeight = FontWeight.ExtraBold,
+                                            textAlign = when (lyricsTextPosition) {
+                                                LyricsPosition.LEFT -> TextAlign.Left
+                                                LyricsPosition.CENTER -> TextAlign.Center
+                                                LyricsPosition.RIGHT -> TextAlign.Right
+                                            }
+                                        )
+                                    } else {
+                                        TextStyle(
+                                            color = inactiveColor,
+                                            fontSize = 25.sp,
+                                            fontWeight = FontWeight.Bold,
+                                            textAlign = when (lyricsTextPosition) {
+                                                LyricsPosition.LEFT -> TextAlign.Left
+                                                LyricsPosition.CENTER -> TextAlign.Center
+                                                LyricsPosition.RIGHT -> TextAlign.Right
+                                            }
+                                        )
+                                    },
+                                    modifier = Modifier.fillMaxWidth()
+                                )
+                            }
                         }
                     }
                 }
@@ -1305,11 +1538,55 @@ fun Lyrics(
                                 )
 
                                 Text(
-                                    text = "Las letras no estÃ¡n disponibles para esta canciÃ³n",
+                                    text = "Las letras no están disponibles para esta canción",
                                     style = MaterialTheme.typography.bodySmall,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                                     textAlign = TextAlign.Center
                                 )
+                                
+                                // Refetch button and provider selector row
+                                Row(
+                                    modifier = Modifier.padding(top = 8.dp),
+                                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                ) {
+                                    // Refetch button
+                                    FilledTonalIconButton(
+                                        onClick = {
+                                            scope.launch(Dispatchers.IO) {
+                                                currentSongId?.let { id ->
+                                                    try {
+                                                        database.query {
+                                                            delete(LyricsEntity(id, ""))
+                                                        }
+                                                    } catch (e: Exception) {
+                                                        // Ignore
+                                                    }
+                                                    refetchTrigger++
+                                                }
+                                            }
+                                        },
+                                        enabled = !isLoadingLyrics
+                                    ) {
+                                        if (isLoadingLyrics) {
+                                            CircularProgressIndicator(
+                                                modifier = Modifier.size(20.dp),
+                                                strokeWidth = 2.dp
+                                            )
+                                        } else {
+                                            Row(
+                                                horizontalArrangement = Arrangement.spacedBy(4.dp),
+                                                verticalAlignment = Alignment.CenterVertically
+                                            ) {
+                                                Icon(
+                                                    painter = painterResource(R.drawable.refresh),
+                                                    contentDescription = "Refetch",
+                                                    modifier = Modifier.size(20.dp)
+                                                )
+                                                Text("Retry", style = MaterialTheme.typography.labelMedium)
+                                            }
+                                        }
+                                    }
+                                }
                             }
                         }
                     } else {
@@ -1327,6 +1604,21 @@ fun Lyrics(
                                 .fillMaxWidth()
                                 .padding(horizontal = 24.dp, vertical = 8.dp)
                                 .alpha(0.5f)
+                                .clickable {
+                                    // Refetch on click for non-fullscreen
+                                    scope.launch(Dispatchers.IO) {
+                                        currentSongId?.let { id ->
+                                            try {
+                                                database.query {
+                                                    delete(LyricsEntity(id, ""))
+                                                }
+                                            } catch (e: Exception) {
+                                                // Ignore
+                                            }
+                                            refetchTrigger++
+                                        }
+                                    }
+                                }
                         )
                     }
                 }
@@ -1440,15 +1732,22 @@ fun Lyrics(
 
                         Spacer(modifier = Modifier.width(8.dp))
 
+                        Spacer(modifier = Modifier.width(8.dp))
+
+                        // Translate button (replaces Provider selector)
+                        IconButton(
+                            onClick = { showLanguageDialog = true }
+                        ) {
+                            Icon(
+                                painter = painterResource(id = R.drawable.translate),
+                                contentDescription = "Translate Lyrics",
+                                tint = textColor
+                            )
+                        }
+
                         IconButton(
                             onClick = {
-                                menuState.show {
-                                    LyricsMenu(
-                                        lyricsProvider = { currentLyricsEntity },
-                                        mediaMetadataProvider = { metadata },
-                                        onDismiss = menuState::dismiss
-                                    )
-                                }
+                                showLyricsMenuDialog = true
                             }
                         ) {
                             Icon(
@@ -1462,6 +1761,456 @@ fun Lyrics(
             }
         }
     }
+
+
+    // Compact provider selector dialog
+    if (showProviderDialog) {
+        AlertDialog(
+            onDismissRequest = { showProviderDialog = false },
+            title = { Text("Lyrics Provider", style = MaterialTheme.typography.titleMedium) },
+            text = {
+                Column {
+                    providerNames.forEachIndexed { index, name ->
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable {
+                                    selectedProviderIndex = index
+                                    showProviderDialog = false
+                                    // Trigger refetch with new provider
+                                    scope.launch(Dispatchers.IO) {
+                                        currentSongId?.let { id ->
+                                            try {
+                                                database.query { delete(LyricsEntity(id, "")) }
+                                            } catch (e: Exception) { }
+                                            refetchTrigger++
+                                        }
+                                    }
+                                }
+                                .padding(vertical = 8.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            RadioButton(
+                                selected = selectedProviderIndex == index,
+                                onClick = null
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(name, style = MaterialTheme.typography.bodyMedium)
+                        }
+                    }
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = { showProviderDialog = false }) {
+                    Text("Close")
+                }
+            }
+        )
+    }
+
+    // Lyrics Menu Dialog (standalone ModalBottomSheet)
+    if (showLyricsMenuDialog) {
+        val lyricsMenuSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+        ModalBottomSheet(
+            onDismissRequest = { showLyricsMenuDialog = false },
+            sheetState = lyricsMenuSheetState,
+            containerColor = MaterialTheme.colorScheme.surface,
+            shape = RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp)
+        ) {
+            mediaMetadata?.let { metadata ->
+                LyricsMenu(
+                    lyricsProvider = { currentLyricsEntity },
+                    mediaMetadataProvider = { metadata },
+                    onDismiss = { showLyricsMenuDialog = false },
+                    onLyricsUpdated = { refetchTrigger++ }
+                )
+            }
+        }
+    }
+
+    // Compact language picker dropdown for translation
+    if (showLanguageDialog) {
+        BasicAlertDialog(
+            onDismissRequest = { showLanguageDialog = false }
+        ) {
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth(0.9f)
+                    .padding(16.dp),
+                shape = RoundedCornerShape(16.dp),
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.surface
+                ),
+                elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
+            ) {
+                Column(
+                    modifier = Modifier.padding(16.dp)
+                ) {
+                    Text(
+                        text = "Lyrics Options",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        modifier = Modifier.padding(bottom = 12.dp)
+                    )
+                    
+                    // Romanize button - converts to English letters (Hinglish style)
+                    Surface(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable {
+                                showLanguageDialog = false
+                                isTranslating = true
+                                scope.launch {
+                                    try {
+                                        val lyricsLines = lines.map { it.text }
+                                        
+                                        // Use line-by-line transliteration
+                                        LyricsTranslationService.transliterateLines(lyricsLines)
+                                            .onSuccess { lineMap ->
+                                                translatedLines = lineMap
+                                                translatedLyrics = lineMap.values.joinToString("\n")
+                                                showTranslation = true
+                                            }
+                                            .onFailure { e ->
+                                                Toast.makeText(
+                                                    context,
+                                                    "Romanization failed: ${e.message}",
+                                                    Toast.LENGTH_SHORT
+                                                ).show()
+                                            }
+                                    } catch (e: Exception) {
+                                        Toast.makeText(
+                                            context,
+                                            "Error: ${e.message}",
+                                            Toast.LENGTH_SHORT
+                                        ).show()
+                                    }
+                                    isTranslating = false
+                                }
+                            },
+                        shape = RoundedCornerShape(12.dp),
+                        color = MaterialTheme.colorScheme.primaryContainer
+                    ) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(12.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.Center
+                        ) {
+                            Icon(
+                                painter = painterResource(R.drawable.translate),
+                                contentDescription = null,
+                                modifier = Modifier.size(20.dp),
+                                tint = MaterialTheme.colorScheme.onPrimaryContainer
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(
+                                text = "Romanize",
+                                style = MaterialTheme.typography.labelLarge,
+                                color = MaterialTheme.colorScheme.onPrimaryContainer
+                            )
+                        }
+                    }
+                    
+                    Spacer(modifier = Modifier.height(12.dp))
+                    
+                    Text(
+                        text = "Or translate to:",
+                        style = MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.padding(bottom = 8.dp)
+                    )
+                    
+                    // Quick language chips - compact grid
+                    val languages = LyricsTranslationService.supportedLanguages.take(8)
+                    Column(
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        languages.chunked(4).forEach { row ->
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                row.forEach { (code, name) ->
+                                    Surface(
+                                        modifier = Modifier
+                                            .weight(1f)
+                                            .clickable {
+                                                selectedTranslationLang = code
+                                                showLanguageDialog = false
+                                                
+                                                // Perform line-by-line translation
+                                                isTranslating = true
+                                                scope.launch {
+                                                    try {
+                                                        val lyricsLines = lines.map { it.text }
+                                                        val combinedText = lyricsLines.joinToString("\n")
+                                                        
+                                                        LyricsTranslationService.translate(combinedText, code)
+                                                            .onSuccess { translated ->
+                                                                val translatedList = translated.split("\n")
+                                                                val lineMap = mutableMapOf<Int, String>()
+                                                                lyricsLines.forEachIndexed { index, _ ->
+                                                                    if (index < translatedList.size) {
+                                                                        lineMap[index] = translatedList[index]
+                                                                    }
+                                                                }
+                                                                translatedLines = lineMap
+                                                                translatedLyrics = translated
+                                                                showTranslation = true
+                                                            }
+                                                            .onFailure { e ->
+                                                                Toast.makeText(
+                                                                    context, 
+                                                                    "Translation failed: ${e.message}", 
+                                                                    Toast.LENGTH_SHORT
+                                                                ).show()
+                                                            }
+                                                    } catch (e: Exception) {
+                                                        Toast.makeText(
+                                                            context, 
+                                                            "Error: ${e.message}", 
+                                                            Toast.LENGTH_SHORT
+                                                        ).show()
+                                                    }
+                                                    isTranslating = false
+                                                }
+                                            },
+                                        shape = RoundedCornerShape(8.dp),
+                                        color = if (selectedTranslationLang == code)
+                                            MaterialTheme.colorScheme.secondaryContainer
+                                        else
+                                            MaterialTheme.colorScheme.surfaceVariant
+                                    ) {
+                                        Text(
+                                            text = name.take(6),
+                                            style = MaterialTheme.typography.labelMedium,
+                                            textAlign = TextAlign.Center,
+                                            modifier = Modifier
+                                                .padding(vertical = 10.dp, horizontal = 4.dp)
+                                                .fillMaxWidth()
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    
+                    // Toggle/Clear button if translation exists
+                    if (translatedLines.isNotEmpty()) {
+                        Spacer(modifier = Modifier.height(12.dp))
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            TextButton(
+                                onClick = {
+                                    showTranslation = !showTranslation
+                                    showLanguageDialog = false
+                                }
+                            ) {
+                                Text(if (showTranslation) "Hide" else "Show")
+                            }
+                            TextButton(
+                                onClick = {
+                                    translatedLines = emptyMap()
+                                    translatedLyrics = null
+                                    showTranslation = false
+                                    showLanguageDialog = false
+                                }
+                            ) {
+                                Text("Clear")
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+    
+    // Provider selection dialog
+    if (showProviderDialog) {
+        BasicAlertDialog(
+            onDismissRequest = { showProviderDialog = false }
+        ) {
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth(0.9f)
+                    .padding(16.dp),
+                shape = RoundedCornerShape(16.dp),
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.surface
+                ),
+                elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
+            ) {
+                Column(
+                    modifier = Modifier.padding(16.dp)
+                ) {
+                    Text(
+                        text = "Lyrics Provider",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        modifier = Modifier.padding(bottom = 4.dp)
+                    )
+                    
+                    // Show current provider
+                    currentProvider?.let {
+                        Text(
+                            text = "Currently using: $it",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.padding(bottom = 12.dp)
+                        )
+                    }
+                    
+                    // Provider options
+                    providerNames.forEachIndexed { index, providerName ->
+                        val hasResult = streamingResults.any { it.providerName == providerName }
+                        val isCurrentProvider = currentProvider == providerName
+                        
+                        Surface(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 4.dp)
+                                .clickable(enabled = hasResult || !isLoadingLyrics) {
+                                    // Switch to this provider's lyrics
+                                    val result = streamingResults.find { it.providerName == providerName }
+                                    if (result != null) {
+                                        currentSongId?.let { songId ->
+                                            val entity = LyricsEntity(songId, result.lyrics)
+                                            currentLyricsEntity = entity
+                                            currentProvider = providerName
+                                            selectedProviderIndex = index
+                                            scope.launch(Dispatchers.IO) {
+                                                try {
+                                                    database.query {
+                                                        upsert(entity)
+                                                    }
+                                                } catch (e: Exception) {
+                                                    // Ignore save error
+                                                }
+                                            }
+                                        }
+                                        showProviderDialog = false
+                                    } else if (!isLoadingLyrics) {
+                                        // Fetch from this specific provider
+                                        scope.launch(Dispatchers.IO) {
+                                            try {
+                                                val entryPoint = EntryPointAccessors.fromApplication(
+                                                    context.applicationContext,
+                                                    com.Chenkham.Echofy.di.LyricsHelperEntryPoint::class.java
+                                                )
+                                                val lyricsHelper = entryPoint.lyricsHelper()
+                                                mediaMetadata?.let { metadata ->
+                                                    val lyrics = lyricsHelper.getLyricsFromProvider(
+                                                        metadata, 
+                                                        providerName
+                                                    )
+                                                    if (lyrics != null) {
+                                                        val entity = LyricsEntity(metadata.id, lyrics)
+                                                        withContext(Dispatchers.Main) {
+                                                            currentLyricsEntity = entity
+                                                            currentProvider = providerName
+                                                            selectedProviderIndex = index
+                                                        }
+                                                        database.query {
+                                                            upsert(entity)
+                                                        }
+                                                    }
+                                                }
+                                            } catch (e: Exception) {
+                                                // Ignore errors
+                                            }
+                                        }
+                                        showProviderDialog = false
+                                    }
+                                },
+                            shape = RoundedCornerShape(8.dp),
+                            color = when {
+                                isCurrentProvider -> MaterialTheme.colorScheme.primaryContainer
+                                hasResult -> MaterialTheme.colorScheme.secondaryContainer
+                                else -> MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
+                            }
+                        ) {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(12.dp),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text(
+                                    text = providerName,
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    fontWeight = if (isCurrentProvider) FontWeight.Bold else FontWeight.Normal
+                                )
+                                
+                                when {
+                                    isLoadingLyrics && !hasResult -> {
+                                        CircularProgressIndicator(
+                                            modifier = Modifier.size(16.dp),
+                                            strokeWidth = 2.dp
+                                        )
+                                    }
+                                    hasResult -> {
+                                        val isSynced = streamingResults.find { it.providerName == providerName }
+                                            ?.lyrics?.startsWith("[") == true
+                                        Row(
+                                            horizontalArrangement = Arrangement.spacedBy(4.dp),
+                                            verticalAlignment = Alignment.CenterVertically
+                                        ) {
+                                            if (isSynced) {
+                                                Icon(
+                                                    painter = painterResource(R.drawable.sync),
+                                                    contentDescription = "Synced",
+                                                    modifier = Modifier.size(14.dp),
+                                                    tint = MaterialTheme.colorScheme.primary
+                                                )
+                                            }
+                                            Icon(
+                                                painter = painterResource(R.drawable.check_circle),
+                                                contentDescription = "Available",
+                                                modifier = Modifier.size(16.dp),
+                                                tint = MaterialTheme.colorScheme.primary
+                                            )
+                                        }
+                                    }
+                                    else -> {
+                                        Text(
+                                            text = "Tap to try",
+                                            style = MaterialTheme.typography.labelSmall,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    
+                    Spacer(modifier = Modifier.height(12.dp))
+                    
+                    // Refetch all button
+                    TextButton(
+                        onClick = {
+                            showProviderDialog = false
+                            refetchTrigger++
+                        },
+                        modifier = Modifier.align(Alignment.End)
+                    ) {
+                        Icon(
+                            painter = painterResource(R.drawable.refresh),
+                            contentDescription = null,
+                            modifier = Modifier.size(18.dp)
+                        )
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text("Refetch All")
+                    }
+                }
+            }
+        }
+    }
+
 
     // Dialogs
     if (showProgressDialog) {

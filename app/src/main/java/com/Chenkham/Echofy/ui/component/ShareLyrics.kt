@@ -356,6 +356,7 @@ private fun ModernControlsSection(
     onSaveImage: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    var errorMessage by remember { mutableStateOf<String?>(null) }
     Card(
         modifier = modifier,
         colors = CardDefaults.cardColors(
@@ -378,10 +379,25 @@ private fun ModernControlsSection(
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onSurface
                 )
+                if (errorMessage != null) {
+                    Text(
+                        text = errorMessage!!,
+                        color = Color.Red,
+                        style = MaterialTheme.typography.bodySmall,
+                        modifier = Modifier.padding(top = 4.dp)
+                    )
+                }
             }
 
             FloatingActionButton(
-                onClick = onSaveImage,
+                onClick = {
+                    try {
+                        onSaveImage()
+                        errorMessage = null
+                    } catch (e: Exception) {
+                        errorMessage = "Failed to capture image. Please try again."
+                    }
+                },
                 modifier = Modifier.size(48.dp),
                 containerColor = MaterialTheme.colorScheme.primary,
                 contentColor = MaterialTheme.colorScheme.onPrimary
@@ -759,6 +775,62 @@ private fun ColorPresetItem(
             fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis
+        )
+    }
+}
+
+// Wrap the main Column in CompositionLocalProvider(LocalOverscrollConfiguration provides null) to disable overscroll
+@Composable
+fun ShareLyricsCustomizationSection(
+    lyricText: String,
+    mediaMetadata: MediaMetadata,
+    selectedCustomization: ImageCustomization,
+    onSaveImage: () -> Unit,
+    showControls: Boolean = true,
+    modifier: Modifier = Modifier
+) {
+    var isGenerating by remember { mutableStateOf(false) }
+    Column(
+        modifier = modifier
+            .fillMaxSize()
+            .background(MaterialTheme.colorScheme.background),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        if (showControls) {
+            ModernControlsSection(
+                selectedCustomization = selectedCustomization,
+                isGenerating = isGenerating,
+                onSaveImage = {
+                    isGenerating = true
+                    try {
+                        onSaveImage()
+                    } catch (_: Exception) {
+                        // Error handled in ModernControlsSection
+                    }
+                    kotlinx.coroutines.GlobalScope.launch {
+                        kotlinx.coroutines.delay(1500)
+                        isGenerating = false
+                    }
+                },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(20.dp)
+            )
+        }
+        Spacer(modifier = Modifier.height(24.dp))
+        LyricsImageCardPreview(
+            lyricText = lyricText,
+            mediaMetadata = mediaMetadata,
+            customization = selectedCustomization,
+            modifier = Modifier
+                .padding(horizontal = 20.dp)
+                .fillMaxWidth()
+        )
+        Spacer(modifier = Modifier.height(20.dp))
+        Text(
+            text = "Image will be saved in high resolution",
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
         )
     }
 }

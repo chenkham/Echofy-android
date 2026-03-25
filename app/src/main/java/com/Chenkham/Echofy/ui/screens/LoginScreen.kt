@@ -37,7 +37,9 @@ import com.Chenkham.Echofy.ui.utils.backToMain
 import com.Chenkham.Echofy.utils.rememberPreference
 import com.Chenkham.Echofy.utils.reportException
 import kotlinx.coroutines.DelicateCoroutinesApi
-import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import androidx.compose.runtime.rememberCoroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import timber.log.Timber
@@ -49,7 +51,7 @@ private const val RETRY_DELAY_MS = 1000L
 @SuppressLint("SetJavaScriptEnabled")
 @OptIn(ExperimentalMaterial3Api::class, DelicateCoroutinesApi::class)
 @Composable
-fun LoginScreen(navController: NavController) {
+fun LoginScreen(navController: NavController, chained: Boolean = false) {
     var visitorData by rememberPreference(VisitorDataKey, "")
     var innerTubeCookie by rememberPreference(InnerTubeCookieKey, "")
     var accountName by rememberPreference(AccountNameKey, "")
@@ -58,6 +60,7 @@ fun LoginScreen(navController: NavController) {
 
     var webView: WebView? = null
     var isLoadingAccountInfo by remember { mutableStateOf(false) }
+    val globalScope = rememberCoroutineScope()
 
     suspend fun fetchAccountInfoWithRetry(retryCount: Int = 0) {
         try {
@@ -139,10 +142,18 @@ fun LoginScreen(navController: NavController) {
                                 innerTubeCookie = youTubeCookieString
                                 isLoadingAccountInfo = true
 
-                                GlobalScope.launch {
+                                globalScope.launch {
                                     // PequeÃ±a espera para asegurar que las cookies se establezcan correctamente
                                     delay(500)
                                     fetchAccountInfoWithRetry()
+                                    
+                                    if (chained) {
+                                        withContext(Dispatchers.Main) {
+                                            navController.navigate("settings/account") {
+                                                popUpTo("settings/account") { inclusive = true }
+                                            }
+                                        }
+                                    }
                                 }
 
                                 // Obtener visitor data
@@ -204,6 +215,8 @@ fun LoginScreen(navController: NavController) {
             Text(
                 if (isLoadingAccountInfo) {
                     stringResource(R.string.login) + " - Loading..."
+                } else if (chained) {
+                    "Link YouTube Music"
                 } else {
                     stringResource(R.string.login)
                 }
@@ -220,6 +233,19 @@ fun LoginScreen(navController: NavController) {
                 )
             }
         },
+        actions = {
+            if (chained) {
+                androidx.compose.material3.TextButton(
+                    onClick = {
+                        navController.navigate("settings/account") {
+                            popUpTo("settings/account") { inclusive = true }
+                        }
+                    }
+                ) {
+                    Text("Skip")
+                }
+            }
+        }
     )
 
     BackHandler(enabled = webView?.canGoBack() == true) {

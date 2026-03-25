@@ -54,6 +54,10 @@ import com.Chenkham.Echofy.ui.component.SongListItem
 import com.Chenkham.Echofy.ui.menu.SongMenu
 import com.Chenkham.Echofy.viewmodels.LocalFilter
 import com.Chenkham.Echofy.viewmodels.LocalSearchViewModel
+import com.Chenkham.Echofy.db.entities.RecentSearchSong
+import com.Chenkham.Echofy.LocalDatabase
+import androidx.compose.runtime.rememberCoroutineScope
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.flow.drop
 
 @OptIn(ExperimentalFoundationApi::class)
@@ -70,6 +74,8 @@ fun LocalSearchScreen(
     val keyboardController = LocalSoftwareKeyboardController.current
     val menuState = LocalMenuState.current
     val playerConnection = LocalPlayerConnection.current ?: return
+    val database = LocalDatabase.current
+    val coroutineScope = rememberCoroutineScope()
 
     val isPlaying by playerConnection.isPlaying.collectAsState()
     val mediaMetadata by playerConnection.mediaMetadata.collectAsState()
@@ -182,6 +188,9 @@ fun LocalSearchScreen(
                             modifier = Modifier
                                 .combinedClickable(
                                     onClick = {
+                                        coroutineScope.launch {
+                                            database.insertRecentSearchSong(RecentSearchSong(songId = item.id))
+                                        }
                                         if (item.id == mediaMetadata?.id) {
                                             playerConnection.player.togglePlayPause()
                                         } else {

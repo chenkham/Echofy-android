@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyItemScope
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -46,9 +47,11 @@ import com.Chenkham.innertube.models.PlaylistItem
 import com.Chenkham.innertube.models.SongItem
 import com.Chenkham.innertube.models.WatchEndpoint
 import com.Chenkham.innertube.models.YTItem
+import com.Chenkham.Echofy.LocalDatabase
 import com.Chenkham.Echofy.LocalPlayerAwareWindowInsets
 import com.Chenkham.Echofy.LocalPlayerConnection
 import com.Chenkham.Echofy.R
+import com.Chenkham.Echofy.db.entities.SearchHistory
 import com.Chenkham.Echofy.constants.AppBarHeight
 import com.Chenkham.Echofy.constants.SearchFilterHeight
 import com.Chenkham.Echofy.extensions.togglePlayPause
@@ -59,27 +62,34 @@ import com.Chenkham.Echofy.ui.component.EmptyPlaceholder
 import com.Chenkham.Echofy.ui.component.LocalMenuState
 import com.Chenkham.Echofy.ui.component.NavigationTitle
 import com.Chenkham.Echofy.ui.component.YouTubeListItem
+import com.Chenkham.Echofy.ui.component.NativeAdCard
 import com.Chenkham.Echofy.ui.component.shimmer.ListItemPlaceHolder
 import com.Chenkham.Echofy.ui.component.shimmer.ShimmerHost
 import com.Chenkham.Echofy.ui.menu.YouTubeAlbumMenu
 import com.Chenkham.Echofy.ui.menu.YouTubeArtistMenu
 import com.Chenkham.Echofy.ui.menu.YouTubePlaylistMenu
 import com.Chenkham.Echofy.ui.menu.YouTubeSongMenu
+import com.Chenkham.Echofy.ads.AdManager
 import com.Chenkham.Echofy.viewmodels.OnlineSearchViewModel
 import kotlinx.coroutines.launch
+import com.Chenkham.Echofy.constants.BackpaperScreen
+import com.Chenkham.Echofy.ui.component.BackpaperBackground
 
 @OptIn(ExperimentalFoundationApi::class, ExperimentalMaterial3Api::class)
 @Composable
 fun OnlineSearchResult(
     navController: NavController,
     viewModel: OnlineSearchViewModel = hiltViewModel(),
+    adManager: AdManager? = null,
 ) {
+    val database = LocalDatabase.current
     val menuState = LocalMenuState.current
     val playerConnection = LocalPlayerConnection.current ?: return
     val haptic = LocalHapticFeedback.current
     val isPlaying by playerConnection.isPlaying.collectAsState()
     val mediaMetadata by playerConnection.mediaMetadata.collectAsState()
 
+    BackpaperBackground(screen = BackpaperScreen.SEARCH) {
     val coroutineScope = rememberCoroutineScope()
     val lazyListState = rememberLazyListState()
 
@@ -168,14 +178,47 @@ fun OnlineSearchResult(
                                             YouTubeQueue(
                                                 WatchEndpoint(videoId = item.id),
                                                 item.toMediaMetadata()
-                                            )
+                                            ),
                                         )
                                     }
+                                    menuState.dismiss()
                                 }
 
-                                is AlbumItem -> navController.navigate("album/${item.id}")
-                                is ArtistItem -> navController.navigate("artist/${item.id}")
-                                is PlaylistItem -> navController.navigate("online_playlist/${item.id}")
+                                is AlbumItem -> {
+                                    // Add to history
+                                    val query = item.title
+                                    coroutineScope.launch {
+                                        database.query {
+                                            insert(SearchHistory(query = query))
+                                        }
+                                    }
+                                    navController.navigate("album/${item.id}")
+                                    menuState.dismiss()
+                                }
+
+                                is ArtistItem -> {
+                                    // Add to history
+                                    val query = item.title
+                                    coroutineScope.launch {
+                                        database.query {
+                                            insert(SearchHistory(query = query))
+                                        }
+                                    }
+                                    navController.navigate("artist/${item.id}")
+                                    menuState.dismiss()
+                                }
+
+                                is PlaylistItem -> {
+                                    // Add to history
+                                    val query = item.title
+                                    coroutineScope.launch {
+                                        database.query {
+                                            insert(SearchHistory(query = query))
+                                        }
+                                    }
+                                    navController.navigate("online_playlist/${item.id}")
+                                    menuState.dismiss()
+                                }
                             }
                         },
                         onLongClick = longClick,
@@ -203,6 +246,13 @@ fun OnlineSearchResult(
                     key = { "${summary.title}/${it.id}" },
                     itemContent = ytItemContent,
                 )
+                
+                // Ad after each category
+                adManager?.let {
+                    item(key = "ad_${summary.title}") {
+                        NativeAdCard(adManager = it)
+                    }
+                }
             }
 
             if (searchSummary?.summaries?.isEmpty() == true) {
@@ -214,11 +264,18 @@ fun OnlineSearchResult(
                 }
             }
         } else {
-            items(
-                items = itemsPage?.items.orEmpty().distinctBy { it.id },
-                key = { it.id },
-                itemContent = ytItemContent,
-            )
+            val distinctItems = itemsPage?.items.orEmpty().distinctBy { it.id }
+            itemsIndexed(
+                items = distinctItems,
+                key = { _, item -> item.id },
+            ) { index, item ->
+                ytItemContent(item)
+                
+                // Show ad every 5 items
+                if ((index + 1) % 5 == 0 && adManager != null) {
+                    NativeAdCard(adManager = adManager)
+                }
+            }
 
             if (itemsPage?.continuation != null) {
                 item(key = "loading") {
@@ -281,4 +338,5 @@ fun OnlineSearchResult(
                 )
                 .fillMaxWidth()
     )
+    }
 }

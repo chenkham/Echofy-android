@@ -10,18 +10,7 @@ import com.Chenkham.Echofy.utils.dataStore
 import com.Chenkham.Echofy.utils.get
 import kotlinx.coroutines.runBlocking
 
-fun Context.isSyncEnabled(): Boolean {
-    return runBlocking {
-        dataStore.get(YtmSyncKey, true) && isUserLoggedIn()
-    }
-}
 
-fun Context.isUserLoggedIn(): Boolean {
-    return runBlocking {
-        val cookie = dataStore[InnerTubeCookieKey] ?: ""
-        "SAPISID" in parseCookieString(cookie) && isInternetConnected()
-    }
-}
 
 fun Context.isInternetConnected(): Boolean {
     val connectivityManager = getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager

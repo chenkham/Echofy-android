@@ -17,11 +17,18 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.Chenkham.Echofy.R
+
+// Purple-Blue gradient colors for section headers
+private val GradientPurple = Color(0xFF7C4DFF)
+private val GradientBlue = Color(0xFF448AFF)
 
 @Composable
 fun NavigationTitle(
@@ -58,9 +65,12 @@ fun NavigationTitle(
 
             Text(
                 text = title,
-                style = MaterialTheme.typography.titleLarge,
+                style = MaterialTheme.typography.titleLarge.copy(
+                    brush = Brush.horizontalGradient(
+                        colors = listOf(GradientPurple, GradientBlue)
+                    )
+                ),
                 fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.primary,
                 overflow = TextOverflow.Ellipsis,
                 maxLines = 1,
             )
@@ -70,7 +80,7 @@ fun NavigationTitle(
             Icon(
                 painter = painterResource(R.drawable.arrow_forward),
                 contentDescription = null,
-                tint = MaterialTheme.colorScheme.primary
+                tint = GradientPurple
             )
         }
     }

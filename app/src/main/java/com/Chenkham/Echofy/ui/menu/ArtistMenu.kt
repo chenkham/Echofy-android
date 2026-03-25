@@ -1,5 +1,9 @@
 ﻿package com.Chenkham.Echofy.ui.menu
 
+import com.Chenkham.Echofy.db.insert
+import com.Chenkham.Echofy.db.update
+import com.Chenkham.Echofy.db.artistSongs
+
 import android.content.Intent
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.WindowInsets
@@ -23,7 +27,10 @@ import com.Chenkham.Echofy.db.entities.Artist
 import com.Chenkham.Echofy.extensions.toMediaItem
 import com.Chenkham.Echofy.playback.queues.ListQueue
 import com.Chenkham.Echofy.ui.component.ArtistListItem
-import com.Chenkham.Echofy.ui.component.GridMenu
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.GridItemSpan
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import com.Chenkham.Echofy.ui.component.GridMenuItem
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -43,37 +50,38 @@ fun ArtistMenu(
     val artistState = database.artist(originalArtist.id).collectAsState(initial = originalArtist)
     val artist = artistState.value ?: originalArtist
 
-    ArtistListItem(
-        artist = artist,
-        badges = {},
-        trailingContent = {
-            IconButton(
-                onClick = {
-                    database.transaction {
-                        update(artist.artist.toggleLike())
-                    }
-                },
-            ) {
-                Icon(
-                    painter = painterResource(if (artist.artist.bookmarkedAt != null) R.drawable.favorite else R.drawable.favorite_border),
-                    tint = if (artist.artist.bookmarkedAt != null) MaterialTheme.colorScheme.error else LocalContentColor.current,
-                    contentDescription = null,
-                )
-            }
-        },
-    )
 
-    HorizontalDivider()
-
-    GridMenu(
-        contentPadding =
-            PaddingValues(
-                start = 8.dp,
-                top = 8.dp,
-                end = 8.dp,
-                bottom = 8.dp + WindowInsets.systemBars.asPaddingValues().calculateBottomPadding(),
-            ),
+    LazyVerticalGrid(
+        columns = GridCells.Fixed(2),
+        contentPadding = PaddingValues(
+            bottom = WindowInsets.systemBars.asPaddingValues().calculateBottomPadding() + 8.dp
+        ),
     ) {
+        item(span = { GridItemSpan(2) }) {
+            Column {
+                ArtistListItem(
+                    artist = artist,
+                    badges = {},
+                    trailingContent = {
+                        IconButton(
+                            onClick = {
+                                database.transaction {
+                                    update(artist.artist.toggleLike())
+                                }
+                            },
+                        ) {
+                            Icon(
+                                painter = painterResource(if (artist.artist.bookmarkedAt != null) R.drawable.favorite else R.drawable.favorite_border),
+                                tint = if (artist.artist.bookmarkedAt != null) MaterialTheme.colorScheme.error else LocalContentColor.current,
+                                contentDescription = null,
+                            )
+                        }
+                    },
+                )
+                HorizontalDivider()
+            }
+        }
+
         if (artist.songCount > 0) {
             GridMenuItem(
                 icon = R.drawable.play,

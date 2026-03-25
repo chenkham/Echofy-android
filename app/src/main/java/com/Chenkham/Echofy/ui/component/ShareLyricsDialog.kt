@@ -1,4 +1,4 @@
-﻿package com.Chenkham.Echofy.ui.component
+package com.Chenkham.Echofy.ui.component
 
 import android.content.Intent
 import android.widget.Toast
@@ -11,6 +11,10 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.LocalOverscrollConfiguration
+
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -48,6 +52,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.SheetValue
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.material3.Slider
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
@@ -85,6 +90,15 @@ import coil.request.ImageRequest
 import com.Chenkham.Echofy.R
 import com.Chenkham.Echofy.models.MediaMetadata
 import com.Chenkham.Echofy.utils.ComposeToImage
+import com.Chenkham.Echofy.ui.component.ImageCustomization
+import com.Chenkham.Echofy.ui.component.BackgroundStyle
+import com.Chenkham.Echofy.ui.component.FontStyle
+import com.Chenkham.Echofy.ui.component.TextAlignment as CustomTextAlignment
+import com.Chenkham.Echofy.ui.component.LogoPosition
+import com.Chenkham.Echofy.ui.component.LogoSize
+import com.Chenkham.Echofy.ui.component.ColorPreset
+import com.Chenkham.Echofy.ui.component.colorPresets
+import com.Chenkham.Echofy.ui.component.LyricsImageCardPreview
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -331,7 +345,7 @@ fun ShareLyricsDialog(
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
 fun ShareLyricsImageCustomizationSheet(
     lyricsText: String,
@@ -397,13 +411,17 @@ fun ShareLyricsImageCustomizationSheet(
         dragHandle = { BottomSheetDefaults.DragHandle() },
         shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp)
     ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .fillMaxHeight(0.9f)
-                .verticalScroll(rememberScrollState())
-                .padding(bottom = 16.dp)
+        // Disable overscroll to prevent vibration/bounce effect
+        CompositionLocalProvider(
+            LocalOverscrollConfiguration provides null
         ) {
+            LazyColumn(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .fillMaxHeight(0.9f)
+                    .padding(bottom = 16.dp)
+            ) {
+                item {
             // Header
             Row(
                 modifier = Modifier
@@ -652,30 +670,30 @@ fun ShareLyricsImageCustomizationSheet(
                             horizontalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
                             FilterChip(
-                                selected = selectedCustomization.textAlignment == TextAlignment.LEFT,
+                                selected = selectedCustomization.textAlignment == CustomTextAlignment.LEFT,
                                 onClick = {
                                     selectedCustomization = selectedCustomization.copy(
-                                        textAlignment = TextAlignment.LEFT
+                                        textAlignment = CustomTextAlignment.LEFT
                                     )
                                 },
                                 label = { Text("Left", fontSize = 12.sp) },
                                 modifier = Modifier.weight(1f)
                             )
                             FilterChip(
-                                selected = selectedCustomization.textAlignment == TextAlignment.CENTER,
+                                selected = selectedCustomization.textAlignment == CustomTextAlignment.CENTER,
                                 onClick = {
                                     selectedCustomization = selectedCustomization.copy(
-                                        textAlignment = TextAlignment.CENTER
+                                        textAlignment = CustomTextAlignment.CENTER
                                     )
                                 },
                                 label = { Text("Center", fontSize = 12.sp) },
                                 modifier = Modifier.weight(1f)
                             )
                             FilterChip(
-                                selected = selectedCustomization.textAlignment == TextAlignment.RIGHT,
+                                selected = selectedCustomization.textAlignment == CustomTextAlignment.RIGHT,
                                 onClick = {
                                     selectedCustomization = selectedCustomization.copy(
-                                        textAlignment = TextAlignment.RIGHT
+                                        textAlignment = CustomTextAlignment.RIGHT
                                     )
                                 },
                                 label = { Text("Right", fontSize = 12.sp) },
@@ -970,6 +988,8 @@ fun ShareLyricsImageCustomizationSheet(
 
             Spacer(modifier = Modifier.height(16.dp))
         }
+    }
+    } // End CompositionLocalProvider
     }
 }
 

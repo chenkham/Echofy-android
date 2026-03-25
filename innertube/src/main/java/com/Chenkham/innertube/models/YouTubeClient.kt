@@ -102,5 +102,23 @@ data class YouTubeClient(
             loginSupported = false,
             useSignatureTimestamp = false
         )
+
+        val ANDROID_TESTSUITE = YouTubeClient(
+            clientName = "ANDROID_TESTSUITE",
+            clientVersion = "1.48",
+            clientId = "30",
+            userAgent = "GoogleInternal/1.0 (Android 5.1.1; Genymotion Genymotion Phone - 5.1.1 - API 22 - 1080x1920; Build/LMY48T; 2026-03-24)",
+            loginSupported = false,
+            useSignatureTimestamp = false
+        )
+
+        val ANDROID_MUSIC = YouTubeClient(
+            clientName = "ANDROID_MUSIC",
+            clientVersion = "6.41.52",
+            clientId = "21",
+            userAgent = "com.google.android.apps.youtube.music/6.41.52 (Linux; U; Android 12; Pixel 6 Pro)",
+            loginSupported = true,
+            useSignatureTimestamp = true
+        )
     }
 }

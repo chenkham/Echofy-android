@@ -65,6 +65,9 @@ import com.Chenkham.Echofy.db.entities.Song
 import com.Chenkham.Echofy.extensions.tryOrNull
 import com.Chenkham.Echofy.ui.component.IconButton
 import com.Chenkham.Echofy.ui.component.ListPreference
+import com.Chenkham.Echofy.ui.component.SwitchPreference
+import com.Chenkham.Echofy.ui.component.PreferenceGroupTitle
+import com.Chenkham.Echofy.constants.AutoClearCacheOnCloseKey
 import com.Chenkham.Echofy.ui.utils.backToMain
 import com.Chenkham.Echofy.ui.utils.formatFileSize
 import com.Chenkham.Echofy.utils.rememberPreference
@@ -90,11 +93,11 @@ fun StorageSettings(
     val coroutineScope = rememberCoroutineScope()
     val (maxImageCacheSize, onMaxImageCacheSizeChange) = rememberPreference(
         key = MaxImageCacheSizeKey,
-        defaultValue = -1
+        defaultValue = 256
     )
     val (maxSongCacheSize, onMaxSongCacheSizeChange) = rememberPreference(
         key = MaxSongCacheSizeKey,
-        defaultValue = -1
+        defaultValue = 256
     )
 
     var imageCacheSize by remember { mutableLongStateOf(imageDiskCache.size) }
@@ -230,6 +233,100 @@ fun StorageSettings(
                     )
                 }
             )
+
+            // Data Privacy Section
+            Spacer(Modifier.height(16.dp))
+            PreferenceGroupTitle(title = stringResource(R.string.data_privacy))
+
+            // Disable Video Cache toggle
+            val (disableVideoCache, onDisableVideoCacheChange) = rememberPreference(
+                key = com.Chenkham.Echofy.constants.VideoCacheEnabledKey,
+                defaultValue = true // Default ON = video caching disabled
+            )
+            
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(20.dp),
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f)
+                ),
+                elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+            ) {
+                Column(modifier = Modifier.padding(8.dp)) {
+                    SwitchPreference(
+                        title = { Text("Disable Video Cache") },
+                        description = "When enabled, videos will not be cached to save storage. Recommended for most users.",
+                        checked = disableVideoCache,
+                        onCheckedChange = onDisableVideoCacheChange
+                    )
+                }
+            }
+            
+            Spacer(Modifier.height(8.dp))
+
+            // Auto-clear cache toggle
+            val (autoClearCache, onAutoClearCacheChange) = rememberPreference(
+                key = AutoClearCacheOnCloseKey,
+                defaultValue = false
+            )
+            
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(20.dp),
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f)
+                ),
+                elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+            ) {
+                Column(modifier = Modifier.padding(8.dp)) {
+                    SwitchPreference(
+                        title = { Text(stringResource(R.string.auto_clear_cache_on_close)) },
+                        description = stringResource(R.string.auto_clear_cache_on_close_description),
+                        checked = autoClearCache,
+                        onCheckedChange = onAutoClearCacheChange
+                    )
+                }
+            }
+
+            // Clear Listening Stats
+            var showClearStatsDialog by remember { mutableStateOf(false) }
+            
+            StorageCard(
+                title = stringResource(R.string.listening_history),
+                icon = R.drawable.history,
+                usedSize = 0L, // Placeholder - we don't track size of events table
+                maxSize = null,
+                progress = 0f,
+                onClearClick = { showClearStatsDialog = true },
+                onManageClick = null
+            )
+
+            if (showClearStatsDialog) {
+                androidx.compose.material3.AlertDialog(
+                    onDismissRequest = { showClearStatsDialog = false },
+                    title = { Text(stringResource(R.string.clear_listening_history)) },
+                    text = { Text(stringResource(R.string.clear_listening_history_warning)) },
+                    confirmButton = {
+                        androidx.compose.material3.TextButton(
+                            onClick = {
+                                coroutineScope.launch(Dispatchers.IO) {
+                                    viewModel.clearListeningHistory()
+                                }
+                                showClearStatsDialog = false
+                            }
+                        ) {
+                            Text(stringResource(R.string.clear), color = MaterialTheme.colorScheme.error)
+                        }
+                    },
+                    dismissButton = {
+                        androidx.compose.material3.TextButton(
+                            onClick = { showClearStatsDialog = false }
+                        ) {
+                            Text(stringResource(R.string.cancel))
+                        }
+                    }
+                )
+            }
         }
 
         TopAppBar(

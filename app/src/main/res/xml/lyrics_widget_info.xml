@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<appwidget-provider xmlns:android="http://schemas.android.com/apk/res/android"
+    android:description="@string/app_name"
+    android:initialKeyguardLayout="@layout/widget_lyrics"
+    android:initialLayout="@layout/widget_lyrics"
+    android:minWidth="250dp"
+    android:minHeight="180dp"
+    android:previewImage="@drawable/lyrics"
+    android:resizeMode="horizontal|vertical"
+    android:updatePeriodMillis="0"
+    android:widgetCategory="home_screen" />

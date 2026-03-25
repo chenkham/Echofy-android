@@ -166,7 +166,7 @@ fun AboutScreen(
         Spacer(Modifier.height(10.dp))
 
         Text(
-            text = "Developed by Chenkham",
+            text = "Join our Community",
             style = MaterialTheme.typography.titleMedium.copy(
                 fontFamily = FontFamily.Monospace
             ),
@@ -194,16 +194,27 @@ fun AboutScreen(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 IconButton(
-                    onClick = { uriHandler.openUri("https://www.instagram.com/chenkham__?igsh=MWRlZ3R1OTlmYWV6YQ==") }
+                    onClick = { uriHandler.openUri("https://t.me/+wvOclqGgyqE0YzA1") }
                 ) {
                     Icon(
                         modifier = Modifier.size(24.dp),
-                        painter = painterResource(R.drawable.instagram),
-                        contentDescription = null
+                        painter = painterResource(R.drawable.telegram),
+                        contentDescription = "Telegram"
                     )
                 }
             }
         }
+
+        Spacer(Modifier.height(10.dp))
+
+        Text(
+            text = "Echofy is a powerful music player designed for seamless streaming and local playback. Enjoy your favorite tunes with high-quality audio and a beautiful, intuitive interface.",
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.padding(horizontal = 24.dp),
+            textAlign = androidx.compose.ui.text.style.TextAlign.Center
+        )
+
         Spacer(Modifier.height(20.dp))
 
     }

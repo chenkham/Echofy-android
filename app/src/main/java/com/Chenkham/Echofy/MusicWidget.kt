@@ -20,6 +20,10 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import java.util.concurrent.TimeUnit
+import androidx.media3.session.MediaController
+import androidx.media3.session.SessionToken
+import com.google.common.util.concurrent.ListenableFuture
+import kotlinx.coroutines.withContext
 
 class MusicWidget : AppWidgetProvider() {
     private val handler = Handler(Looper.getMainLooper())
@@ -47,19 +51,29 @@ class MusicWidget : AppWidgetProvider() {
 
     override fun onReceive(context: Context, intent: Intent) {
         super.onReceive(context, intent)
-        when (intent.action) {
+        
+        val playerConnection = PlayerConnection.instance
+        if (playerConnection != null) {
+            handleActionWithPlayerConnection(context, intent.action, playerConnection)
+        } else {
+            handleActionWithMediaController(context, intent.action)
+        }
+    }
+
+    private fun handleActionWithPlayerConnection(context: Context, action: String?, playerConnection: PlayerConnection) {
+        when (action) {
             ACTION_PLAY_PAUSE -> {
-                PlayerConnection.instance?.togglePlayPause()
+                playerConnection.togglePlayPause()
                 updateAllWidgets(context)
             }
 
             ACTION_PREV -> {
-                PlayerConnection.instance?.seekToPrevious()
+                playerConnection.seekToPrevious()
                 updateAllWidgets(context)
             }
 
             ACTION_NEXT -> {
-                PlayerConnection.instance?.seekToNext()
+                playerConnection.seekToNext()
                 updateAllWidgets(context)
             }
 
@@ -84,6 +98,95 @@ class MusicWidget : AppWidgetProvider() {
 
             ACTION_STATE_CHANGED, ACTION_UPDATE_PROGRESS -> {
                 updateAllWidgets(context)
+            }
+        }
+    }
+
+    private fun handleActionWithMediaController(context: Context, action: String?) {
+        if (action == ACTION_OPEN_APP) {
+            openApp(context)
+            return
+        }
+
+        CoroutineScope(Dispatchers.Main).launch {
+            val tokenContext = context.applicationContext
+            val sessionToken = SessionToken(tokenContext, ComponentName(tokenContext, com.Chenkham.Echofy.playback.MusicService::class.java))
+            val controllerFuture = MediaController.Builder(tokenContext, sessionToken).buildAsync()
+            
+            try {
+                // Wait for controller
+                val controller = withContext(Dispatchers.IO) { controllerFuture.get() }
+                
+                when (action) {
+                    ACTION_PLAY_PAUSE -> {
+                        if (controller.playWhenReady) {
+                            controller.pause()
+                        } else {
+                            if (controller.playbackState == Player.STATE_IDLE || controller.playbackState == Player.STATE_ENDED) {
+                                controller.prepare()
+                            }
+                            controller.play()
+                            
+                            // If the service process was completely killed, the controller connection restores the Service, 
+                            // but the persistent queue loads asynchronously. play() is ignored if the queue is empty.
+                            // We wait for the queue to load and retry play.
+                            if (controller.mediaItemCount == 0) {
+                                withContext(Dispatchers.IO) {
+                                    var retries = 0
+                                    while (controller.mediaItemCount == 0 && retries < 20) {
+                                        kotlinx.coroutines.delay(100)
+                                        retries++
+                                    }
+                                }
+                                controller.prepare()
+                                controller.play()
+                            }
+                        }
+                    }
+                    ACTION_PREV -> {
+                        if (controller.hasPreviousMediaItem() || controller.currentPosition > 3000) {
+                            controller.seekToPrevious()
+                            controller.prepare()
+                            controller.play()
+                        }
+                    }
+                    ACTION_NEXT -> {
+                        if (controller.hasNextMediaItem()) {
+                            controller.seekToNext()
+                            controller.prepare()
+                            controller.play()
+                        }
+                    }
+                    ACTION_SHUFFLE -> {
+                        controller.shuffleModeEnabled = !controller.shuffleModeEnabled
+                    }
+                    ACTION_REPLAY -> {
+                        controller.repeatMode = if (controller.repeatMode == Player.REPEAT_MODE_ONE) {
+                            Player.REPEAT_MODE_OFF
+                        } else {
+                            Player.REPEAT_MODE_ONE
+                        }
+                    }
+                    ACTION_LIKE -> {
+                        // MediaController does not natively support like directly without custom session commands
+                        // We will skip this or send a custom command if supported, for now skip for background widget clicks
+                    }
+                }
+                
+                // Redraw with current state from controller
+                val appWidgetManager = AppWidgetManager.getInstance(context)
+                val widgetIds = appWidgetManager.getAppWidgetIds(
+                    ComponentName(context, MusicWidget::class.java)
+                )
+                if (widgetIds.isNotEmpty()) {
+                    widgetIds.forEach { updateWidgetWithPlayer(context, appWidgetManager, it, controller, false) }
+                }
+                
+                // Release controller
+                MediaController.releaseFuture(controllerFuture)
+                
+            } catch (e: Exception) {
+                // Ignore, unable to connect
             }
         }
     }
@@ -143,7 +246,23 @@ class MusicWidget : AppWidgetProvider() {
                 ComponentName(context, MusicWidget::class.java)
             )
             if (widgetIds.isNotEmpty()) {
-                widgetIds.forEach { updateWidget(context, appWidgetManager, it) }
+                val playerConnection = PlayerConnection.instance
+                if (playerConnection != null) {
+                    widgetIds.forEach { updateWidgetWithPlayer(context, appWidgetManager, it, playerConnection.player, playerConnection.isCurrentSongLiked()) }
+                } else {
+                    // Try to fetch state via MediaController
+                    CoroutineScope(Dispatchers.Main).launch {
+                        val sessionToken = SessionToken(context, ComponentName(context, com.Chenkham.Echofy.playback.MusicService::class.java))
+                        val controllerFuture = MediaController.Builder(context, sessionToken).buildAsync()
+                        try {
+                            val controller = withContext(Dispatchers.IO) { controllerFuture.get() }
+                            widgetIds.forEach { updateWidgetWithPlayer(context, appWidgetManager, it, controller, false) }
+                            MediaController.releaseFuture(controllerFuture)
+                        } catch (e: Exception) {
+                            widgetIds.forEach { updateWidgetWithPlayer(context, appWidgetManager, it, null, false) }
+                        }
+                    }
+                }
             }
         }
 
@@ -152,16 +271,28 @@ class MusicWidget : AppWidgetProvider() {
             appWidgetManager: AppWidgetManager,
             appWidgetId: Int,
         ) {
-            val views = RemoteViews(context.packageName, R.layout.widget_music)
             val playerConnection = PlayerConnection.instance
-            val player = playerConnection?.player
+            if (playerConnection != null) {
+                updateWidgetWithPlayer(context, appWidgetManager, appWidgetId, playerConnection.player, playerConnection.isCurrentSongLiked())
+            } else {
+                updateWidgetWithPlayer(context, appWidgetManager, appWidgetId, null, false)
+            }
+        }
+
+        private fun updateWidgetWithPlayer(
+            context: Context,
+            appWidgetManager: AppWidgetManager,
+            appWidgetId: Int,
+            player: Player?,
+            isLiked: Boolean
+        ) {
+            val views = RemoteViews(context.packageName, R.layout.widget_music)
 
             // Configurar Pending Intents primero para mejor respuesta
             setPendingIntents(context, views)
 
-
             player?.let { player ->
-                // InformaciÃ³n de la canciÃ³n
+                // Informacíon de la canción
                 val songTitle = player.mediaMetadata.title?.toString()
                     ?: context.getString(R.string.song_title)
                 val artist = player.mediaMetadata.artist?.toString()
@@ -177,8 +308,8 @@ class MusicWidget : AppWidgetProvider() {
                 val shuffleIcon = if (player.shuffleModeEnabled) R.drawable.shuffle_on else R.drawable.shuffle
                 views.setImageViewResource(R.id.widget_shuffle, shuffleIcon)
 
-                val likeIcon = if (playerConnection.isCurrentSongLiked())
-                    R.drawable.favorite else R.drawable.favorite_border
+                val likeIcon = if (isLiked)
+                    R.drawable.heart_fill else R.drawable.heart
                 views.setImageViewResource(R.id.widget_like, likeIcon)
 
                 // Progress y tiempos

@@ -33,7 +33,17 @@ import com.Chenkham.Echofy.constants.SongSortDescendingKey
 import com.Chenkham.Echofy.constants.SongSortType
 import com.Chenkham.Echofy.constants.SongSortTypeKey
 import com.Chenkham.Echofy.constants.TopSize
+import com.Chenkham.Echofy.constants.YtmSyncKey
 import com.Chenkham.Echofy.db.MusicDatabase
+import com.Chenkham.Echofy.db.albums
+import com.Chenkham.Echofy.db.albumsLiked
+import com.Chenkham.Echofy.db.artists
+import com.Chenkham.Echofy.db.artistSongs
+import com.Chenkham.Echofy.db.artistsBookmarked
+import com.Chenkham.Echofy.db.likedSongs
+import com.Chenkham.Echofy.db.playlists
+import com.Chenkham.Echofy.db.songs
+import com.Chenkham.Echofy.db.update
 import com.Chenkham.Echofy.extensions.reversed
 import com.Chenkham.Echofy.extensions.toEnum
 import com.Chenkham.Echofy.playback.DownloadUtil
@@ -263,6 +273,20 @@ constructor(
         context.dataStore.data
             .map { it[TopSize] ?: "50" }
             .distinctUntilChanged()
+
+    init {
+        // Auto-sync YT Music playlists when ViewModel is created (i.e. when Library screen loads),
+        // so playlists appear immediately without the user needing to tap the Playlists tab first.
+        viewModelScope.launch(Dispatchers.IO) {
+            val ytmSync = context.dataStore.data
+                .map { it[YtmSyncKey] ?: true }
+                .stateIn(viewModelScope, SharingStarted.Eagerly, true)
+                .value
+            if (ytmSync) {
+                syncUtils.syncSavedPlaylists()
+            }
+        }
+    }
 }
 
 @HiltViewModel
@@ -296,6 +320,7 @@ class LibraryMixViewModel
 constructor(
     @ApplicationContext context: Context,
     database: MusicDatabase,
+    private val syncUtils: SyncUtils,
 ) : ViewModel() {
     val topValue =
         context.dataStore.data
@@ -353,6 +378,17 @@ constructor(
                             }
                         }
                     }
+            }
+        }
+        // Auto-sync YT Music saved playlists so they appear immediately on Library open
+        // without the user needing to tap the Playlists filter chip first.
+        viewModelScope.launch(Dispatchers.IO) {
+            val ytmSync = context.dataStore.data
+                .map { it[YtmSyncKey] ?: true }
+                .stateIn(viewModelScope, SharingStarted.Eagerly, true)
+                .value
+            if (ytmSync) {
+                syncUtils.syncSavedPlaylists()
             }
         }
     }

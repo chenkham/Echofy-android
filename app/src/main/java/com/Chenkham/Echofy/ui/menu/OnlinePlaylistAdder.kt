@@ -1,5 +1,9 @@
 ﻿package com.Chenkham.Echofy.ui.menu
 
+import com.Chenkham.Echofy.db.addSongToPlaylist
+import com.Chenkham.Echofy.db.update
+import com.Chenkham.Echofy.db.insert
+
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.padding

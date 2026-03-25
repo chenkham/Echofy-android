@@ -18,6 +18,7 @@ import androidx.navigation.NavType
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
 import com.Chenkham.Echofy.BuildConfig
+import com.Chenkham.Echofy.ads.AdManager
 import com.Chenkham.Echofy.ui.screens.artist.ArtistItemsScreen
 import com.Chenkham.Echofy.ui.screens.artist.ArtistScreen
 import com.Chenkham.Echofy.ui.screens.artist.ArtistSongsScreen
@@ -39,6 +40,11 @@ import com.Chenkham.Echofy.ui.screens.settings.PlayerSettings
 import com.Chenkham.Echofy.ui.screens.settings.PrivacySettings
 import com.Chenkham.Echofy.ui.screens.settings.SettingsScreen
 import com.Chenkham.Echofy.ui.screens.settings.StorageSettings
+import com.Chenkham.Echofy.ui.screens.settings.EqualizerScreen
+import com.Chenkham.Echofy.ui.screens.settings.BackpaperSettings
+import com.Chenkham.Echofy.ui.screens.settings.SaverSettings
+import com.Chenkham.Echofy.ui.utils.TouchBlockingWrapper
+import kotlinx.coroutines.launch
 
 @RequiresApi(Build.VERSION_CODES.TIRAMISU)
 @SuppressLint("UnrememberedMutableState")
@@ -47,38 +53,135 @@ fun NavGraphBuilder.navigationBuilder(
     navController: NavHostController,
     scrollBehavior: TopAppBarScrollBehavior,
     latestVersionName: String,
+    adManager: AdManager? = null,
+    isOnboardingCompleted: Boolean = true,
+    onOnboardingComplete: () -> Unit = {},
 ) {
-    composable(Screens.Home.route) {
-        HomeScreen(navController)
+    composable("splash") {
+        TouchBlockingWrapper {
+            SplashScreen(
+                onNavigateToOnboarding = {
+                    navController.navigate("onboarding") {
+                        popUpTo("splash") { inclusive = true }
+                    }
+                },
+                onNavigateToHome = {
+                    navController.navigate(Screens.Home.route) {
+                        popUpTo("splash") { inclusive = true }
+                    }
+                },
+                isOnboardingCompleted = isOnboardingCompleted
+            )
+        }
     }
+    composable("onboarding") {
+        TouchBlockingWrapper {
+            OnboardingScreen(
+                onLoginClick = {
+                    navController.navigate("sign_in?chained=true")
+                },
+                onSkipClick = {
+                    onOnboardingComplete()
+                    navController.navigate(Screens.Home.route) {
+                        popUpTo("onboarding") { inclusive = true }
+                    }
+                }
+            )
+        }
+    }
+    composable(Screens.Home.route) {
+        TouchBlockingWrapper {
+            HomeScreen(navController, adManager = adManager)
+        }
+    }
+    composable(
+        route = "sign_in?chained={chained}",
+        arguments = listOf(
+            navArgument("chained") {
+                type = NavType.BoolType
+                defaultValue = false
+            }
+        )
+    ) { backStackEntry ->
+        TouchBlockingWrapper {
+            val chained = backStackEntry.arguments?.getBoolean("chained") ?: false
+            val mainViewModel: com.Chenkham.Echofy.MainViewModel = androidx.hilt.navigation.compose.hiltViewModel()
+            val coroutineScope = androidx.compose.runtime.rememberCoroutineScope()
+            com.Chenkham.Echofy.ui.screens.auth.SignInScreen(
+                chained = chained,
+                onSignInSuccess = {
+                    mainViewModel.disableGuestMode()
+                    navController.navigate("login?chained=true") {
+                        popUpTo("sign_in?chained={chained}") { inclusive = true }
+                    }
+                },
+                onContinueAsGuest = {
+                    coroutineScope.launch {
+                        mainViewModel.enableGuestMode()
+                        navController.navigate(Screens.Home.route) {
+                            popUpTo(0) { inclusive = true }
+                        }
+                    }
+                }
+            )
+        }
+    }
+
+    composable(route = "account_settings") {
+        TouchBlockingWrapper {
+            com.Chenkham.Echofy.ui.screens.settings.AccountSettings(
+                navController = navController,
+                scrollBehavior = scrollBehavior
+            )
+        }
+    }
+
     composable(
         Screens.Library.route,
     ) {
-        LibraryScreen(navController)
+        TouchBlockingWrapper {
+            LibraryScreen(navController, adManager = adManager)
+        }
+    }
+
+    composable(
+        Screens.Premium.route
+    ) {
+        TouchBlockingWrapper {
+            com.Chenkham.Echofy.ui.screens.premium.PremiumScreen()
+        }
     }
     composable(Screens.Explore.route) {
-        ExploreScreen(navController,scrollBehavior)
+        TouchBlockingWrapper {
+            ExploreScreen(navController, scrollBehavior, adManager = adManager)
+        }
     }
-    composable(Screens.ListenTogether.route) {
-        ListenTogetherScreen(navController)
-    }
+
     composable("history") {
-        HistoryScreen(navController)
+        TouchBlockingWrapper {
+            HistoryScreen(navController)
+        }
     }
     composable("stats") {
-        StatsScreen(navController)
+        TouchBlockingWrapper {
+            StatsScreen(navController)
+        }
     }
     composable("account") {
-        AccountScreen(navController, scrollBehavior)
+        TouchBlockingWrapper {
+            AccountScreen(navController, scrollBehavior)
+        }
     }
     composable("new_release") {
-        NewReleaseScreen(navController, scrollBehavior)
+        TouchBlockingWrapper {
+            NewReleaseScreen(navController, scrollBehavior)
+        }
     }
     composable("notifications") {
-        NotificationsScreen(navController)
+        TouchBlockingWrapper {
+            NotificationsScreen(navController)
+        }
     }
-
-
 
 
 
@@ -112,7 +215,9 @@ fun NavGraphBuilder.navigationBuilder(
             fadeOut(tween(200))
         },
     ) {
-        OnlineSearchResult(navController)
+        TouchBlockingWrapper {
+            OnlineSearchResult(navController, adManager = adManager)
+        }
     }
     composable(
         route = "album/{albumId}",
@@ -123,7 +228,9 @@ fun NavGraphBuilder.navigationBuilder(
                 },
             ),
     ) {
-        AlbumScreen(navController, scrollBehavior)
+        TouchBlockingWrapper {
+            AlbumScreen(navController, scrollBehavior)
+        }
     }
     composable(
         route = "artist/{artistId}",
@@ -134,11 +241,13 @@ fun NavGraphBuilder.navigationBuilder(
                 },
             ),
     ) { backStackEntry ->
-        val artistId = backStackEntry.arguments?.getString("artistId")!!
-        if (artistId.startsWith("LA")) {
-            ArtistSongsScreen(navController, scrollBehavior)
-        } else {
-            ArtistScreen(navController, scrollBehavior)
+        TouchBlockingWrapper {
+            val artistId = backStackEntry.arguments?.getString("artistId")!!
+            if (artistId.startsWith("LA")) {
+                ArtistSongsScreen(navController, scrollBehavior)
+            } else {
+                ArtistScreen(navController, scrollBehavior)
+            }
         }
     }
     composable(
@@ -150,7 +259,9 @@ fun NavGraphBuilder.navigationBuilder(
                 },
             ),
     ) {
-        ArtistSongsScreen(navController, scrollBehavior)
+        TouchBlockingWrapper {
+            ArtistSongsScreen(navController, scrollBehavior)
+        }
     }
     composable(
         route = "artist/{artistId}/items?browseId={browseId}?params={params}",
@@ -169,7 +280,9 @@ fun NavGraphBuilder.navigationBuilder(
                 },
             ),
     ) {
-        ArtistItemsScreen(navController, scrollBehavior)
+        TouchBlockingWrapper {
+            ArtistItemsScreen(navController, scrollBehavior)
+        }
     }
     composable(
         route = "online_playlist/{playlistId}",
@@ -180,7 +293,9 @@ fun NavGraphBuilder.navigationBuilder(
                 },
             ),
     ) {
-        OnlinePlaylistScreen(navController, scrollBehavior)
+        TouchBlockingWrapper {
+            OnlinePlaylistScreen(navController, scrollBehavior)
+        }
     }
     composable(
         route = "local_playlist/{playlistId}",
@@ -191,7 +306,9 @@ fun NavGraphBuilder.navigationBuilder(
                 },
             ),
     ) {
-        LocalPlaylistScreen(navController, scrollBehavior)
+        TouchBlockingWrapper {
+            LocalPlaylistScreen(navController, scrollBehavior)
+        }
     }
     composable(
         route = "auto_playlist/{playlist}",
@@ -202,7 +319,9 @@ fun NavGraphBuilder.navigationBuilder(
                 },
             ),
     ) {
-        AutoPlaylistScreen(navController, scrollBehavior)
+        TouchBlockingWrapper {
+            AutoPlaylistScreen(navController, scrollBehavior)
+        }
     }
     composable(
         route = "cache_playlist/{playlist}",
@@ -213,7 +332,9 @@ fun NavGraphBuilder.navigationBuilder(
                 },
             ),
     ) {
-        CachePlaylistScreen(navController, scrollBehavior)
+        TouchBlockingWrapper {
+            CachePlaylistScreen(navController, scrollBehavior)
+        }
     }
 
 
@@ -227,7 +348,9 @@ fun NavGraphBuilder.navigationBuilder(
                 },
             ),
     ) {
-        TopPlaylistScreen(navController, scrollBehavior)
+        TouchBlockingWrapper {
+            TopPlaylistScreen(navController, scrollBehavior)
+        }
     }
     composable(
         route = "youtube_browse/{browseId}?params={params}",
@@ -243,46 +366,107 @@ fun NavGraphBuilder.navigationBuilder(
                 },
             ),
     ) {
-        YouTubeBrowseScreen(navController)
+        TouchBlockingWrapper {
+            YouTubeBrowseScreen(navController)
+        }
+    }
+    composable(
+        route = "podcast/{podcastId}",
+        arguments = listOf(
+            navArgument("podcastId") {
+                type = NavType.StringType
+            }
+        )
+    ) {
+        TouchBlockingWrapper {
+            PodcastScreen(navController, scrollBehavior)
+        }
     }
 
 
     composable("settings") {
-        val latestVersion by mutableLongStateOf(BuildConfig.VERSION_CODE.toLong())
-        SettingsScreen(latestVersion, navController, scrollBehavior)
+        TouchBlockingWrapper {
+            val latestVersion by mutableLongStateOf(BuildConfig.VERSION_CODE.toLong())
+            SettingsScreen(latestVersion, navController, scrollBehavior)
+        }
     }
     composable("settings/appearance") {
-        AppearanceSettings(navController, scrollBehavior)
+        TouchBlockingWrapper {
+            AppearanceSettings(navController, scrollBehavior)
+        }
+    }
+    composable("settings/backpaper") {
+        TouchBlockingWrapper {
+            BackpaperSettings(navController, scrollBehavior)
+        }
     }
     composable("settings/account") {
-        AccountSettings(navController, scrollBehavior)
+        TouchBlockingWrapper {
+            AccountSettings(navController, scrollBehavior)
+        }
     }
     composable("settings/content") {
-        ContentSettings(navController, scrollBehavior)
+        TouchBlockingWrapper {
+            ContentSettings(navController, scrollBehavior)
+        }
     }
     composable("settings/player") {
-        PlayerSettings(navController, scrollBehavior)
+        TouchBlockingWrapper {
+            PlayerSettings(navController, scrollBehavior)
+        }
     }
     composable("settings/storage") {
-        StorageSettings(navController, scrollBehavior)
+        TouchBlockingWrapper {
+            StorageSettings(navController, scrollBehavior)
+        }
     }
     composable("settings/privacy") {
-        PrivacySettings(navController, scrollBehavior)
+        TouchBlockingWrapper {
+            PrivacySettings(navController, scrollBehavior)
+        }
     }
     composable("settings/backup_restore") {
-        BackupAndRestore(navController, scrollBehavior)
+        TouchBlockingWrapper {
+            BackupAndRestore(navController, scrollBehavior)
+        }
     }
     composable("settings/discord") {
-        DiscordSettings(navController, scrollBehavior)
+        TouchBlockingWrapper {
+            DiscordSettings(navController, scrollBehavior)
+        }
     }
     composable("settings/discord/login") {
-        DiscordLoginScreen(navController)
+        TouchBlockingWrapper {
+            DiscordLoginScreen(navController)
+        }
     }
     composable("settings/about") {
-        AboutScreen(navController, scrollBehavior)
+        TouchBlockingWrapper {
+            AboutScreen(navController, scrollBehavior)
+        }
     }
-    composable("login") {
-        LoginScreen(navController)
+    composable("settings/equalizer") {
+        TouchBlockingWrapper {
+            EqualizerScreen(navController)
+        }
+    }
+    composable("settings/saver") {
+        TouchBlockingWrapper {
+            SaverSettings(navController, scrollBehavior)
+        }
+    }
+    composable(
+        route = "login?chained={chained}",
+        arguments = listOf(
+            navArgument("chained") {
+                type = NavType.BoolType
+                defaultValue = false
+            }
+        )
+    ) { backStackEntry ->
+        TouchBlockingWrapper {
+            val chained = backStackEntry.arguments?.getBoolean("chained") ?: false
+            LoginScreen(navController, chained)
+        }
     }
 }
-

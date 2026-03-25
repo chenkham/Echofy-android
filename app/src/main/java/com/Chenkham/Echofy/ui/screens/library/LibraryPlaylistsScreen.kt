@@ -67,6 +67,9 @@ import com.Chenkham.Echofy.ui.component.LocalMenuState
 import com.Chenkham.Echofy.ui.component.PlaylistGridItem
 import com.Chenkham.Echofy.ui.component.PlaylistListItem
 import com.Chenkham.Echofy.ui.component.SortHeader
+import com.Chenkham.Echofy.ui.component.SmartPlaylistListItem
+import com.Chenkham.Echofy.ui.component.SmartPlaylistGridItem
+import androidx.compose.ui.graphics.Color
 import com.Chenkham.Echofy.utils.rememberEnumPreference
 import com.Chenkham.Echofy.utils.rememberPreference
 import com.Chenkham.Echofy.viewmodels.LibraryPlaylistsViewModel
@@ -265,16 +268,12 @@ fun LibraryPlaylistsScreen(
                         key = "likedPlaylist",
                         contentType = { CONTENT_TYPE_PLAYLIST },
                     ) {
-                        PlaylistListItem(
-                            playlist = likedPlaylist,
-                            autoPlaylist = true,
-                            modifier =
-                                Modifier
-                                    .fillMaxWidth()
-                                    .clickable {
-                                        navController.navigate("auto_playlist/liked")
-                                    }
-                                    .animateItem(),
+                        SmartPlaylistListItem(
+                            title = stringResource(R.string.liked),
+                            icon = painterResource(R.drawable.favorite),
+                            gradientColors = listOf(Color(0xFF8E2DE2), Color(0xFF4A00E0)),
+                            onClick = { navController.navigate("auto_playlist/liked") },
+                            modifier = Modifier.animateItem()
                         )
                     }
 
@@ -282,16 +281,12 @@ fun LibraryPlaylistsScreen(
                         key = "downloadedPlaylist",
                         contentType = { CONTENT_TYPE_PLAYLIST },
                     ) {
-                        PlaylistListItem(
-                            playlist = downloadPlaylist,
-                            autoPlaylist = true,
-                            modifier =
-                                Modifier
-                                    .fillMaxWidth()
-                                    .clickable {
-                                        navController.navigate("auto_playlist/downloaded")
-                                    }
-                                    .animateItem(),
+                        SmartPlaylistListItem(
+                            title = stringResource(R.string.offline),
+                            icon = painterResource(R.drawable.download),
+                            gradientColors = listOf(Color(0xFF11998e), Color(0xFF38ef7d)),
+                            onClick = { navController.navigate("auto_playlist/downloaded") },
+                            modifier = Modifier.animateItem()
                         )
                     }
 
@@ -299,16 +294,12 @@ fun LibraryPlaylistsScreen(
                         key = "TopPlaylist",
                         contentType = { CONTENT_TYPE_PLAYLIST },
                     ) {
-                        PlaylistListItem(
-                            playlist = topPlaylist,
-                            autoPlaylist = true,
-                            modifier =
-                                Modifier
-                                    .fillMaxWidth()
-                                    .clickable {
-                                        navController.navigate("top_playlist/$topSize")
-                                    }
-                                    .animateItem(),
+                        SmartPlaylistListItem(
+                            title = stringResource(R.string.my_top) + " $topSize",
+                            icon = painterResource(R.drawable.trending_up),
+                            gradientColors = listOf(Color(0xFFf12711), Color(0xFFf5af19)),
+                            onClick = { navController.navigate("top_playlist/$topSize") },
+                            modifier = Modifier.animateItem()
                         )
                     }
 
@@ -316,20 +307,12 @@ fun LibraryPlaylistsScreen(
                         key = "cachePlaylist",
                         contentType = { CONTENT_TYPE_PLAYLIST },
                     ) {
-                        PlaylistGridItem(
-                            playlist = cachePlaylist,
-                            fillMaxWidth = true,
-                            autoPlaylist = true,
-                            modifier =
-                                Modifier
-                                    .fillMaxWidth()
-                                    .combinedClickable(
-                                        onClick = {
-                                            navController.navigate("cache_playlist/cached")
-                                        },
-                                    )
-                                    .animateItem(),
-                            context = LocalContext.current // Pasamos el contexto actual para obtener la URI de la miniatura
+                        SmartPlaylistListItem(
+                            title = stringResource(R.string.cached_playlist),
+                            icon = painterResource(R.drawable.cached),
+                            gradientColors = listOf(Color(0xFF667eea), Color(0xFF764ba2)),
+                            onClick = { navController.navigate("cache_playlist/cached") },
+                            modifier = Modifier.animateItem()
                         )
                     }
 
@@ -393,20 +376,13 @@ fun LibraryPlaylistsScreen(
                         key = "likedPlaylist",
                         contentType = { CONTENT_TYPE_PLAYLIST },
                     ) {
-                        PlaylistGridItem(
-                            playlist = likedPlaylist,
+                        SmartPlaylistGridItem(
+                            title = stringResource(R.string.liked),
+                            icon = painterResource(R.drawable.favorite),
+                            gradientColors = listOf(Color(0xFF8E2DE2), Color(0xFF4A00E0)),
+                            onClick = { navController.navigate("auto_playlist/liked") },
                             fillMaxWidth = true,
-                            autoPlaylist = true,
-                            modifier =
-                                Modifier
-                                    .fillMaxWidth()
-                                    .combinedClickable(
-                                        onClick = {
-                                            navController.navigate("auto_playlist/liked")
-                                        },
-                                    )
-                                    .animateItem(),
-                            context = LocalContext.current // Pasamos el contexto actual para obtener la URI de la miniatura
+                            modifier = Modifier.animateItem()
                         )
                     }
 
@@ -414,20 +390,13 @@ fun LibraryPlaylistsScreen(
                         key = "downloadedPlaylist",
                         contentType = { CONTENT_TYPE_PLAYLIST },
                     ) {
-                        PlaylistGridItem(
-                            playlist = downloadPlaylist,
+                        SmartPlaylistGridItem(
+                            title = stringResource(R.string.offline),
+                            icon = painterResource(R.drawable.download),
+                            gradientColors = listOf(Color(0xFF11998e), Color(0xFF38ef7d)),
+                            onClick = { navController.navigate("auto_playlist/downloaded") },
                             fillMaxWidth = true,
-                            autoPlaylist = true,
-                            modifier =
-                                Modifier
-                                    .fillMaxWidth()
-                                    .combinedClickable(
-                                        onClick = {
-                                            navController.navigate("auto_playlist/downloaded")
-                                        },
-                                    )
-                                    .animateItem(),
-                            context = LocalContext.current // Pasamos el contexto actual para obtener la URI de la miniatura
+                            modifier = Modifier.animateItem()
                         )
                     }
 
@@ -435,20 +404,13 @@ fun LibraryPlaylistsScreen(
                         key = "TopPlaylist",
                         contentType = { CONTENT_TYPE_PLAYLIST },
                     ) {
-                        PlaylistGridItem(
-                            playlist = topPlaylist,
+                        SmartPlaylistGridItem(
+                            title = stringResource(R.string.my_top) + " $topSize",
+                            icon = painterResource(R.drawable.trending_up),
+                            gradientColors = listOf(Color(0xFFf12711), Color(0xFFf5af19)),
+                            onClick = { navController.navigate("top_playlist/$topSize") },
                             fillMaxWidth = true,
-                            autoPlaylist = true,
-                            modifier =
-                                Modifier
-                                    .fillMaxWidth()
-                                    .combinedClickable(
-                                        onClick = {
-                                            navController.navigate("top_playlist/$topSize")
-                                        },
-                                    )
-                                    .animateItem(),
-                            context = LocalContext.current // Pasamos el contexto actual para obtener la URI de la miniatura
+                            modifier = Modifier.animateItem()
                         )
                     }
 
@@ -456,20 +418,13 @@ fun LibraryPlaylistsScreen(
                         key = "cachePlaylist",
                         contentType = { CONTENT_TYPE_PLAYLIST },
                     ) {
-                        PlaylistGridItem(
-                            playlist = cachePlaylist,
+                        SmartPlaylistGridItem(
+                            title = stringResource(R.string.cached_playlist),
+                            icon = painterResource(R.drawable.cached),
+                            gradientColors = listOf(Color(0xFF667eea), Color(0xFF764ba2)),
+                            onClick = { navController.navigate("cache_playlist/cached") },
                             fillMaxWidth = true,
-                            autoPlaylist = true,
-                            modifier =
-                                Modifier
-                                    .fillMaxWidth()
-                                    .combinedClickable(
-                                        onClick = {
-                                            navController.navigate("cache_playlist/cached")
-                                        },
-                                    )
-                                    .animateItem(),
-                            context = LocalContext.current // Pasamos el contexto actual para obtener la URI de la miniatura
+                            modifier = Modifier.animateItem()
                         )
                     }
 

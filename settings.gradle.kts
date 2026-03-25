@@ -18,6 +18,7 @@ plugins {
 rootProject.name = "Echofy"
 include(":app")
 include(":innertube")
+include(":ytmusicapi")
 include(":kugou")
 include(":lrclib")
 include(":kizzy")

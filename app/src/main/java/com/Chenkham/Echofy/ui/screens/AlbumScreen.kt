@@ -42,6 +42,7 @@ import androidx.compose.material3.TopAppBarScrollBehavior
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.toMutableStateList
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -89,6 +90,7 @@ import com.Chenkham.Echofy.ui.component.AutoResizeText
 import com.Chenkham.Echofy.ui.component.FontSizeRange
 import com.Chenkham.Echofy.ui.component.LocalMenuState
 import com.Chenkham.Echofy.ui.component.NavigationTitle
+import com.Chenkham.Echofy.ui.component.PrefetchOnVisible
 import com.Chenkham.Echofy.ui.component.SongListItem
 import com.Chenkham.Echofy.ui.component.YouTubeGridItem
 import com.Chenkham.Echofy.ui.component.shimmer.ButtonPlaceholder
@@ -105,7 +107,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import kotlinx.io.IOException
+import java.io.IOException
 
 @OptIn(ExperimentalFoundationApi::class, ExperimentalMaterial3Api::class)
 @Composable
@@ -130,7 +132,9 @@ fun AlbumScreen(
     val albumWithSongs by viewModel.albumWithSongs.collectAsState()
     val otherVersions by viewModel.otherVersions.collectAsState()
 
-    val wrappedSongs = albumWithSongs?.songs?.map { item -> ItemWrapper(item) }?.toMutableList()
+    val wrappedSongs = remember(albumWithSongs) {
+        albumWithSongs?.songs?.map { item -> ItemWrapper(item) }?.toMutableStateList()
+    }
     var selection by remember {
         mutableStateOf(false)
     }
@@ -139,6 +143,7 @@ fun AlbumScreen(
     var downloadState by remember {
         mutableStateOf(Download.STATE_STOPPED)
     }
+    val adManager = com.Chenkham.Echofy.ui.component.LocalAdManager.current
 
     LaunchedEffect(albumWithSongs) {
         val songs = albumWithSongs?.songs?.map { it.id }
@@ -165,7 +170,7 @@ fun AlbumScreen(
     ) {
         val albumWithSongs = albumWithSongs
         if (albumWithSongs != null && albumWithSongs.songs.isNotEmpty()) {
-            item {
+            item(key = "albumHeader") {
                 Column(
                     modifier = Modifier.padding(12.dp),
                 ) {
@@ -340,6 +345,11 @@ fun AlbumScreen(
                                     else -> {
                                         IconButton(
                                             onClick = {
+                                                if (adManager?.isPremium?.value != true) {
+                                                    Toast.makeText(context, R.string.premium_required, Toast.LENGTH_SHORT).show()
+                                                    return@IconButton
+                                                }
+
                                                 albumWithSongs.songs.forEach { song ->
                                                     val downloadRequest =
                                                         DownloadRequest
@@ -438,6 +448,9 @@ fun AlbumScreen(
                     items = wrappedSongs,
                     key = { _, song -> song.item.id },
                 ) { index, songWrapper ->
+                    // INSTANT PLAYBACK: Prefetch URL when song becomes visible
+                    PrefetchOnVisible(mediaId = songWrapper.item.id)
+                    
                     SongListItem(
                         song = songWrapper.item,
                         albumIndex = index + 1,

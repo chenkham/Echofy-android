@@ -188,3 +188,20 @@
 -allowaccessmodification
 -repackageclasses ''
 -flattenpackagehierarchy
+
+# ==============================================================================
+# GOOGLE ADMOB & PLAY BILLING
+# ==============================================================================
+
+# Google Mobile Ads (AdMob)
+-keep class com.google.android.gms.ads.** { *; }
+-keep class com.google.ads.** { *; }
+-dontwarn com.google.android.gms.ads.**
+
+# Google Play Billing
+-keep class com.android.billingclient.** { *; }
+-keep class com.android.vending.billing.** { *; }
+-dontwarn com.android.billingclient.**
+
+# Keep ad-related models
+-keep class com.Chenkham.Echofy.ads.** { *; }

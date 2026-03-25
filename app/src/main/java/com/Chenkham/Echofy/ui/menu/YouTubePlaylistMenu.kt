@@ -5,13 +5,18 @@ import android.content.Intent
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.systemBars
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.GridItemSpan
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -55,6 +60,8 @@ import com.Chenkham.Echofy.constants.ListThumbnailSize
 import com.Chenkham.Echofy.constants.ThumbnailCornerRadius
 import com.Chenkham.Echofy.db.entities.PlaylistEntity
 import com.Chenkham.Echofy.db.entities.PlaylistSongMap
+import com.Chenkham.Echofy.db.insert
+import com.Chenkham.Echofy.db.update
 import com.Chenkham.Echofy.extensions.toMediaItem
 import com.Chenkham.Echofy.models.MediaMetadata
 import com.Chenkham.Echofy.models.toMediaMetadata
@@ -73,6 +80,8 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.flow.collect
+import com.Chenkham.Echofy.ui.component.LocalAdManager
 
 @OptIn(ExperimentalMaterial3Api::class)
 @SuppressLint("MutableCollectionMutableState")
@@ -88,8 +97,11 @@ fun YouTubePlaylistMenu(
     val context = LocalContext.current
     val database = LocalDatabase.current
     val downloadUtil = LocalDownloadUtil.current
+    val adManager = LocalAdManager.current
     val playerConnection = LocalPlayerConnection.current ?: return
-    val dbPlaylist by database.playlistByBrowseId(playlist.id).collectAsState(initial = null)
+    val dbPlaylist by remember(playlist.id) { 
+        database.playlistByBrowseId(playlist.id) 
+    }.collectAsState(initial = null)
 
     var showChoosePlaylistDialog by rememberSaveable { mutableStateOf(false) }
     var showImportPlaylistDialog by rememberSaveable { mutableStateOf(false) }
@@ -123,81 +135,27 @@ fun YouTubePlaylistMenu(
         },
         onDismiss = { showChoosePlaylistDialog = false },
     )
-
-    YouTubeListItem(
-        item = playlist,
-        trailingContent = {
-            if (playlist.id != "LM" && !playlist.isEditable) {
-                IconButton(
-                    onClick = {
-                        if (dbPlaylist?.playlist == null) {
-                            database.transaction {
-                                val playlistEntity = PlaylistEntity(
-                                    name = playlist.title,
-                                    browseId = playlist.id,
-                                    isEditable = false,
-                                    remoteSongCount = playlist.songCountText?.let {
-                                        Regex("""\d+""").find(
-                                            it
-                                        )?.value?.toIntOrNull()
-                                    },
-                                    playEndpointParams = playlist.playEndpoint?.params,
-                                    shuffleEndpointParams = playlist.shuffleEndpoint?.params,
-                                    radioEndpointParams = playlist.radioEndpoint?.params
-                                ).toggleLike()
-                                insert(playlistEntity)
-                                coroutineScope.launch(Dispatchers.IO) {
-                                    songs.ifEmpty {
-                                        YouTube.playlist(playlist.id).completed()
-                                            .getOrNull()?.songs.orEmpty()
-                                    }.map { it.toMediaMetadata() }
-                                        .onEach(::insert)
-                                        .mapIndexed { index, song ->
-                                            PlaylistSongMap(
-                                                songId = song.id,
-                                                playlistId = playlistEntity.id,
-                                                position = index
-                                            )
-                                        }
-                                        .forEach(::insert)
-                                }
-                            }
-                        } else {
-                            database.transaction {
-                                update(dbPlaylist!!.playlist.toggleLike())
-                            }
-                        }
-                    }
-                ) {
-                    Icon(
-                        painter = painterResource(if (dbPlaylist?.playlist?.bookmarkedAt != null) R.drawable.favorite else R.drawable.favorite_border),
-                        tint = if (dbPlaylist?.playlist?.bookmarkedAt != null) MaterialTheme.colorScheme.error else LocalContentColor.current,
-                        contentDescription = null
-                    )
-                }
-            }
-        }
-    )
-    HorizontalDivider()
-
+    
     var downloadState by remember {
         mutableStateOf(Download.STATE_STOPPED)
     }
     LaunchedEffect(songs) {
         if (songs.isEmpty()) return@LaunchedEffect
-        downloadUtil.downloads.collect { downloads ->
-            downloadState =
-                if (songs.all { downloads[it.id]?.state == Download.STATE_COMPLETED })
-                    Download.STATE_COMPLETED
-                else if (songs.all {
-                        downloads[it.id]?.state == Download.STATE_QUEUED
-                                || downloads[it.id]?.state == Download.STATE_DOWNLOADING
-                                || downloads[it.id]?.state == Download.STATE_COMPLETED
-                    })
-                    Download.STATE_DOWNLOADING
-                else
-                    Download.STATE_STOPPED
-        }
+        downloadUtil.downloads
+            .collect { downloads ->
+                downloadState = withContext(Dispatchers.Default) {
+                    if (songs.all { downloads[it.id]?.state == Download.STATE_COMPLETED })
+                        Download.STATE_COMPLETED
+                    else if (songs.all {
+                            downloads[it.id]?.state == Download.STATE_QUEUED
+                                    || downloads[it.id]?.state == Download.STATE_DOWNLOADING
+                                    || downloads[it.id]?.state == Download.STATE_COMPLETED
+                        })
+                        Download.STATE_DOWNLOADING
+                    else
+                        Download.STATE_STOPPED
+                }
+            }
     }
     var showRemoveDownloadDialog by remember {
         mutableStateOf(false)
@@ -312,15 +270,71 @@ fun YouTubePlaylistMenu(
         }
     }
 
-    GridMenu(
-        contentPadding =
-            PaddingValues(
-                start = 8.dp,
-                top = 8.dp,
-                end = 8.dp,
-                bottom = 8.dp + WindowInsets.systemBars.asPaddingValues().calculateBottomPadding(),
-            ),
+    LazyVerticalGrid(
+        columns = GridCells.Fixed(2),
+        modifier = Modifier.fillMaxWidth(),
+        contentPadding = PaddingValues(bottom = 16.dp)
     ) {
+        item(span = { GridItemSpan(2) }) {
+            Column {
+                YouTubeListItem(
+                    item = playlist,
+                    trailingContent = {
+                        if (playlist.id != "LM" && !playlist.isEditable) {
+                            IconButton(
+                                onClick = {
+                                    if (dbPlaylist?.playlist == null) {
+                                        database.transaction {
+                                            val playlistEntity = PlaylistEntity(
+                                                name = playlist.title,
+                                                browseId = playlist.id,
+                                                isEditable = false,
+                                                remoteSongCount = playlist.songCountText?.let {
+                                                    Regex("""\d+""").find(
+                                                        it
+                                                    )?.value?.toIntOrNull()
+                                                },
+                                                playEndpointParams = playlist.playEndpoint?.params,
+                                                shuffleEndpointParams = playlist.shuffleEndpoint?.params,
+                                                radioEndpointParams = playlist.radioEndpoint?.params
+                                            ).toggleLike()
+                                            insert(playlistEntity)
+                                            coroutineScope.launch(Dispatchers.IO) {
+                                                songs.ifEmpty {
+                                                    YouTube.playlist(playlist.id).completed()
+                                                        .getOrNull()?.songs.orEmpty()
+                                                }.map { it.toMediaMetadata() }
+                                                    .onEach(::insert)
+                                                    .mapIndexed { index, song ->
+                                                        PlaylistSongMap(
+                                                            songId = song.id,
+                                                            playlistId = playlistEntity.id,
+                                                            position = index
+                                                        )
+                                                    }
+                                                    .forEach(::insert)
+                                            }
+                                        }
+                                    } else {
+                                        database.transaction {
+                                            update(dbPlaylist!!.playlist.toggleLike())
+                                        }
+                                    }
+                                }
+                            ) {
+                                Icon(
+                                    painter = painterResource(if (dbPlaylist?.playlist?.bookmarkedAt != null) R.drawable.favorite else R.drawable.favorite_border),
+                                    tint = if (dbPlaylist?.playlist?.bookmarkedAt != null) MaterialTheme.colorScheme.error else LocalContentColor.current,
+                                    contentDescription = null
+                                )
+                            }
+                        }
+                    }
+                )
+                HorizontalDivider()
+            }
+        }
+
         playlist.playEndpoint?.let {
             GridMenuItem(
                 icon = R.drawable.play,
@@ -393,12 +407,7 @@ fun YouTubePlaylistMenu(
             }
             onDismiss()
         }
-        //GridMenuItem(
-        //icon = R.drawable.playlist_import,
-        //title = R.string.import_playlist
-        //) {
-        //showImportPlaylistDialog = true
-        //}
+        
         GridMenuItem(
             icon = R.drawable.playlist_add,
             title = R.string.add_to_playlist,
@@ -410,17 +419,21 @@ fun YouTubePlaylistMenu(
             DownloadGridMenu(
                 state = downloadState,
                 onDownload = {
-                    songs.forEach { song ->
-                        val downloadRequest = DownloadRequest.Builder(song.id, song.id.toUri())
-                            .setCustomCacheKey(song.id)
-                            .setData(song.title.toByteArray())
-                            .build()
-                        DownloadService.sendAddDownload(
-                            context,
-                            ExoDownloadService::class.java,
-                            downloadRequest,
-                            false
-                        )
+                    if (adManager?.isPremium?.value != true) {
+                        android.widget.Toast.makeText(context, R.string.premium_required, android.widget.Toast.LENGTH_SHORT).show()
+                    } else {
+                        songs.forEach { song ->
+                            val downloadRequest = DownloadRequest.Builder(song.id, song.id.toUri())
+                                .setCustomCacheKey(song.id)
+                                .setData(song.title.toByteArray())
+                                .build()
+                            DownloadService.sendAddDownload(
+                                context,
+                                ExoDownloadService::class.java,
+                                downloadRequest,
+                                false
+                            )
+                        }
                     }
                 },
                 onRemoveDownload = {

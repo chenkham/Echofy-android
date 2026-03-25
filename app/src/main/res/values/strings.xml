@@ -1,11 +1,13 @@
-﻿<resources>
+﻿﻿<resources>
     <!-- Bottom navigation -->
     <string name="home">Home</string>
     <string name="songs">Songs</string>
     <string name="artists">Artists</string>
     <string name="albums">Albums</string>
+    <string name="library">Library</string>
     <string name="playlists">Playlists</string>
     <string name="listen_together">Together</string>
+
     <string name="sync_with_session">Sync with Session</string>
     <string name="no_active_session">No active session. Join or create one first.</string>
     <string name="song_synced">Song synced with session!</string>
@@ -34,7 +36,20 @@
     <!-- Home -->
     <string name="history">History</string>
     <string name="stats">Stats</string>
+    <string name="explore">Explore</string>
     <string name="mood_and_genres">Mood and Genres</string>
+    <string name="charts">Charts</string>
+    <string name="top_songs">Top Songs</string>
+    <string name="top_albums">Top Albums</string>
+    <string name="top_artists">Top Artists</string>
+    <string name="trending">Trending</string>
+    <string name="podcasts">Podcasts</string>
+    <string name="genres">Genres</string>
+    <string name="login_required">Login Required</string>
+    <string name="login_to_access_podcasts">Sign in to access podcasts</string>
+    <string name="login_required_podcasts">Sign in to your YouTube account to access podcasts</string>
+    <string name="no_podcasts_found">No podcasts found</string>
+    <string name="sign_in">Sign In</string>
     <string name="account">Account</string>
     <string name="quick_picks">Quick picks</string>
     <string name="quick_picks_empty">Listen to songs to generate your quick picks</string>
@@ -103,6 +118,7 @@
     <string name="delete_playlist_confirm">Do you really want to delete the playlist \"%s\"?</string>
     <string name="elements_selected">%1$d Elements selected</string>
     <string name="allows_for_sync_witch_youtube">Note: This allows for syncing with YouTube Music. This is NOT changeable later.</string>
+    <string name="login_to_youtube_music_first">Please link your YouTube Music account in settings first.</string>
 
     <!-- Button -->
     <string name="retry">Retry</string>
@@ -165,6 +181,7 @@
     <string name="edit_lyrics">Edit lyrics</string>
     <string name="search_lyrics">Search lyrics</string>
     <string name="lyrics">Lyrics</string>
+    <string name="no_lyrics_available">No lyrics available for this song</string>
 
     <string name="edit_song">Edit song</string>
     <string name="song_title">Song title</string>
@@ -247,6 +264,8 @@
     <string name="error_no_internet">No network connection</string>
     <string name="error_timeout">Timeout</string>
     <string name="error_unknown">Unknown error</string>
+    <string name="error_playback">Playback Error</string>
+    <string name="retry_in_seconds">Retry in %d…</string>
     <string name="seek_backward">5 seconds backward</string>
     <string name="seek_forward">5 seconds forward</string>
 
@@ -318,6 +337,8 @@
     <string name="misc">Misc</string>
     <string name="default_open_tab">Default open tab</string>
     <string name="slim_navbar">Hide bottom navigation bar labels</string>
+    <string name="mini_player_style">MiniPlayer style</string>
+    <string name="floating">Floating</string>
 
     <string name="content">Content</string>
     <string name="google">Google</string>
@@ -371,6 +392,12 @@
     <string name="auto_skip_next_on_error_desc">Ensure your continuous playback experience</string>
     <string name="stop_music_on_task_clear">Stop music on task clear</string>
     <string name="equalizer">Equalizer</string>
+    <string name="video_quality">Video Quality</string>
+    <string name="voice_search">Voice Search</string>
+    <string name="playback_mode">Playback mode</string>
+    <string name="playback_mode_audio">Audio</string>
+    <string name="playback_mode_video">Video</string>
+    <string name="playback_mode_desc">Switch between audio (thumbnail) and video (music video) mode</string>
 
     <string name="storage">Storage</string>
     <string name="cache">Cache</string>
@@ -384,6 +411,15 @@
     <string name="max_song_cache_size">Max song cache size</string>
     <string name="clear_song_cache">Clear song cache</string>
     <string name="size_used">%s used</string>
+
+    <!-- Data Privacy -->
+    <string name="data_privacy">Data Privacy</string>
+    <string name="auto_clear_cache_on_close">Auto-clear cache on close</string>
+    <string name="auto_clear_cache_on_close_description">Automatically clear cache when the app is closed</string>
+    <string name="listening_history">Listening History</string>
+    <string name="clear_listening_history">Clear Listening History</string>
+    <string name="clear_listening_history_warning">This will permanently delete all your listening statistics, including play counts and listening time. This action cannot be undone.</string>
+    <string name="share_stats">Share Stats</string>
 
     <string name="privacy">Privacy</string>
     <string name="listen_history">Listen History</string>
@@ -458,7 +494,6 @@
         <item quantity="other">%d seconds</item>
     </plurals>
     <string name="mute">Mute</string>
-    <string name="explore">Explore</string>
     <string name="custom_avatar">"Custom avatar "</string>
     <string name="custom_avatar_beta">Custom avatar</string>
     <string name="select_image">Select image</string>
@@ -631,6 +666,70 @@
     <string name="bug_category">Bug Category</string>
     <string name="bug_description">Description</string>
     <string name="bug_description_placeholder">Describe the issue in detail…</string>
+    <string name="listen_together_toggle">Listen Together</string>
+    <string name="listen_together_desc">Show the Listen Together tab in the bottom bar</string>
+    <string name="seasonal_wallpaper">Seasonal Live Wallpaper</string>
+    <string name="seasonal_wallpaper_desc">Animated background effects</string>
+    <string name="off">Off</string>
+    <string name="winter">Winter (Snow)</string>
+    <string name="spring">Spring (Petals)</string>
+    <string name="summer">Summer (Fireflies)</string>
+    <string name="autumn">Autumn (Leaves)</string>
     <string name="device_info_included">Device info will be included automatically</string>
     <string name="send_report">Send Report</string>
+    
+    <!-- Backpaper (App Background Wallpaper) -->
+    <string name="backpaper">Backpaper</string>
+    <string name="enable_backpaper">Enable Backpaper</string>
+    <string name="enable_backpaper_desc">Set a custom wallpaper as app background</string>
+    <string name="no_wallpaper_selected">No wallpaper selected</string>
+    <string name="adjustments">Adjustments</string>
+    <string name="opacity">Opacity</string>
+    <string name="blur">Blur</string>
+    <string name="built_in_wallpapers">Built-in Wallpapers</string>
+    <string name="choose_custom_photo">Choose Custom Photo</string>
+    <string name="apply_to_screens">Apply to Screens</string>
+    <string name="premium_required">This feature is for Premium users only</string>
+    <string name="premium">Premium</string>
+
+    <!-- Accessibility Strings -->
+    <string name="song_cover">Song cover</string>
+    <string name="acc_play">Play</string>
+    <string name="acc_pause">Pause</string>
+    <string name="acc_skip_next">Next song</string>
+    <string name="acc_skip_prev">Previous song</string>
+    <string name="acc_shuffle">Shuffle</string>
+    <string name="acc_repeat">Repeat</string>
+    <string name="acc_lyrics">Lyrics</string>
+    <string name="acc_queue">Queue</string>
+    <string name="acc_close">Close</string>
+    <string name="acc_more_options">More options</string>
+    <string name="acc_sleep_timer">Sleep timer</string>
+    <string name="acc_equalizer">Equalizer</string>
+    <string name="acc_share">Share</string>
+    <string name="acc_add_to_playlist">Add to playlist</string>
+    <string name="acc_download">Download</string>
+    <string name="acc_favorite">Like</string>
+    <string name="acc_unfavorite">Unlike</string>
+    <string name="acc_minimize">Minimize</string>
+    <string name="acc_rewind">Rewind</string>
+    <string name="acc_fast_forward">Fast forward</string>
+    <string name="acc_video_mode">Video mode</string>
+    <string name="acc_audio_mode">Audio mode</string>
+    <!-- YTM Sync with Playlist -->
+    <string name="sync_with_ytm">Sync with YT Music</string>
+    <string name="sync_with_ytm_description">Choose how to sync this playlist with your YouTube Music account.</string>
+    <string name="upload_to_ytm">Upload to YT Music</string>
+    <string name="upload_to_ytm_desc">Create a new YT Music playlist and link it to this one.</string>
+    <string name="merge_into_ytm_playlist">Merge into YTM playlist</string>
+    <string name="merge_into_ytm_playlist_desc">Add songs from this playlist into an existing synced YT Music playlist.</string>
+    <string name="playlist_uploaded_to_ytm">Playlist uploaded to YT Music and linked!</string>
+    <string name="error_creating_ytm_playlist">Error creating YT Music playlist. Please try again.</string>
+    <string name="songs_merged_into_ytm_playlist">Songs merged into YT Music playlist!</string>
+    <string name="no_ytm_playlists_to_merge">No YT Music synced playlists found. Create a synced playlist first.</string>
+
+    <!-- Community -->
+    <string name="join_telegram">Join our Telegram community</string>
+    <string name="whatsapp">WhatsApp</string>
+    <string name="join_whatsapp">Join our WhatsApp community</string>
 </resources>

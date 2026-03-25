@@ -11,9 +11,9 @@
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" />
-    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" tools:node="remove" />
     <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
-    <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
+    <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" tools:node="remove" />
 
     <uses-permission
         android:name="android.permission.WRITE_EXTERNAL_STORAGE"
@@ -30,7 +30,7 @@
         </intent>
     </queries>
     <application
-        android:name=".App"
+        android:name="com.Chenkham.Echofy.App"
         android:allowBackup="true"
         android:appCategory="audio"
         android:dataExtractionRules="@xml/data_extraction_rules"
@@ -42,15 +42,50 @@
         android:supportsRtl="false"
         android:theme="@style/Theme.Echofy"
         tools:targetApi="tiramisu">
+        
+        <!-- Google AdMob App ID for ads monetization -->
+        <meta-data
+            android:name="com.google.android.gms.ads.APPLICATION_ID"
+            android:value="ca-app-pub-9643799722679113~8968430508"/>
+        
+        <!-- Fix manifest merger conflict between AdMob and Analytics -->
+        <property
+            android:name="android.adservices.AD_SERVICES_CONFIG"
+            android:resource="@xml/gma_ad_services_config"
+            tools:replace="android:resource"/>
+        
         <receiver
             android:name=".MusicWidget"
-            android:exported="false">
+            android:exported="true">
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+                <action android:name="com.Chenkham.Echofy.ACTION_PLAY_PAUSE" />
+                <action android:name="com.Chenkham.Echofy.ACTION_PREV" />
+                <action android:name="com.Chenkham.Echofy.ACTION_NEXT" />
+                <action android:name="com.Chenkham.Echofy.ACTION_SHUFFLE" />
+                <action android:name="com.Chenkham.Echofy.ACTION_LIKE" />
+                <action android:name="com.Chenkham.Echofy.ACTION_STATE_CHANGED" />
+                <action android:name="com.Chenkham.Echofy.ACTION_UPDATE_PROGRESS" />
+                <action android:name="com.Chenkham.Echofy.ACTION_OPEN_APP" />
             </intent-filter>
             <meta-data
                 android:name="android.appwidget.provider"
                 android:resource="@xml/widget_info" />
+        </receiver>
+
+        <receiver
+            android:name=".ui.widgets.LyricsWidget"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+                <action android:name="com.Chenkham.Echofy.ACTION_STATE_CHANGED" />
+                <action android:name="com.Chenkham.Echofy.ACTION_NEXT" />
+                <action android:name="com.Chenkham.Echofy.ACTION_PREV" />
+                <action android:name="com.Chenkham.Echofy.ACTION_UPDATE_LYRICS" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/lyrics_widget_info" />
         </receiver>
         <uses-library
             android:name="org.apache.http.legacy"
@@ -60,7 +95,7 @@
             android:name=".MainActivity"
             android:exported="true"
             android:launchMode="singleTask"
-            android:theme="@style/Theme.Echofy"
+            android:theme="@style/Theme.App.Starting"
             android:supportsPictureInPicture="true"
             android:configChanges="screenSize|smallestScreenSize|screenLayout|orientation"
             android:windowSoftInputMode="adjustResize">
@@ -71,6 +106,12 @@
 
                 <category android:name="android.intent.category.LAUNCHER" />
                 <category android:name="android.intent.category.APP_MUSIC" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+
+
+            <intent-filter>
+                <action android:name="android.media.action.MEDIA_PLAY_FROM_SEARCH" />
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
 
@@ -139,6 +180,14 @@
                 <data android:mimeType="text/plain" />
             </intent-filter>
 
+            <!-- Custom Deep Link for App Actions -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="echofy" />
+            </intent-filter>
+
             <meta-data
                 android:name="android.app.shortcuts"
                 android:resource="@xml/shortcuts" />
@@ -189,6 +238,12 @@
             </intent-filter>
         </receiver>
 
+        <!-- Image Cropping Activity -->
+        <activity
+            android:name="com.canhub.cropper.CropImageActivity"
+            android:theme="@style/Base.Theme.AppCompat"
+            android:exported="true" />
+
         <meta-data
             android:name="com.google.android.gms.car.application"
             android:resource="@xml/automotive_app_desc" />
@@ -211,17 +266,21 @@
                 <action android:name="com.google.firebase.MESSAGING_EVENT" />
             </intent-filter>
         </service>
+
+        <service
+            android:name=".ui.widgets.LyricsWidgetService"
+            android:permission="android.permission.BIND_REMOTEVIEWS" />
+
+        <receiver
+            android:name=".services.VoiceControlReceiver"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="com.Chenkham.Echofy.ACTION_VOICE_COMMAND" />
+            </intent-filter>
+        </receiver>
         
         <!-- FileProvider for in-app updates (APK installation) -->
-        <provider
-            android:name="androidx.core.content.FileProvider"
-            android:authorities="${applicationId}.fileprovider"
-            android:exported="false"
-            android:grantUriPermissions="true">
-            <meta-data
-                android:name="android.support.FILE_PROVIDER_PATHS"
-                android:resource="@xml/file_paths" />
-        </provider>
+
     </application>
 
 </manifest>

@@ -134,8 +134,8 @@ fun ArtistScreen(
         contentPadding = LocalPlayerAwareWindowInsets.current
             .add(
                 WindowInsets(
-                    top = -WindowInsets.systemBars.asPaddingValues()
-                        .calculateTopPadding() - AppBarHeight
+                    top = (WindowInsets.systemBars.asPaddingValues()
+                        .calculateTopPadding() - AppBarHeight).coerceAtLeast(0.dp)
                 )
             )
             .asPaddingValues(),

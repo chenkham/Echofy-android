@@ -9,6 +9,7 @@ import com.Chenkham.Echofy.MainActivity
 import com.Chenkham.Echofy.R
 import com.Chenkham.Echofy.db.InternalDatabase
 import com.Chenkham.Echofy.db.MusicDatabase
+import com.Chenkham.Echofy.db.checkpoint
 import com.Chenkham.Echofy.db.entities.ArtistEntity
 import com.Chenkham.Echofy.db.entities.Song
 import com.Chenkham.Echofy.db.entities.SongEntity

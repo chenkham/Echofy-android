@@ -16,7 +16,9 @@ import com.Chenkham.Echofy.constants.ContentLanguageKey
 import com.Chenkham.Echofy.constants.CountryCodeToName
 import com.Chenkham.Echofy.constants.EnableKugouKey
 import com.Chenkham.Echofy.constants.EnableLrcLibKey
+import com.Chenkham.Echofy.constants.EnableLrcLibKey
 import com.Chenkham.Echofy.constants.HideExplicitKey
+
 import com.Chenkham.Echofy.constants.HistoryDuration
 import com.Chenkham.Echofy.constants.LanguageCodeToName
 import com.Chenkham.Echofy.constants.PreferredLyricsProvider
@@ -89,10 +91,12 @@ fun ContentSettings(
         key = EnableLrcLibKey,
         defaultValue = true
     )
+
     val (preferredProvider, onPreferredProviderChange) = rememberEnumPreference(
         key = PreferredLyricsProviderKey,
         defaultValue = PreferredLyricsProvider.LRCLIB
     )
+
 
 
     SettingsPage(
@@ -133,6 +137,9 @@ fun ContentSettings(
                     onCheckedChange = onHideExplicitChange,
                 )},
 
+                // Listen Together Feature
+
+
                 {NotificationPermissionPreference()},
             )
         )
@@ -170,6 +177,7 @@ fun ContentSettings(
         SettingsGeneralCategory(
             title = stringResource(R.string.lyrics),
             items = listOf(
+
                 {SwitchPreference(
                     title = { Text(stringResource(R.string.enable_lrclib)) },
                     icon = { Icon(painterResource(R.drawable.lyrics), null) },

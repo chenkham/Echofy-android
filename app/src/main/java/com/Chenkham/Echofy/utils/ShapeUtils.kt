@@ -1,12 +1,17 @@
 ﻿package com.Chenkham.Echofy.utils
 
-import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
-import androidx.compose.material3.MaterialShapes
-import androidx.graphics.shapes.RoundedPolygon
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.graphics.RectangleShape
+import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.unit.dp
 
-
-@OptIn(ExperimentalMaterial3ExpressiveApi::class)
-fun getSmallButtonShape(shapeName: String): RoundedPolygon {
+/**
+ * Returns a standard Compose Shape based on the shape name.
+ * Since MaterialShapes from Material3 Expressive is not available in stable versions,
+ * we provide a simplified set of standard shapes.
+ */
+fun getSmallButtonShape(shapeName: String): Shape {
     return when (shapeName) {
         "Pill" -> MaterialShapes.Pill
         "Circle" -> MaterialShapes.Circle
@@ -43,12 +48,53 @@ fun getSmallButtonShape(shapeName: String): RoundedPolygon {
         "PuffyDiamond" -> MaterialShapes.PuffyDiamond
         "Slanted" -> MaterialShapes.Slanted
         "ClamShell" -> MaterialShapes.ClamShell
-        else -> MaterialShapes.Circle
+        "Rounded" -> RoundedCornerShape(12.dp)
+        else -> CircleShape // Default to CircleShape
     }
 }
 
-@OptIn(ExperimentalMaterial3ExpressiveApi::class)
-fun getPlayPauseShape(shapeName: String): RoundedPolygon = getSmallButtonShape(shapeName)
+fun getPlayPauseShape(shapeName: String): Shape = getSmallButtonShape(shapeName)
 
-@OptIn(ExperimentalMaterial3ExpressiveApi::class)
-fun getMiniPlayerThumbnailShape(shapeName: String): RoundedPolygon = getSmallButtonShape(shapeName)
+fun getMiniPlayerThumbnailShape(shapeName: String): Shape = getSmallButtonShape(shapeName)
+
+fun String.toShape(): Shape = getSmallButtonShape(this)
+
+fun Shape.toShape(): Shape = this
+
+object MaterialShapes {
+    val Pill = CircleShape
+    val Circle = CircleShape
+    val Square = RectangleShape
+    val Diamond = RoundedCornerShape(4.dp)
+    val Pentagon = RoundedCornerShape(8.dp)
+    val Heart = CircleShape
+    val Oval = CircleShape
+    val Arch = RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp)
+    val SemiCircle = RoundedCornerShape(topStart = 50.dp, topEnd = 50.dp)
+    val Triangle = RoundedCornerShape(4.dp)
+    val Arrow = RoundedCornerShape(4.dp)
+    val Fan = RoundedCornerShape(topEnd = 16.dp)
+    val Gem = RoundedCornerShape(8.dp)
+    val Bun = RoundedCornerShape(8.dp)
+    val Ghostish = RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp, bottomStart = 4.dp, bottomEnd = 4.dp)
+    val Cookie4Sided = RoundedCornerShape(4.dp)
+    val Cookie6Sided = RoundedCornerShape(6.dp)
+    val Cookie7Sided = RoundedCornerShape(7.dp)
+    val Cookie9Sided = RoundedCornerShape(9.dp)
+    val Cookie12Sided = RoundedCornerShape(12.dp)
+    val Clover4Leaf = RoundedCornerShape(16.dp)
+    val Clover8Leaf = RoundedCornerShape(16.dp)
+    val Sunny = CircleShape
+    val VerySunny = CircleShape
+    val Burst = CircleShape
+    val SoftBurst = CircleShape
+    val Boom = CircleShape
+    val SoftBoom = CircleShape
+    val Flower = CircleShape
+    val PixelCircle = CircleShape
+    val PixelTriangle = RectangleShape
+    val Puffy = RoundedCornerShape(12.dp)
+    val PuffyDiamond = RoundedCornerShape(8.dp)
+    val Slanted = RoundedCornerShape(8.dp)
+    val ClamShell = RoundedCornerShape(bottomStart = 16.dp, bottomEnd = 16.dp)
+}

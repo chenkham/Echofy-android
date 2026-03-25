@@ -1,6 +1,7 @@
 {
   "project_info": {
     "project_number": "1033902318161",
+    "firebase_url": "https://tai-khamyang-app-default-rtdb.asia-southeast1.firebasedatabase.app",
     "project_id": "tai-khamyang-app",
     "storage_bucket": "tai-khamyang-app.firebasestorage.app"
   },
@@ -13,6 +14,30 @@
         }
       },
       "oauth_client": [
+        {
+          "client_id": "1033902318161-03svfb3qkh5dhjbqqtnec4m0g3pnnts1.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.Chenkham.Echofy",
+            "certificate_hash": "fbba084923269d59bf91354e4b2a4755a0601628"
+          }
+        },
+        {
+          "client_id": "1033902318161-il1di34gs3gl2ekiua4cleapdujjnn23.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.Chenkham.Echofy",
+            "certificate_hash": "41696eb3d94876fbb3bfee013c25abe218908707"
+          }
+        },
+        {
+          "client_id": "1033902318161-mvp5t4qqkmuvkmhhi9q063ib7o3a2to6.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.Chenkham.Echofy",
+            "certificate_hash": "7ba05cab28a049a97eb212277340a638f442fc3e"
+          }
+        },
         {
           "client_id": "1033902318161-c6qh9nvnnrvc5nql7031b4bcjotp07v6.apps.googleusercontent.com",
           "client_type": 3

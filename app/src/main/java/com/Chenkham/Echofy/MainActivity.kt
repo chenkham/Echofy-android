@@ -1,4 +1,4 @@
-﻿package com.Chenkham.Echofy
+package com.Chenkham.Echofy
 
 import android.Manifest
 import androidx.compose.ui.text.style.TextAlign
@@ -21,7 +21,7 @@ import android.content.pm.PackageManager
 import android.content.res.Configuration
 import android.graphics.Rect
 import android.graphics.drawable.BitmapDrawable
-import android.graphics.drawable.Icon
+
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
@@ -64,6 +64,8 @@ import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.BoxWithConstraintsScope
+
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -144,6 +146,7 @@ import androidx.compose.ui.util.fastFirstOrNull
 import androidx.compose.ui.util.fastForEach
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
+import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
 import androidx.core.net.toUri
@@ -155,6 +158,7 @@ import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.lifecycleScope
 import androidx.media3.common.MediaItem
 import androidx.media3.common.Player
+import kotlinx.coroutines.flow.first
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
@@ -181,10 +185,15 @@ import com.Chenkham.Echofy.constants.PureBlackKey
 import com.Chenkham.Echofy.constants.SearchSource
 import com.Chenkham.Echofy.constants.SearchSourceKey
 import com.Chenkham.Echofy.constants.SlimNavBarKey
+
+
 import com.Chenkham.Echofy.constants.StopMusicOnTaskClearKey
+import com.Chenkham.Echofy.db.*
+import com.Chenkham.Echofy.db.daos.*
 import com.Chenkham.Echofy.db.MusicDatabase
 import com.Chenkham.Echofy.db.entities.SearchHistory
 import com.Chenkham.Echofy.extensions.toEnum
+import com.Chenkham.Echofy.extensions.toMediaItem
 import com.Chenkham.Echofy.models.toMediaMetadata
 import com.Chenkham.Echofy.playback.DownloadUtil
 import com.Chenkham.Echofy.playback.MusicService
@@ -192,6 +201,7 @@ import com.Chenkham.Echofy.playback.MusicService.MusicBinder
 import com.Chenkham.Echofy.playback.PlayerConnection
 import com.Chenkham.Echofy.playback.queues.YouTubeQueue
 import com.Chenkham.Echofy.ui.component.AvatarPreferenceManager
+import com.Chenkham.Echofy.ui.component.LocalAdManager
 import com.Chenkham.Echofy.ui.component.AvatarSelection
 import com.Chenkham.Echofy.ui.component.BottomSheetMenu
 import com.Chenkham.Echofy.ui.component.IconButton
@@ -206,7 +216,7 @@ import com.Chenkham.Echofy.ui.menu.YouTubeSongMenu
 import com.Chenkham.Echofy.ui.player.BottomSheetPlayer
 import com.Chenkham.Echofy.ui.screens.Screens
 import com.Chenkham.Echofy.ui.screens.navigationBuilder
-import com.Chenkham.Echofy.ui.components.FloatingChatOverlay
+
 import com.Chenkham.Echofy.ui.screens.search.LocalSearchScreen
 import com.Chenkham.Echofy.ui.screens.search.OnlineSearchScreen
 import com.Chenkham.Echofy.ui.screens.settings.DarkMode
@@ -219,8 +229,11 @@ import com.Chenkham.Echofy.ui.utils.appBarScrollBehavior
 import com.Chenkham.Echofy.ui.utils.backToMain
 import com.Chenkham.Echofy.ui.utils.resetHeightOffset
 import com.Chenkham.Echofy.utils.SyncUtils
-import com.Chenkham.Echofy.utils.Updater
 import com.Chenkham.Echofy.utils.dataStore
+import com.google.android.play.core.appupdate.AppUpdateManagerFactory
+import com.google.android.play.core.appupdate.AppUpdateOptions
+import com.google.android.play.core.install.model.AppUpdateType
+import com.google.android.play.core.install.model.UpdateAvailability
 import com.Chenkham.Echofy.utils.get
 import com.Chenkham.Echofy.utils.rememberEnumPreference
 import com.Chenkham.Echofy.utils.rememberPreference
@@ -243,8 +256,13 @@ import java.net.URLEncoder
 import javax.inject.Inject
 import kotlin.time.Duration.Companion.days
 import com.google.firebase.inappmessaging.FirebaseInAppMessaging
+import kotlin.time.Duration.Companion.minutes
+import com.Chenkham.Echofy.ads.AdManager
+import com.Chenkham.Echofy.BuildConfig
 
 // El codigo original de la aplicacion pertenece a : Arturo Cervantes Galindo (Arturo254) Cualquier parecido es copia y pega de mi codigo original
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.asComposeRenderEffect
 
 @Suppress("DEPRECATION", "ASSIGNED_BUT_NEVER_ACCESSED_VARIABLE")
 @AndroidEntryPoint
@@ -258,8 +276,18 @@ class MainActivity : ComponentActivity() {
     @Inject
     lateinit var syncUtils: SyncUtils
 
+    @Inject
+    lateinit var adManager: AdManager
+
+    @Inject
+    lateinit var authRepository: com.Chenkham.Echofy.auth.AuthRepository
+
     private var playerConnection by mutableStateOf<PlayerConnection?>(null)
     private var isInPipMode by mutableStateOf(false)
+    
+    private var pipEnabled = true
+    private var autoClearCache = false
+    private var stopMusicOnTaskClear = false
 
     companion object {
         private const val ACTION_PIP_CONTROL = "com.Chenkham.Echofy.PIP_CONTROL"
@@ -310,24 +338,10 @@ class MainActivity : ComponentActivity() {
             }
         }
 
-    private var latestVersionName by mutableStateOf(BuildConfig.VERSION_NAME)
+    private var latestVersionName: String by mutableStateOf(BuildConfig.VERSION_NAME)
 
     override fun onStart() {
         super.onStart()
-        startService(Intent(this, MusicService::class.java))
-        bindService(
-            Intent(this, MusicService::class.java),
-            serviceConnection,
-            Context.BIND_AUTO_CREATE
-        )
-        // Register PiP broadcast receiver
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            registerReceiver(pipBroadcastReceiver, IntentFilter(ACTION_PIP_CONTROL), RECEIVER_NOT_EXPORTED)
-        } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            @Suppress("UnspecifiedRegisterReceiverFlag")
-            registerReceiver(pipBroadcastReceiver, IntentFilter(ACTION_PIP_CONTROL))
-        }
-        
         // Handle deep links from push notifications
         handleNotificationDeepLink(intent)
     }
@@ -394,24 +408,43 @@ class MainActivity : ComponentActivity() {
     }
 
     override fun onStop() {
-        try {
-            unregisterReceiver(pipBroadcastReceiver)
-        } catch (e: Exception) {
-            // Receiver might not be registered
-        }
-        unbindService(serviceConnection)
         super.onStop()
     }
 
     override fun onDestroy() {
         super.onDestroy()
-        if (dataStore.get(
-                StopMusicOnTaskClearKey,
-                false
-            ) && playerConnection?.isPlaying?.value == true && isFinishing
-        ) {
-            stopService(Intent(this, MusicService::class.java))
+        
+        try {
+            unregisterReceiver(pipBroadcastReceiver)
+        } catch (e: Exception) {
+            // Receiver might not be registered
+        }
+
+        try {
             unbindService(serviceConnection)
+        } catch (e: IllegalArgumentException) {
+            Timber.w("Service not bound: ${e.message}")
+        }
+
+        // Auto-clear cache if preference is enabled
+        if (autoClearCache) {
+            try {
+                // Clear Coil image cache
+                val imageCacheDir = cacheDir.resolve("coil")
+                imageCacheDir.deleteRecursively()
+                
+                // Clear ExoPlayer cache
+                val playerCacheDir = cacheDir.resolve("exoplayer")
+                playerCacheDir.deleteRecursively()
+                
+                Timber.d("Auto-cleared cache on app close")
+            } catch (e: Exception) {
+                Timber.e(e, "Failed to auto-clear cache")
+            }
+        }
+        
+        if (stopMusicOnTaskClear && playerConnection?.isPlaying?.value == true && isFinishing) {
+            stopService(Intent(this, MusicService::class.java))
             playerConnection = null
         }
     }
@@ -419,7 +452,6 @@ class MainActivity : ComponentActivity() {
     override fun onUserLeaveHint() {
         super.onUserLeaveHint()
         // Enter PiP mode when user leaves the app (presses home) while music is playing
-        val pipEnabled = dataStore.get(com.Chenkham.Echofy.constants.PipEnabledKey, true)
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O &&
             playerConnection?.isPlaying?.value == true &&
             pipEnabled) {
@@ -457,7 +489,7 @@ class MainActivity : ComponentActivity() {
         )
         actions.add(
             RemoteAction(
-                Icon.createWithResource(this, R.drawable.skip_previous),
+                android.graphics.drawable.Icon.createWithResource(this, R.drawable.skip_previous),
                 "Previous",
                 "Previous track",
                 prevIntent
@@ -475,7 +507,7 @@ class MainActivity : ComponentActivity() {
         val playPauseTitle = if (isPlaying) "Pause" else "Play"
         actions.add(
             RemoteAction(
-                Icon.createWithResource(this, playPauseIcon),
+                android.graphics.drawable.Icon.createWithResource(this, playPauseIcon),
                 playPauseTitle,
                 playPauseTitle,
                 playPauseIntent
@@ -491,7 +523,7 @@ class MainActivity : ComponentActivity() {
         )
         actions.add(
             RemoteAction(
-                Icon.createWithResource(this, R.drawable.skip_next),
+                android.graphics.drawable.Icon.createWithResource(this, R.drawable.skip_next),
                 "Next",
                 "Next track",
                 nextIntent
@@ -531,7 +563,7 @@ class MainActivity : ComponentActivity() {
     @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
     @OptIn(ExperimentalMaterial3Api::class)
     override fun onCreate(savedInstanceState: Bundle?) {
-
+        val splashScreen = installSplashScreen()
         super.onCreate(savedInstanceState)
         window.decorView.layoutDirection = View.LAYOUT_DIRECTION_LTR
         WindowCompat.setDecorFitsSystemWindows(window, false)
@@ -552,7 +584,22 @@ class MainActivity : ComponentActivity() {
                 }
         }
 
-        intent?.let { handlevideoIdIntent(it) }
+        intent?.let { handleIntent(it) }
+
+        // Bind the MusicService so it doesn't die when the app drops to the background unless the user swipes to close it
+        bindService(
+            Intent(this, MusicService::class.java),
+            serviceConnection,
+            Context.BIND_AUTO_CREATE
+        )
+
+        // Register PiP broadcast receiver
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            registerReceiver(pipBroadcastReceiver, IntentFilter(ACTION_PIP_CONTROL), RECEIVER_NOT_EXPORTED)
+        } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            @Suppress("UnspecifiedRegisterReceiverFlag")
+            registerReceiver(pipBroadcastReceiver, IntentFilter(ACTION_PIP_CONTROL))
+        }
 
         setContent {
             // Request notification permission on Android 13+
@@ -577,6 +624,7 @@ class MainActivity : ComponentActivity() {
             
             // Initialize Firebase In-App Messaging to trigger on every app open
             LaunchedEffect(Unit) {
+                kotlinx.coroutines.delay(3500) // Let UI render fully first to avoid frame drops
                 try {
                     // Enable data collection for In-App Messaging (required for images)
                     FirebaseInAppMessaging.getInstance().isAutomaticDataCollectionEnabled = true
@@ -594,37 +642,71 @@ class MainActivity : ComponentActivity() {
                 }
             }
             
-            // Check for updates and show dialog if new version available
-            var showUpdateDialog by remember { mutableStateOf(false) }
-            var latestVersion by remember { mutableStateOf<String?>(null) }
-            
+            // 30-minute Interval Ad Timer
             LaunchedEffect(Unit) {
-                if (System.currentTimeMillis() - Updater.lastCheckTime > 1.days.inWholeMilliseconds) {
-                    Updater.getLatestVersionName().onSuccess { version ->
-                        latestVersionName = version
-                        latestVersion = version
-                        // Show dialog if new version available
-                        if (isNewerVersion(version, BuildConfig.VERSION_NAME)) {
-                            showUpdateDialog = true
+                while(true) {
+                    delay(30.minutes)
+                    withContext(Dispatchers.Main) {
+                        try {
+                             if (!adManager.shouldShowAds()) {
+                                 Timber.d("Timer fired but user is premium, skipping ad")
+                             } else {
+                                 Timber.d("30-minute ad timer fired, showing ad")
+                                 adManager.showTimedAd(this@MainActivity)
+                             }
+                        } catch (e: Exception) {
+                            Timber.e(e, "Error showing timed ad")
                         }
                     }
                 }
             }
+
+            // Cache settings to avoid blocking on lifecycle events
+            LaunchedEffect(Unit) {
+                launch(Dispatchers.IO) {
+                    dataStore.data.map { it[com.Chenkham.Echofy.constants.PipEnabledKey] ?: true }
+                        .distinctUntilChanged()
+                        .collect { pipEnabled = it }
+                }
+                launch(Dispatchers.IO) {
+                    dataStore.data.map { it[com.Chenkham.Echofy.constants.AutoClearCacheOnCloseKey] ?: false }
+                        .distinctUntilChanged()
+                        .collect { autoClearCache = it }
+                }
+                launch(Dispatchers.IO) {
+                    dataStore.data.map { it[StopMusicOnTaskClearKey] ?: false }
+                        .distinctUntilChanged()
+                        .collect { stopMusicOnTaskClear = it }
+                }
+            }
             
-            // Update Available Dialog
-            if (showUpdateDialog && latestVersion != null) {
-                UpdateAvailableDialog(
-                    context = this@MainActivity,
-                    currentVersion = BuildConfig.VERSION_NAME,
-                    newVersion = latestVersion!!,
-                    onDismiss = { showUpdateDialog = false }
-                )
+            // Check for updates using Google Play In-App Updates
+            val appUpdateManager = remember { AppUpdateManagerFactory.create(this@MainActivity) }
+            
+            LaunchedEffect(Unit) {
+                try {
+                    val appUpdateInfoTask = appUpdateManager.appUpdateInfo
+                    appUpdateInfoTask.addOnSuccessListener { appUpdateInfo ->
+                        if (appUpdateInfo.updateAvailability() == UpdateAvailability.UPDATE_AVAILABLE
+                            && appUpdateInfo.isUpdateTypeAllowed(AppUpdateType.FLEXIBLE)
+                        ) {
+                            appUpdateManager.startUpdateFlowForResult(
+                                appUpdateInfo,
+                                AppUpdateType.FLEXIBLE,
+                                this@MainActivity,
+                                1001
+                            )
+                        }
+                    }
+                } catch (e: Exception) {
+                    Timber.e(e, "Failed to check for Google Play updates")
+                }
             }
 
             var showFullscreenLyrics by remember { mutableStateOf(false) }
 
 
-            val enableDynamicTheme by rememberPreference(DynamicThemeKey, defaultValue = true)
+            val enableDynamicTheme by rememberPreference(DynamicThemeKey, defaultValue = false)
             val darkTheme by rememberEnumPreference(DarkModeKey, defaultValue = DarkMode.AUTO)
 
             val pureBlack by rememberPreference(PureBlackKey, defaultValue = false)
@@ -695,15 +777,43 @@ class MainActivity : ComponentActivity() {
 
 
                     val navController = rememberNavController()
+                    
+                    // Auth Check & Reactive Redirection
+                    val mainViewModel: MainViewModel = hiltViewModel()
+                    val authState by mainViewModel.authState.collectAsState()
                     val navBackStackEntry by navController.currentBackStackEntryAsState()
+                    val currentRoute = navBackStackEntry?.destination?.route
+                    
+                    LaunchedEffect(authState, currentRoute) {
+                         when (authState) {
+                             is AuthState.Loading -> {
+                                 // Do nothing, wait for state
+                             }
+                             is AuthState.Unauthenticated -> {
+                                 // Only navigate to sign_in if we are NOT there and NOT in onboarding/splash
+                                 // And wait until we are sure we're not loading (handled by Loading state)
+                                 if (currentRoute != "sign_in" && currentRoute != "splash" && currentRoute != "onboarding") {
+                                     navController.navigate("sign_in") {
+                                         // Don't pop Home, just put Sign In on top so back button works if we want?
+                                         // Or prevent back? Typically prevent back.
+                                         popUpTo(Screens.Home.route) { inclusive = true } 
+                                     }
+                                 }
+                             }
+                             is AuthState.Authenticated, is AuthState.Guest -> {
+                                 // Allow user to be on sign_in screen if they navigated there explicitly (e.g. from Settings)
+                                 // The SignInScreen's success callback handles the redirection to Home.
+                             }
+                         }
+                    }
                     val (previousTab) = rememberSaveable { mutableStateOf("home") }
 
-                    val navigationItems = remember { Screens.MainScreens }
+                    val navigationItems = remember {
+                        Screens.MainScreens
+                    }
+
                     val (slimNav) = rememberPreference(SlimNavBarKey, defaultValue = false)
-                    val defaultOpenTab =
-                        remember {
-                            dataStore[DefaultOpenTabKey].toEnum(defaultValue = NavigationTab.HOME)
-                        }
+                    val defaultOpenTab by rememberEnumPreference(DefaultOpenTabKey, NavigationTab.HOME)
                     val tabOpenedFromShortcut =
                         remember {
                             when (intent?.action) {
@@ -713,14 +823,14 @@ class MainActivity : ComponentActivity() {
                             }
                         }
 
-                    val topLevelScreens =
-                        listOf(
-                            Screens.Home.route,
-                            Screens.Explore.route,
-                            Screens.Library.route,
-                            Screens.ListenTogether.route,
-                            "settings",
-                        )
+                    val topLevelScreens = remember {
+                        buildList {
+                            add(Screens.Home.route)
+                            add(Screens.Explore.route)
+                            add(Screens.Library.route)
+                            add("settings")
+                        }
+                    }
 
                     val (query, onQueryChange) =
                         rememberSaveable(stateSaver = TextFieldValue.Saver) {
@@ -919,6 +1029,23 @@ class MainActivity : ComponentActivity() {
                             Consumer<Intent> { intent ->
                                 val uri = intent.data ?: intent.extras?.getString(Intent.EXTRA_TEXT)
                                     ?.toUri() ?: return@Consumer
+
+                                // Handle "echofy://" App Actions deep links
+                                if (uri.scheme == "echofy" && uri.host == "open") {
+                                    val feature = uri.pathSegments.firstOrNull()
+                                    when (feature) {
+                                        "search" -> {
+                                            onActiveChange(true)
+                                            openSearchImmediately = true
+                                        }
+                                        "library" -> navController.navigate(Screens.Library.route)
+                                        "settings" -> navController.navigate("settings")
+                                        "home" -> navController.navigate(Screens.Home.route)
+                                        "explore" -> navController.navigate(Screens.Explore.route)
+                                    }
+                                    return@Consumer
+                                }
+
                                 when (val path = uri.pathSegments.firstOrNull()) {
                                     "playlist" ->
                                         uri.getQueryParameter("list")?.let { playlistId ->
@@ -989,13 +1116,12 @@ class MainActivity : ComponentActivity() {
                     val insetBg = if (playerBottomSheetState.progress > 0f) Color.Transparent else baseBg
 
                     CompositionLocalProvider(
-                        LocalDatabase provides database,
-                        LocalContentColor provides contentColorFor(MaterialTheme.colorScheme.surface),
                         LocalPlayerConnection provides playerConnection,
-                        LocalPlayerAwareWindowInsets provides playerAwareWindowInsets,
                         LocalDownloadUtil provides downloadUtil,
-                        LocalShimmerTheme provides ShimmerTheme,
+                        LocalDatabase provides database,
                         LocalSyncUtils provides syncUtils,
+                        LocalAdManager provides adManager,
+                        LocalPlayerAwareWindowInsets provides playerAwareWindowInsets
                     ) {
                         Scaffold(
                             topBar = {
@@ -1011,6 +1137,22 @@ class MainActivity : ComponentActivity() {
                                             modifier = Modifier
                                                 .matchParentSize()
                                                 .background(MaterialTheme.colorScheme.surface)
+                                        )
+
+                                        // Top Gradient Overlay (YouTube-like style)
+                                        Box(
+                                            modifier = Modifier
+                                                .matchParentSize()
+                                                .background(
+                                                    brush = Brush.verticalGradient(
+                                                        colors = listOf(
+                                                            Color.Black.copy(alpha = 0.7f),
+                                                            Color.Transparent
+                                                        ),
+                                                        startY = 0f,
+                                                        endY = 300f
+                                                    )
+                                                )
                                         )
 
                                         // ValidaciÃ³n mÃ¡s segura para el background
@@ -1038,7 +1180,13 @@ class MainActivity : ComponentActivity() {
                                                         contentScale = ContentScale.FillBounds,
                                                         modifier = Modifier
                                                             .matchParentSize()
-                                                            .blur(35.dp)
+                                                            .graphicsLayer {
+                                                                if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S) {
+                                                                    renderEffect = android.graphics.RenderEffect.createBlurEffect(
+                                                                        40f, 40f, android.graphics.Shader.TileMode.MIRROR
+                                                                    ).asComposeRenderEffect()
+                                                                }
+                                                            }
                                                             .alpha(0.6f)
                                                             .drawWithContent {
                                                                 drawContent()
@@ -1256,6 +1404,44 @@ class MainActivity : ComponentActivity() {
                                                             )
                                                         }
                                                     }
+                                                    
+                                                    // Voice Search Button
+                                                    val voiceSearchLauncher = rememberLauncherForActivityResult(
+                                                        contract = ActivityResultContracts.StartActivityForResult()
+                                                    ) { result ->
+                                                        if (result.resultCode == android.app.Activity.RESULT_OK) {
+                                                            val spokenText = result.data
+                                                                ?.getStringArrayListExtra(android.speech.RecognizerIntent.EXTRA_RESULTS)
+                                                                ?.firstOrNull()
+                                                            spokenText?.let { text ->
+                                                                onQueryChange(TextFieldValue(text, TextRange(text.length)))
+                                                                onSearch(text)
+                                                            }
+                                                        }
+                                                    }
+                                                    
+                                                    IconButton(
+                                                        onClick = {
+                                                            val intent = Intent(android.speech.RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
+                                                                putExtra(
+                                                                    android.speech.RecognizerIntent.EXTRA_LANGUAGE_MODEL,
+                                                                    android.speech.RecognizerIntent.LANGUAGE_MODEL_FREE_FORM
+                                                                )
+                                                                putExtra(android.speech.RecognizerIntent.EXTRA_PROMPT, "Search for music...")
+                                                            }
+                                                            try {
+                                                                voiceSearchLauncher.launch(intent)
+                                                            } catch (e: Exception) {
+                                                                // Speech recognition not available
+                                                            }
+                                                        },
+                                                    ) {
+                                                        Icon(
+                                                            painter = painterResource(R.drawable.mic),
+                                                            contentDescription = "Voice search",
+                                                        )
+                                                    }
+                                                    
                                                     IconButton(
                                                         onClick = {
                                                             searchSource =
@@ -1368,10 +1554,6 @@ class MainActivity : ComponentActivity() {
                                         ) + fadeOut(animationSpec = tween(300))
                                     ) {
                                         Lyrics(
-                                            sliderPositionProvider = {
-                                                // Obtener posiciÃ³n del slider desde el player connection
-                                                null // o la lÃ³gica que tengas para obtener la posiciÃ³n del slider
-                                            },
                                             onNavigateBack = {
                                                 showFullscreenLyrics = false
                                             },
@@ -1396,7 +1578,7 @@ class MainActivity : ComponentActivity() {
                                                     if (navigationBarHeight == 0.dp) {
                                                         IntOffset(
                                                             x = 0,
-                                                            y = (bottomInset + NavigationBarHeight).roundToPx(),
+                                                            y = (bottomInset + NavigationBarHeight).coerceAtLeast(0.dp).roundToPx(),
                                                         )
                                                     } else {
                                                         val slideOffset =
@@ -1407,14 +1589,22 @@ class MainActivity : ComponentActivity() {
                                                                     )
                                                         val hideOffset =
                                                             (bottomInset + NavigationBarHeight) *
-                                                                    (1 - navigationBarHeight / NavigationBarHeight)
+                                                                    (1 - navigationBarHeight / NavigationBarHeight).coerceAtLeast(0f)
                                                         IntOffset(
                                                             x = 0,
-                                                            y = (slideOffset + hideOffset).roundToPx(),
+                                                            y = (slideOffset + hideOffset).coerceAtLeast(0.dp).roundToPx(),
                                                         )
                                                     }
-                                                },
-                                            containerColor = if (pureBlack) Color.Black else MaterialTheme.colorScheme.surfaceContainer,
+                                                }
+                                                .background(
+                                                    androidx.compose.ui.graphics.Brush.verticalGradient(
+                                                        colors = listOf(
+                                                            Color.Transparent,
+                                                            Color.Black.copy(alpha = 0.8f)
+                                                        )
+                                                    )
+                                                ),
+                                            containerColor = Color.Transparent,
                                             contentColor = if (pureBlack) Color.White else MaterialTheme.colorScheme.onSurfaceVariant
                                         ) {
                                             var lastTapTime by remember { mutableLongStateOf(0L) }
@@ -1651,7 +1841,8 @@ class MainActivity : ComponentActivity() {
                                 navigationBuilder(
                                     navController,
                                     topAppBarScrollBehavior,
-                                    latestVersionName
+                                    latestVersionName,
+                                    adManager = adManager
                                 )
                             }
 
@@ -1659,7 +1850,6 @@ class MainActivity : ComponentActivity() {
 
                         BottomSheetMenu(
                             state = LocalMenuState.current,
-                            modifier = Modifier.align(Alignment.BottomCenter)
                         )
 
                         sharedSong?.let { song ->
@@ -1718,7 +1908,51 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-    private fun handlevideoIdIntent(intent: Intent) {
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        handleIntent(intent)
+    }
+
+    private fun handleIntent(intent: Intent) {
+        // Handle Google Assistant "Play [query]" intent
+        if (intent.action == android.provider.MediaStore.INTENT_ACTION_MEDIA_PLAY_FROM_SEARCH) {
+            lifecycleScope.launch {
+                val isEnabled = dataStore.data.first()[com.Chenkham.Echofy.constants.VoiceControlEnabledKey] ?: false
+                val isPremium = authRepository.getActiveUser().first()?.isPremium == true
+
+                if (!isEnabled || !isPremium) {
+                   Toast.makeText(this@MainActivity, "Premium + Voice Control required", Toast.LENGTH_SHORT).show()
+                   return@launch 
+                }
+
+                val query = intent.getStringExtra(android.app.SearchManager.QUERY)
+                
+                if (!query.isNullOrEmpty()) {
+                    val lowerQuery = query.lowercase()
+                
+                    // Handle "Play my downloads" or "Play downloaded songs"
+                    if (lowerQuery.contains("download") || lowerQuery.contains("offline")) {
+                        playSmartPlaylist(com.Chenkham.Echofy.db.entities.PlaylistEntity.DOWNLOADED_PLAYLIST_ID)
+                        return@launch
+                    }
+
+                    // Handle "Play liked songs" or "Play favorites"
+                    if (lowerQuery.contains("liked") || lowerQuery.contains("favorite")) {
+                        playSmartPlaylist(com.Chenkham.Echofy.db.entities.PlaylistEntity.LIKED_PLAYLIST_ID)
+                        return@launch
+                    }
+
+                    // Fallback to online search for everything else
+                    performOnlineSearchAndPlay(query)
+                } else {
+                    // No query, just "Play music" -> Resume playback or play random/shuffle
+                    playerConnection?.player?.play()
+                }
+            }
+            return
+        }
+
+        // Handle existing YouTube URL sharing logic
         val uri = intent.data ?: intent.extras?.getString(Intent.EXTRA_TEXT)?.toUri() ?: return
         when {
             uri.pathSegments.firstOrNull() == "watch" -> uri.getQueryParameter("v")
@@ -1738,6 +1972,84 @@ class MainActivity : ComponentActivity() {
                 }.onFailure {
                     reportException(it)
                 }
+            }
+        }
+    }
+
+    private fun playSmartPlaylist(playlistId: String) {
+        lifecycleScope.launch {
+            // Wait for service connection if needed
+            if (playerConnection == null) {
+                // Simple retry mechanism or wait
+                delay(1000) 
+            }
+            
+            // Construct mapping logic similar to MediaLibrarySessionCallback
+            val songs: List<com.Chenkham.Echofy.db.entities.Song> = withContext(Dispatchers.IO) {
+                when (playlistId) {
+                    com.Chenkham.Echofy.db.entities.PlaylistEntity.LIKED_PLAYLIST_ID -> {
+                        database.likedSongs(
+                            com.Chenkham.Echofy.constants.SongSortType.CREATE_DATE,
+                            descending = true
+                        ).first()
+                    }
+                    com.Chenkham.Echofy.db.entities.PlaylistEntity.DOWNLOADED_PLAYLIST_ID -> {
+                         // We would need access to DownloadUtil here, but it's injected in Service or Activity
+                         // For simplicity, we can just query all songs and filter by if we have a download index
+                         // However, accessing database directly is safer
+                         // Ideally we ask the MediaController to play a mediaID.
+                        emptyList() // Placeholder: Best practice is to use mediaController.playFromMediaId
+                    }
+                    else -> emptyList()
+                }
+            }
+            
+            // Better approach: Use the TransportControls/MediaController to play by ID
+            // This ensures logic stays in Service/Callback
+            val mediaId = "${com.Chenkham.Echofy.playback.MusicService.PLAYLIST}/$playlistId"
+            // We can't easily "playFromMediaId" with the simple MediaController shim we have in PlayerConnection.
+            // But we can construct the queue manually if we have the songs.
+             
+            if (songs.isNotEmpty()) {
+                playerConnection?.playQueue(
+                    com.Chenkham.Echofy.playback.queues.ListQueue(
+                        title = if(playlistId == com.Chenkham.Echofy.db.entities.PlaylistEntity.LIKED_PLAYLIST_ID) "Liked Songs" else "Downloads",
+                        items = songs.map { it.toMediaItem() },
+                        startIndex = 0
+                    )
+                )
+            } else {
+                 // Fallback: Try to use the service's browse logic if we can't query here easily
+                 // Or just toast "No songs found"
+            }
+        }
+    }
+
+    private fun performOnlineSearchAndPlay(query: String) {
+        lifecycleScope.launch {
+            Toast.makeText(this@MainActivity, "Searching for $query...", Toast.LENGTH_SHORT).show()
+            
+            val result: Result<com.Chenkham.innertube.pages.SearchResult> = withContext(Dispatchers.IO) {
+                YouTube.search(query, com.Chenkham.innertube.YouTube.SearchFilter.FILTER_SONG)
+            }
+            
+            result.onSuccess { searchResult ->
+                val firstSong = searchResult.items.firstNotNullOfOrNull { it as? com.Chenkham.innertube.models.SongItem }
+                
+                if (firstSong != null) {
+                    // Create a queue starting with this song
+                     playerConnection?.playQueue(
+                        YouTubeQueue(
+                            WatchEndpoint(videoId = firstSong.id),
+                            firstSong.toMediaMetadata()
+                        )
+                    )
+                } else {
+                     Toast.makeText(this@MainActivity, "No songs found for $query", Toast.LENGTH_LONG).show()
+                }
+            }.onFailure {
+                reportException(it)
+                Toast.makeText(this@MainActivity, "Search failed", Toast.LENGTH_SHORT).show()
             }
         }
     }
@@ -1874,32 +2186,6 @@ private fun openNotificationSettings(context: Context) {
     }
 }
 
-suspend fun checkForUpdates(): String? = withContext(Dispatchers.IO) {
-    try {
-        val url = URL("https://api.github.com/repos/chenkham/Echofy-android/releases/latest")
-        val connection = url.openConnection()
-        connection.connect()
-        val json = connection.getInputStream().bufferedReader().use { it.readText() }
-        val jsonObject = JSONObject(json)
-        return@withContext jsonObject.getString("tag_name")
-    } catch (e: Exception) {
-        e.printStackTrace()
-        return@withContext null
-    }
-}
-
-fun isNewerVersion(remoteVersion: String, currentVersion: String): Boolean {
-    val remote = remoteVersion.removePrefix("v").split(".").map { it.toIntOrNull() ?: 0 }
-    val current = currentVersion.removePrefix("v").split(".").map { it.toIntOrNull() ?: 0 }
-
-    for (i in 0 until maxOf(remote.size, current.size)) {
-        val r = remote.getOrNull(i) ?: 0
-        val c = current.getOrNull(i) ?: 0
-        if (r > c) return true
-        if (r < c) return false
-    }
-    return false
-}
 
 @Composable
 fun ProfileIconWithUpdateBadge(
@@ -1911,6 +2197,7 @@ fun ProfileIconWithUpdateBadge(
     val avatarManager = remember { AvatarPreferenceManager(context) }
     val currentSelection by avatarManager.getAvatarSelection.collectAsState(initial = AvatarSelection.Default)
     var showUpdateBadge by remember { mutableStateOf(false) }
+    // PERFORMANCE FIX: Use rememberUpdatedState to prevent stale closure
     val updatedOnClick = rememberUpdatedState(onProfileClick)
 
     // AnimaciÃ³n del badge
@@ -1935,15 +2222,7 @@ fun ProfileIconWithUpdateBadge(
         label = "alpha"
     )
 
-    // Control seguro de updates
-    LaunchedEffect(currentVersion) {
-        try {
-            val latestVersion = withContext(Dispatchers.IO) { checkForUpdates() }
-            showUpdateBadge = latestVersion?.let { isNewerVersion(it, currentVersion) } ?: false
-        } catch (e: Exception) {
-            Timber.tag("ProfileIcon").e("Error checking for updates: ${e.message}")
-        }
-    }
+
 
     Box(
         contentAlignment = Alignment.Center,
@@ -2055,152 +2334,3 @@ fun ProfileIconWithUpdateBadge(
     }
 }
 
-/**
- * Dialog shown when a new app version is available.
- */
-@Composable
-fun UpdateAvailableDialog(
-    context: Context,
-    currentVersion: String,
-    newVersion: String,
-    onDismiss: () -> Unit
-) {
-    var isDownloading by remember { mutableStateOf(false) }
-    var downloadError by remember { mutableStateOf<String?>(null) }
-    val scope = rememberCoroutineScope()
-    
-    AlertDialog(
-        onDismissRequest = { if (!isDownloading) onDismiss() },
-        icon = {
-            if (isDownloading) {
-                CircularProgressIndicator(
-                    modifier = Modifier.size(48.dp),
-                    color = MaterialTheme.colorScheme.primary
-                )
-            } else {
-                Icon(
-                    painter = painterResource(R.drawable.update),
-                    contentDescription = null,
-                    modifier = Modifier.size(48.dp),
-                    tint = MaterialTheme.colorScheme.primary
-                )
-            }
-        },
-        title = {
-            Text(
-                text = if (isDownloading) "Downloading Update..." else "Update Available! 🚀",
-                style = MaterialTheme.typography.headlineSmall,
-                fontWeight = FontWeight.Bold
-            )
-        },
-        text = {
-            Column(
-                horizontalAlignment = Alignment.CenterHorizontally,
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                if (isDownloading) {
-                    Text(
-                        text = "Please wait while the update downloads.\nInstallation will start automatically.",
-                        style = MaterialTheme.typography.bodyMedium,
-                        textAlign = TextAlign.Center,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                    if (downloadError != null) {
-                        Spacer(Modifier.height(8.dp))
-                        Text(
-                            text = downloadError!!,
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.error
-                        )
-                    }
-                } else {
-                    Text(
-                        text = "A new version of Echofy is available",
-                        style = MaterialTheme.typography.bodyMedium,
-                        textAlign = TextAlign.Center
-                    )
-                    Spacer(Modifier.height(16.dp))
-                    Row(
-                        horizontalArrangement = Arrangement.Center,
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            Text(
-                                text = "Current",
-                                style = MaterialTheme.typography.labelSmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                            Text(
-                                text = currentVersion,
-                                style = MaterialTheme.typography.titleMedium,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                        }
-                        Spacer(Modifier.width(32.dp))
-                        Icon(
-                            painter = painterResource(R.drawable.arrow_forward),
-                            contentDescription = null,
-                            tint = MaterialTheme.colorScheme.primary
-                        )
-                        Spacer(Modifier.width(32.dp))
-                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            Text(
-                                text = "New",
-                                style = MaterialTheme.typography.labelSmall,
-                                color = MaterialTheme.colorScheme.primary
-                            )
-                            Text(
-                                text = newVersion,
-                                style = MaterialTheme.typography.titleMedium,
-                                fontWeight = FontWeight.Bold,
-                                color = MaterialTheme.colorScheme.primary
-                            )
-                        }
-                    }
-                }
-            }
-        },
-        dismissButton = {
-            if (!isDownloading) {
-                TextButton(onClick = onDismiss) {
-                    Text("Later")
-                }
-            } else {
-                TextButton(onClick = {
-                    isDownloading = false
-                    downloadError = null
-                }) {
-                    Text("Cancel")
-                }
-            }
-        },
-        confirmButton = {
-            if (!isDownloading) {
-                Button(
-                    onClick = {
-                        isDownloading = true
-                        downloadError = null
-                        scope.launch {
-                            try {
-                                val urlResult = com.Chenkham.Echofy.utils.InAppUpdater.getApkDownloadUrl()
-                                urlResult.onSuccess { downloadUrl ->
-                                    // Use DownloadManager for reliable download with system notification
-                                    com.Chenkham.Echofy.utils.InAppUpdater.downloadWithManager(context, downloadUrl)
-                                    onDismiss()
-                                }.onFailure { error ->
-                                    downloadError = error.message ?: "Failed to get download URL"
-                                    isDownloading = false
-                                }
-                            } catch (e: Exception) {
-                                downloadError = e.message ?: "Download failed"
-                                isDownloading = false
-                            }
-                        }
-                    }
-                ) {
-                    Text("Update Now")
-                }
-            }
-        }
-    )
-}

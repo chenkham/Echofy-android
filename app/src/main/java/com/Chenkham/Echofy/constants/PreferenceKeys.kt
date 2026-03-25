@@ -1,4 +1,4 @@
-﻿package com.Chenkham.Echofy.constants
+package com.Chenkham.Echofy.constants
 
 import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.floatPreferencesKey
@@ -16,12 +16,26 @@ val SlimNavBarKey = booleanPreferencesKey("slimNavBar")
 val GridItemsSizeKey = stringPreferencesKey("gridItemSize")
 val SliderStyleKey = stringPreferencesKey("sliderStyle")
 val PipEnabledKey = booleanPreferencesKey("pipEnabled")
-val DynamicEchoEnabledKey = booleanPreferencesKey("dynamicEchoEnabled")
-val DynamicEchoStyleKey = stringPreferencesKey("dynamicEchoStyle")
+val EnableListenTogetherKey = booleanPreferencesKey("enableListenTogether")
+val PlaybackModeKey = stringPreferencesKey("playbackMode")
+val SeasonalWallpaperKey = stringPreferencesKey("seasonalWallpaper")
+val DataSaverEnabledKey = booleanPreferencesKey("dataSaverEnabled")
+val BatterySaverEnabledKey = booleanPreferencesKey("batterySaverEnabled")
+val VideoCacheEnabledKey = booleanPreferencesKey("videoCacheEnabled")
+val VideoPlaybackEnabledKey = booleanPreferencesKey("videoPlaybackEnabled")
 
-enum class DynamicEchoStyle {
-    WAVE,
-    GLOW
+
+enum class PlaybackMode {
+    AUDIO,  // Default - shows album art thumbnail
+    VIDEO   // Shows music video
+}
+
+enum class SeasonalWallpaper {
+    OFF,
+    WINTER,
+    SPRING,
+    SUMMER,
+    AUTUMN,
 }
 
 enum class SliderStyle {
@@ -61,6 +75,7 @@ val StopMusicOnTaskClearKey = booleanPreferencesKey("stopMusicOnTaskClear")
 
 val MaxImageCacheSizeKey = intPreferencesKey("maxImageCacheSize")
 val MaxSongCacheSizeKey = intPreferencesKey("maxSongCacheSize")
+val AutoClearCacheOnCloseKey = booleanPreferencesKey("autoClearCacheOnClose")
 
 val DisableLoadMoreWhenRepeatAllKey = booleanPreferencesKey("disableLoadMoreWhenRepeatAll")
 val ScrobbleDelayPercentKey = floatPreferencesKey("scrobbleDelayPercent")
@@ -70,13 +85,23 @@ val EnableLastFMScrobblingKey = booleanPreferencesKey("enableLastFMScrobbling")
 val LastFMUseNowPlaying = booleanPreferencesKey("lastFMUseNowPlaying")
 val AudioOffload = booleanPreferencesKey("audioOffload")
 
+// Built-in Equalizer settings
+val EqualizerEnabledKey = booleanPreferencesKey("equalizerEnabled")
+val EqualizerPresetKey = intPreferencesKey("equalizerPreset") // -1 = Custom, 0+ = preset index
+val EqualizerBandLevelsKey = stringPreferencesKey("equalizerBandLevels") // JSON array
+val BassBoostEnabledKey = booleanPreferencesKey("bassBoostEnabled")
+val BassBoostStrengthKey = intPreferencesKey("bassBoostStrength") // 0-1000
+
+// Video Quality setting for video playback
+val VideoQualityKey = stringPreferencesKey("videoQuality") // "Auto", "1080p", "720p", "480p", "360p", "144p"
+
 val PlayerTextAlignmentKey = stringPreferencesKey("playerTextAlignment")
 
 val RotateBackgroundKey = booleanPreferencesKey("rotate_background")
 
 
 val SmallButtonsShapeKey = stringPreferencesKey("small_buttons_shape")
-const val DefaultSmallButtonsShape = "Pill"
+const val DefaultSmallButtonsShape = "Circle"
 
 val PauseListenHistoryKey = booleanPreferencesKey("pauseListenHistory")
 val PauseSearchHistoryKey = booleanPreferencesKey("pauseSearchHistory")
@@ -123,6 +148,7 @@ val PlaylistViewTypeKey = stringPreferencesKey("playlistViewType")
 val PlaylistEditLockKey = booleanPreferencesKey("playlistEditLock")
 val QuickPicksKey = stringPreferencesKey("discover")
 val PreferredLyricsProviderKey = stringPreferencesKey("lyricsProvider")
+val CurrentLyricsProviderKey = stringPreferencesKey("currentLyricsProvider") // Manual provider override
 val QueueEditLockKey = booleanPreferencesKey("queueEditLock")
 
 val LyricFontSizeKey = intPreferencesKey("lyricFontSize")
@@ -131,7 +157,7 @@ val AnimateLyricsKey = booleanPreferencesKey("animate_lyrics")
 
 
 val PlayPauseButtonShapeKey = stringPreferencesKey("playPauseButtonShape")
-const val DefaultPlayPauseButtonShape = "Cookie9Sided"
+const val DefaultPlayPauseButtonShape = "Circle"
 
 val MiniPlayerThumbnailShapeKey = stringPreferencesKey("miniPlayerThumbnailShape")
 const val DefaultMiniPlayerThumbnailShape = "Circle"
@@ -290,6 +316,11 @@ enum class PlayerButtonsStyle {
     SECONDARY,
 }
 
+enum class MiniPlayerStyle {
+    Floating,
+    Slim
+}
+
 val TopSize = stringPreferencesKey("topSize")
 val HistoryDuration = floatPreferencesKey("historyDuration")
 
@@ -302,6 +333,7 @@ val TranslateLyricsKey = booleanPreferencesKey("translateLyrics")
 val PlayerVolumeKey = floatPreferencesKey("playerVolume")
 val RepeatModeKey = intPreferencesKey("repeatMode")
 val PlayerButtonsStyleKey = stringPreferencesKey("player_buttons_style")
+val MiniPlayerStyleKey = stringPreferencesKey("mini_player_style")
 
 val SearchSourceKey = stringPreferencesKey("searchSource")
 val SwipeThumbnailKey = booleanPreferencesKey("swipeThumbnail")
@@ -319,6 +351,7 @@ enum class SearchSource {
 }
 
 val VisitorDataKey = stringPreferencesKey("visitorData")
+val VisitorDataTimestampKey = longPreferencesKey("visitorDataTimestamp")
 val DataSyncIdKey = stringPreferencesKey("dataSyncId")
 val AccountPhotoUrlKey = stringPreferencesKey("account_photo_url")
 val InnerTubeCookieKey = stringPreferencesKey("innerTubeCookie")
@@ -520,3 +553,58 @@ val CountryCodeToName =
         "YE" to "Yemen",
         "ZW" to "Zimbabwe",
     )
+
+// Onboarding / First Launch
+val OnboardingCompletedKey = booleanPreferencesKey("onboardingCompleted")
+val OnboardingSelectedCountryKey = stringPreferencesKey("onboardingSelectedCountry")
+val OnboardingSelectedArtistsKey = stringPreferencesKey("onboardingSelectedArtists") // JSON array
+val OnboardingSelectedLanguageKey = stringPreferencesKey("onboardingSelectedLanguage")
+
+
+// Backpaper (App Background Wallpaper) Settings
+val BackpaperEnabledKey = booleanPreferencesKey("backpaperEnabled")
+val BackpaperTypeKey = stringPreferencesKey("backpaperType")
+val BackpaperBuiltInIdKey = stringPreferencesKey("backpaperBuiltInId")
+val BackpaperCustomPathKey = stringPreferencesKey("backpaperCustomPath")
+val BackpaperOpacityKey = floatPreferencesKey("backpaperOpacity")
+val BackpaperBlurKey = floatPreferencesKey("backpaperBlur")
+val BackpaperApplyToHomeKey = booleanPreferencesKey("backpaperApplyToHome")
+val BackpaperApplyToExploreKey = booleanPreferencesKey("backpaperApplyToExplore")
+val BackpaperApplyToLibraryKey = booleanPreferencesKey("backpaperApplyToLibrary")
+val BackpaperApplyToPlayerKey = booleanPreferencesKey("backpaperApplyToPlayer")
+val BackpaperApplyToSettingsKey = booleanPreferencesKey("backpaperApplyToSettings")
+val BackpaperApplyToSearchKey = booleanPreferencesKey("backpaperApplyToSearch")
+val BackpaperApplyToLyricsKey = booleanPreferencesKey("backpaperApplyToLyrics")
+
+enum class BackpaperType {
+    NONE,       // No wallpaper
+    BUILT_IN,   // Use bundled wallpaper
+    CUSTOM      // Use user's custom photo
+}
+
+enum class WallpaperCategory {
+    WINTER,
+    SPRING,
+    SUMMER,
+    AUTUMN,
+    NIGHT,
+    NATURE,
+    ABSTRACT
+}
+
+enum class BackpaperScreen {
+    HOME,
+    EXPLORE,
+    LIBRARY,
+    PLAYER,
+    SETTINGS,
+    SEARCH,
+    LYRICS
+}
+
+val IsGuestModeKey = booleanPreferencesKey("is_guest_mode")
+
+// Charts Country Selection
+val ChartCountryKey = stringPreferencesKey("chartCountry")
+
+val VoiceControlEnabledKey = booleanPreferencesKey("voiceControlEnabled")

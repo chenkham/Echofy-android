@@ -48,6 +48,7 @@ import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.toMutableStateList
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
@@ -88,6 +89,7 @@ import com.Chenkham.Echofy.constants.HideExplicitKey
 import com.Chenkham.Echofy.constants.ThumbnailCornerRadius
 import com.Chenkham.Echofy.db.entities.PlaylistEntity
 import com.Chenkham.Echofy.db.entities.PlaylistSongMap
+import com.Chenkham.Echofy.db.insert
 import com.Chenkham.Echofy.extensions.metadata
 import com.Chenkham.Echofy.extensions.toMediaItem
 import com.Chenkham.Echofy.extensions.togglePlayPause
@@ -96,6 +98,7 @@ import com.Chenkham.Echofy.playback.queues.YouTubeQueue
 import com.Chenkham.Echofy.ui.component.AutoResizeText
 import com.Chenkham.Echofy.ui.component.FontSizeRange
 import com.Chenkham.Echofy.ui.component.LocalMenuState
+import com.Chenkham.Echofy.ui.component.PrefetchOnVisible
 import com.Chenkham.Echofy.ui.component.VerticalFastScroller
 import com.Chenkham.Echofy.ui.component.YouTubeListItem
 import com.Chenkham.Echofy.ui.component.shimmer.ButtonPlaceholder
@@ -194,7 +197,9 @@ fun OnlinePlaylistScreen(
     // Calcular el padding del contenido considerando WindowInsets
     val contentPadding = LocalPlayerAwareWindowInsets.current.union(WindowInsets.ime)
         .asPaddingValues()
-    val wrappedSongs = filteredSongs.map { item -> ItemWrapper(item) }.toMutableList()
+    val wrappedSongs = remember(filteredSongs) {
+        filteredSongs.map { item -> ItemWrapper(item) }.toMutableStateList()
+    }
 
     Box(
         modifier = Modifier.fillMaxSize(),
@@ -408,6 +413,9 @@ fun OnlinePlaylistScreen(
                         items(
                             items = wrappedSongs,
                         ) { song ->
+                            // INSTANT PLAYBACK: Prefetch URL when song becomes visible
+                            PrefetchOnVisible(mediaId = song.item.second.id)
+                            
                             YouTubeListItem(
                                 item = song.item.second,
                                 isActive = mediaMetadata?.id == song.item.second.id,

@@ -1,4 +1,4 @@
-﻿package com.Chenkham.Echofy.db
+package com.Chenkham.Echofy.db
 
 import android.annotation.SuppressLint
 import android.content.Context
@@ -27,6 +27,7 @@ import com.Chenkham.Echofy.db.entities.PlaylistEntity
 import com.Chenkham.Echofy.db.entities.PlaylistSongMap
 import com.Chenkham.Echofy.db.entities.PlaylistSongMapPreview
 import com.Chenkham.Echofy.db.entities.RelatedSongMap
+import com.Chenkham.Echofy.db.entities.RecentSearchSong
 import com.Chenkham.Echofy.db.entities.SearchHistory
 import com.Chenkham.Echofy.db.entities.SetVideoIdEntity
 import com.Chenkham.Echofy.db.entities.SongAlbumMap
@@ -81,14 +82,15 @@ class MusicDatabase(
         Event::class,
         RelatedSongMap::class,
         SetVideoIdEntity::class,
-        PlayCountEntity::class
+        PlayCountEntity::class,
+        RecentSearchSong::class
     ],
     views = [
         SortedSongArtistMap::class,
         SortedSongAlbumMap::class,
         PlaylistSongMapPreview::class,
     ],
-    version = 19,
+    version = 21,
     exportSchema = true,
     autoMigrations = [
         AutoMigration(from = 2, to = 3),
@@ -108,6 +110,8 @@ class MusicDatabase(
         AutoMigration(from = 16, to = 17, spec = Migration16To17::class),
         AutoMigration(from = 17, to = 18),
         AutoMigration(from = 18, to = 19),
+        AutoMigration(from = 19, to = 20),
+        AutoMigration(from = 20, to = 21),
     ],
 )
 @TypeConverters(Converters::class)

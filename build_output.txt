@@ -1,0 +1,793 @@
+Configuration on demand is an incubating feature.
+Reusing configuration cache.
+> Task :innertube:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :kugou:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :lrclib:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :kizzy:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :ytmusicapi:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :material-color-utilities:processResources NO-SOURCE
+> Task :kizzy:processResources NO-SOURCE
+> Task :kugou:processResources NO-SOURCE
+> Task :lrclib:processResources NO-SOURCE
+> Task :jossredconnect:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :innertube:processResources NO-SOURCE
+> Task :ytmusicapi:processResources NO-SOURCE
+> Task :app:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :app:preBuild UP-TO-DATE
+> Task :jossredconnect:processResources NO-SOURCE
+> Task :app:preDebugBuild UP-TO-DATE
+> Task :app:generateDebugBuildConfig UP-TO-DATE
+> Task :app:processDebugGoogleServices UP-TO-DATE
+> Task :app:generateDebugResValues UP-TO-DATE
+> Task :jossredconnect:compileKotlin UP-TO-DATE
+> Task :jossredconnect:compileJava NO-SOURCE
+> Task :jossredconnect:classes UP-TO-DATE
+> Task :app:extractDeepLinksDebug UP-TO-DATE
+> Task :jossredconnect:jar UP-TO-DATE
+> Task :material-color-utilities:compileJava UP-TO-DATE
+> Task :material-color-utilities:classes UP-TO-DATE
+> Task :app:createDebugCompatibleScreenManifests UP-TO-DATE
+> Task :material-color-utilities:jar UP-TO-DATE
+> Task :app:generateDebugResources UP-TO-DATE
+> Task :kugou:compileKotlin UP-TO-DATE
+> Task :ytmusicapi:compileKotlin UP-TO-DATE
+> Task :kizzy:compileKotlin UP-TO-DATE
+> Task :lrclib:compileKotlin UP-TO-DATE
+> Task :ytmusicapi:compileJava NO-SOURCE
+> Task :ytmusicapi:classes UP-TO-DATE
+> Task :lrclib:compileJava NO-SOURCE
+> Task :kugou:compileJava NO-SOURCE
+> Task :lrclib:classes UP-TO-DATE
+> Task :kugou:classes UP-TO-DATE
+> Task :kizzy:compileJava NO-SOURCE
+> Task :kizzy:classes UP-TO-DATE
+> Task :innertube:compileKotlin UP-TO-DATE
+> Task :kugou:jar UP-TO-DATE
+> Task :kizzy:jar UP-TO-DATE
+> Task :innertube:compileJava NO-SOURCE
+> Task :innertube:classes UP-TO-DATE
+> Task :ytmusicapi:jar UP-TO-DATE
+> Task :innertube:jar UP-TO-DATE
+> Task :app:packageDebugResources UP-TO-DATE
+> Task :app:parseDebugLocalResources UP-TO-DATE
+> Task :lrclib:jar UP-TO-DATE
+> Task :app:mapDebugSourceSetPaths UP-TO-DATE
+> Task :app:mergeDebugResources UP-TO-DATE
+> Task :app:checkDebugAarMetadata UP-TO-DATE
+> Task :app:processDebugMainManifest UP-TO-DATE
+> Task :app:processDebugManifest UP-TO-DATE
+> Task :app:processDebugManifestForPackage UP-TO-DATE
+> Task :app:processDebugResources UP-TO-DATE
+> Task :app:kspDebugKotlin UP-TO-DATE
+> Task :app:kaptGenerateStubsDebugKotlin UP-TO-DATE
+> Task :app:kaptDebugKotlin UP-TO-DATE
+
+> Task :app:compileDebugKotlin FAILED
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/playback/MediaLibrarySessionCallback.kt:241:81 Unresolved reference 'likedSongs'.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/playback/MediaLibrarySessionCallback.kt:343:73 Unresolved reference 'likedSongs'.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/ui/component/BottomSheetMenu.kt:7:35 Unresolved reference 'LocalOverscrollFactory'.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/ui/component/BottomSheetMenu.kt:95:16 Unresolved reference 'LocalOverscrollFactory'.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/ui/component/BottomSheetMenu.kt:97:16 @Composable invocations can only happen from the context of a @Composable function
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/ui/component/GridMenu.kt:5:35 Unresolved reference 'LocalOverscrollFactory'.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/ui/component/GridMenu.kt:62:29 Unresolved reference 'LocalOverscrollFactory'.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/ui/component/GridMenu.kt:63:8 @Composable invocations can only happen from the context of a @Composable function
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/ui/component/Items.kt:1733:52 None of the following candidates is applicable:
+fun insert(song: SongEntity): Long
+fun insert(artist: ArtistEntity): Long
+fun insert(album: AlbumEntity): Long
+fun insert(playlist: PlaylistEntity): Long
+fun insert(map: SongArtistMap): Long
+fun insert(map: SongAlbumMap): Long
+fun insert(map: AlbumArtistMap): Long
+fun insert(map: PlaylistSongMap): Long
+fun insert(searchHistory: SearchHistory): Long
+fun insert(event: Event): Long
+fun insert(map: RelatedSongMap): Long
+fun insert(playCountEntity: PlayCountEntity): Long
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/ui/component/Lyrics.kt:305:37 Unresolved reference 'getLyrics'.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/ui/component/Lyrics.kt:313:65 Unresolved reference 'lyrics'.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/ui/component/ShapeSelector.kt:27:34 Unresolved reference 'ExperimentalMaterial3ExpressiveApi'.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/ui/component/ShapeSelector.kt:29:34 Unresolved reference 'MaterialShapes'.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/ui/component/ShapeSelector.kt:37:34 Unresolved reference 'toShape'.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/ui/component/ShapeSelector.kt:78:7 Unresolved reference 'ExperimentalMaterial3ExpressiveApi'.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/ui/component/ShapeSelector.kt:78:7 Annotation argument must be a compile-time constant.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/ui/component/ShapeSelector.kt:102:43 Unresolved reference 'MaterialShapes'.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/ui/component/ShapeSelector.kt:103:45 Unresolved reference 'MaterialShapes'.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/ui/component/ShapeSelector.kt:104:45 Unresolved reference 'MaterialShapes'.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/ui/component/ShapeSelector.kt:105:46 Unresolved reference 'MaterialShapes'.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/ui/component/ShapeSelector.kt:106:47 Unresolved reference 'MaterialShapes'.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/ui/component/ShapeSelector.kt:107:44 Unresolved reference 'MaterialShapes'.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/ui/component/ShapeSelector.kt:108:43 Unresolved reference 'MaterialShapes'.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/ui/component/ShapeSelector.kt:109:43 Unresolved reference 'MaterialShapes'.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/ui/component/ShapeSelector.kt:110:49 Unresolved reference 'MaterialShapes'.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/ui/component/ShapeSelector.kt:111:47 Unresolved reference 'MaterialShapes'.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/ui/component/ShapeSelector.kt:112:44 Unresolved reference 'MaterialShapes'.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/ui/component/ShapeSelector.kt:113:42 Unresolved reference 'MaterialShapes'.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/ui/component/ShapeSelector.kt:114:42 Unresolved reference 'MaterialShapes'.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/ui/component/ShapeSelector.kt:115:42 Unresolved reference 'MaterialShapes'.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/ui/component/ShapeSelector.kt:116:47 Unresolved reference 'MaterialShapes'.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/ui/component/ShapeSelector.kt:117:51 Unresolved reference 'MaterialShapes'.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/ui/component/ShapeSelector.kt:118:51 Unresolved reference 'MaterialShapes'.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/ui/component/ShapeSelector.kt:119:51 Unresolved reference 'MaterialShapes'.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/ui/component/ShapeSelector.kt:120:51 Unresolved reference 'MaterialShapes'.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/ui/component/ShapeSelector.kt:121:52 Unresolved reference 'MaterialShapes'.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/ui/component/ShapeSelector.kt:122:50 Unresolved reference 'MaterialShapes'.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/ui/component/ShapeSelector.kt:123:50 Unresolved reference 'MaterialShapes'.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/ui/component/ShapeSelector.kt:124:44 Unresolved reference 'MaterialShapes'.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/ui/component/ShapeSelector.kt:125:48 Unresolved reference 'MaterialShapes'.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/ui/component/ShapeSelector.kt:126:44 Unresolved reference 'MaterialShapes'.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/ui/component/ShapeSelector.kt:127:48 Unresolved reference 'MaterialShapes'.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/ui/component/ShapeSelector.kt:128:43 Unresolved reference 'MaterialShapes'.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/ui/component/ShapeSelector.kt:129:47 Unresolved reference 'MaterialShapes'.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/ui/component/ShapeSelector.kt:130:45 Unresolved reference 'MaterialShapes'.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/ui/component/ShapeSelector.kt:131:50 Unresolved reference 'MaterialShapes'.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/ui/component/ShapeSelector.kt:132:52 Unresolved reference 'MaterialShapes'.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/ui/component/ShapeSelector.kt:133:44 Unresolved reference 'MaterialShapes'.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/ui/component/ShapeSelector.kt:134:51 Unresolved reference 'MaterialShapes'.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/ui/component/ShapeSelector.kt:135:46 Unresolved reference 'MaterialShapes'.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/ui/component/ShapeSelector.kt:136:48 Unresolved reference 'MaterialShapes'.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/ui/component/ShapeSelector.kt:159:30 Unresolved reference 'MaterialShapes'.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/ui/component/ShapeSelector.kt:255:7 Unresolved reference 'ExperimentalMaterial3ExpressiveApi'.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/ui/component/ShapeSelector.kt:255:7 Annotation argument must be a compile-time constant.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/ui/component/ShapeSelector.kt:312:40 Unresolved reference 'toShape'.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/ui/component/ShapeSelector.kt:339:40 Unresolved reference 'ExperimentalMaterial3ExpressiveApi'.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/ui/component/ShapeSelector.kt:339:40 Annotation argument must be a compile-time constant.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/ui/component/ShareLyricsDialog.kt:16:36 Unresolved reference 'LocalOverscrollFactory'.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/ui/component/ShareLyricsDialog.kt:417:13 Unresolved reference 'LocalOverscrollFactory'.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/ui/menu/AddToPlaylistDialog.kt:115:41 Unresolved reference 'addSongToPlaylist'.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/ui/menu/AddToPlaylistDialog.kt:148:28 Unresolved reference 'addSongToPlaylist'.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/ui/menu/AddToPlaylistDialog.kt:165:28 Unresolved reference 'addSongToPlaylist'.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/ui/menu/AlbumMenu.kt:353:24 None of the following candidates is applicable:
+fun update(song: SongEntity): Int
+fun update(artist: ArtistEntity): Int
+fun update(album: AlbumEntity): Int
+fun update(playlist: PlaylistEntity): Int
+fun update(map: PlaylistSongMap): Int
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/ui/menu/ArtistMenu.kt:88:24 Cannot infer type for this parameter. Please specify it explicitly.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/ui/menu/ArtistMenu.kt:90:33 Unresolved reference 'artistSongs'.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/ui/menu/ArtistMenu.kt:91:33 Cannot infer type for this parameter. Please specify it explicitly.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/ui/menu/ArtistMenu.kt:92:39 Unresolved reference 'it'.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/ui/menu/ArtistMenu.kt:109:24 Cannot infer type for this parameter. Please specify it explicitly.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/ui/menu/ArtistMenu.kt:111:33 Unresolved reference 'artistSongs'.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/ui/menu/ArtistMenu.kt:112:33 Cannot infer type for this parameter. Please specify it explicitly.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/ui/menu/ArtistMenu.kt:113:39 Unresolved reference 'it'.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/ui/menu/ImportPlaylistDialog.kt:55:33 Unresolved reference 'addSongToPlaylist'.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/ui/menu/OnlinePlaylistAdder.kt:144:48 Cannot infer type for this parameter. Please specify it explicitly.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/ui/menu/OnlinePlaylistAdder.kt:146:65 None of the following candidates is applicable:
+fun insert(song: SongEntity): Long
+fun insert(artist: ArtistEntity): Long
+fun insert(album: AlbumEntity): Long
+fun insert(playlist: PlaylistEntity): Long
+fun insert(map: SongArtistMap): Long
+fun insert(map: SongAlbumMap): Long
+fun insert(map: AlbumArtistMap): Long
+fun insert(map: PlaylistSongMap): Long
+fun insert(searchHistory: SearchHistory): Long
+fun insert(event: Event): Long
+fun insert(map: RelatedSongMap): Long
+fun insert(playCountEntity: PlayCountEntity): Long
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/ui/menu/OnlinePlaylistAdder.kt:151:61 Unresolved reference 'addSongToPlaylist'.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/ui/menu/OnlinePlaylistAdder.kt:208:65 None of the following candidates is applicable:
+fun insert(song: SongEntity): Long
+fun insert(artist: ArtistEntity): Long
+fun insert(album: AlbumEntity): Long
+fun insert(playlist: PlaylistEntity): Long
+fun insert(map: SongArtistMap): Long
+fun insert(map: SongAlbumMap): Long
+fun insert(map: AlbumArtistMap): Long
+fun insert(map: PlaylistSongMap): Long
+fun insert(searchHistory: SearchHistory): Long
+fun insert(event: Event): Long
+fun insert(map: RelatedSongMap): Long
+fun insert(playCountEntity: PlayCountEntity): Long
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/ui/menu/OnlinePlaylistAdder.kt:281:28 Unresolved reference 'addSongToPlaylist'.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/ui/menu/OnlinePlaylistAdder.kt:298:28 Unresolved reference 'addSongToPlaylist'.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/ui/menu/PlayerMenu.kt:111:35 Unresolved reference 'LocalOverscrollFactory'.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/ui/menu/PlayerMenu.kt:161:35 None of the following candidates is applicable:
+fun insert(song: SongEntity): Long
+fun insert(artist: ArtistEntity): Long
+fun insert(album: AlbumEntity): Long
+fun insert(playlist: PlaylistEntity): Long
+fun insert(map: SongArtistMap): Long
+fun insert(map: SongAlbumMap): Long
+fun insert(map: AlbumArtistMap): Long
+fun insert(map: PlaylistSongMap): Long
+fun insert(searchHistory: SearchHistory): Long
+fun insert(event: Event): Long
+fun insert(map: RelatedSongMap): Long
+fun insert(playCountEntity: PlayCountEntity): Long
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/ui/menu/PlayerMenu.kt:309:8 Unresolved reference 'LocalOverscrollFactory'.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/ui/menu/PlayerMenu.kt:311:8 @Composable invocations can only happen from the context of a @Composable function
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/ui/menu/PlayerMenu.kt:475:24 None of the following candidates is applicable:
+fun insert(song: SongEntity): Long
+fun insert(artist: ArtistEntity): Long
+fun insert(album: AlbumEntity): Long
+fun insert(playlist: PlaylistEntity): Long
+fun insert(map: SongArtistMap): Long
+fun insert(map: SongAlbumMap): Long
+fun insert(map: AlbumArtistMap): Long
+fun insert(map: PlaylistSongMap): Long
+fun insert(searchHistory: SearchHistory): Long
+fun insert(event: Event): Long
+fun insert(map: RelatedSongMap): Long
+fun insert(playCountEntity: PlayCountEntity): Long
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/ui/menu/PlayerMenu.kt:519:47 None of the following candidates is applicable:
+fun insert(song: SongEntity): Long
+fun insert(artist: ArtistEntity): Long
+fun insert(album: AlbumEntity): Long
+fun insert(playlist: PlaylistEntity): Long
+fun insert(map: SongArtistMap): Long
+fun insert(map: SongAlbumMap): Long
+fun insert(map: AlbumArtistMap): Long
+fun insert(map: PlaylistSongMap): Long
+fun insert(searchHistory: SearchHistory): Long
+fun insert(event: Event): Long
+fun insert(map: RelatedSongMap): Long
+fun insert(playCountEntity: PlayCountEntity): Long
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/ui/menu/PlayerMenu.kt:812:47 The API of this layout is experimental and is likely to change in the future.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/ui/menu/SelectionSongsMenu.kt:242:24 None of the following candidates is applicable:
+fun insert(song: SongEntity): Long
+fun insert(artist: ArtistEntity): Long
+fun insert(album: AlbumEntity): Long
+fun insert(playlist: PlaylistEntity): Long
+fun insert(map: SongArtistMap): Long
+fun insert(map: SongAlbumMap): Long
+fun insert(map: AlbumArtistMap): Long
+fun insert(map: PlaylistSongMap): Long
+fun insert(searchHistory: SearchHistory): Long
+fun insert(event: Event): Long
+fun insert(map: RelatedSongMap): Long
+fun insert(playCountEntity: PlayCountEntity): Long
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/ui/menu/SongMenu.kt:381:36 Unresolved reference 'LocalOverscrollFactory'.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/ui/menu/SongMenu.kt:850:40 None of the following candidates is applicable:
+fun update(song: SongEntity): Int
+fun update(artist: ArtistEntity): Int
+fun update(album: AlbumEntity): Int
+fun update(playlist: PlaylistEntity): Int
+fun update(map: PlaylistSongMap): Int
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/ui/menu/YouTubeAlbumMenu.kt:6:35 Unresolved reference 'LocalOverscrollFactory'.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/ui/menu/YouTubeAlbumMenu.kt:109:28 None of the following candidates is applicable:
+fun insert(song: SongEntity): Long
+fun insert(artist: ArtistEntity): Long
+fun insert(album: AlbumEntity): Long
+fun insert(playlist: PlaylistEntity): Long
+fun insert(map: SongArtistMap): Long
+fun insert(map: SongAlbumMap): Long
+fun insert(map: AlbumArtistMap): Long
+fun insert(map: PlaylistSongMap): Long
+fun insert(searchHistory: SearchHistory): Long
+fun insert(event: Event): Long
+fun insert(map: RelatedSongMap): Long
+fun insert(playCountEntity: PlayCountEntity): Long
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/ui/menu/YouTubeAlbumMenu.kt:252:8 Unresolved reference 'LocalOverscrollFactory'.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/ui/menu/YouTubeAlbumMenu.kt:254:8 @Composable invocations can only happen from the context of a @Composable function
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/ui/menu/YouTubeAlbumMenu.kt:257:60 @Composable invocations can only happen from the context of a @Composable function
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/ui/menu/YouTubePlaylistMenu.kt:123:35 None of the following candidates is applicable:
+fun insert(song: SongEntity): Long
+fun insert(artist: ArtistEntity): Long
+fun insert(album: AlbumEntity): Long
+fun insert(playlist: PlaylistEntity): Long
+fun insert(map: SongArtistMap): Long
+fun insert(map: SongAlbumMap): Long
+fun insert(map: AlbumArtistMap): Long
+fun insert(map: PlaylistSongMap): Long
+fun insert(searchHistory: SearchHistory): Long
+fun insert(event: Event): Long
+fun insert(map: RelatedSongMap): Long
+fun insert(playCountEntity: PlayCountEntity): Long
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/ui/menu/YouTubePlaylistMenu.kt:209:35 None of the following candidates is applicable:
+fun insert(song: SongEntity): Long
+fun insert(artist: ArtistEntity): Long
+fun insert(album: AlbumEntity): Long
+fun insert(playlist: PlaylistEntity): Long
+fun insert(map: SongArtistMap): Long
+fun insert(map: SongAlbumMap): Long
+fun insert(map: AlbumArtistMap): Long
+fun insert(map: PlaylistSongMap): Long
+fun insert(searchHistory: SearchHistory): Long
+fun insert(event: Event): Long
+fun insert(map: RelatedSongMap): Long
+fun insert(playCountEntity: PlayCountEntity): Long
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/ui/menu/YouTubePlaylistMenu.kt:303:62 None of the following candidates is applicable:
+fun insert(song: SongEntity): Long
+fun insert(artist: ArtistEntity): Long
+fun insert(album: AlbumEntity): Long
+fun insert(playlist: PlaylistEntity): Long
+fun insert(map: SongArtistMap): Long
+fun insert(map: SongAlbumMap): Long
+fun insert(map: AlbumArtistMap): Long
+fun insert(map: PlaylistSongMap): Long
+fun insert(searchHistory: SearchHistory): Long
+fun insert(event: Event): Long
+fun insert(map: RelatedSongMap): Long
+fun insert(playCountEntity: PlayCountEntity): Long
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/ui/menu/YouTubeSongMenu.kt:80:35 Unresolved reference 'LocalOverscrollFactory'.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/ui/menu/YouTubeSongMenu.kt:123:16 None of the following candidates is applicable:
+fun insert(song: SongEntity): Long
+fun insert(artist: ArtistEntity): Long
+fun insert(album: AlbumEntity): Long
+fun insert(playlist: PlaylistEntity): Long
+fun insert(map: SongArtistMap): Long
+fun insert(map: SongAlbumMap): Long
+fun insert(map: AlbumArtistMap): Long
+fun insert(map: PlaylistSongMap): Long
+fun insert(searchHistory: SearchHistory): Long
+fun insert(event: Event): Long
+fun insert(map: RelatedSongMap): Long
+fun insert(playCountEntity: PlayCountEntity): Long
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/ui/menu/YouTubeSongMenu.kt:238:8 Unresolved reference 'LocalOverscrollFactory'.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/ui/menu/YouTubeSongMenu.kt:240:8 @Composable invocations can only happen from the context of a @Composable function
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/ui/menu/YouTubeSongMenu.kt:272:44 None of the following candidates is applicable:
+fun insert(song: SongEntity): Long
+fun insert(artist: ArtistEntity): Long
+fun insert(album: AlbumEntity): Long
+fun insert(playlist: PlaylistEntity): Long
+fun insert(map: SongArtistMap): Long
+fun insert(map: SongAlbumMap): Long
+fun insert(map: AlbumArtistMap): Long
+fun insert(map: PlaylistSongMap): Long
+fun insert(searchHistory: SearchHistory): Long
+fun insert(event: Event): Long
+fun insert(map: RelatedSongMap): Long
+fun insert(playCountEntity: PlayCountEntity): Long
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/ui/menu/YouTubeSongMenu.kt:518:32 None of the following candidates is applicable:
+fun insert(song: SongEntity): Long
+fun insert(artist: ArtistEntity): Long
+fun insert(album: AlbumEntity): Long
+fun insert(playlist: PlaylistEntity): Long
+fun insert(map: SongArtistMap): Long
+fun insert(map: SongAlbumMap): Long
+fun insert(map: AlbumArtistMap): Long
+fun insert(map: PlaylistSongMap): Long
+fun insert(searchHistory: SearchHistory): Long
+fun insert(event: Event): Long
+fun insert(map: RelatedSongMap): Long
+fun insert(playCountEntity: PlayCountEntity): Long
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/ui/menu/YouTubeSongMenu.kt:530:24 None of the following candidates is applicable:
+fun insert(song: SongEntity): Long
+fun insert(artist: ArtistEntity): Long
+fun insert(album: AlbumEntity): Long
+fun insert(playlist: PlaylistEntity): Long
+fun insert(map: SongArtistMap): Long
+fun insert(map: SongAlbumMap): Long
+fun insert(map: AlbumArtistMap): Long
+fun insert(map: PlaylistSongMap): Long
+fun insert(searchHistory: SearchHistory): Long
+fun insert(event: Event): Long
+fun insert(map: RelatedSongMap): Long
+fun insert(playCountEntity: PlayCountEntity): Long
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/ui/player/MiniPlayer.kt:46:34 Unresolved reference 'ExperimentalMaterial3ExpressiveApi'.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/ui/player/MiniPlayer.kt:49:34 Unresolved reference 'MaterialShapes'.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/ui/player/MiniPlayer.kt:53:34 Unresolved reference 'toShape'.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/ui/player/MiniPlayer.kt:104:40 Unresolved reference 'ExperimentalMaterial3ExpressiveApi'.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/ui/player/MiniPlayer.kt:104:40 Annotation argument must be a compile-time constant.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/ui/player/MiniPlayer.kt:158:12 Unresolved reference 'MaterialShapes'.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/ui/player/MiniPlayer.kt:213:12 Unresolved reference 'MaterialShapes'.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/ui/player/MiniPlayer.kt:215:6 Unresolved reference 'toShape'.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/ui/player/Player.kt:30:35 Unresolved reference 'LocalOverscrollFactory'.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/ui/player/Player.kt:66:34 Unresolved reference 'ExperimentalMaterial3ExpressiveApi'.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/ui/player/Player.kt:68:34 Unresolved reference 'MaterialShapes'.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/ui/player/Player.kt:75:34 Unresolved reference 'toShape'.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/ui/player/Player.kt:193:40 Unresolved reference 'ExperimentalMaterial3ExpressiveApi'.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/ui/player/Player.kt:193:40 Annotation argument must be a compile-time constant.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/ui/player/Player.kt:601:12 Unresolved reference 'MaterialShapes'.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/ui/player/Player.kt:610:35 Unresolved reference 'toShape'.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/ui/player/Player.kt:907:47 Unresolved reference 'toShape'.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/ui/player/Player.kt:931:47 Unresolved reference 'toShape'.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/ui/player/Player.kt:948:47 Unresolved reference 'toShape'.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/ui/player/Player.kt:972:47 Unresolved reference 'toShape'.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/ui/player/Player.kt:1002:51 Unresolved reference 'toShape'.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/ui/player/Player.kt:1051:47 Unresolved reference 'toShape'.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/ui/player/Player.kt:1074:51 Unresolved reference 'toShape'.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/ui/player/Player.kt:1166:41 Unresolved reference 'toShape'.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/ui/player/Player.kt:1564:49 Unresolved reference 'LocalOverscrollFactory'.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/ui/player/Player.kt:1565:28 @Composable invocations can only happen from the context of a @Composable function
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/ui/player/Queue.kt:21:36 Unresolved reference 'LocalOverscrollFactory'.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/ui/player/Queue.kt:385:37 Unresolved reference 'LocalOverscrollFactory'.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/ui/player/Queue.kt:386:16 @Composable invocations can only happen from the context of a @Composable function
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/ui/player/Queue.kt:389:33 @Composable invocations can only happen from the context of a @Composable function
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/ui/player/Queue.kt:395:26 @Composable invocations can only happen from the context of a @Composable function
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/ui/screens/AlbumScreen.kt:108:15 Unresolved reference 'io'.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/ui/screens/AlbumScreen.kt:705:16 Unresolved reference 'IOException'.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/ui/screens/artist/ArtistSongsScreen.kt:96:14 Property delegate must have a 'getValue(Nothing?, KProperty0<ERROR CLASS: Cannot infer argument for type parameter T>)' method. None of the following functions is applicable:
+fun <T> State<T>.getValue(thisObj: Any?, property: KProperty<*>): T
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/ui/screens/artist/ArtistSongsScreen.kt:96:17 Cannot infer type for this parameter. Please specify it explicitly.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/ui/screens/artist/ArtistSongsScreen.kt:96:17 Not enough information to infer type argument for 'T'.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/ui/screens/artist/ArtistSongsScreen.kt:96:33 Cannot infer type for this parameter. Please specify it explicitly.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/ui/screens/artist/ArtistSongsScreen.kt:96:33 Not enough information to infer type argument for 'T'.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/ui/screens/artist/ArtistSongsScreen.kt:109:23 Cannot infer type for this parameter. Please specify it explicitly.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/ui/screens/artist/ArtistSongsScreen.kt:110:20 Cannot infer type for this parameter. Please specify it explicitly.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/ui/screens/artist/ArtistSongsScreen.kt:110:28 Cannot infer type for this parameter. Please specify it explicitly.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/ui/screens/artist/ArtistSongsScreen.kt:118:30 Cannot infer type for this parameter. Please specify it explicitly.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/ui/screens/artist/ArtistSongsScreen.kt:119:20 Unresolved reference 'item'.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/ui/screens/artist/ArtistSongsScreen.kt:120:28 Unresolved reference 'item'.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/ui/screens/artist/ArtistSongsScreen.kt:175:50 Unresolved reference 'size'.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/ui/screens/artist/ArtistSongsScreen.kt:176:50 Unresolved reference 'size'.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/ui/screens/artist/ArtistSongsScreen.kt:187:28 Cannot infer type for this parameter. Please specify it explicitly.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/ui/screens/artist/ArtistSongsScreen.kt:187:31 Cannot infer type for this parameter. Please specify it explicitly.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/ui/screens/artist/ArtistSongsScreen.kt:187:44 Unresolved reference 'item'.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/ui/screens/artist/ArtistSongsScreen.kt:188:20 Cannot infer type for this parameter. Please specify it explicitly.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/ui/screens/artist/ArtistSongsScreen.kt:188:27 Cannot infer type for this parameter. Please specify it explicitly.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/ui/screens/artist/ArtistSongsScreen.kt:189:20 @Composable invocations can only happen from the context of a @Composable function
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/ui/screens/artist/ArtistSongsScreen.kt:190:43 Unresolved reference 'item'.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/ui/screens/artist/ArtistSongsScreen.kt:192:47 Unresolved reference 'item'.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/ui/screens/artist/ArtistSongsScreen.kt:194:49 Unresolved reference 'isSelected'.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/ui/screens/artist/ArtistSongsScreen.kt:200:71 Unresolved reference 'item'.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/ui/screens/artist/ArtistSongsScreen.kt:219:60 Unresolved reference 'item'.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/ui/screens/artist/ArtistSongsScreen.kt:225:84 Unresolved reference 'it'.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/ui/screens/artist/ArtistSongsScreen.kt:231:56 Unresolved reference 'isSelected'.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/ui/screens/artist/ArtistSongsScreen.kt:231:82 Unresolved reference 'isSelected'.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/ui/screens/artist/ArtistSongsScreen.kt:239:63 Unresolved reference 'it'.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/ui/screens/artist/ArtistSongsScreen.kt:240:52 Unresolved reference 'isSelected'.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/ui/screens/artist/ArtistSongsScreen.kt:243:33 Unresolved reference 'animateItem'.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/ui/screens/artist/ArtistSongsScreen.kt:253:57 Unresolved reference 'it'.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/ui/screens/artist/ArtistSongsScreen.kt:302:55 Unresolved reference 'it'.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/ui/screens/artist/ArtistSongsScreen.kt:329:57 Unresolved reference 'it'.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/ui/screens/artist/ArtistSongsScreen.kt:334:58 Unresolved reference 'size'.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/ui/screens/artist/ArtistSongsScreen.kt:335:59 Unresolved reference 'it'.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/ui/screens/artist/ArtistSongsScreen.kt:337:59 Unresolved reference 'it'.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/ui/screens/artist/ArtistSongsScreen.kt:343:62 Unresolved reference 'size'.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/ui/screens/artist/ArtistSongsScreen.kt:354:78 Unresolved reference 'it'.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/ui/screens/artist/ArtistSongsScreen.kt:355:51 Unresolved reference 'it'.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/ui/screens/artist/ArtistSongsScreen.kt:359:67 Unresolved reference 'it'.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/ui/screens/artist/ArtistSongsScreen.kt:396:67 Unresolved reference 'it'.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/ui/screens/library/LibraryAlbumsScreen.kt:130:15 Property delegate must have a 'getValue(Nothing?, KProperty0<ERROR CLASS: Cannot infer argument for type parameter T>)' method. None of the following functions is applicable:
+fun <T> State<T>.getValue(thisObj: Any?, property: KProperty<*>): T
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/ui/screens/library/LibraryAlbumsScreen.kt:130:18 Cannot infer type for this parameter. Please specify it explicitly.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/ui/screens/library/LibraryAlbumsScreen.kt:130:18 Not enough information to infer type argument for 'T'.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/ui/screens/library/LibraryAlbumsScreen.kt:130:38 Cannot infer type for this parameter. Please specify it explicitly.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/ui/screens/library/LibraryAlbumsScreen.kt:130:38 Not enough information to infer type argument for 'T'.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/ui/screens/library/LibraryAlbumsScreen.kt:176:70 Unresolved reference 'size'.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/ui/screens/library/LibraryAlbumsScreen.kt:176:83 Unresolved reference 'size'.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/ui/screens/library/LibraryAlbumsScreen.kt:224:27 Cannot infer type for this parameter. Please specify it explicitly.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/ui/screens/library/LibraryAlbumsScreen.kt:224:27 Not enough information to infer type argument for 'T'.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/ui/screens/library/LibraryAlbumsScreen.kt:224:33 Cannot infer type for this parameter. Please specify it explicitly.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/ui/screens/library/LibraryAlbumsScreen.kt:237:36 Unresolved reference 'it'.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/ui/screens/library/LibraryAlbumsScreen.kt:239:28 Cannot infer type for this parameter. Please specify it explicitly.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/ui/screens/library/LibraryAlbumsScreen.kt:240:28 @Composable invocations can only happen from the context of a @Composable function
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/ui/screens/library/LibraryAlbumsScreen.kt:244:49 Unresolved reference 'id'.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/ui/screens/library/LibraryAlbumsScreen.kt:246:52 Unresolved reference 'animateItem'.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/ui/screens/library/LibraryAlbumsScreen.kt:277:27 Cannot infer type for this parameter. Please specify it explicitly.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/ui/screens/library/LibraryAlbumsScreen.kt:277:27 Not enough information to infer type argument for 'T'.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/ui/screens/library/LibraryAlbumsScreen.kt:277:33 Cannot infer type for this parameter. Please specify it explicitly.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/ui/screens/library/LibraryAlbumsScreen.kt:290:36 Unresolved reference 'it'.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/ui/screens/library/LibraryAlbumsScreen.kt:292:28 Cannot infer type for this parameter. Please specify it explicitly.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/ui/screens/library/LibraryAlbumsScreen.kt:293:28 @Composable invocations can only happen from the context of a @Composable function
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/ui/screens/library/LibraryAlbumsScreen.kt:298:49 Unresolved reference 'id'.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/ui/screens/library/LibraryAlbumsScreen.kt:300:52 Unresolved reference 'animateItem'.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/ui/screens/library/LibraryArtistsScreen.kt:126:16 Property delegate must have a 'getValue(Nothing?, KProperty0<ERROR CLASS: Cannot infer argument for type parameter T>)' method. None of the following functions is applicable:
+fun <T> State<T>.getValue(thisObj: Any?, property: KProperty<*>): T
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/ui/screens/library/LibraryArtistsScreen.kt:126:19 Cannot infer type for this parameter. Please specify it explicitly.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/ui/screens/library/LibraryArtistsScreen.kt:126:19 Not enough information to infer type argument for 'T'.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/ui/screens/library/LibraryArtistsScreen.kt:126:40 Cannot infer type for this parameter. Please specify it explicitly.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/ui/screens/library/LibraryArtistsScreen.kt:126:40 Not enough information to infer type argument for 'T'.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/ui/screens/library/LibraryArtistsScreen.kt:168:72 Unresolved reference 'size'.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/ui/screens/library/LibraryArtistsScreen.kt:168:86 Unresolved reference 'size'.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/ui/screens/library/LibraryArtistsScreen.kt:216:28 Cannot infer type for this parameter. Please specify it explicitly.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/ui/screens/library/LibraryArtistsScreen.kt:216:28 Not enough information to infer type argument for 'T'.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/ui/screens/library/LibraryArtistsScreen.kt:216:34 Cannot infer type for this parameter. Please specify it explicitly.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/ui/screens/library/LibraryArtistsScreen.kt:229:36 Unresolved reference 'it'.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/ui/screens/library/LibraryArtistsScreen.kt:231:28 Cannot infer type for this parameter. Please specify it explicitly.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/ui/screens/library/LibraryArtistsScreen.kt:232:28 @Composable invocations can only happen from the context of a @Composable function
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/ui/screens/library/LibraryArtistsScreen.kt:236:52 Unresolved reference 'animateItem'.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/ui/screens/library/LibraryArtistsScreen.kt:268:28 Cannot infer type for this parameter. Please specify it explicitly.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/ui/screens/library/LibraryArtistsScreen.kt:268:28 Not enough information to infer type argument for 'T'.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/ui/screens/library/LibraryArtistsScreen.kt:268:34 Cannot infer type for this parameter. Please specify it explicitly.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/ui/screens/library/LibraryArtistsScreen.kt:281:36 Unresolved reference 'it'.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/ui/screens/library/LibraryArtistsScreen.kt:283:28 Cannot infer type for this parameter. Please specify it explicitly.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/ui/screens/library/LibraryArtistsScreen.kt:284:28 @Composable invocations can only happen from the context of a @Composable function
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/ui/screens/library/LibraryArtistsScreen.kt:288:52 Unresolved reference 'animateItem'.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/ui/screens/library/LibraryMixScreen.kt:143:34 Cannot infer type for this parameter. Please specify it explicitly.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/ui/screens/library/LibraryMixScreen.kt:143:34 Not enough information to infer type argument for 'T'.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/ui/screens/library/LibraryMixScreen.kt:144:35 Cannot infer type for this parameter. Please specify it explicitly.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/ui/screens/library/LibraryMixScreen.kt:144:35 Not enough information to infer type argument for 'T'.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/ui/screens/library/LibraryMixScreen.kt:145:39 Cannot infer type for this parameter. Please specify it explicitly.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/ui/screens/library/LibraryMixScreen.kt:145:39 Not enough information to infer type argument for 'T'.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/ui/screens/library/LibraryMixScreen.kt:153:36 Cannot infer type for this parameter. Please specify it explicitly.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/ui/screens/library/LibraryMixScreen.kt:164:20 Cannot infer type for this parameter. Please specify it explicitly.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/ui/screens/library/LibraryMixScreen.kt:164:42 Cannot infer type for this parameter. Please specify it explicitly.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/ui/screens/library/LibraryMixScreen.kt:175:36 Cannot infer type for this parameter. Please specify it explicitly.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/ui/screens/library/LibraryMixScreen.kt:183:10 Cannot infer type for this parameter. Please specify it explicitly.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/ui/screens/library/LibraryMixScreen.kt:183:10 Not enough information to infer type argument for 'T'.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/ui/screens/library/LibraryMixScreen.kt:317:20 Cannot infer type for this parameter. Please specify it explicitly.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/ui/screens/library/LibraryMixScreen.kt:317:20 Not enough information to infer type argument for 'T'.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/ui/screens/library/LibraryMixScreen.kt:319:30 Cannot infer type for this parameter. Please specify it explicitly.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/ui/screens/library/LibraryMixScreen.kt:319:35 Unresolved reference 'id'.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/ui/screens/library/LibraryMixScreen.kt:320:38 Cannot infer type for this parameter. Please specify it explicitly.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/ui/screens/library/LibraryMixScreen.kt:321:24 Cannot infer type for this parameter. Please specify it explicitly.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/ui/screens/library/LibraryMixScreen.kt:540:20 Cannot infer type for this parameter. Please specify it explicitly.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/ui/screens/library/LibraryMixScreen.kt:540:20 Not enough information to infer type argument for 'T'.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/ui/screens/library/LibraryMixScreen.kt:542:30 Cannot infer type for this parameter. Please specify it explicitly.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/ui/screens/library/LibraryMixScreen.kt:542:35 Unresolved reference 'id'.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/ui/screens/library/LibraryMixScreen.kt:543:38 Cannot infer type for this parameter. Please specify it explicitly.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/ui/screens/library/LibraryMixScreen.kt:544:24 Cannot infer type for this parameter. Please specify it explicitly.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/ui/screens/library/LibraryPlaylistsScreen.kt:106:18 Property delegate must have a 'getValue(Nothing?, KProperty0<ERROR CLASS: Cannot infer argument for type parameter T>)' method. None of the following functions is applicable:
+fun <T> State<T>.getValue(thisObj: Any?, property: KProperty<*>): T
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/ui/screens/library/LibraryPlaylistsScreen.kt:106:21 Cannot infer type for this parameter. Please specify it explicitly.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/ui/screens/library/LibraryPlaylistsScreen.kt:106:21 Not enough information to infer type argument for 'T'.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/ui/screens/library/LibraryPlaylistsScreen.kt:106:44 Cannot infer type for this parameter. Please specify it explicitly.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/ui/screens/library/LibraryPlaylistsScreen.kt:106:44 Not enough information to infer type argument for 'T'.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/ui/screens/library/LibraryPlaylistsScreen.kt:217:30 Unresolved reference 'size'.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/ui/screens/library/LibraryPlaylistsScreen.kt:218:30 Unresolved reference 'size'.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/ui/screens/library/LibraryPlaylistsScreen.kt:319:30 Cannot infer type for this parameter. Please specify it explicitly.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/ui/screens/library/LibraryPlaylistsScreen.kt:319:30 Not enough information to infer type argument for 'T'.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/ui/screens/library/LibraryPlaylistsScreen.kt:319:36 Cannot infer type for this parameter. Please specify it explicitly.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/ui/screens/library/LibraryPlaylistsScreen.kt:327:36 Unresolved reference 'it'.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/ui/screens/library/LibraryPlaylistsScreen.kt:329:28 Cannot infer type for this parameter. Please specify it explicitly.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/ui/screens/library/LibraryPlaylistsScreen.kt:330:28 @Composable invocations can only happen from the context of a @Composable function
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/ui/screens/library/LibraryPlaylistsScreen.kt:335:52 Unresolved reference 'animateItem'.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/ui/screens/library/LibraryPlaylistsScreen.kt:431:30 Cannot infer type for this parameter. Please specify it explicitly.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/ui/screens/library/LibraryPlaylistsScreen.kt:431:30 Not enough information to infer type argument for 'T'.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/ui/screens/library/LibraryPlaylistsScreen.kt:431:36 Cannot infer type for this parameter. Please specify it explicitly.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/ui/screens/library/LibraryPlaylistsScreen.kt:439:36 Unresolved reference 'it'.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/ui/screens/library/LibraryPlaylistsScreen.kt:441:28 Cannot infer type for this parameter. Please specify it explicitly.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/ui/screens/library/LibraryPlaylistsScreen.kt:442:28 @Composable invocations can only happen from the context of a @Composable function
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/ui/screens/library/LibraryPlaylistsScreen.kt:447:52 Unresolved reference 'animateItem'.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/ui/screens/library/LibraryPlaylistsScreen.kt:448:55 @Composable invocations can only happen from the context of a @Composable function
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/ui/screens/playlist/OnlinePlaylistScreen.kt:307:82 None of the following candidates is applicable:
+fun insert(song: SongEntity): Long
+fun insert(artist: ArtistEntity): Long
+fun insert(album: AlbumEntity): Long
+fun insert(playlist: PlaylistEntity): Long
+fun insert(map: SongArtistMap): Long
+fun insert(map: SongAlbumMap): Long
+fun insert(map: AlbumArtistMap): Long
+fun insert(map: PlaylistSongMap): Long
+fun insert(searchHistory: SearchHistory): Long
+fun insert(event: Event): Long
+fun insert(map: RelatedSongMap): Long
+fun insert(playCountEntity: PlayCountEntity): Long
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/ui/theme/Theme.kt:7:34 Unresolved reference 'ExperimentalMaterial3ExpressiveApi'.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/ui/theme/Theme.kt:8:34 Cannot access 'fun MaterialExpressiveTheme(colorScheme: ColorScheme? = ..., shapes: Shapes? = ..., typography: Typography? = ..., content: @Composable() ComposableFunction0<Unit>): Unit': it is internal in file.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/ui/theme/Theme.kt:10:34 Unresolved reference 'MotionScheme'.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/ui/theme/Theme.kt:29:7 Unresolved reference 'ExperimentalMaterial3ExpressiveApi'.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/ui/theme/Theme.kt:29:7 Annotation argument must be a compile-time constant.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/ui/theme/Theme.kt:55:8 Unresolved reference 'MotionScheme'.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/ui/theme/Theme.kt:57:8 Unresolved reference 'MotionScheme'.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/ui/theme/Theme.kt:60:4 Cannot access 'fun MaterialExpressiveTheme(colorScheme: ColorScheme? = ..., shapes: Shapes? = ..., typography: Typography? = ..., content: @Composable() ComposableFunction0<Unit>): Unit': it is internal in file.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/utils/ShapeUtils.kt:3:34 Unresolved reference 'ExperimentalMaterial3ExpressiveApi'.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/utils/ShapeUtils.kt:4:34 Unresolved reference 'MaterialShapes'.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/utils/ShapeUtils.kt:8:7 Unresolved reference 'ExperimentalMaterial3ExpressiveApi'.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/utils/ShapeUtils.kt:8:7 Annotation argument must be a compile-time constant.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/utils/ShapeUtils.kt:11:18 Unresolved reference 'MaterialShapes'.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/utils/ShapeUtils.kt:12:20 Unresolved reference 'MaterialShapes'.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/utils/ShapeUtils.kt:13:20 Unresolved reference 'MaterialShapes'.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/utils/ShapeUtils.kt:14:21 Unresolved reference 'MaterialShapes'.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/utils/ShapeUtils.kt:15:22 Unresolved reference 'MaterialShapes'.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/utils/ShapeUtils.kt:16:19 Unresolved reference 'MaterialShapes'.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/utils/ShapeUtils.kt:17:18 Unresolved reference 'MaterialShapes'.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/utils/ShapeUtils.kt:18:18 Unresolved reference 'MaterialShapes'.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/utils/ShapeUtils.kt:19:24 Unresolved reference 'MaterialShapes'.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/utils/ShapeUtils.kt:20:22 Unresolved reference 'MaterialShapes'.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/utils/ShapeUtils.kt:21:19 Unresolved reference 'MaterialShapes'.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/utils/ShapeUtils.kt:22:17 Unresolved reference 'MaterialShapes'.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/utils/ShapeUtils.kt:23:17 Unresolved reference 'MaterialShapes'.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/utils/ShapeUtils.kt:24:17 Unresolved reference 'MaterialShapes'.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/utils/ShapeUtils.kt:25:22 Unresolved reference 'MaterialShapes'.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/utils/ShapeUtils.kt:26:26 Unresolved reference 'MaterialShapes'.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/utils/ShapeUtils.kt:27:26 Unresolved reference 'MaterialShapes'.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/utils/ShapeUtils.kt:28:26 Unresolved reference 'MaterialShapes'.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/utils/ShapeUtils.kt:29:26 Unresolved reference 'MaterialShapes'.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/utils/ShapeUtils.kt:30:27 Unresolved reference 'MaterialShapes'.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/utils/ShapeUtils.kt:31:25 Unresolved reference 'MaterialShapes'.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/utils/ShapeUtils.kt:32:25 Unresolved reference 'MaterialShapes'.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/utils/ShapeUtils.kt:33:19 Unresolved reference 'MaterialShapes'.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/utils/ShapeUtils.kt:34:23 Unresolved reference 'MaterialShapes'.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/utils/ShapeUtils.kt:35:19 Unresolved reference 'MaterialShapes'.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/utils/ShapeUtils.kt:36:23 Unresolved reference 'MaterialShapes'.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/utils/ShapeUtils.kt:37:18 Unresolved reference 'MaterialShapes'.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/utils/ShapeUtils.kt:38:22 Unresolved reference 'MaterialShapes'.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/utils/ShapeUtils.kt:39:20 Unresolved reference 'MaterialShapes'.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/utils/ShapeUtils.kt:40:25 Unresolved reference 'MaterialShapes'.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/utils/ShapeUtils.kt:41:27 Unresolved reference 'MaterialShapes'.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/utils/ShapeUtils.kt:42:19 Unresolved reference 'MaterialShapes'.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/utils/ShapeUtils.kt:43:26 Unresolved reference 'MaterialShapes'.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/utils/ShapeUtils.kt:44:21 Unresolved reference 'MaterialShapes'.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/utils/ShapeUtils.kt:45:23 Unresolved reference 'MaterialShapes'.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/utils/ShapeUtils.kt:46:16 Unresolved reference 'MaterialShapes'.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/utils/ShapeUtils.kt:50:7 Unresolved reference 'ExperimentalMaterial3ExpressiveApi'.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/utils/ShapeUtils.kt:50:7 Annotation argument must be a compile-time constant.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/utils/ShapeUtils.kt:53:7 Unresolved reference 'ExperimentalMaterial3ExpressiveApi'.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/utils/ShapeUtils.kt:53:7 Annotation argument must be a compile-time constant.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/utils/SyncUtils.kt:39:32 None of the following candidates is applicable:
+fun insert(song: SongEntity): Long
+fun insert(artist: ArtistEntity): Long
+fun insert(album: AlbumEntity): Long
+fun insert(playlist: PlaylistEntity): Long
+fun insert(map: SongArtistMap): Long
+fun insert(map: SongAlbumMap): Long
+fun insert(map: AlbumArtistMap): Long
+fun insert(map: PlaylistSongMap): Long
+fun insert(searchHistory: SearchHistory): Long
+fun insert(event: Event): Long
+fun insert(map: RelatedSongMap): Long
+fun insert(playCountEntity: PlayCountEntity): Long
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/utils/SyncUtils.kt:59:32 None of the following candidates is applicable:
+fun insert(song: SongEntity): Long
+fun insert(artist: ArtistEntity): Long
+fun insert(album: AlbumEntity): Long
+fun insert(playlist: PlaylistEntity): Long
+fun insert(map: SongArtistMap): Long
+fun insert(map: SongAlbumMap): Long
+fun insert(map: AlbumArtistMap): Long
+fun insert(map: PlaylistSongMap): Long
+fun insert(searchHistory: SearchHistory): Long
+fun insert(event: Event): Long
+fun insert(map: RelatedSongMap): Long
+fun insert(playCountEntity: PlayCountEntity): Long
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/utils/SyncUtils.kt:80:37 None of the following candidates is applicable:
+fun insert(song: SongEntity): Long
+fun insert(artist: ArtistEntity): Long
+fun insert(album: AlbumEntity): Long
+fun insert(playlist: PlaylistEntity): Long
+fun insert(map: SongArtistMap): Long
+fun insert(map: SongAlbumMap): Long
+fun insert(map: AlbumArtistMap): Long
+fun insert(map: PlaylistSongMap): Long
+fun insert(searchHistory: SearchHistory): Long
+fun insert(event: Event): Long
+fun insert(map: RelatedSongMap): Long
+fun insert(playCountEntity: PlayCountEntity): Long
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/utils/SyncUtils.kt:149:32 None of the following candidates is applicable:
+fun update(song: SongEntity): Int
+fun update(artist: ArtistEntity): Int
+fun update(album: AlbumEntity): Int
+fun update(playlist: PlaylistEntity): Int
+fun update(map: PlaylistSongMap): Int
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/utils/SyncUtils.kt:162:26 None of the following candidates is applicable:
+fun insert(song: SongEntity): Long
+fun insert(artist: ArtistEntity): Long
+fun insert(album: AlbumEntity): Long
+fun insert(playlist: PlaylistEntity): Long
+fun insert(map: SongArtistMap): Long
+fun insert(map: SongAlbumMap): Long
+fun insert(map: AlbumArtistMap): Long
+fun insert(map: PlaylistSongMap): Long
+fun insert(searchHistory: SearchHistory): Long
+fun insert(event: Event): Long
+fun insert(map: RelatedSongMap): Long
+fun insert(playCountEntity: PlayCountEntity): Long
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/viewmodels/AlbumViewModel.kt:43:28 None of the following candidates is applicable:
+fun insert(song: SongEntity): Long
+fun insert(artist: ArtistEntity): Long
+fun insert(album: AlbumEntity): Long
+fun insert(playlist: PlaylistEntity): Long
+fun insert(map: SongArtistMap): Long
+fun insert(map: SongAlbumMap): Long
+fun insert(map: AlbumArtistMap): Long
+fun insert(map: PlaylistSongMap): Long
+fun insert(searchHistory: SearchHistory): Long
+fun insert(event: Event): Long
+fun insert(map: RelatedSongMap): Long
+fun insert(playCountEntity: PlayCountEntity): Long
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/viewmodels/AlbumViewModel.kt:45:28 None of the following candidates is applicable:
+fun update(song: SongEntity): Int
+fun update(artist: ArtistEntity): Int
+fun update(album: AlbumEntity): Int
+fun update(playlist: PlaylistEntity): Int
+fun update(map: PlaylistSongMap): Int
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/viewmodels/AutoPlaylistViewModel.kt:54:40 Unresolved reference 'likedSongs'.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/viewmodels/BackupRestoreViewModel.kt:44:20 Cannot infer type for this parameter. Please specify it explicitly.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/viewmodels/BackupRestoreViewModel.kt:45:33 Unresolved reference 'checkpoint'.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/viewmodels/BackupRestoreViewModel.kt:76:32 Cannot infer type for this parameter. Please specify it explicitly.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/viewmodels/BackupRestoreViewModel.kt:77:45 Unresolved reference 'checkpoint'.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/viewmodels/LibraryViewModels.kt:80:51 Unresolved reference 'songs'.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/viewmodels/LibraryViewModels.kt:81:49 Unresolved reference 'likedSongs'.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/viewmodels/LibraryViewModels.kt:153:13 Cannot infer type for this parameter. Please specify it explicitly.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/viewmodels/LibraryViewModels.kt:153:13 Not enough information to infer type argument for 'R'.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/viewmodels/LibraryViewModels.kt:154:16 Not enough information to infer type argument for 'K'.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/viewmodels/LibraryViewModels.kt:155:53 Unresolved reference 'artists'.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/viewmodels/LibraryViewModels.kt:156:51 Unresolved reference 'artistsBookmarked'.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/viewmodels/LibraryViewModels.kt:159:14 Cannot infer type for this parameter. Please specify it explicitly.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/viewmodels/LibraryViewModels.kt:159:14 Not enough information to infer type argument for 'T'.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/viewmodels/LibraryViewModels.kt:159:42 Cannot infer type for this parameter. Please specify it explicitly.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/viewmodels/LibraryViewModels.kt:159:42 Not enough information to infer type argument for 'T'.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/viewmodels/LibraryViewModels.kt:159:89 Cannot infer type for this parameter. Please specify it explicitly.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/viewmodels/LibraryViewModels.kt:159:89 Not enough information to infer type argument for 'T'.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/viewmodels/LibraryViewModels.kt:167:33 Cannot infer type for this parameter. Please specify it explicitly.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/viewmodels/LibraryViewModels.kt:169:21 Cannot infer type for this parameter. Please specify it explicitly.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/viewmodels/LibraryViewModels.kt:169:21 Not enough information to infer type argument for 'T'.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/viewmodels/LibraryViewModels.kt:169:21 Not enough information to infer type argument for 'R'.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/viewmodels/LibraryViewModels.kt:169:25 Cannot infer type for this parameter. Please specify it explicitly.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/viewmodels/LibraryViewModels.kt:169:30 Unresolved reference 'artist'.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/viewmodels/LibraryViewModels.kt:170:21 Unresolved reference 'filter'.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/viewmodels/LibraryViewModels.kt:171:24 Unresolved reference 'it'.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/viewmodels/LibraryViewModels.kt:172:28 Unresolved reference 'it'.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/viewmodels/LibraryViewModels.kt:175:32 Cannot infer type for this parameter. Please specify it explicitly.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/viewmodels/LibraryViewModels.kt:176:32 Suspension functions can only be called within coroutine body.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/viewmodels/LibraryViewModels.kt:176:46 Unresolved reference 'id'.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/viewmodels/LibraryViewModels.kt:204:13 Cannot infer type for this parameter. Please specify it explicitly.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/viewmodels/LibraryViewModels.kt:204:13 Not enough information to infer type argument for 'R'.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/viewmodels/LibraryViewModels.kt:205:16 Not enough information to infer type argument for 'K'.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/viewmodels/LibraryViewModels.kt:206:52 Unresolved reference 'albums'.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/viewmodels/LibraryViewModels.kt:207:50 Unresolved reference 'albumsLiked'.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/viewmodels/LibraryViewModels.kt:210:14 Cannot infer type for this parameter. Please specify it explicitly.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/viewmodels/LibraryViewModels.kt:210:14 Not enough information to infer type argument for 'T'.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/viewmodels/LibraryViewModels.kt:210:42 Cannot infer type for this parameter. Please specify it explicitly.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/viewmodels/LibraryViewModels.kt:210:42 Not enough information to infer type argument for 'T'.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/viewmodels/LibraryViewModels.kt:210:89 Cannot infer type for this parameter. Please specify it explicitly.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/viewmodels/LibraryViewModels.kt:210:89 Not enough information to infer type argument for 'T'.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/viewmodels/LibraryViewModels.kt:218:32 Cannot infer type for this parameter. Please specify it explicitly.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/viewmodels/LibraryViewModels.kt:221:24 Unresolved reference 'it'.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/viewmodels/LibraryViewModels.kt:222:32 Cannot infer type for this parameter. Please specify it explicitly.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/viewmodels/LibraryViewModels.kt:224:29 Suspension functions can only be called within coroutine body.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/viewmodels/LibraryViewModels.kt:224:41 Unresolved reference 'id'.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/viewmodels/LibraryViewModels.kt:227:49 Unresolved reference 'album'.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/viewmodels/LibraryViewModels.kt:227:73 Unresolved reference 'artists'.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/viewmodels/LibraryViewModels.kt:233:53 Unresolved reference 'album'.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/viewmodels/LibraryViewModels.kt:258:13 Cannot infer type for this parameter. Please specify it explicitly.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/viewmodels/LibraryViewModels.kt:258:13 Not enough information to infer type argument for 'R'.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/viewmodels/LibraryViewModels.kt:259:25 Unresolved reference 'playlists'.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/viewmodels/LibraryViewModels.kt:260:14 Cannot infer type for this parameter. Please specify it explicitly.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/viewmodels/LibraryViewModels.kt:260:14 Not enough information to infer type argument for 'T'.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/viewmodels/LibraryViewModels.kt:260:42 Cannot infer type for this parameter. Please specify it explicitly.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/viewmodels/LibraryViewModels.kt:260:42 Not enough information to infer type argument for 'T'.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/viewmodels/LibraryViewModels.kt:260:89 Cannot infer type for this parameter. Please specify it explicitly.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/viewmodels/LibraryViewModels.kt:260:89 Not enough information to infer type argument for 'T'.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/viewmodels/LibraryViewModels.kt:292:13 Cannot infer type for this parameter. Please specify it explicitly.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/viewmodels/LibraryViewModels.kt:292:13 Not enough information to infer type argument for 'R'.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/viewmodels/LibraryViewModels.kt:293:25 Unresolved reference 'artistSongs'.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/viewmodels/LibraryViewModels.kt:294:14 Cannot infer type for this parameter. Please specify it explicitly.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/viewmodels/LibraryViewModels.kt:294:14 Not enough information to infer type argument for 'T'.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/viewmodels/LibraryViewModels.kt:294:42 Cannot infer type for this parameter. Please specify it explicitly.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/viewmodels/LibraryViewModels.kt:294:42 Not enough information to infer type argument for 'T'.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/viewmodels/LibraryViewModels.kt:294:89 Cannot infer type for this parameter. Please specify it explicitly.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/viewmodels/LibraryViewModels.kt:294:89 Not enough information to infer type argument for 'T'.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/viewmodels/LibraryViewModels.kt:310:13 Unresolved reference 'artistsBookmarked'.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/viewmodels/LibraryViewModels.kt:313:14 Cannot infer type for this parameter. Please specify it explicitly.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/viewmodels/LibraryViewModels.kt:313:61 Cannot infer type for this parameter. Please specify it explicitly.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/viewmodels/LibraryViewModels.kt:314:26 Unresolved reference 'albumsLiked'.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/viewmodels/LibraryViewModels.kt:315:9 Cannot infer type for this parameter. Please specify it explicitly.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/viewmodels/LibraryViewModels.kt:315:56 Cannot infer type for this parameter. Please specify it explicitly.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/viewmodels/LibraryViewModels.kt:316:29 Unresolved reference 'playlists'.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/viewmodels/LibraryViewModels.kt:317:9 Cannot infer type for this parameter. Please specify it explicitly.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/viewmodels/LibraryViewModels.kt:317:56 Cannot infer type for this parameter. Please specify it explicitly.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/viewmodels/LibraryViewModels.kt:321:29 Cannot infer type for this parameter. Please specify it explicitly.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/viewmodels/LibraryViewModels.kt:324:24 Unresolved reference 'it'.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/viewmodels/LibraryViewModels.kt:325:32 Cannot infer type for this parameter. Please specify it explicitly.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/viewmodels/LibraryViewModels.kt:327:29 Suspension functions can only be called within coroutine body.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/viewmodels/LibraryViewModels.kt:327:41 Unresolved reference 'id'.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/viewmodels/LibraryViewModels.kt:330:49 Unresolved reference 'album'.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/viewmodels/LibraryViewModels.kt:330:73 Unresolved reference 'artists'.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/viewmodels/LibraryViewModels.kt:336:53 Unresolved reference 'album'.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/viewmodels/LibraryViewModels.kt:344:30 Cannot infer type for this parameter. Please specify it explicitly.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/viewmodels/LibraryViewModels.kt:346:21 Cannot infer type for this parameter. Please specify it explicitly.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/viewmodels/LibraryViewModels.kt:346:21 Not enough information to infer type argument for 'T'.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/viewmodels/LibraryViewModels.kt:346:21 Not enough information to infer type argument for 'R'.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/viewmodels/LibraryViewModels.kt:346:25 Cannot infer type for this parameter. Please specify it explicitly.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/viewmodels/LibraryViewModels.kt:346:30 Unresolved reference 'artist'.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/viewmodels/LibraryViewModels.kt:347:21 Unresolved reference 'filter'.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/viewmodels/LibraryViewModels.kt:348:24 Unresolved reference 'it'.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/viewmodels/LibraryViewModels.kt:350:36 Unresolved reference 'it'.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/viewmodels/LibraryViewModels.kt:353:32 Cannot infer type for this parameter. Please specify it explicitly.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/viewmodels/LibraryViewModels.kt:354:32 Suspension functions can only be called within coroutine body.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/viewmodels/LibraryViewModels.kt:354:46 Unresolved reference 'id'.
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/viewmodels/StatsViewModel.kt:145:32 None of the following candidates is applicable:
+fun update(song: SongEntity): Int
+fun update(artist: ArtistEntity): Int
+fun update(album: AlbumEntity): Int
+fun update(playlist: PlaylistEntity): Int
+fun update(map: PlaylistSongMap): Int
+e: file:///C:/Users/chenk/.gemini/antigravity/scratch/ultimate_projects/Echofy-android/app/src/main/java/com/Chenkham/Echofy/viewmodels/StatsViewModel.kt:161:36 None of the following candidates is applicable:
+fun update(song: SongEntity): Int
+fun update(artist: ArtistEntity): Int
+fun update(album: AlbumEntity): Int
+fun update(playlist: PlaylistEntity): Int
+fun update(map: PlaylistSongMap): Int
+
+FAILURE: Build failed with an exception.
+
+* What went wrong:
+Execution failed for task ':app:compileDebugKotlin'.
+> A failure occurred while executing org.jetbrains.kotlin.compilerRunner.GradleCompilerRunnerWithWorkers$GradleKotlinCompilerWorkAction
+   > Compilation error. See log for more details
+
+* Try:
+> Run with --stacktrace option to get the stack trace.
+> Run with --info or --debug option to get more log output.
+> Run with --scan to generate a Build Scan (Powered by Develocity).
+> Get more help at https://help.gradle.org.
+
+BUILD FAILED in 6s
+33 actionable tasks: 1 executed, 32 up-to-date
+Configuration cache entry reused.

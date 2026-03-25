@@ -1,4 +1,4 @@
-﻿package com.Chenkham.innertube
+package com.Chenkham.innertube
 
 import com.Chenkham.innertube.models.AccountInfo
 import com.Chenkham.innertube.models.AlbumItem
@@ -16,6 +16,7 @@ import com.Chenkham.innertube.models.WatchEndpoint.WatchEndpointMusicSupportedCo
 import com.Chenkham.innertube.models.YouTubeClient
 import com.Chenkham.innertube.models.YouTubeClient.Companion.WEB
 import com.Chenkham.innertube.models.YouTubeClient.Companion.WEB_REMIX
+import com.Chenkham.innertube.models.YouTubeClient.Companion.ANDROID_MUSIC
 import com.Chenkham.innertube.models.YouTubeLocale
 import com.Chenkham.innertube.models.getContinuation
 import com.Chenkham.innertube.models.getItems
@@ -34,6 +35,7 @@ import com.Chenkham.innertube.pages.ArtistItemsContinuationPage
 import com.Chenkham.innertube.pages.ArtistItemsPage
 import com.Chenkham.innertube.pages.ArtistPage
 import com.Chenkham.innertube.pages.BrowseResult
+
 import com.Chenkham.innertube.pages.ExplorePage
 import com.Chenkham.innertube.pages.HistoryPage
 import com.Chenkham.innertube.pages.HomePage
@@ -45,6 +47,7 @@ import com.Chenkham.innertube.pages.NextPage
 import com.Chenkham.innertube.pages.NextResult
 import com.Chenkham.innertube.pages.PlaylistContinuationPage
 import com.Chenkham.innertube.pages.PlaylistPage
+
 import com.Chenkham.innertube.pages.RelatedPage
 import com.Chenkham.innertube.pages.SearchPage
 import com.Chenkham.innertube.pages.SearchResult
@@ -311,8 +314,9 @@ object YouTube {
             }
 
             else -> {
-                val continuationItems = response.onResponseReceivedActions?.firstOrNull()
-                    ?.appendContinuationItemsAction?.continuationItems
+                val continuationItems = response.onResponseReceivedActions?.firstNotNullOfOrNull {
+                    it.appendContinuationItemsAction?.continuationItems
+                }
                 ArtistItemsContinuationPage(
                     items = continuationItems?.getItems()?.mapNotNull {
                         ArtistItemsPage.fromMusicResponsiveListItemRenderer(it)
@@ -380,8 +384,9 @@ object YouTube {
                 continuation = musicPlaylistShelfContinuation.continuations?.getContinuation()
             )
         } else {
-            val continuationItems = response.onResponseReceivedActions?.firstOrNull()
-                ?.appendContinuationItemsAction?.continuationItems
+            val continuationItems = response.onResponseReceivedActions?.firstNotNullOfOrNull {
+                it.appendContinuationItemsAction?.continuationItems
+            }
             PlaylistContinuationPage(
                 songs = continuationItems?.getItems()?.mapNotNull {
                     PlaylistPage.fromMusicResponsiveListItemRenderer(it)
@@ -443,6 +448,7 @@ object YouTube {
         response.contents?.singleColumnBrowseResultsRenderer?.tabs?.firstOrNull()?.tabRenderer?.content?.sectionListRenderer?.contents!!
             .mapNotNull(MoodAndGenres.Companion::fromSectionListRendererContent)
     }
+
 
     suspend fun browse(browseId: String, params: String?): Result<BrowseResult> = runCatching {
         val response = innerTube.browse(WEB_REMIX, browseId = browseId, params = params).body<BrowseResponse>()
@@ -638,7 +644,7 @@ object YouTube {
         innerTube.moveSongPlaylist(WEB_REMIX, playlistId, setVideoId, successorSetVideoId)
     }
 
-    fun createPlaylist(title: String) = runBlocking {
+    suspend fun createPlaylist(title: String) = runCatching {
         innerTube.createPlaylist(WEB_REMIX, title).body<CreatePlaylistResponse>().playlistId
     }
 

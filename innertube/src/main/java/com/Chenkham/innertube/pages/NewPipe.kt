@@ -68,12 +68,30 @@ private class NewPipeDownloaderImpl(proxy: Proxy?) : Downloader() {
 
 object NewPipeUtils {
 
+    // Cache signature timestamp for 6 hours (timestamps are valid for much longer)
+    // This avoids expensive JavaScript parsing on every song play
+    @Volatile
+    private var cachedSignatureTimestamp: Int? = null
+    @Volatile
+    private var signatureTimestampExpiry: Long = 0L
+    private const val TIMESTAMP_CACHE_DURATION_MS = 6 * 60 * 60 * 1000L // 6 hours
+
     init {
         NewPipe.init(NewPipeDownloaderImpl(YouTube.proxy))
     }
 
     fun getSignatureTimestamp(videoId: String): Result<Int> = runCatching {
-        YoutubeJavaScriptPlayerManager.getSignatureTimestamp(videoId)
+        // Return cached timestamp if still valid - major speedup
+        val cached = cachedSignatureTimestamp
+        if (cached != null && System.currentTimeMillis() < signatureTimestampExpiry) {
+            return@runCatching cached
+        }
+        
+        // Fetch new timestamp and cache it
+        val timestamp = YoutubeJavaScriptPlayerManager.getSignatureTimestamp(videoId)
+        cachedSignatureTimestamp = timestamp
+        signatureTimestampExpiry = System.currentTimeMillis() + TIMESTAMP_CACHE_DURATION_MS
+        timestamp
     }
 
     fun getStreamUrl(format: PlayerResponse.StreamingData.Format, videoId: String): Result<String> =

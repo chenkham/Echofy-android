@@ -77,6 +77,22 @@ constructor(
             }
         }
     }
+
+    /**
+     * Clears all local listening history/stats (event table)
+     */
+    fun clearListeningHistory() {
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                database.query {
+                    clearAllEvents()
+                }
+                timber.log.Timber.d("Listening history cleared successfully")
+            } catch (e: Exception) {
+                timber.log.Timber.e(e, "Failed to clear listening history")
+            }
+        }
+    }
 }
 
 sealed class DateAgo {

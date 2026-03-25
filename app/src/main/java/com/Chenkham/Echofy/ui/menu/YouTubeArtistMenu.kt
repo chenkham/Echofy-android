@@ -16,7 +16,8 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.systemBars
-import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
@@ -55,173 +56,171 @@ fun YouTubeArtistMenu(
     val playerConnection = LocalPlayerConnection.current ?: return
     val libraryArtist by database.artist(artist.id).collectAsState(initial = null)
 
-    YouTubeListItem(
-        item = artist,
-        trailingContent = {},
-    )
-
-    HorizontalDivider()
-
-    Spacer(modifier = Modifier.height(12.dp))
-
-    // Row for "Start Radio", "Shuffle", and "Share" buttons with grid-like background
-    Row(
+    // Root container for vertical scrolling
+    Column(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(start = 24.dp, end = 24.dp, top = 8.dp, bottom = 8.dp),
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
+            .verticalScroll(rememberScrollState())
     ) {
-        // Start Radio button
-        artist.radioEndpoint?.let { watchEndpoint ->
-            Column(
-                modifier = Modifier
-                    .weight(1f)
-                    .background(
-                        color = MaterialTheme.colorScheme.surfaceVariant,
-                        shape = RoundedCornerShape(8.dp)
-                    )
-                    .clip(RoundedCornerShape(8.dp))
-                    .clickable {
-                        playerConnection.playQueue(YouTubeQueue(watchEndpoint))
-                        onDismiss()
-                    }
-                    .padding(12.dp),
-                horizontalAlignment = Alignment.CenterHorizontally,
-            ) {
-                Icon(
-                    painter = painterResource(R.drawable.radio),
-                    contentDescription = null,
-                    modifier = Modifier.size(24.dp),
-                )
-                Text(
-                    text = stringResource(R.string.start_radio),
-                    style = MaterialTheme.typography.labelMedium,
-                    textAlign = TextAlign.Center,
-                    modifier = Modifier
-                        .basicMarquee()
-                        .padding(top = 4.dp),
-                )
-            }
-        }
+        YouTubeListItem(
+            item = artist,
+            trailingContent = {},
+        )
 
-        // Shuffle button
-        artist.shuffleEndpoint?.let { watchEndpoint ->
-            Column(
-                modifier = Modifier
-                    .weight(1f)
-                    .background(
-                        color = MaterialTheme.colorScheme.surfaceVariant,
-                        shape = RoundedCornerShape(8.dp)
-                    )
-                    .clip(RoundedCornerShape(8.dp))
-                    .clickable {
-                        playerConnection.playQueue(YouTubeQueue(watchEndpoint))
-                        onDismiss()
-                    }
-                    .padding(12.dp),
-                horizontalAlignment = Alignment.CenterHorizontally,
-            ) {
-                Icon(
-                    painter = painterResource(R.drawable.shuffle),
-                    contentDescription = null,
-                    modifier = Modifier.size(24.dp),
-                )
-                Text(
-                    text = stringResource(R.string.shuffle),
-                    style = MaterialTheme.typography.labelMedium,
-                    textAlign = TextAlign.Center,
-                    modifier = Modifier
-                        .basicMarquee()
-                        .padding(top = 4.dp),
-                )
-            }
-        }
+        HorizontalDivider()
 
-        // Share button
-        Column(
+        Spacer(modifier = Modifier.height(12.dp))
+
+        // Row for "Start Radio", "Shuffle", and "Share" buttons with grid-like background
+        Row(
             modifier = Modifier
-                .weight(1f)
-                .background(
-                    color = MaterialTheme.colorScheme.surfaceVariant,
-                    shape = RoundedCornerShape(8.dp)
-                )
-                .clip(RoundedCornerShape(8.dp))
-                .clickable {
-                    val intent = Intent().apply {
-                        action = Intent.ACTION_SEND
-                        type = "text/plain"
-                        putExtra(Intent.EXTRA_TEXT, artist.shareLink)
-                    }
-                    context.startActivity(Intent.createChooser(intent, null))
-                    onDismiss()
-                }
-                .padding(12.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
+                .fillMaxWidth()
+                .padding(start = 24.dp, end = 24.dp, top = 8.dp, bottom = 8.dp),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
         ) {
-            Icon(
-                painter = painterResource(R.drawable.share),
-                contentDescription = null,
-                modifier = Modifier.size(24.dp),
-            )
-            Text(
-                text = stringResource(R.string.share),
-                style = MaterialTheme.typography.labelMedium,
-                textAlign = TextAlign.Center,
-                modifier = Modifier
-                    .basicMarquee()
-                    .padding(top = 4.dp),
-            )
-        }
-    }
-
-    LazyColumn(
-        contentPadding = PaddingValues(
-            start = 8.dp,
-            top = 8.dp,
-            end = 8.dp,
-            bottom = 8.dp + WindowInsets.systemBars.asPaddingValues().calculateBottomPadding(),
-        ),
-    ) {
-        // Subscribe/Subscribed button
-        item {
-            ListItem(
-                headlineContent = {
-                    Text(
-                        text = if (libraryArtist?.artist?.bookmarkedAt != null) stringResource(R.string.subscribed) else stringResource(
-                            R.string.subscribe
+            // Start Radio button
+            artist.radioEndpoint?.let { watchEndpoint ->
+                Column(
+                    modifier = Modifier
+                        .weight(1f)
+                        .background(
+                            color = MaterialTheme.colorScheme.surfaceVariant,
+                            shape = RoundedCornerShape(8.dp)
                         )
-                    )
-                },
-                leadingContent = {
-                    Icon(
-                        painter = painterResource(
-                            if (libraryArtist?.artist?.bookmarkedAt != null) {
-                                R.drawable.subscribed
-                            } else {
-                                R.drawable.subscribe
-                            }
-                        ),
-                        contentDescription = null,
-                    )
-                },
-                modifier = Modifier.clickable {
-                    database.query {
-                        val libraryArtist = libraryArtist
-                        if (libraryArtist != null) {
-                            update(libraryArtist.artist.toggleLike())
-                        } else {
-                            insert(
-                                ArtistEntity(
-                                    id = artist.id,
-                                    name = artist.title,
-                                    channelId = artist.channelId,
-                                    thumbnailUrl = artist.thumbnail,
-                                ).toggleLike()
-                            )
+                        .clip(RoundedCornerShape(8.dp))
+                        .clickable {
+                            playerConnection.playQueue(YouTubeQueue(watchEndpoint))
+                            onDismiss()
                         }
+                        .padding(12.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                ) {
+                    Icon(
+                        painter = painterResource(R.drawable.radio),
+                        contentDescription = null,
+                        modifier = Modifier.size(24.dp),
+                    )
+                    Text(
+                        text = stringResource(R.string.start_radio),
+                        style = MaterialTheme.typography.labelMedium,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier
+                            .basicMarquee()
+                            .padding(top = 4.dp),
+                    )
+                }
+            }
+
+            // Shuffle button
+            artist.shuffleEndpoint?.let { watchEndpoint ->
+                Column(
+                    modifier = Modifier
+                        .weight(1f)
+                        .background(
+                            color = MaterialTheme.colorScheme.surfaceVariant,
+                            shape = RoundedCornerShape(8.dp)
+                        )
+                        .clip(RoundedCornerShape(8.dp))
+                        .clickable {
+                            playerConnection.playQueue(YouTubeQueue(watchEndpoint))
+                            onDismiss()
+                        }
+                        .padding(12.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                ) {
+                    Icon(
+                        painter = painterResource(R.drawable.shuffle),
+                        contentDescription = null,
+                        modifier = Modifier.size(24.dp),
+                    )
+                    Text(
+                        text = stringResource(R.string.shuffle),
+                        style = MaterialTheme.typography.labelMedium,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier
+                            .basicMarquee()
+                            .padding(top = 4.dp),
+                    )
+                }
+            }
+
+            // Share button
+            Column(
+                modifier = Modifier
+                    .weight(1f)
+                    .background(
+                        color = MaterialTheme.colorScheme.surfaceVariant,
+                        shape = RoundedCornerShape(8.dp)
+                    )
+                    .clip(RoundedCornerShape(8.dp))
+                    .clickable {
+                        val intent = Intent().apply {
+                            action = Intent.ACTION_SEND
+                            type = "text/plain"
+                            putExtra(Intent.EXTRA_TEXT, artist.shareLink)
+                        }
+                        context.startActivity(Intent.createChooser(intent, null))
+                        onDismiss()
+                    }
+                    .padding(12.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+            ) {
+                Icon(
+                    painter = painterResource(R.drawable.share),
+                    contentDescription = null,
+                    modifier = Modifier.size(24.dp),
+                )
+                Text(
+                    text = stringResource(R.string.share),
+                    style = MaterialTheme.typography.labelMedium,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier
+                        .basicMarquee()
+                        .padding(top = 4.dp),
+                )
+            }
+        }
+
+        // Subscribe/Subscribed button converted from lazy item to standard composable
+        ListItem(
+            headlineContent = {
+                Text(
+                    text = if (libraryArtist?.artist?.bookmarkedAt != null) stringResource(R.string.subscribed) else stringResource(
+                        R.string.subscribe
+                    )
+                )
+            },
+            leadingContent = {
+                Icon(
+                    painter = painterResource(
+                        if (libraryArtist?.artist?.bookmarkedAt != null) {
+                            R.drawable.subscribed
+                        } else {
+                            R.drawable.subscribe
+                        }
+                    ),
+                    contentDescription = null,
+                )
+            },
+            modifier = Modifier.clickable {
+                database.query {
+                    val libraryArtist = libraryArtist
+                    if (libraryArtist != null) {
+                        update(libraryArtist.artist.toggleLike())
+                    } else {
+                        insert(
+                            ArtistEntity(
+                                id = artist.id,
+                                name = artist.title,
+                                channelId = artist.channelId,
+                                thumbnailUrl = artist.thumbnail,
+                            ).toggleLike()
+                        )
                     }
                 }
-            )
-        }
+            }
+        )
+        
+        Spacer(modifier = Modifier.height(WindowInsets.systemBars.asPaddingValues().calculateBottomPadding() + 8.dp))
     }
 }

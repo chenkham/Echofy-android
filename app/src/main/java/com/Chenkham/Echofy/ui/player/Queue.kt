@@ -65,6 +65,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberSwipeToDismissBoxState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -80,8 +81,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
+import androidx.compose.ui.input.nestedscroll.NestedScrollSource
 import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.unit.Velocity
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
@@ -350,6 +355,25 @@ fun Queue(
             }
         }
 
+        // Custom nested scroll connection to consume post-scroll overflow and prevent vibration
+        val consumeOverflowNestedScrollConnection = remember {
+            object : NestedScrollConnection {
+                override suspend fun onPostFling(consumed: Velocity, available: Velocity): Velocity {
+                    // Consume all remaining velocity to prevent propagation
+                    return available
+                }
+
+                override fun onPostScroll(
+                    consumed: Offset,
+                    available: Offset,
+                    source: NestedScrollSource
+                ): Offset {
+                    // Consume all remaining scroll delta to prevent propagation
+                    return available
+                }
+            }
+        }
+
         Box(
             modifier =
                 Modifier
@@ -369,6 +393,7 @@ fun Queue(
                 modifier =
                     Modifier
                         .background(backgroundColor)
+                        .nestedScroll(consumeOverflowNestedScrollConnection)
                         .nestedScroll(state.preUpPostDownNestedScrollConnection),
             ) {
                 item {
@@ -449,15 +474,28 @@ fun Queue(
                                         }
                                         IconButton(
                                             onClick = {
+                                                // If not in selection mode or no songs selected, 
+                                                // add the current song to selection so the menu works
+                                                val songsToShow = if (selectedSongs.isEmpty()) {
+                                                    listOf(window.mediaItem.metadata!!)
+                                                } else {
+                                                    selectedSongs.toList()
+                                                }
+                                                val itemsToShow = if (selectedItems.isEmpty()) {
+                                                    listOf(currentItem)
+                                                } else {
+                                                    selectedItems.toList()
+                                                }
                                                 menuState.show {
                                                     SelectionMediaMetadataMenu(
-                                                        songSelection = selectedSongs,
+                                                        songSelection = songsToShow,
                                                         onDismiss = menuState::dismiss,
                                                         clearAction = {
                                                             selectedSongs.clear()
                                                             selectedItems.clear()
                                                         },
-                                                        currentItems = selectedItems,
+                                                        currentItems = itemsToShow,
+                                                        isQueueMenu = true,
                                                     )
                                                 }
                                             },
@@ -576,12 +614,11 @@ fun Queue(
                                                     PlayerMenu(
                                                         mediaMetadata = item.metadata!!,
                                                         navController = navController,
-                                                        playerBottomSheetState = playerBottomSheetState,
-                                                        isQueueTrigger = true,
                                                         onShowDetailsDialog = {
                                                             showDetailsDialog = true
                                                         },
                                                         onDismiss = menuState::dismiss,
+                                                        onNavigateAway = { playerBottomSheetState.collapseSoft() },
                                                     )
                                                 }
                                             },
@@ -726,6 +763,7 @@ fun Queue(
                                         selectedItems.clear()
                                     },
                                     currentItems = selectedItems,
+                                    isQueueMenu = true,
                                 )
                             }
                         },

@@ -52,6 +52,7 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarScrollBehavior
 import androidx.compose.material3.rememberSwipeToDismissBoxState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.toMutableStateList
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
@@ -122,6 +123,7 @@ import com.Chenkham.Echofy.ui.component.EmptyPlaceholder
 import com.Chenkham.Echofy.ui.component.FontSizeRange
 import com.Chenkham.Echofy.ui.component.IconButton
 import com.Chenkham.Echofy.ui.component.LocalMenuState
+import com.Chenkham.Echofy.ui.component.PrefetchOnVisible
 import com.Chenkham.Echofy.ui.component.SongListItem
 import com.Chenkham.Echofy.ui.component.SortHeader
 import com.Chenkham.Echofy.ui.component.TextFieldDialog
@@ -211,7 +213,9 @@ fun LocalPlaylistScreen(
         }
     }
 
-    val wrappedSongs = filteredSongs.map { item -> ItemWrapper(item) }.toMutableList()
+    val wrappedSongs = remember(filteredSongs) {
+        filteredSongs.map { item -> ItemWrapper(item) }.toMutableStateList()
+    }
     var selection by remember {
         mutableStateOf(false)
     }
@@ -420,7 +424,7 @@ fun LocalPlaylistScreen(
                         }
                     } else {
                         if (!isSearching) {
-                            item {
+                            item(key = "playlistHeader") {
                                 LocalPlaylistHeader(
                                     playlist = playlist,
                                     songs = songs,
@@ -546,6 +550,9 @@ fun LocalPlaylistScreen(
                                 )
 
                             val content: @Composable () -> Unit = {
+                                // INSTANT PLAYBACK: Prefetch URL when song becomes visible
+                                PrefetchOnVisible(mediaId = song.song.id)
+                                
                                 SongListItem(
                                     song = song.song,
                                     isActive = song.song.id == mediaMetadata?.id,
@@ -1135,7 +1142,7 @@ fun LocalPlaylistHeader(
                         ) {
                             Icon(
                                 painter = painterResource(
-                                    if (liked) R.drawable.favorite else R.drawable.favorite_border
+                                    if (liked) R.drawable.heart_fill else R.drawable.heart
                                 ),
                                 contentDescription = null,
                                 tint = if (liked) MaterialTheme.colorScheme.error else LocalContentColor.current

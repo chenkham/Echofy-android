@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.Chenkham.innertube.YouTube
 import com.Chenkham.Echofy.constants.statToPeriod
 import com.Chenkham.Echofy.db.MusicDatabase
+import com.Chenkham.Echofy.db.update
 import com.Chenkham.Echofy.ui.screens.OptionStats
 import com.Chenkham.Echofy.utils.reportException
 import dagger.hilt.android.lifecycle.HiltViewModel

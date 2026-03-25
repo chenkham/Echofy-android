@@ -1,5 +1,7 @@
 ﻿package com.Chenkham.Echofy.ui.menu
 
+import com.Chenkham.Echofy.db.addSongToPlaylist
+
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.size
@@ -69,6 +71,16 @@ fun AddToPlaylistDialog(
     }
     var duplicates by remember {
         mutableStateOf(emptyList<String>())
+    }
+
+    // Reset cached song IDs whenever the dialog is reopened so we always
+    // use the *currently playing* song instead of a stale previous one.
+    LaunchedEffect(isVisible) {
+        if (isVisible) {
+            songIds = null
+            duplicates = emptyList()
+            selectedPlaylist = null
+        }
     }
 
     LaunchedEffect(Unit) {

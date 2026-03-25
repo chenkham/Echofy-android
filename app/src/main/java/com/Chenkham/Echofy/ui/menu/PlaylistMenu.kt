@@ -1,6 +1,8 @@
 ﻿package com.Chenkham.Echofy.ui.menu
 
 import android.content.Intent
+import com.Chenkham.Echofy.ui.component.LocalAdManager
+import android.widget.Toast
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.asPaddingValues
@@ -38,6 +40,8 @@ import com.Chenkham.Echofy.LocalDatabase
 import com.Chenkham.Echofy.LocalDownloadUtil
 import com.Chenkham.Echofy.LocalPlayerConnection
 import com.Chenkham.Echofy.R
+import com.Chenkham.Echofy.constants.InnerTubeCookieKey
+import com.Chenkham.innertube.utils.parseCookieString
 import com.Chenkham.Echofy.db.entities.Playlist
 import com.Chenkham.Echofy.db.entities.PlaylistSong
 import com.Chenkham.Echofy.db.entities.Song
@@ -49,8 +53,8 @@ import com.Chenkham.Echofy.ui.component.DefaultDialog
 import com.Chenkham.Echofy.ui.component.DownloadGridMenu
 import com.Chenkham.Echofy.ui.component.GridMenu
 import com.Chenkham.Echofy.ui.component.GridMenuItem
-import com.Chenkham.Echofy.ui.component.PlaylistListItem
 import com.Chenkham.Echofy.ui.component.TextFieldDialog
+import com.Chenkham.Echofy.utils.rememberPreference
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -72,6 +76,10 @@ fun PlaylistMenu(
     val downloadUtil = LocalDownloadUtil.current
     val playerConnection = LocalPlayerConnection.current ?: return
     val dbPlaylist by database.playlist(playlist.id).collectAsState(initial = playlist)
+    val (innerTubeCookie) = rememberPreference(InnerTubeCookieKey, "")
+    val isLoggedIn = remember(innerTubeCookie) {
+        "SAPISID" in parseCookieString(innerTubeCookie)
+    }
     var songs by remember {
         mutableStateOf(emptyList<Song>())
     }
@@ -241,6 +249,11 @@ fun PlaylistMenu(
         mutableStateOf(false)
     }
 
+    // New: Sync with YTM dialog state
+    var showSyncWithYTMDialog by rememberSaveable {
+        mutableStateOf(false)
+    }
+
     AddToPlaylistDialog(
         isVisible = showChoosePlaylistDialog,
         onGetSong = {
@@ -255,29 +268,18 @@ fun PlaylistMenu(
         onDismiss = { showChoosePlaylistDialog = false }
     )
 
-    PlaylistListItem(
+    // Sync with YTM Dialog
+    SyncWithYTMDialog(
+        isVisible = showSyncWithYTMDialog,
         playlist = playlist,
-        trailingContent = {
-            if (playlist.playlist.isEditable != true) {
-                IconButton(
-                    onClick = {
-                        database.query {
-                            dbPlaylist?.playlist?.toggleLike()?.let { update(it) }
-                        }
-                    }
-                ) {
-                    Icon(
-                        painter = painterResource(if (dbPlaylist?.playlist?.bookmarkedAt != null) R.drawable.favorite else R.drawable.favorite_border),
-                        tint = if (dbPlaylist?.playlist?.bookmarkedAt != null) MaterialTheme.colorScheme.error else LocalContentColor.current,
-                        contentDescription = null
-                    )
-                }
-            }
-        },
+        songs = songs,
+        onDismiss = { showSyncWithYTMDialog = false }
     )
+
 
     HorizontalDivider()
 
+    val adManager = LocalAdManager.current
     GridMenu(
         contentPadding =
             PaddingValues(
@@ -357,18 +359,23 @@ fun PlaylistMenu(
             }
         }
 
-        GridMenuItem(
-            icon = R.drawable.playlist_add,
-            title = R.string.add_to_playlist
-        ) {
-            showChoosePlaylistDialog = true
+        // Show Sync with YT Music for local playlists when user is logged in
+        if (autoPlaylist != true && isLoggedIn) {
+            GridMenuItem(
+                icon = R.drawable.sync,
+                title = R.string.sync_with_ytm,
+            ) {
+                showSyncWithYTMDialog = true
+            }
         }
 
         if (downloadPlaylist != true) {
             DownloadGridMenu(
                 state = downloadState,
                 onDownload = {
-                    songs.forEach { song ->
+                    val isPremium = adManager?.isPremium?.value == true
+                    if (isPremium) {
+                        songs.forEach { song ->
                         val downloadRequest =
                             DownloadRequest
                                 .Builder(song.id, song.id.toUri())
@@ -382,7 +389,11 @@ fun PlaylistMenu(
                             false,
                         )
                     }
-                },
+                    Toast.makeText(context, "Download started", Toast.LENGTH_SHORT).show()
+                } else {
+                    Toast.makeText(context, R.string.premium_required, Toast.LENGTH_SHORT).show()
+                }
+            },
                 onRemoveDownload = {
                     showRemoveDownloadDialog = true
                 },

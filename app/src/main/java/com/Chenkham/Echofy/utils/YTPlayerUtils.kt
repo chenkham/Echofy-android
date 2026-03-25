@@ -5,6 +5,8 @@ import androidx.media3.common.PlaybackException
 import com.Chenkham.innertube.NewPipeUtils
 import com.Chenkham.innertube.YouTube
 import com.Chenkham.innertube.models.YouTubeClient
+import com.Chenkham.innertube.models.YouTubeClient.Companion.ANDROID_MUSIC
+import com.Chenkham.innertube.models.YouTubeClient.Companion.ANDROID_TESTSUITE
 import com.Chenkham.innertube.models.YouTubeClient.Companion.ANDROID_VR_NO_AUTH
 import com.Chenkham.innertube.models.YouTubeClient.Companion.IOS
 import com.Chenkham.innertube.models.YouTubeClient.Companion.MOBILE
@@ -15,6 +17,7 @@ import com.Chenkham.innertube.models.YouTubeClient.Companion.WEB_REMIX
 import com.Chenkham.innertube.models.response.PlayerResponse
 import com.Chenkham.Echofy.constants.AudioQuality
 import okhttp3.OkHttpClient
+import kotlinx.coroutines.flow.MutableStateFlow
 import timber.log.Timber
 
 object YTPlayerUtils {
@@ -23,6 +26,9 @@ object YTPlayerUtils {
     private val httpClient = OkHttpClient.Builder()
         .proxy(YouTube.proxy)
         .build()
+
+    // Expose available qualities to UI (PlayerMenu)
+    val availableQualities = MutableStateFlow<List<String>>(emptyList())
 
     /**
      * The main client is used for metadata and initial streams. Do not use
@@ -40,14 +46,33 @@ object YTPlayerUtils {
     /**
      * Clients used for fallback streams in case the streams of the main client
      * do not work.
+     *
+     * Order matters: prefer clients that return direct URLs (no cipher/signatureCipher)
+     * first, so NewPipe JS deobfuscation failures don't block playback.
+     * ANDROID_MUSIC, ANDROID_TESTSUITE, ANDROID_VR_NO_AUTH, IOS and MOBILE all return
+     * direct stream URLs without needing NewPipe signature deobfuscation.
      */
     private val STREAM_FALLBACK_CLIENTS: Array<YouTubeClient> = arrayOf(
-        ANDROID_VR_NO_AUTH,
+        ANDROID_VR_NO_AUTH,       // no-auth, direct URL — fast & reliable
+        ANDROID_MUSIC,            // direct URL, no cipher
+        ANDROID_TESTSUITE,        // direct URL, no cipher, no auth needed
         TVHTML5_SIMPLY_EMBEDDED_PLAYER,
         IOS,
         WEB,
         WEB_CREATOR,
         MOBILE
+    )
+
+    /**
+     * Clients to try (in order) for fast-start playback. All of these return
+     * direct stream URLs so we don't depend on NewPipe JS parsing.
+     */
+    private val FAST_START_CLIENTS: Array<YouTubeClient> = arrayOf(
+        ANDROID_VR_NO_AUTH,
+        ANDROID_MUSIC,
+        ANDROID_TESTSUITE,
+        IOS,
+        MOBILE,
     )
 
     data class PlaybackData(
@@ -59,6 +84,74 @@ object YTPlayerUtils {
     )
 
     /**
+     * FAST-START: Quick player response for instant playback.
+     * Iterates through [FAST_START_CLIENTS] to find a working stream without URL
+     * validation, keeping the response time fast (~200-800ms).
+     */
+    suspend fun fastStartPlayerResponse(
+        videoId: String,
+        playlistId: String? = null,
+        audioQuality: AudioQuality,
+        videoQuality: String = "Auto",
+        connectivityManager: ConnectivityManager,
+        videoMode: Boolean = false,
+    ): Result<PlaybackData> = runCatching {
+        Timber.tag(logTag).d("FAST-START: Quick fetch for $videoId")
+
+        var lastReason: String? = null
+        for ((index, client) in FAST_START_CLIENTS.withIndex()) {
+            Timber.tag(logTag).d("FAST-START: Trying client ${index + 1}/${FAST_START_CLIENTS.size}: ${client.clientName}")
+            val response = YouTube.player(videoId, playlistId, client, null).getOrNull() ?: continue
+            if (response.playabilityStatus.status == "OK") {
+                val result = runCatching {
+                    processResponse(response, videoId, audioQuality, videoQuality, connectivityManager, videoMode)
+                }.getOrNull()
+                if (result != null) {
+                    Timber.tag(logTag).d("FAST-START: SUCCESS with client ${client.clientName}")
+                    return@runCatching result
+                }
+            }
+            lastReason = response.playabilityStatus.reason
+            Timber.tag(logTag).w("FAST-START: Client ${client.clientName} failed: $lastReason")
+        }
+
+        // All fast-start clients failed — throw so MusicService can fall back to full fetch
+        throw PlaybackException(
+            lastReason ?: "All fast-start clients failed",
+            null,
+            PlaybackException.ERROR_CODE_REMOTE_ERROR
+        )
+    }
+
+    private fun processResponse(
+        response: PlayerResponse,
+        videoId: String,
+        audioQuality: AudioQuality, 
+        videoQuality: String,
+        connectivityManager: ConnectivityManager,
+        videoMode: Boolean
+    ): PlaybackData {
+        val format = findFormat(response, audioQuality, videoQuality, connectivityManager, videoMode)
+            ?: throw Exception("No format found")
+        
+        val streamUrl = findUrlOrNull(format, videoId)
+            ?: throw Exception("No stream URL found")
+        
+        val expiresIn = response.streamingData?.expiresInSeconds
+            ?: throw Exception("No expiration time")
+        
+        Timber.tag(logTag).d("FAST-START: Got URL in quick path for $videoId")
+        
+        return PlaybackData(
+            response.playerConfig?.audioConfig,
+            response.videoDetails,
+            format,
+            streamUrl,
+            expiresIn
+        )
+    }
+
+    /**
      * Custom player response intended to use for playback. Metadata like
      * audioConfig and videoDetails are from [MAIN_CLIENT]. Format & stream can
      * be from [MAIN_CLIENT] or [STREAM_FALLBACK_CLIENTS].
@@ -67,10 +160,12 @@ object YTPlayerUtils {
         videoId: String,
         playlistId: String? = null,
         audioQuality: AudioQuality,
+        videoQuality: String = "Auto",
         connectivityManager: ConnectivityManager,
+        videoMode: Boolean = false,
     ): Result<PlaybackData> = runCatching {
         Timber.tag(logTag)
-            .d("Fetching player response for videoId: $videoId, playlistId: $playlistId")
+            .d("Fetching player response for videoId: $videoId, playlistId: $playlistId, videoMode: $videoMode, videoQuality: $videoQuality")
         /**
          * This is required for some clients to get working streams however it
          * should not be forced for the [MAIN_CLIENT] because the response of the
@@ -144,7 +239,9 @@ object YTPlayerUtils {
                     findFormat(
                         streamPlayerResponse,
                         audioQuality,
+                        videoQuality,
                         connectivityManager,
+                        videoMode
                     )
 
                 if (format == null) {
@@ -169,21 +266,23 @@ object YTPlayerUtils {
 
                 Timber.tag(logTag).d("Stream expires in: $streamExpiresInSeconds seconds")
 
-                if (clientIndex == STREAM_FALLBACK_CLIENTS.size - 1) {
-                    /** skip [validateStatus] for last client */
+                // Validate MAIN_CLIENT too; if it fails, fall back to the next client
+                val shouldSkipValidation = clientIndex == STREAM_FALLBACK_CLIENTS.size - 1
+                val isValid = if (shouldSkipValidation) {
                     Timber.tag(logTag)
-                        .d("Using last fallback client without validation: ${STREAM_FALLBACK_CLIENTS[clientIndex].clientName}")
-                    break
+                        .d("Using last fallback client without validation: ${client.clientName}")
+                    true
+                } else {
+                    validateStatus(streamUrl, client.userAgent)
                 }
 
-                if (validateStatus(streamUrl)) {
-                    // working stream found
+                if (isValid) {
                     Timber.tag(logTag)
-                        .d("Stream validated successfully with client: ${if (clientIndex == -1) MAIN_CLIENT.clientName else STREAM_FALLBACK_CLIENTS[clientIndex].clientName}")
+                        .d("Stream validated successfully with client: ${client.clientName}")
                     break
                 } else {
                     Timber.tag(logTag)
-                        .d("Stream validation failed for client: ${if (clientIndex == -1) MAIN_CLIENT.clientName else STREAM_FALLBACK_CLIENTS[clientIndex].clientName}")
+                        .d("Stream validation failed for client: ${client.clientName}")
                 }
             } else {
                 Timber.tag(logTag)
@@ -250,25 +349,66 @@ object YTPlayerUtils {
     private fun findFormat(
         playerResponse: PlayerResponse,
         audioQuality: AudioQuality,
+        videoQuality: String,
         connectivityManager: ConnectivityManager,
+        videoMode: Boolean
     ): PlayerResponse.StreamingData.Format? {
         Timber.tag(logTag)
-            .d("Finding format with audioQuality: $audioQuality, network metered: ${connectivityManager.isActiveNetworkMetered}")
+            .d("Finding format with audioQuality: $audioQuality, videoQuality: $videoQuality, network metered: ${connectivityManager.isActiveNetworkMetered}, videoMode: $videoMode")
 
-        val format = playerResponse.streamingData?.adaptiveFormats
-            ?.filter { it.isAudio }
-            ?.maxByOrNull {
-                it.bitrate * when (audioQuality) {
-                    AudioQuality.AUTO -> if (connectivityManager.isActiveNetworkMetered) -1 else 1
-                    AudioQuality.HIGH -> 1
-                    AudioQuality.LOW -> -1
-                } + (if (it.mimeType.startsWith("audio/webm")) 10240 else 0) // prefer opus stream
+        val format = if (videoMode) {
+            // Find combined formats (video + audio) for direct playback
+            // or high quality video formats
+            val muxedFormats = playerResponse.streamingData?.formats
+            val adaptiveFormats = playerResponse.streamingData?.adaptiveFormats?.filter { it.mimeType.startsWith("video/") }
+
+            // We currently use muxed if available, else adaptive
+            val usableFormats = muxedFormats ?: adaptiveFormats
+            
+            val availableQualitiesLabels = usableFormats?.map { "${it.height}p" }?.distinct()?.sortedByDescending { it.replace("p", "").toIntOrNull() ?: 0 } ?: emptyList()
+            availableQualities.tryEmit(availableQualitiesLabels)
+            
+            Timber.tag(logTag).d("Available muxed formats for video: $availableQualitiesLabels (Fallback to adaptive: ${muxedFormats == null})")
+
+            val formats = usableFormats
+
+            if (videoQuality == "Auto") {
+                // If Metered (Data), use lowest quality.
+                // If Unmetered (WiFi), use 720p or closest to it (balance between quality and buffer speed)
+                if (connectivityManager.isActiveNetworkMetered) {
+                     formats?.minByOrNull { it.bitrate }
+                } else {
+                     // Prefer 720p for WiFi Auto, or max if not available
+                     val targetHeight = 720
+                     formats?.minByOrNull { 
+                        kotlin.math.abs((it.height ?: 0) - targetHeight) 
+                     } ?: formats?.maxByOrNull { it.bitrate }
+                }
+            } else {
+                // Determine target height from quality label (e.g., "1080p" -> 1080)
+                val targetHeight = videoQuality.replace("p", "").toIntOrNull() ?: 720
+                
+                // Find format closest to target quality
+                formats?.minByOrNull { 
+                    kotlin.math.abs((it.height ?: 0) - targetHeight) 
+                } ?: formats?.maxByOrNull { it.bitrate }
             }
+        } else {
+            playerResponse.streamingData?.adaptiveFormats
+                ?.filter { it.isAudio }
+                ?.maxByOrNull {
+                    it.bitrate * when (audioQuality) {
+                        AudioQuality.AUTO -> if (connectivityManager.isActiveNetworkMetered) -1 else 1
+                        AudioQuality.HIGH -> 1
+                        AudioQuality.LOW -> -1
+                    } + (if (it.mimeType.startsWith("audio/webm")) 10240 else 0) // prefer opus stream
+                }
+        }
 
         if (format != null) {
-            Timber.tag(logTag).d("Selected format: ${format.mimeType}, bitrate: ${format.bitrate}")
+            Timber.tag(logTag).d("Selected format: ${format.mimeType}, bitrate: ${format.bitrate}, height: ${format.height}, qualityLabel: ${format.qualityLabel}")
         } else {
-            Timber.tag(logTag).d("No suitable audio format found")
+            Timber.tag(logTag).d("No suitable format found")
         }
 
         return format
@@ -279,12 +419,17 @@ object YTPlayerUtils {
      * true the url is likely to work. If this returns false the url might
      * cause an error during playback.
      */
-    private fun validateStatus(url: String): Boolean {
+    private fun validateStatus(url: String, userAgent: String?): Boolean {
         Timber.tag(logTag).d("Validating stream URL status")
         try {
             val requestBuilder = okhttp3.Request.Builder()
                 .head()
                 .url(url)
+            
+            if (userAgent != null) {
+                requestBuilder.header("User-Agent", userAgent)
+            }
+
             val response = httpClient.newCall(requestBuilder.build()).execute()
             val isSuccessful = response.isSuccessful
             Timber.tag(logTag)

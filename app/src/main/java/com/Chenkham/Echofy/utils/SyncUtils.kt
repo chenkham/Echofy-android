@@ -12,6 +12,8 @@ import com.Chenkham.Echofy.db.entities.ArtistEntity
 import com.Chenkham.Echofy.db.entities.PlaylistEntity
 import com.Chenkham.Echofy.db.entities.PlaylistSongMap
 import com.Chenkham.Echofy.db.entities.SongEntity
+import com.Chenkham.Echofy.db.insert
+import com.Chenkham.Echofy.db.update
 import com.Chenkham.Echofy.models.toMediaMetadata
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.firstOrNull

@@ -4,6 +4,7 @@ package com.Chenkham.Echofy.ui.component
 
 import android.annotation.SuppressLint
 import android.content.Context
+import com.Chenkham.Echofy.db.insert
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.expandIn
@@ -69,7 +70,9 @@ import androidx.media3.exoplayer.offline.Download.STATE_COMPLETED
 import androidx.media3.exoplayer.offline.Download.STATE_DOWNLOADING
 import androidx.media3.exoplayer.offline.Download.STATE_QUEUED
 import coil.compose.AsyncImage
+
 import coil.compose.AsyncImagePainter
+import coil.request.CachePolicy
 import coil.request.ImageRequest
 import com.Chenkham.innertube.YouTube
 import com.Chenkham.innertube.models.AlbumItem
@@ -102,6 +105,10 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import androidx.compose.runtime.staticCompositionLocalOf
+import com.Chenkham.Echofy.ads.AdManager
+
+val LocalAdManager = staticCompositionLocalOf<AdManager?> { null }
 
 @Composable
 inline fun ListItem(
@@ -422,8 +429,20 @@ fun SongListItem(
                         )
                     }
                 }
+                // PERFORMANCE: Optimized image loading with caching
+                val context = LocalContext.current
+                val imageRequest = remember(song.song.thumbnailUrl) {
+                    ImageRequest.Builder(context)
+                        .data(song.song.thumbnailUrl)
+                        .size(256) // Fixed size for consistent caching
+                        .memoryCachePolicy(CachePolicy.ENABLED)
+                        .diskCachePolicy(CachePolicy.ENABLED)
+                        .crossfade(false) // Instant display from cache
+                        .allowHardware(true)
+                        .build()
+                }
                 AsyncImage(
-                    model = song.song.thumbnailUrl,
+                    model = imageRequest,
                     contentDescription = null,
                     modifier =
                         Modifier
@@ -519,8 +538,20 @@ fun SongGridItem(
     ),
     badges = badges,
     thumbnailContent = {
+        // PERFORMANCE: Optimized image loading with caching
+        val context = LocalContext.current
+        val imageRequest = remember(song.song.thumbnailUrl) {
+            ImageRequest.Builder(context)
+                .data(song.song.thumbnailUrl)
+                .size(544) // Standard grid thumbnail size
+                .memoryCachePolicy(CachePolicy.ENABLED)
+                .diskCachePolicy(CachePolicy.ENABLED)
+                .crossfade(false) // Instant display from cache
+                .allowHardware(true)
+                .build()
+        }
         AsyncImage(
-            model = song.song.thumbnailUrl,
+            model = imageRequest,
             contentDescription = null,
             modifier =
                 Modifier
@@ -1118,7 +1149,7 @@ fun PlaylistListItem(
     thumbnailContent = {
         val painter =
             when (playlist.playlist.name) {
-                stringResource(R.string.liked) -> R.drawable.favorite_border
+                stringResource(R.string.liked) -> R.drawable.heart
                 stringResource(R.string.offline) -> R.drawable.offline
                 stringResource(R.string.cached_playlist) -> R.drawable.cached
                 else -> {
@@ -1229,7 +1260,7 @@ fun PlaylistGridItem(
             // Si no hay miniatura, mostrar la imagen predeterminada
             val painter =
                 when (playlist.playlist.name) {
-                    stringResource(R.string.liked) -> R.drawable.favorite_border
+                    stringResource(R.string.liked) -> R.drawable.heart
                     stringResource(R.string.offline) -> R.drawable.offline
                     stringResource(R.string.cached_playlist) -> R.drawable.cached
                     else -> {
@@ -1549,15 +1580,26 @@ fun YouTubeGridItem(
     item: YTItem,
     modifier: Modifier = Modifier,
     coroutineScope: CoroutineScope? = null,
+    isLiked: Boolean? = null,
+    inLibrary: Boolean? = null,
+    isBookmarked: Boolean? = null,
     badges: @Composable RowScope.() -> Unit = {
         val database = LocalDatabase.current
-        val song by database.song(item.id).collectAsState(initial = null)
-        val album by database.album(item.id).collectAsState(initial = null)
+        // If state is not injected, fallback to DB query (laggy but backward compatible)
+        val songState = if (isLiked == null || inLibrary == null) {
+            database.song(item.id).collectAsState(initial = null).value
+        } else null
+        
+        val albumState = if (isBookmarked == null) {
+            database.album(item.id).collectAsState(initial = null).value
+        } else null
 
-        if (item is SongItem &&
-            song?.song?.liked == true ||
-            item is AlbumItem &&
-            album?.album?.bookmarkedAt != null
+        val finalLiked = isLiked ?: (songState?.song?.liked == true)
+        val finalInLibrary = inLibrary ?: (songState?.song?.inLibrary != null)
+        val finalBookmarked = isBookmarked ?: (albumState?.album?.bookmarkedAt != null)
+
+        if (item is SongItem && finalLiked ||
+            item is AlbumItem && finalBookmarked
         ) {
             Icon(
                 painter = painterResource(R.drawable.favorite),
@@ -1569,7 +1611,7 @@ fun YouTubeGridItem(
                         .padding(end = 2.dp),
             )
         }
-        if (item is SongItem && song?.song?.inLibrary != null) {
+        if (item is SongItem && finalInLibrary) {
             Icon(
                 painter = painterResource(R.drawable.library_add_check),
                 contentDescription = null,
@@ -1590,8 +1632,8 @@ fun YouTubeGridItem(
             )
         }
         if (item is SongItem) {
-            val downloads by LocalDownloadUtil.current.downloads.collectAsState()
-            when (downloads[item.id]?.state) {
+            val downloads by LocalDownloadUtil.current.getDownload(item.id).collectAsState(initial = null)
+            when (downloads?.state) {
                 STATE_COMPLETED ->
                     Icon(
                         painter = painterResource(R.drawable.offline),
@@ -1602,7 +1644,7 @@ fun YouTubeGridItem(
                                 .padding(end = 2.dp),
                     )
 
-                STATE_DOWNLOADING ->
+                STATE_QUEUED, STATE_DOWNLOADING ->
                     CircularProgressIndicator(
                         strokeWidth = 2.dp,
                         modifier =
@@ -1644,8 +1686,20 @@ fun YouTubeGridItem(
                     .aspectRatio(thumbnailRatio)
                     .clip(thumbnailShape),
         ) {
+            // PERFORMANCE: Optimized image loading with caching for smooth scrolling
+            val context = LocalContext.current
+            val imageRequest = remember(item.thumbnail) {
+                ImageRequest.Builder(context)
+                    .data(item.thumbnail)
+                    .size(544) // Standard grid thumbnail size
+                    .memoryCachePolicy(CachePolicy.ENABLED)
+                    .diskCachePolicy(CachePolicy.ENABLED)
+                    .crossfade(false) // Instant display from cache
+                    .allowHardware(true)
+                    .build()
+            }
             AsyncImage(
-                model = item.thumbnail,
+                model = imageRequest,
                 contentDescription = null,
                 modifier =
                     Modifier

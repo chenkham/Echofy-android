@@ -1,5 +1,8 @@
 ﻿package com.Chenkham.Echofy.ui.menu
 
+import com.Chenkham.Echofy.db.insert
+import com.Chenkham.Echofy.db.addSongToPlaylist
+
 import android.annotation.SuppressLint
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.WindowInsets
@@ -47,6 +50,7 @@ import com.Chenkham.Echofy.ui.component.GridMenuItem
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import java.time.LocalDateTime
+import com.Chenkham.Echofy.ui.component.LocalAdManager
 
 @SuppressLint("MutableCollectionMutableState")
 @Composable
@@ -59,6 +63,7 @@ fun SelectionSongMenu(
     val context = LocalContext.current
     val database = LocalDatabase.current
     val downloadUtil = LocalDownloadUtil.current
+    val adManager = LocalAdManager.current
     val coroutineScope = rememberCoroutineScope()
     val playerConnection = LocalPlayerConnection.current ?: return
 
@@ -249,19 +254,23 @@ fun SelectionSongMenu(
         DownloadGridMenu(
             state = downloadState,
             onDownload = {
-                songSelection.forEach { song ->
-                    val downloadRequest =
-                        DownloadRequest
-                            .Builder(song.id, song.id.toUri())
-                            .setCustomCacheKey(song.id)
-                            .setData(song.song.title.toByteArray())
-                            .build()
-                    DownloadService.sendAddDownload(
-                        context,
-                        ExoDownloadService::class.java,
-                        downloadRequest,
-                        false,
-                    )
+                if (adManager?.isPremium?.value != true) {
+                    android.widget.Toast.makeText(context, R.string.premium_required, android.widget.Toast.LENGTH_SHORT).show()
+                } else {
+                    songSelection.forEach { song ->
+                        val downloadRequest =
+                            DownloadRequest
+                                .Builder(song.id, song.id.toUri())
+                                .setCustomCacheKey(song.id)
+                                .setData(song.song.title.toByteArray())
+                                .build()
+                        DownloadService.sendAddDownload(
+                            context,
+                            ExoDownloadService::class.java,
+                            downloadRequest,
+                            false,
+                        )
+                    }
                 }
             },
             onRemoveDownload = {
@@ -270,7 +279,7 @@ fun SelectionSongMenu(
         )
 
         GridMenuItem(
-            icon = if (allLiked) R.drawable.favorite else R.drawable.favorite_border,
+            icon = if (allLiked) R.drawable.heart_fill else R.drawable.heart,
             title = if (allLiked) R.string.dislike_all else R.string.like_all,
         ) {
             val allLiked =
@@ -314,10 +323,12 @@ fun SelectionMediaMetadataMenu(
     currentItems: List<Timeline.Window>,
     onDismiss: () -> Unit,
     clearAction: () -> Unit,
+    isQueueMenu: Boolean = false,
 ) {
     val context = LocalContext.current
     val database = LocalDatabase.current
     val downloadUtil = LocalDownloadUtil.current
+    val adManager = LocalAdManager.current
     val coroutineScope = rememberCoroutineScope()
     val playerConnection = LocalPlayerConnection.current ?: return
 
@@ -445,27 +456,37 @@ fun SelectionMediaMetadataMenu(
             title = R.string.play,
         ) {
             onDismiss()
-            playerConnection.playQueue(
-                ListQueue(
-                    title = "Selection",
-                    items = songSelection.map { it.toMediaItem() },
-                ),
-            )
+            if (isQueueMenu && currentItems.isNotEmpty()) {
+                // In queue: seek to the first selected song instead of replacing queue
+                playerConnection.player.seekToDefaultPosition(currentItems.first().firstPeriodIndex)
+                playerConnection.player.playWhenReady = true
+            } else {
+                // Normal mode: replace queue with selection
+                playerConnection.playQueue(
+                    ListQueue(
+                        title = "Selection",
+                        items = songSelection.map { it.toMediaItem() },
+                    ),
+                )
+            }
             clearAction()
         }
 
-        GridMenuItem(
-            icon = R.drawable.shuffle,
-            title = R.string.shuffle,
-        ) {
-            onDismiss()
-            playerConnection.playQueue(
-                ListQueue(
-                    title = "Selection",
-                    items = songSelection.shuffled().map { it.toMediaItem() },
-                ),
-            )
-            clearAction()
+        // Hide shuffle in queue menu
+        if (!isQueueMenu) {
+            GridMenuItem(
+                icon = R.drawable.shuffle,
+                title = R.string.shuffle,
+            ) {
+                onDismiss()
+                playerConnection.playQueue(
+                    ListQueue(
+                        title = "Selection",
+                        items = songSelection.shuffled().map { it.toMediaItem() },
+                    ),
+                )
+                clearAction()
+            }
         }
 
         GridMenuItem(
@@ -485,7 +506,7 @@ fun SelectionMediaMetadataMenu(
         }
 
         GridMenuItem(
-            icon = if (allLiked) R.drawable.favorite else R.drawable.favorite_border,
+            icon = if (allLiked) R.drawable.heart_fill else R.drawable.heart,
             title = R.string.like_all,
         ) {
             database.query {
@@ -504,19 +525,23 @@ fun SelectionMediaMetadataMenu(
         DownloadGridMenu(
             state = downloadState,
             onDownload = {
-                songSelection.forEach { song ->
-                    val downloadRequest =
-                        DownloadRequest
-                            .Builder(song.id, song.id.toUri())
-                            .setCustomCacheKey(song.id)
-                            .setData(song.title.toByteArray())
-                            .build()
-                    DownloadService.sendAddDownload(
-                        context,
-                        ExoDownloadService::class.java,
-                        downloadRequest,
-                        false,
-                    )
+                if (adManager?.isPremium?.value != true) {
+                    android.widget.Toast.makeText(context, R.string.premium_required, android.widget.Toast.LENGTH_SHORT).show()
+                } else {
+                    songSelection.forEach { song ->
+                        val downloadRequest =
+                            DownloadRequest
+                                .Builder(song.id, song.id.toUri())
+                                .setCustomCacheKey(song.id)
+                                .setData(song.title.toByteArray())
+                                .build()
+                        DownloadService.sendAddDownload(
+                            context,
+                            ExoDownloadService::class.java,
+                            downloadRequest,
+                            false,
+                        )
+                    }
                 }
             },
             onRemoveDownload = {

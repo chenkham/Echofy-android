@@ -59,6 +59,34 @@ object KuGou {
             } ?: throw IllegalStateException("No lyrics candidate")
         }
 
+    /**
+     * Get lyrics with matched song metadata for title validation
+     * @return Pair of (lyrics, matchedSongName) or null if no match found
+     */
+    suspend fun getLyricsWithMetadata(title: String, artist: String, duration: Int): Result<Pair<String, String>> =
+        runCatching {
+            val keyword = generateKeyword(title, artist)
+            val songsResponse = searchSongs(keyword)
+            
+            for (song in songsResponse.data.info) {
+                if (duration == -1 || abs(song.duration - duration) <= DURATION_TOLERANCE) {
+                    val candidate = searchLyricsByHash(song.hash).candidates.firstOrNull()
+                    if (candidate != null) {
+                        val lyrics = downloadLyrics(candidate.id, candidate.accesskey)
+                            .content.decodeBase64String().normalize()
+                        return@runCatching Pair(lyrics, song.songname)
+                    }
+                }
+            }
+            
+            // Fallback to keyword search (no song name available)
+            searchLyricsByKeyword(keyword, duration).candidates.firstOrNull()?.let { candidate ->
+                val lyrics = downloadLyrics(candidate.id, candidate.accesskey)
+                    .content.decodeBase64String().normalize()
+                Pair(lyrics, "")
+            } ?: throw IllegalStateException("No lyrics candidate")
+        }
+
     suspend fun getAllPossibleLyricsOptions(
         title: String, artist: String, duration: Int, callback: (String) -> Unit
     ) {

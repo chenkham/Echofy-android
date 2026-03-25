@@ -52,7 +52,7 @@ object AppModule {
         val constructor = {
             SimpleCache(
                 context.filesDir.resolve("exoplayer"),
-                when (val cacheSize = context.dataStore[MaxSongCacheSizeKey] ?: 1024) {
+                when (val cacheSize = context.dataStore[MaxSongCacheSizeKey] ?: 256) {
                     -1 -> NoOpCacheEvictor()
                     else -> LeastRecentlyUsedCacheEvictor(cacheSize * 1024 * 1024L)
                 },
@@ -75,5 +75,10 @@ object AppModule {
         }
         constructor().release()
         return constructor()
+    }
+    @Singleton
+    @Provides
+    fun provideDataStore(@ApplicationContext context: Context): androidx.datastore.core.DataStore<androidx.datastore.preferences.core.Preferences> {
+        return context.dataStore
     }
 }

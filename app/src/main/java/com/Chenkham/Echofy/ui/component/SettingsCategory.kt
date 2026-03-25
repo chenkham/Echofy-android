@@ -49,24 +49,13 @@ fun SettingsCategory(
             )
         }
 
-        // Settings card
-        Card(
-            modifier = Modifier
-                .fillMaxWidth()
-                .animateContentSize(),
-            shape = RoundedCornerShape(24.dp),
-            colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f)
-            ),
-            elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
-        ) {
-            Column {
-                items.forEachIndexed { index, item ->
-                    Material3SettingsItemRow(
-                        item = item,
-                        showDivider = index < items.size - 1
-                    )
-                }
+        // Settings list (Flat design)
+        Column {
+            items.forEachIndexed { index, item ->
+                Material3SettingsItemRow(
+                    item = item,
+                    showDivider = index < items.size - 1
+                )
             }
         }
     }
@@ -92,30 +81,19 @@ fun SettingsGeneralCategory(
             )
         }
 
-        // Settings card
-        Card(
-            modifier = Modifier
-                .fillMaxWidth()
-                .animateContentSize(),
-            shape = RoundedCornerShape(24.dp),
-            colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f)
-            ),
-            elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
-        ) {
-            Column {
-                items.forEachIndexed { index, item ->
-                    item()
-                    if (index < items.size - 1) {
-                        HorizontalDivider(
-                            modifier = Modifier.padding(
-                                start = 76.dp,
-                                end = 20.dp
-                            ),
-                            thickness = 0.5.dp,
-                            color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f)
-                        )
-                    }
+        // Settings list (Flat design)
+        Column {
+            items.forEachIndexed { index, item ->
+                item()
+                if (index < items.size - 1) {
+                    HorizontalDivider(
+                        modifier = Modifier.padding(
+                            start = 76.dp,
+                            end = 20.dp
+                        ),
+                        thickness = 0.5.dp,
+                        color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f)
+                    )
                 }
             }
         }

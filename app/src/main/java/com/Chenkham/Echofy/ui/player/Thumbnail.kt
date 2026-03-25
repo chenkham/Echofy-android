@@ -33,16 +33,29 @@ import androidx.core.content.edit
 import coil.compose.AsyncImage
 import com.Chenkham.Echofy.LocalPlayerConnection
 import com.Chenkham.Echofy.constants.PlayerHorizontalPadding
+import com.Chenkham.Echofy.constants.PlaybackMode
+import com.Chenkham.Echofy.constants.PlaybackModeKey
+import com.Chenkham.Echofy.constants.VideoPlaybackEnabledKey
 import com.Chenkham.Echofy.constants.ShowLyricsKey
 import com.Chenkham.Echofy.constants.SwipeThumbnailKey
 import com.Chenkham.Echofy.ui.component.AppConfig
 import com.Chenkham.Echofy.ui.component.Lyrics
+import com.Chenkham.Echofy.utils.rememberEnumPreference
 import com.Chenkham.Echofy.utils.rememberPreference
 import kotlin.math.roundToInt
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.painterResource
+import com.Chenkham.Echofy.R
 
 @Composable
 fun Thumbnail(
-    sliderPositionProvider: () -> Long?,
     onOpenFullscreenLyrics: () -> Unit, // NUEVO PARÃMETRO
     modifier: Modifier = Modifier,
     changeColor: Boolean = false,
@@ -55,6 +68,11 @@ fun Thumbnail(
 
     var showLyrics by rememberPreference(ShowLyricsKey, false)
     val swipeThumbnail by rememberPreference(SwipeThumbnailKey, true)
+    val playbackModeSelected by rememberEnumPreference(PlaybackModeKey, PlaybackMode.AUDIO)
+    val videoPlaybackEnabled by rememberPreference(VideoPlaybackEnabledKey, true)
+    
+    // Only use video mode if both: user selected VIDEO mode AND video playback is enabled
+    val playbackMode = if (videoPlaybackEnabled) playbackModeSelected else PlaybackMode.AUDIO
 
     DisposableEffect(showLyrics) {
         currentView.keepScreenOn = showLyrics
@@ -77,7 +95,11 @@ fun Thumbnail(
                 modifier =
                     Modifier
                         .fillMaxWidth() // SOLO ancho completo, no altura
-                        .padding(horizontal = PlayerHorizontalPadding)
+                        .then(
+                            // No padding for video mode - edge-to-edge
+                            if (playbackMode == PlaybackMode.VIDEO) Modifier
+                            else Modifier.padding(horizontal = PlayerHorizontalPadding)
+                        )
                         .pointerInput(Unit) {
                             detectHorizontalDragGestures(
                                 onDragCancel = {
@@ -111,31 +133,43 @@ fun Thumbnail(
                     cornerRadius = AppConfig.getThumbnailCornerRadius(context)
                 }
 
-                AsyncImage(
-                    model = mediaMetadata?.thumbnailUrl,
-                    contentDescription = null,
-                    contentScale = ContentScale.Crop,
-                    modifier = Modifier
-                        .offset { IntOffset(offsetX.roundToInt(), 0) }
-                        .fillMaxWidth()
-                        .aspectRatio(1f)
-                        .clip(RoundedCornerShape(cornerRadius * 2))
-                        .pointerInput(Unit) {
-                            detectTapGestures(
-                                onTap = {
-                                    // MODIFICADO: Ahora abre letras en pantalla completa
-                                    onOpenFullscreenLyrics()
-                                },
-                                onDoubleTap = { offset ->
-                                    if (offset.x < size.width / 2) {
-                                        playerConnection.player.seekBack()
-                                    } else {
-                                        playerConnection.player.seekForward()
-                                    }
-                                },
-                            )
-                        },
-                )
+                // Show Video or Thumbnail based on playback mode
+                if (playbackMode == PlaybackMode.VIDEO) {
+                    VideoPlayerView(
+                        exoPlayer = playerConnection.player,
+                        modifier = Modifier
+                            .offset { IntOffset(offsetX.roundToInt(), 0) }
+                            .fillMaxWidth()
+                            .aspectRatio(16f / 9f), // Standard video aspect ratio
+                        cornerRadius = 0f // Edge-to-edge, no rounded corners
+                    )
+                } else {
+                    AsyncImage(
+                        model = mediaMetadata?.thumbnailUrl,
+                        contentDescription = null,
+                        contentScale = ContentScale.Crop,
+                        modifier = Modifier
+                            .offset { IntOffset(offsetX.roundToInt(), 0) }
+                            .fillMaxWidth()
+                            .aspectRatio(1f)
+                            .clip(RoundedCornerShape(cornerRadius * 2))
+                            .pointerInput(Unit) {
+                                detectTapGestures(
+                                    onTap = {
+                                        // Toggle in-place lyrics instead of fullscreen
+                                        showLyrics = !showLyrics
+                                    },
+                                    onDoubleTap = { offset ->
+                                        if (offset.x < size.width / 2) {
+                                            playerConnection.player.seekBack()
+                                        } else {
+                                            playerConnection.player.seekForward()
+                                        }
+                                    },
+                                )
+                            },
+                    )
+                }
             }
         }
 
@@ -144,9 +178,9 @@ fun Thumbnail(
             enter = fadeIn(),
             exit = fadeOut(),
         ) {
-            Lyrics(
-                sliderPositionProvider = sliderPositionProvider,
-            )
+            Box(modifier = Modifier.fillMaxSize()) {
+                Lyrics()
+            }
         }
 
         AnimatedVisibility(

@@ -1,5 +1,7 @@
 ﻿package com.Chenkham.Echofy.ui.menu
 
+import com.Chenkham.Echofy.db.addSongToPlaylist
+
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable

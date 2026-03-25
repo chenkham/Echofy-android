@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<shortcuts xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Capability for "Play music from search" -->
+    <!-- Examples: "Play Blinding Lights on Echofy", "Play classic rock on Echofy" -->
+    <capability android:name="actions.intent.PLAY_MUSIC_FROM_SEARCH">
+        <intent
+            android:action="android.media.action.MEDIA_PLAY_FROM_SEARCH"
+            android:targetPackage="com.Chenkham.Echofy"
+            android:targetClass="com.Chenkham.Echofy.MainActivity">
+            <parameter
+                android:name="music.MUSIC_GENRE_ITEM"
+                android:key="query" />
+        </intent>
+    </capability>
+
+    <!-- Capability for "Open [feature] on Echofy" -->
+    <capability android:name="actions.intent.OPEN_APP_FEATURE">
+        <intent
+            android:action="android.intent.action.VIEW"
+            android:targetPackage="com.Chenkham.Echofy"
+            android:targetClass="com.Chenkham.Echofy.MainActivity">
+            <url-template android:value="echofy://open/{feature}" />
+            <parameter
+                android:name="feature"
+                android:key="feature" />
+        </intent>
+    </capability>
+</shortcuts>

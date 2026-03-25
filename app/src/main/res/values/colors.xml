@@ -1,17 +1,25 @@
 <resources>
-    <!-- Fallback colors (usados en Android < 12 o cuando no hay palette) -->
-    <color name="md_sys_color_primary">#6750A4</color>
-    <color name="md_sys_color_onPrimary">#FFFFFF</color>
-    <color name="md_sys_color_surface">#FFFFFF</color>
-    <color name="md_sys_color_onSurface">#000000</color>
-    <color name="md_sys_color_surface_variant">#E7E0EC</color>
-    <color name="md_sys_color_outline_variant">#79747E</color>
+    <!-- Echofy Primary Colors - Modern Cyan/Blue/Green theme -->
+    <color name="md_sys_color_primary">#00D9FF</color> <!-- Cyan Neon -->
+    <color name="md_sys_color_onPrimary">#003544</color>
+    <color name="md_sys_color_surface">#0A1A1F</color>
+    <color name="md_sys_color_onSurface">#E0F7FA</color>
+    <color name="md_sys_color_surface_variant">#1A2F35</color>
+    <color name="md_sys_color_outline_variant">#4DB6AC</color>
 
+    <!-- Echofy Accent Colors -->
+    <color name="echofy_cyan">#00D9FF</color>
+    <color name="echofy_blue">#2979FF</color>
+    <color name="echofy_green">#00E676</color>
+    <color name="echofy_purple">#7C4DFF</color>
+    <color name="echofy_teal">#1DE9B6</color>
 
-    <color name="light_blue_50">#FFE1F5FE</color>
-    <color name="light_blue_200">#FF81D4FA</color>
-    <color name="light_blue_600">#FF039BE5</color>
-    <color name="light_blue_900">#FF01579B</color>
+    <!-- Gradients -->
+    <color name="gradient_start">#00D9FF</color>
+    <color name="gradient_end">#7C4DFF</color>
+
+    <!-- Utility Colors -->
     <color name="Lights">#FFFFFF</color>
     <color name="white_30">#4DFFFFFF</color>
 </resources>
+

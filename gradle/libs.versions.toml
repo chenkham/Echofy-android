@@ -1,22 +1,22 @@
 [versions]
-androidGradlePlugin = "8.13.2"
+androidGradlePlugin = "8.7.3"
 annotation = "1.9.1"
 json = "20241224"
 kotlin = "2.1.0"
-compose = "1.9.4"
-lifecycle = "2.9.4"
-material3 = "1.5.0-alpha08"
-media3 = "1.8.0"
+compose = "1.7.6"
+lifecycle = "2.8.7"
+material3 = "1.3.1"
+media3 = "1.3.1"
 room = "2.6.1"
 hilt = "2.55"
-ktor = "3.0.3"
+ktor = "2.3.12"
 ksp = "2.1.0-1.0.29"
 kotlinxSerializationJson = "1.8.0"
 okhttp = "5.0.0-alpha.14"
 loggingInterceptor = "5.0.0-alpha.14"
 blurry = "4.0.1"
-materialRipple = "1.9.4"
-roomRuntimeAndroid = "2.7.2"
+materialRipple = "1.7.6"
+roomRuntimeAndroid = "2.6.1"
 extractor = "06b7ae2"
 composeReorderable = "3.0.0"
 uiAndroid = "1.9.2"
@@ -26,6 +26,7 @@ glanceMaterial3 = "1.1.1"
 graphicsShapes = "1.1.0"
 workRuntimeKtx = "2.9.0"
 constraintlayout = "2.2.1"
+imageCropper = "4.5.0"
 
 [libraries]
 annotation = { module = "androidx.annotation:annotation", version.ref = "annotation" }
@@ -64,6 +65,7 @@ palette = { group = "androidx.palette", name = "palette", version = "1.0.0" }
 media3 = { group = "androidx.media3", name = "media3-exoplayer", version.ref = "media3" }
 media3-okhttp = { group = "androidx.media3", name = "media3-datasource-okhttp", version.ref = "media3" }
 media3-session = { group = "androidx.media3", name = "media3-session", version.ref = "media3" }
+media3-ui = { group = "androidx.media3", name = "media3-ui", version.ref = "media3" }
 
 room-runtime = { group = "androidx.room", name = "room-runtime", version.ref = "room" }
 room-compiler = { group = "androidx.room", name = "room-compiler", version.ref = "room" }
@@ -71,7 +73,7 @@ room-ktx = { group = "androidx.room", name = "room-ktx", version.ref = "room" }
 
 apache-lang3 = { group = "org.apache.commons", name = "commons-lang3", version = "3.17.0" }
 
-hilt = { group = "com.google.dagger", name = "hilt-android", version = "2.53.1" }
+hilt = { group = "com.google.dagger", name = "hilt-android", version.ref = "hilt" }
 hilt-compiler = { group = "com.google.dagger", name = "hilt-android-compiler", version.ref = "hilt" }
 
 ktor-client-core = { group = "io.ktor", name = "ktor-client-core", version.ref = "ktor" }
@@ -91,13 +93,13 @@ junit = { group = "junit", name = "junit", version = "4.13.2" }
 
 timber = { group = "com.jakewharton.timber", name = "timber", version = "5.0.1" }
 
-newpipe-extractor = { module  = "com.github.mostafaalagamy:MetrolistExtractor", name = "PipePipeExtractor", version = "a194151" }
+newpipe-extractor = { module  = "com.github.mostafaalagamy:MetrolistExtractor", name = "PipePipeExtractor", version = "d8fee79" }
 kotlinx-serialization-json = { group = "org.jetbrains.kotlinx", name = "kotlinx-serialization-json", version.ref = "kotlinxSerializationJson" }
 okhttp = { group = "com.squareup.okhttp3", name = "okhttp", version.ref = "okhttp" }
 logging-interceptor = { group = "com.squareup.okhttp3", name = "logging-interceptor", version.ref = "loggingInterceptor" }
 blurry = { group = "jp.wasabeef", name = "blurry", version.ref = "blurry" }
 material-ripple = { group = "androidx.compose.material", name = "material-ripple", version.ref = "materialRipple" }
-room-runtime-android = { group = "androidx.room", name = "room-runtime-android", version.ref = "roomRuntimeAndroid" }
+
 ui-android = { group = "androidx.compose.ui", name = "ui-android", version.ref = "uiAndroid" }
 material-icons-extended = { group = "androidx.compose.material", name = "material-icons-extended", version.ref = "materialIconsExtended" }
 glance-appwidget = { group = "androidx.glance", name = "glance-appwidget", version.ref = "glanceAppwidget" }
@@ -105,6 +107,7 @@ glance-material3 = { group = "androidx.glance", name = "glance-material3", versi
 graphics-shapes = { group = "androidx.graphics", name = "graphics-shapes", version.ref = "graphicsShapes" }
 work-runtime-ktx = { group = "androidx.work", name = "work-runtime-ktx", version.ref = "workRuntimeKtx" }
 constraintlayout = { group = "androidx.constraintlayout", name = "constraintlayout", version.ref = "constraintlayout" }
+image-cropper = { module = "com.github.CanHub:Android-Image-Cropper", version.ref = "imageCropper" }
 
 [plugins]
 kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }

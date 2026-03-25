@@ -14,7 +14,6 @@ import androidx.media3.session.MediaLibraryService
 import androidx.media3.session.MediaLibraryService.MediaLibrarySession
 import androidx.media3.session.MediaSession
 import androidx.media3.session.SessionCommand
-import androidx.media3.session.SessionError
 import androidx.media3.session.SessionResult
 import com.Chenkham.Echofy.R
 import com.Chenkham.Echofy.constants.MediaSessionConstants
@@ -23,6 +22,7 @@ import com.Chenkham.Echofy.db.MusicDatabase
 import com.Chenkham.Echofy.db.entities.PlaylistEntity
 import com.Chenkham.Echofy.db.entities.Song
 import com.Chenkham.Echofy.extensions.toMediaItem
+import com.Chenkham.Echofy.db.likedSongs
 import com.Chenkham.Echofy.extensions.toggleRepeatMode
 import com.google.common.collect.ImmutableList
 import com.google.common.util.concurrent.Futures
@@ -283,7 +283,7 @@ constructor(
         scope.future(Dispatchers.IO) {
             database.song(mediaId).first()?.toMediaItem()?.let {
                 LibraryResult.ofItem(it, null)
-            } ?: LibraryResult.ofError(SessionError.ERROR_UNKNOWN)
+            } ?: LibraryResult.ofError(SessionResult.RESULT_ERROR_UNKNOWN)
         }
 
     override fun onSetMediaItems(

@@ -4,10 +4,11 @@ import android.content.res.Configuration
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.LinearEasing
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.isActive
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateFloat
-import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.spring
@@ -38,18 +39,18 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialShapes
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.toShape
+import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
@@ -69,6 +70,7 @@ import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.IntOffset
@@ -95,11 +97,12 @@ import kotlin.math.absoluteValue
 import kotlin.math.exp
 import kotlin.math.roundToInt
 
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
+import com.Chenkham.Echofy.constants.MiniPlayerStyle
+import com.Chenkham.Echofy.constants.MiniPlayerStyleKey
+
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MiniPlayer(
-    position: Long,
-    duration: Long,
     modifier: Modifier = Modifier,
 ) {
     val playerConnection = LocalPlayerConnection.current ?: return
@@ -111,6 +114,22 @@ fun MiniPlayer(
     val canSkipPrevious by playerConnection.canSkipPrevious.collectAsState()
     val currentSong by playerConnection.currentSong.collectAsState(initial = null)
 
+    var position by remember { mutableLongStateOf(0L) }
+    var duration by remember { mutableLongStateOf(0L) }
+
+    LaunchedEffect(playerConnection, isPlaying) {
+        if (isPlaying) {
+            while (isActive) {
+                position = playerConnection.player.currentPosition
+                duration = playerConnection.player.duration
+                delay(100)
+            }
+        } else {
+            position = playerConnection.player.currentPosition
+            duration = playerConnection.player.duration
+        }
+    }
+
     // Obtener el estado del tema para calcular el color de fondo correcto
     val isSystemInDarkTheme = isSystemInDarkTheme()
     val darkTheme by rememberEnumPreference(DarkModeKey, defaultValue = DarkMode.AUTO)
@@ -119,6 +138,11 @@ fun MiniPlayer(
     val useDarkTheme = remember(darkTheme, isSystemInDarkTheme) {
         if (darkTheme == DarkMode.AUTO) isSystemInDarkTheme else darkTheme == DarkMode.ON
     }
+
+    val (miniPlayerStyle, _) = rememberEnumPreference(
+        key = MiniPlayerStyleKey,
+        defaultValue = MiniPlayerStyle.Slim
+    )
 
     // Obtener la forma del thumbnail del MiniPlayer
     val miniPlayerThumbnailShapeState = rememberPreference(
@@ -130,7 +154,7 @@ fun MiniPlayer(
         if (isPlaying) {
             getMiniPlayerThumbnailShape(miniPlayerThumbnailShapeState.value)
         } else {
-            MaterialShapes.Circle
+            CircleShape
         }
     }
 
@@ -157,11 +181,7 @@ fun MiniPlayer(
         stiffness = Spring.StiffnessLow
     )
 
-    val overlayAlpha by animateFloatAsState(
-        targetValue = if (isPlaying) 0.0f else 0.4f,
-        label = "overlay_alpha",
-        animationSpec = animationSpec
-    )
+
 
     // AnimaciÃ³n INFINITA de rotaciÃ³n para el thumbnail
     // Se ejecuta continuamente mientras isPlaying = true
@@ -179,15 +199,8 @@ fun MiniPlayer(
         label = "rotation"
     )
 
-    // Convertir RoundedPolygon a Shape usando la API oficial
-    // Cambia a Square cuando estÃ¡ en pausa, usa la forma seleccionada cuando estÃ¡ reproduciendo
-    val currentThumbnailShape = remember(isPlaying, miniPlayerThumbnailShape) {
-        if (isPlaying) {
-            miniPlayerThumbnailShape
-        } else {
-            MaterialShapes.Square
-        }
-    }.toShape()
+    // Use the same shape whether playing or paused
+    val currentThumbnailShape = miniPlayerThumbnailShape
 
     /**
      * Calculates the auto-swipe threshold based on swipe sensitivity.
@@ -197,12 +210,18 @@ fun MiniPlayer(
     }
     val autoSwipeThreshold = calculateAutoSwipeThreshold(0.73f)
 
+
+    val playerHeight = if (miniPlayerStyle == MiniPlayerStyle.Slim) 64.dp else 80.dp
+    val playerPaddingVertical = if (miniPlayerStyle == MiniPlayerStyle.Slim) 0.dp else 8.dp
+    val playerPaddingHorizontal = if (miniPlayerStyle == MiniPlayerStyle.Slim) 0.dp else 16.dp
+    val playerShape = if (miniPlayerStyle == MiniPlayerStyle.Slim) RoundedCornerShape(0.dp) else RoundedCornerShape(32.dp)
+
     Box(
         modifier = modifier
             .fillMaxWidth()
-            .height(80.dp)
+            .height(playerHeight)
             .windowInsetsPadding(WindowInsets.systemBars.only(WindowInsetsSides.Horizontal))
-            .padding(horizontal = 16.dp, vertical = 8.dp)
+            .padding(horizontal = playerPaddingHorizontal, vertical = playerPaddingVertical)
             .background(Color.Transparent)
     ) {
         Surface(
@@ -219,12 +238,12 @@ fun MiniPlayer(
                 .height(64.dp)
                 .offset { IntOffset(offsetXAnimatable.value.roundToInt(), 0) }
                 .shadow(
-                    elevation = 8.dp,
-                    shape = RoundedCornerShape(32.dp),
+                    elevation = if (miniPlayerStyle == MiniPlayerStyle.Slim) 0.dp else 8.dp,
+                    shape = playerShape,
                     clip = false
                 ),
             tonalElevation = 2.dp,
-            shape = RoundedCornerShape(32.dp),
+            shape = playerShape,
             color = Color.Transparent
         ) {
             Box(
@@ -317,11 +336,6 @@ fun MiniPlayer(
                                 .size(40.dp)
                                 .rotate(if (isPlaying) thumbnailRotation else 0f) // Solo rota cuando estÃ¡ reproduciendo
                                 .clip(currentThumbnailShape)
-                                .border(
-                                    width = 1.dp,
-                                    color = MaterialTheme.colorScheme.outline.copy(alpha = 0.3f),
-                                    shape = currentThumbnailShape
-                                )
                                 .clickable {
                                     if (playbackState == Player.STATE_ENDED) {
                                         playerConnection.player.seekTo(0, 0)
@@ -334,39 +348,11 @@ fun MiniPlayer(
                             mediaMetadata?.let { metadata ->
                                 AsyncImage(
                                     model = metadata.thumbnailUrl,
-                                    contentDescription = null,
+                                    contentDescription = stringResource(R.string.song_cover),
                                     contentScale = ContentScale.Crop,
                                     modifier = Modifier
                                         .fillMaxSize()
                                         .clip(currentThumbnailShape)
-                                )
-                            }
-
-                            Box(
-                                modifier = Modifier
-                                    .fillMaxSize()
-                                    .background(
-                                        color = Color.Black.copy(alpha = overlayAlpha),
-                                        shape = currentThumbnailShape
-                                    )
-                            )
-
-                            androidx.compose.animation.AnimatedVisibility(
-                                visible = playbackState == Player.STATE_ENDED || !isPlaying,
-                                enter = fadeIn(),
-                                exit = fadeOut()
-                            ) {
-                                Icon(
-                                    painter = painterResource(
-                                        if (playbackState == Player.STATE_ENDED) {
-                                            R.drawable.replay
-                                        } else {
-                                            R.drawable.play
-                                        }
-                                    ),
-                                    contentDescription = null,
-                                    tint = Color.White,
-                                    modifier = Modifier.size(20.dp)
                                 )
                             }
                         }
@@ -436,9 +422,9 @@ fun MiniPlayer(
                     ) {
                         Icon(
                             painter = painterResource(
-                                if (currentSong?.song?.liked == true) R.drawable.favorite else R.drawable.favorite_border
+                                if (currentSong?.song?.liked == true) R.drawable.heart_fill else R.drawable.heart
                             ),
-                            contentDescription = if (currentSong?.song?.liked == true) "Unlike" else "Like",
+                            contentDescription = stringResource(if (currentSong?.song?.liked == true) R.string.acc_unfavorite else R.string.acc_favorite),
                             tint = if (currentSong?.song?.liked == true) {
                                 MaterialTheme.colorScheme.error
                             } else {
@@ -455,7 +441,7 @@ fun MiniPlayer(
                     ) {
                         Icon(
                             painter = painterResource(R.drawable.skip_next),
-                            contentDescription = null,
+                            contentDescription = stringResource(R.string.acc_skip_next),
                             tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
                             modifier = Modifier.size(18.dp)
                         )
@@ -474,7 +460,7 @@ fun MiniPlayer(
                     painter = painterResource(
                         if (offsetXAnimatable.value > 0) R.drawable.skip_previous else R.drawable.skip_next
                     ),
-                    contentDescription = null,
+                    contentDescription = stringResource(if (offsetXAnimatable.value > 0) R.string.acc_skip_prev else R.string.acc_skip_next),
                     tint = MaterialTheme.colorScheme.primary.copy(
                         alpha = (offsetXAnimatable.value.absoluteValue / autoSwipeThreshold).coerceIn(0f, 1f)
                     ),
@@ -485,45 +471,3 @@ fun MiniPlayer(
     }
 }
 
-@Composable
-fun MiniMediaInfo(
-    mediaMetadata: MediaMetadata,
-    error: androidx.media3.common.PlaybackException?,
-    modifier: Modifier = Modifier,
-) {
-    Row(
-        verticalAlignment = Alignment.CenterVertically,
-        modifier = modifier,
-    ) {
-        Box(modifier = Modifier.padding(6.dp)) {
-            AsyncImage(
-                model = mediaMetadata.thumbnailUrl,
-                contentDescription = null,
-                modifier = Modifier
-                    .size(48.dp)
-                    .clip(RoundedCornerShape(ThumbnailCornerRadius)),
-            )
-            androidx.compose.animation.AnimatedVisibility(
-                visible = error != null,
-                enter = fadeIn(),
-                exit = fadeOut(),
-            ) {
-                Box(
-                    Modifier
-                        .size(48.dp)
-                        .background(
-                            color = Color.Black.copy(alpha = 0.6f),
-                            shape = RoundedCornerShape(ThumbnailCornerRadius),
-                        ),
-                ) {
-                    Icon(
-                        painter = painterResource(R.drawable.info),
-                        contentDescription = null,
-                        tint = MaterialTheme.colorScheme.error,
-                        modifier = Modifier.align(Alignment.Center),
-                    )
-                }
-            }
-        }
-    }
-}

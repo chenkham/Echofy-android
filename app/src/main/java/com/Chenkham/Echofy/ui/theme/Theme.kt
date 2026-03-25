@@ -4,10 +4,7 @@ import android.graphics.Bitmap
 import android.os.Build
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.ColorScheme
-import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
-import androidx.compose.material3.MaterialExpressiveTheme
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.MotionScheme
 import androidx.compose.material3.dynamicDarkColorScheme
 import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.runtime.Composable
@@ -24,14 +21,13 @@ import com.google.material.color.hct.Hct
 import com.google.material.color.scheme.SchemeTonalSpot
 import com.google.material.color.score.Score
 
-val DefaultThemeColor = Color(0xFF4285F4)
+val DefaultThemeColor = Color(0xFF00D9FF) // Cyan Neon - Echofy unique identity
 
-@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun EchofyTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
     pureBlack: Boolean = false,
-    expressive: Boolean = true,
+    expressive: Boolean = true, // Kept for API compatibility but unused
     themeColor: Color = DefaultThemeColor,
     content: @Composable () -> Unit,
 ) {
@@ -51,17 +47,10 @@ fun EchofyTheme(
         }
     }
 
-    val motionScheme = if (expressive) {
-        MotionScheme.expressive()
-    } else {
-        MotionScheme.standard()
-    }
-
-    MaterialExpressiveTheme(
+    MaterialTheme(
         colorScheme = colorScheme,
         typography = MaterialTheme.typography,
         shapes = MaterialTheme.shapes,
-        motionScheme = motionScheme,
         content = content
     )
 }

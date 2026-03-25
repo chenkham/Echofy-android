@@ -22,11 +22,10 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialShapes
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.SheetState
@@ -34,7 +33,6 @@ import androidx.compose.material3.Tab
 import androidx.compose.material3.TabRow
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
-import androidx.compose.material3.toShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -46,19 +44,23 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.RectangleShape
+import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.graphics.shapes.RoundedPolygon
 import com.Chenkham.Echofy.R
+
+import com.Chenkham.Echofy.utils.MaterialShapes
+import com.Chenkham.Echofy.utils.toShape
 
 /**
  * Data class que representa una forma disponible
  */
 data class SmallButtonShapeOption(
     val name: String,
-    val shape: RoundedPolygon,
+    val shape: Shape,
     val displayName: String
 )
 
@@ -75,7 +77,7 @@ enum class ShapeType {
  * Bottom Sheet selector de formas unificado con tabs
  * DiseÃ±o Material 3 Expressive con animaciones sutiles y jerarquÃ­a clara
  */
-@OptIn(ExperimentalMaterial3ExpressiveApi::class, ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun UnifiedShapeBottomSheet(
     selectedSmallButtonsShape: String,
@@ -252,7 +254,7 @@ fun UnifiedShapeBottomSheet(
 /**
  * Item individual de forma con animaciones sutiles y feedback visual
  */
-@OptIn(ExperimentalMaterial3ExpressiveApi::class)
+
 @Composable
 private fun SmallButtonShapeItem(
     shapeOption: SmallButtonShapeOption,
@@ -336,7 +338,7 @@ private fun SmallButtonShapeItem(
 /**
  * BotÃ³n selector unificado para todas las formas (UN SOLO BOTÃ“N)
  */
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun UnifiedShapeSelectorButton(
     smallButtonsShape: String,

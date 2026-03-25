@@ -1,5 +1,8 @@
 ﻿package com.Chenkham.Echofy.ui.screens.settings
 
+import androidx.compose.foundation.layout.size
+import androidx.compose.runtime.collectAsState
+
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.only
@@ -57,8 +60,10 @@ import com.Chenkham.Echofy.utils.rememberPreference
 fun AccountSettings(
     navController: NavController,
     scrollBehavior: TopAppBarScrollBehavior,
+    viewModel: AccountViewModel = androidx.hilt.navigation.compose.hiltViewModel()
 ) {
     val context = LocalContext.current
+    val googleUser by viewModel.user.collectAsState()
 
     val (accountName, onAccountNameChange) = rememberPreference(AccountNameKey, "")
     val (accountEmail, onAccountEmailChange) = rememberPreference(AccountEmailKey, "")
@@ -105,14 +110,54 @@ fun AccountSettings(
     var showTokenEditor by remember {
         mutableStateOf(false)
     }
+    var showSignOutDialog by remember { mutableStateOf(false) }
 
     SettingsPage(
         title = stringResource(R.string.account),
         navController = navController,
         scrollBehavior = scrollBehavior
     ) {
+        // NEW: App Account Section
         SettingsGeneralCategory(
-            title = stringResource(R.string.google),
+            title = "App Account",
+            items = listOf(
+                {
+                    if (googleUser != null) {
+                        PreferenceEntry(
+                            title = { Text(googleUser!!.displayName ?: "User") },
+                            description = googleUser!!.email,
+                            icon = {
+                                coil.compose.AsyncImage(
+                                    model = googleUser!!.photoUrl,
+                                    contentDescription = "Profile photo",
+                                    modifier = Modifier
+                                        .size(24.dp)
+                                        .clip(androidx.compose.foundation.shape.CircleShape),
+                                    contentScale = androidx.compose.ui.layout.ContentScale.Crop,
+                                    error = painterResource(R.drawable.person),
+                                    placeholder = painterResource(R.drawable.person)
+                                )
+                            },
+                            trailingContent = {
+                                OutlinedButton(onClick = { showSignOutDialog = true }) {
+                                    Text("Sign Out")
+                                }
+                            }
+                        )
+                    } else {
+                        PreferenceEntry(
+                            title = { Text("Sign in with Google") },
+                            description = "Sync your preferences and data",
+                            icon = { Icon(painterResource(R.drawable.login), null) },
+                            onClick = { navController.navigate("sign_in?chained=true") }
+                        )
+                    }
+                }
+            )
+        )
+
+        SettingsGeneralCategory(
+            title = "YouTube Music (Cookie)", // Clarified title
             items = listOf(
                 {PreferenceEntry(
                     title = {
@@ -280,5 +325,31 @@ fun AccountSettings(
                 )}
             )
         )
+
+        if (showSignOutDialog) {
+            androidx.compose.material3.AlertDialog(
+                onDismissRequest = { showSignOutDialog = false },
+                title = { Text("Sign Out?") },
+                text = { Text("Are you sure you want to sign out from the app?") },
+                confirmButton = {
+                    androidx.compose.material3.TextButton(
+                        onClick = {
+                            showSignOutDialog = false
+                            viewModel.signOut()
+                            navController.navigate("sign_in") {
+                                popUpTo(0) { inclusive = true }
+                            }
+                        }
+                    ) {
+                        Text("Sign Out")
+                    }
+                },
+                dismissButton = {
+                    androidx.compose.material3.TextButton(onClick = { showSignOutDialog = false }) {
+                        Text("Cancel")
+                    }
+                }
+            )
+        }
     }
 }

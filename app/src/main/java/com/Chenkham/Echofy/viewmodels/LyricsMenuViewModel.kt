@@ -56,13 +56,12 @@ constructor(
         mediaMetadata: MediaMetadata,
         lyricsEntity: LyricsEntity?,
     ) {
-        database.query {
-            lyricsEntity?.let(::delete)
-            val lyrics =
-                runBlocking {
-                    lyricsHelper.getLyrics(mediaMetadata)
-                }
-            upsert(LyricsEntity(mediaMetadata.id, lyrics))
+        viewModelScope.launch(Dispatchers.IO) {
+            val lyrics = lyricsHelper.getLyrics(mediaMetadata)
+            database.query {
+                lyricsEntity?.let(::delete)
+                upsert(LyricsEntity(mediaMetadata.id, lyrics))
+            }
         }
     }
 }

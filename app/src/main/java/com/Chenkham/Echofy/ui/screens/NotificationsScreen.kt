@@ -112,6 +112,18 @@ fun NotificationsScreen(
         loadNotifications()
     }
     
+    fun deleteNotification(notificationId: String) {
+        val prefs = context.getSharedPreferences("echofy_notifications", Context.MODE_PRIVATE)
+        val storedNotifications = prefs.getStringSet("notifications", emptySet())?.toMutableSet() ?: mutableSetOf()
+        
+        val updated = storedNotifications.filterNot { entry ->
+            entry.startsWith(notificationId)
+        }.toSet()
+        
+        prefs.edit().putStringSet("notifications", updated).apply()
+        loadNotifications()
+    }
+    
     LaunchedEffect(Unit) {
         loadNotifications()
     }
@@ -242,7 +254,8 @@ fun NotificationsScreen(
                     ) { notification ->
                         NotificationCard(
                             notification = notification,
-                            onRead = { markAsRead(notification.id) }
+                            onRead = { markAsRead(notification.id) },
+                            onDelete = { deleteNotification(notification.id) }
                         )
                     }
                 }
@@ -254,9 +267,11 @@ fun NotificationsScreen(
 @Composable
 private fun NotificationCard(
     notification: LocalNotification,
-    onRead: () -> Unit
+    onRead: () -> Unit,
+    onDelete: () -> Unit
 ) {
     var isExpanded by remember { mutableStateOf(false) }
+    var showMenu by remember { mutableStateOf(false) }
     
     val accentColor = when (notification.type) {
         "welcome" -> Color(0xFF4CAF50)
@@ -280,15 +295,15 @@ private fun NotificationCard(
                 isExpanded = !isExpanded
                 if (!notification.isRead) onRead()
             },
-        shape = RoundedCornerShape(16.dp),
+        shape = RoundedCornerShape(12.dp),
         colors = CardDefaults.cardColors(
             containerColor = if (notification.isRead) 
-                MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
+                MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f)
             else 
-                MaterialTheme.colorScheme.surface
+                MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.7f)
         ),
         elevation = CardDefaults.cardElevation(
-            defaultElevation = if (notification.isRead) 0.dp else 2.dp
+            defaultElevation = 0.dp // No shadow
         )
     ) {
         Column(
@@ -365,6 +380,55 @@ private fun NotificationCard(
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
                     )
+                }
+                
+                // 3-dot menu
+                Box {
+                    IconButton(
+                        onClick = { showMenu = true },
+                        modifier = Modifier.size(32.dp)
+                    ) {
+                        Icon(
+                            painter = painterResource(R.drawable.more_vert),
+                            contentDescription = "Options",
+                            modifier = Modifier.size(18.dp),
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                    
+                    DropdownMenu(
+                        expanded = showMenu,
+                        onDismissRequest = { showMenu = false }
+                    ) {
+                        DropdownMenuItem(
+                            text = { Text("Mark as read") },
+                            onClick = {
+                                onRead()
+                                showMenu = false
+                            },
+                            leadingIcon = {
+                                Icon(
+                                    painter = painterResource(R.drawable.visibility),
+                                    contentDescription = null,
+                                    modifier = Modifier.size(18.dp)
+                                )
+                            }
+                        )
+                        DropdownMenuItem(
+                            text = { Text("Delete") },
+                            onClick = {
+                                onDelete()
+                                showMenu = false
+                            },
+                            leadingIcon = {
+                                Icon(
+                                    painter = painterResource(R.drawable.delete),
+                                    contentDescription = null,
+                                    modifier = Modifier.size(18.dp)
+                                )
+                            }
+                        )
+                    }
                 }
             }
             

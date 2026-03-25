@@ -38,6 +38,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.toMutableStateList
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -67,6 +68,7 @@ import androidx.media3.exoplayer.offline.DownloadService
 import androidx.navigation.NavController
 import coil.compose.AsyncImage
 import com.Chenkham.Echofy.LocalDownloadUtil
+import com.Chenkham.Echofy.ui.component.LocalAdManager
 import com.Chenkham.Echofy.LocalPlayerAwareWindowInsets
 import com.Chenkham.Echofy.LocalPlayerConnection
 import com.Chenkham.Echofy.R
@@ -119,7 +121,9 @@ fun TopPlaylistScreen(
             songs?.fastSumBy { it.song.duration } ?: 0
         }
 
-    val wrappedSongs = songs?.map { item -> ItemWrapper(item) }?.toMutableList()
+    val wrappedSongs = remember(songs) {
+        songs?.map { item -> ItemWrapper(item) }?.toMutableStateList()
+    }
 
     var searchQuery by remember {
         mutableStateOf(TextFieldValue(""))
@@ -127,6 +131,7 @@ fun TopPlaylistScreen(
     var isSearching by remember { mutableStateOf(false) }
     val focusManager = LocalFocusManager.current
     val focusRequester = remember { FocusRequester() }
+    val adManager = LocalAdManager.current
     LaunchedEffect(isSearching) {
         if (isSearching) {
             focusRequester.requestFocus()
@@ -316,22 +321,30 @@ fun TopPlaylistScreen(
                                                 else -> {
                                                     IconButton(
                                                         onClick = {
-                                                            songs!!.forEach { song ->
-                                                                val downloadRequest =
-                                                                    DownloadRequest
-                                                                        .Builder(
-                                                                            song.song.id,
-                                                                            song.song.id.toUri(),
-                                                                        )
-                                                                        .setCustomCacheKey(song.song.id)
-                                                                        .setData(song.song.title.toByteArray())
-                                                                        .build()
-                                                                DownloadService.sendAddDownload(
+                                                            if (adManager?.isPremium?.value != true) {
+                                                                android.widget.Toast.makeText(
                                                                     context,
-                                                                    ExoDownloadService::class.java,
-                                                                    downloadRequest,
-                                                                    false,
-                                                                )
+                                                                    R.string.premium_required,
+                                                                    android.widget.Toast.LENGTH_SHORT
+                                                                ).show()
+                                                            } else {
+                                                                songs!!.forEach { song ->
+                                                                    val downloadRequest =
+                                                                        DownloadRequest
+                                                                            .Builder(
+                                                                                song.song.id,
+                                                                                song.song.id.toUri(),
+                                                                            )
+                                                                            .setCustomCacheKey(song.song.id)
+                                                                            .setData(song.song.title.toByteArray())
+                                                                            .build()
+                                                                    DownloadService.sendAddDownload(
+                                                                        context,
+                                                                        ExoDownloadService::class.java,
+                                                                        downloadRequest,
+                                                                        false,
+                                                                    )
+                                                                }
                                                             }
                                                         },
                                                     ) {
@@ -437,7 +450,7 @@ fun TopPlaylistScreen(
 
                 val searchQueryStr = (searchQuery.text.trim())
                 val filteredSongs = if (searchQueryStr.isEmpty()) {
-                    wrappedSongs
+                    wrappedSongs?.toList()
                 } else {
                     wrappedSongs?.filter {
                         (it.item.song.title).contains(searchQueryStr, ignoreCase = true) or

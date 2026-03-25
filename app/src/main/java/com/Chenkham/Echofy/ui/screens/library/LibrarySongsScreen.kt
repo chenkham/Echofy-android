@@ -26,6 +26,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.toMutableStateList
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -56,6 +57,7 @@ import com.Chenkham.Echofy.playback.queues.ListQueue
 import com.Chenkham.Echofy.ui.component.ChipsRow
 import com.Chenkham.Echofy.ui.component.HideOnScrollFAB
 import com.Chenkham.Echofy.ui.component.LocalMenuState
+import com.Chenkham.Echofy.ui.component.PrefetchOnVisible
 import com.Chenkham.Echofy.ui.component.SongListItem
 import com.Chenkham.Echofy.ui.component.SortHeader
 import com.Chenkham.Echofy.ui.component.VerticalFastScroller
@@ -102,7 +104,9 @@ fun LibrarySongsScreen(
         }
     }
 
-    val wrappedSongs = songs.map { item -> ItemWrapper(item) }.toMutableList()
+    val wrappedSongs = remember(songs) {
+        songs.map { item -> ItemWrapper(item) }.toMutableStateList()
+    }
     var selection by remember {
         mutableStateOf(false)
     }
@@ -127,12 +131,11 @@ fun LibrarySongsScreen(
             listState = lazyListState,
             topContentPadding = 16.dp,
             endContentPadding = 0.dp
-        )
-        {
-        LazyColumn(
-            state = lazyListState,
-            contentPadding = LocalPlayerAwareWindowInsets.current.asPaddingValues(),
         ) {
+            LazyColumn(
+                state = lazyListState,
+                contentPadding = LocalPlayerAwareWindowInsets.current.asPaddingValues(),
+            ) {
             item(
                 key = "filter",
                 contentType = CONTENT_TYPE_HEADER,
@@ -262,6 +265,9 @@ fun LibrarySongsScreen(
                 key = { _, item -> item.item.song.id },
                 contentType = { _, _ -> CONTENT_TYPE_SONG },
             ) { index, songWrapper ->
+                // INSTANT PLAYBACK: Prefetch URL when song becomes visible
+                PrefetchOnVisible(mediaId = songWrapper.item.song.id)
+                
                 SongListItem(
                     song = songWrapper.item,
                     showInLibraryIcon = true,
@@ -323,7 +329,7 @@ fun LibrarySongsScreen(
                 )
             }
         }
-        }
+    }
 
         HideOnScrollFAB(
             visible = songs.isNotEmpty() == true,

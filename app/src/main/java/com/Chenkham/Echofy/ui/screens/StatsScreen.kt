@@ -1,33 +1,49 @@
 ﻿package com.Chenkham.Echofy.ui.screens
 
+import android.content.Context
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.unit.dp
+import androidx.core.graphics.drawable.toBitmap
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
+import androidx.core.content.FileProvider
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import com.Chenkham.innertube.models.WatchEndpoint
@@ -169,7 +185,7 @@ fun StatsScreen(
                 LocalPlayerAwareWindowInsets.current.only(WindowInsetsSides.Top)
             )
         ) {
-            item {
+            item(key = "choiceChips") {
                 ChoiceChipsRow(
                     chips =
                         when (selectedOption) {
@@ -404,6 +420,24 @@ fun StatsScreen(
             )
         }
 
+        // Share Stats Dialog
+        var showShareDialog by remember { mutableStateOf(false) }
+        
+        if (showShareDialog) {
+            com.Chenkham.Echofy.ui.component.StatsShareDialog(
+                topSongs = mostPlayedSongsStats,
+                topArtists = mostPlayedArtists.take(5),
+                totalListenTime = mostPlayedSongsStats.sumOf { it.timeListened ?: 0L },
+                periodText = when (selectedOption) {
+                    OptionStats.WEEKS -> stringResource(R.string.this_week)
+                    OptionStats.MONTHS -> stringResource(R.string.past_month)
+                    OptionStats.YEARS -> stringResource(R.string.past_year)
+                    OptionStats.CONTINUOUS -> stringResource(R.string.all_time)
+                },
+                onDismiss = { showShareDialog = false }
+            )
+        }
+
         TopAppBar(
             title = { Text(stringResource(R.string.stats)) },
             navigationIcon = {
@@ -414,6 +448,17 @@ fun StatsScreen(
                     Icon(
                         painterResource(R.drawable.arrow_back),
                         contentDescription = null,
+                    )
+                }
+            },
+            actions = {
+                IconButton(
+                    onClick = { showShareDialog = true },
+                    onLongClick = {},
+                ) {
+                    Icon(
+                        painterResource(R.drawable.share),
+                        contentDescription = stringResource(R.string.share_stats),
                     )
                 }
             },

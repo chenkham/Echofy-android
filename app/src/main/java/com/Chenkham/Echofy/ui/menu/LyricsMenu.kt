@@ -1,4 +1,4 @@
-﻿package com.Chenkham.Echofy.ui.menu
+package com.Chenkham.Echofy.ui.menu
 
 import android.app.SearchManager
 import android.content.Intent
@@ -221,6 +221,7 @@ fun LyricsMenu(
                                         LyricsEntity(
                                             id = searchMediaMetadata.id,
                                             lyrics = result.lyrics,
+                                            providerName = result.providerName,
                                         ),
                                     )
                                 }
@@ -305,6 +306,7 @@ fun LyricsMenu(
     }
 
     GridMenu(
+        modifier = Modifier.height(200.dp), // Fixed height for proper rendering in BottomSheetMenu
         contentPadding =
             PaddingValues(
                 start = 8.dp,

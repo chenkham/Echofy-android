@@ -74,6 +74,12 @@ import java.time.LocalDateTime
 import java.util.Locale
 import java.util.UUID
 
+import com.Chenkham.Echofy.ui.component.SmartPlaylistGridItem
+import com.Chenkham.Echofy.ui.component.SmartPlaylistListItem
+import androidx.compose.ui.graphics.Color
+import com.Chenkham.Echofy.ui.component.CreatePlaylistDialog
+import com.Chenkham.Echofy.ui.component.HideOnScrollFAB
+
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun LibraryMixScreen(
@@ -195,6 +201,17 @@ fun LibraryMixScreen(
             backStackEntry?.savedStateHandle?.set("scrollToTop", false)
         }
     }
+
+    var showCreatePlaylistDialog by androidx.compose.runtime.saveable.rememberSaveable { androidx.compose.runtime.mutableStateOf(false) }
+
+    if (showCreatePlaylistDialog) {
+        CreatePlaylistDialog(
+            onDismiss = { showCreatePlaylistDialog = false },
+            initialTextFieldValue = null,
+            allowSyncing = true
+        )
+    }
+
     val headerContent = @Composable {
         Row(
             verticalAlignment = Alignment.CenterVertically,
@@ -240,39 +257,36 @@ fun LibraryMixScreen(
         modifier = Modifier.fillMaxSize(),
     ) {
         when (viewType) {
-            LibraryViewType.LIST ->
-                LazyColumn(
-                    state = lazyListState,
-                    contentPadding = LocalPlayerAwareWindowInsets.current.asPaddingValues(),
-                ) {
-                    item(
-                        key = "filter",
-                        contentType = CONTENT_TYPE_HEADER,
+            LibraryViewType.LIST -> {
+                Box(modifier = Modifier.fillMaxSize()) {
+                    LazyColumn(
+                        state = lazyListState,
+                        contentPadding = LocalPlayerAwareWindowInsets.current.asPaddingValues(),
                     ) {
-                        filterContent()
-                    }
+                        item(
+                            key = "filter",
+                            contentType = CONTENT_TYPE_HEADER,
+                        ) {
+                            filterContent()
+                        }
 
-                    item(
-                        key = "header",
-                        contentType = CONTENT_TYPE_HEADER,
-                    ) {
-                        headerContent()
-                    }
+                        item(
+                            key = "header",
+                            contentType = CONTENT_TYPE_HEADER,
+                        ) {
+                            headerContent()
+                        }
 
-                    item(
-                        key = "likedPlaylist",
-                        contentType = { CONTENT_TYPE_PLAYLIST },
-                    ) {
-                        PlaylistListItem(
-                            playlist = likedPlaylist,
-                            autoPlaylist = true,
-                            modifier =
-                                Modifier
-                                    .fillMaxWidth()
-                                    .clickable {
-                                        navController.navigate("auto_playlist/liked")
-                                    }
-                                    .animateItem(),
+                        item(
+                            key = "likedPlaylist",
+                            contentType = { CONTENT_TYPE_PLAYLIST },
+                        ) {
+                        SmartPlaylistListItem(
+                            title = stringResource(R.string.liked),
+                            icon = painterResource(R.drawable.favorite),
+                            gradientColors = listOf(Color(0xFF8E2DE2), Color(0xFF4A00E0)),
+                            onClick = { navController.navigate("auto_playlist/liked") },
+                            modifier = Modifier.animateItem()
                         )
                     }
 
@@ -280,16 +294,12 @@ fun LibraryMixScreen(
                         key = "downloadedPlaylist",
                         contentType = { CONTENT_TYPE_PLAYLIST },
                     ) {
-                        PlaylistListItem(
-                            playlist = downloadPlaylist,
-                            autoPlaylist = true,
-                            modifier =
-                                Modifier
-                                    .fillMaxWidth()
-                                    .clickable {
-                                        navController.navigate("auto_playlist/downloaded")
-                                    }
-                                    .animateItem(),
+                        SmartPlaylistListItem(
+                            title = stringResource(R.string.offline),
+                            icon = painterResource(R.drawable.download),
+                            gradientColors = listOf(Color(0xFF11998e), Color(0xFF38ef7d)),
+                            onClick = { navController.navigate("auto_playlist/downloaded") },
+                            modifier = Modifier.animateItem()
                         )
                     }
 
@@ -297,32 +307,24 @@ fun LibraryMixScreen(
                         key = "TopPlaylist",
                         contentType = { CONTENT_TYPE_PLAYLIST },
                     ) {
-                        PlaylistListItem(
-                            playlist = topPlaylist,
-                            autoPlaylist = true,
-                            modifier =
-                                Modifier
-                                    .fillMaxWidth()
-                                    .clickable {
-                                        navController.navigate("top_playlist/$topSize")
-                                    }
-                                    .animateItem(),
+                        SmartPlaylistListItem(
+                            title = stringResource(R.string.my_top) + " $topSize",
+                            icon = painterResource(R.drawable.trending_up),
+                            gradientColors = listOf(Color(0xFFf12711), Color(0xFFf5af19)),
+                            onClick = { navController.navigate("top_playlist/$topSize") },
+                            modifier = Modifier.animateItem()
                         )
                     }
                     item(
                         key = "cachePlaylist",
                         contentType = { CONTENT_TYPE_PLAYLIST },
                     ) {
-                        PlaylistListItem(
-                            playlist = cachePlaylist,
-                            autoPlaylist = true,
-                            modifier =
-                                Modifier
-                                    .fillMaxWidth()
-                                    .clickable {
-                                        navController.navigate("cache_playlist/cached")
-                                    }
-                                    .animateItem(),
+                        SmartPlaylistListItem(
+                            title = stringResource(R.string.cached_playlist),
+                            icon = painterResource(R.drawable.cached),
+                            gradientColors = listOf(Color(0xFF667eea), Color(0xFF764ba2)),
+                            onClick = { navController.navigate("cache_playlist/cached") },
+                            modifier = Modifier.animateItem()
                         )
                     }
 
@@ -468,206 +470,199 @@ fun LibraryMixScreen(
                     }
                 }
 
-            LibraryViewType.GRID ->
-                LazyVerticalGrid(
-                    state = lazyGridState,
-                    columns =
-                        GridCells.Adaptive(
-                            minSize = GridThumbnailHeight + if (gridItemSize == GridItemSize.BIG) 24.dp else (-24).dp,
-                        ),
-                    contentPadding = LocalPlayerAwareWindowInsets.current.asPaddingValues(),
-                ) {
-                    item(
-                        key = "filter",
-                        span = { GridItemSpan(maxLineSpan) },
-                        contentType = CONTENT_TYPE_HEADER,
-                    ) {
-                        filterContent()
-                    }
+                    HideOnScrollFAB(
+                        lazyListState = lazyListState,
+                        icon = R.drawable.add,
+                        onClick = {
+                            showCreatePlaylistDialog = true
+                        },
+                    )
+                }
+            }
 
-                    item(
-                        key = "header",
-                        span = { GridItemSpan(maxLineSpan) },
-                        contentType = CONTENT_TYPE_HEADER,
+            LibraryViewType.GRID -> {
+                Box(modifier = Modifier.fillMaxSize()) {
+                    LazyVerticalGrid(
+                        state = lazyGridState,
+                        columns =
+                            GridCells.Adaptive(
+                                minSize = GridThumbnailHeight + if (gridItemSize == GridItemSize.BIG) 24.dp else (-24).dp,
+                            ),
+                        contentPadding = LocalPlayerAwareWindowInsets.current.asPaddingValues(),
                     ) {
-                        headerContent()
-                    }
+                        item(
+                            key = "filter",
+                            span = { GridItemSpan(maxLineSpan) },
+                            contentType = CONTENT_TYPE_HEADER,
+                        ) {
+                            filterContent()
+                        }
 
-                    item(
-                        key = "likedPlaylist",
-                        contentType = { CONTENT_TYPE_PLAYLIST },
-                    ) {
-                        PlaylistGridItem(
-                            playlist = likedPlaylist,
-                            fillMaxWidth = true,
-                            autoPlaylist = true,
-                            modifier =
-                                Modifier
-                                    .fillMaxWidth()
-                                    .combinedClickable(
-                                        onClick = {
-                                            navController.navigate("auto_playlist/liked")
-                                        },
+                        item(
+                            key = "header",
+                            span = { GridItemSpan(maxLineSpan) },
+                            contentType = CONTENT_TYPE_HEADER,
+                        ) {
+                            headerContent()
+                        }
+
+                        item(
+                            key = "likedPlaylist",
+                            contentType = { CONTENT_TYPE_PLAYLIST },
+                        ) {
+                            SmartPlaylistGridItem(
+                                title = stringResource(R.string.liked),
+                                icon = painterResource(R.drawable.favorite),
+                                gradientColors = listOf(Color(0xFF8E2DE2), Color(0xFF4A00E0)),
+                                onClick = { navController.navigate("auto_playlist/liked") },
+                                fillMaxWidth = true,
+                                modifier = Modifier.animateItem()
+                            )
+                        }
+
+                        item(
+                            key = "downloadedPlaylist",
+                            contentType = { CONTENT_TYPE_PLAYLIST },
+                        ) {
+                            SmartPlaylistGridItem(
+                                title = stringResource(R.string.offline),
+                                icon = painterResource(R.drawable.download),
+                                gradientColors = listOf(Color(0xFF11998e), Color(0xFF38ef7d)),
+                                onClick = { navController.navigate("auto_playlist/downloaded") },
+                                fillMaxWidth = true,
+                                modifier = Modifier.animateItem()
+                            )
+                        }
+
+                        item(
+                            key = "TopPlaylist",
+                            contentType = { CONTENT_TYPE_PLAYLIST },
+                        ) {
+                            SmartPlaylistGridItem(
+                                title = stringResource(R.string.my_top) + " $topSize",
+                                icon = painterResource(R.drawable.trending_up),
+                                gradientColors = listOf(Color(0xFFf12711), Color(0xFFf5af19)),
+                                onClick = { navController.navigate("top_playlist/$topSize") },
+                                fillMaxWidth = true,
+                                modifier = Modifier.animateItem()
+                            )
+                        }
+                        item(
+                            key = "cachePlaylist",
+                            contentType = { CONTENT_TYPE_PLAYLIST },
+                        ) {
+                            SmartPlaylistGridItem(
+                                title = stringResource(R.string.cached_playlist),
+                                icon = painterResource(R.drawable.cached),
+                                gradientColors = listOf(Color(0xFF667eea), Color(0xFF764ba2)),
+                                onClick = { navController.navigate("cache_playlist/cached") },
+                                fillMaxWidth = true,
+                                modifier = Modifier.animateItem()
+                            )
+                        }
+
+                        items(
+                            items = allItems,
+                            key = { it.id },
+                            contentType = { CONTENT_TYPE_PLAYLIST },
+                        ) { item ->
+                            when (item) {
+                                is Playlist -> {
+                                    PlaylistGridItem(
+                                        playlist = item,
+                                        fillMaxWidth = true,
+                                        modifier =
+                                            Modifier
+                                                .fillMaxWidth()
+                                                .combinedClickable(
+                                                    onClick = {
+                                                        navController.navigate("local_playlist/${item.id}")
+                                                    },
+                                                    onLongClick = {
+                                                        haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                                        menuState.show {
+                                                            PlaylistMenu(
+                                                                playlist = item,
+                                                                coroutineScope = coroutineScope,
+                                                                onDismiss = menuState::dismiss,
+                                                            )
+                                                        }
+                                                    },
+                                                )
+                                                .animateItem(),
+                                        context = LocalContext.current // Pasamos el contexto actual para obtener la URI de la miniatura
                                     )
-                                    .animateItem(),
-                            context = LocalContext.current // Pasamos el contexto actual para obtener la URI de la miniatura
-                        )
-                    }
+                                }
 
-                    item(
-                        key = "downloadedPlaylist",
-                        contentType = { CONTENT_TYPE_PLAYLIST },
-                    ) {
-                        PlaylistGridItem(
-                            playlist = downloadPlaylist,
-                            fillMaxWidth = true,
-                            autoPlaylist = true,
-                            modifier =
-                                Modifier
-                                    .fillMaxWidth()
-                                    .combinedClickable(
-                                        onClick = {
-                                            navController.navigate("auto_playlist/downloaded")
-                                        },
+                                is Artist -> {
+                                    ArtistGridItem(
+                                        artist = item,
+                                        fillMaxWidth = true,
+                                        modifier =
+                                            Modifier
+                                                .fillMaxWidth()
+                                                .combinedClickable(
+                                                    onClick = {
+                                                        navController.navigate("artist/${item.id}")
+                                                    },
+                                                    onLongClick = {
+                                                        haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                                        menuState.show {
+                                                            ArtistMenu(
+                                                                originalArtist = item,
+                                                                coroutineScope = coroutineScope,
+                                                                onDismiss = menuState::dismiss,
+                                                            )
+                                                        }
+                                                    },
+                                                )
+                                                .animateItem(),
                                     )
-                                    .animateItem(),
-                            context = LocalContext.current // Pasamos el contexto actual para obtener la URI de la miniatura
-                        )
-                    }
+                                }
 
-                    item(
-                        key = "TopPlaylist",
-                        contentType = { CONTENT_TYPE_PLAYLIST },
-                    ) {
-                        PlaylistGridItem(
-                            playlist = topPlaylist,
-                            fillMaxWidth = true,
-                            autoPlaylist = true,
-                            modifier =
-                                Modifier
-                                    .fillMaxWidth()
-                                    .combinedClickable(
-                                        onClick = {
-                                            navController.navigate("top_playlist/$topSize")
-                                        },
+                                is Album -> {
+                                    AlbumGridItem(
+                                        album = item,
+                                        isActive = item.id == mediaMetadata?.album?.id,
+                                        isPlaying = isPlaying,
+                                        coroutineScope = coroutineScope,
+                                        fillMaxWidth = true,
+                                        modifier =
+                                            Modifier
+                                                .fillMaxWidth()
+                                                .combinedClickable(
+                                                    onClick = {
+                                                        navController.navigate("album/${item.id}")
+                                                    },
+                                                    onLongClick = {
+                                                        haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                                        menuState.show {
+                                                            AlbumMenu(
+                                                                originalAlbum = item,
+                                                                navController = navController,
+                                                                onDismiss = menuState::dismiss,
+                                                            )
+                                                        }
+                                                    },
+                                                )
+                                                .animateItem(),
                                     )
-                                    .animateItem(),
-                            context = LocalContext.current // Pasamos el contexto actual para obtener la URI de la miniatura
-                        )
-                    }
-                    item(
-                        key = "cachePlaylist",
-                        contentType = { CONTENT_TYPE_PLAYLIST },
-                    ) {
-                        PlaylistGridItem(
-                            playlist = cachePlaylist,
-                            fillMaxWidth = true,
-                            autoPlaylist = true,
-                            modifier =
-                                Modifier
-                                    .fillMaxWidth()
-                                    .combinedClickable(
-                                        onClick = {
-                                            navController.navigate("cache_playlist/cached")
-                                        },
-                                    )
-                                    .animateItem(),
-                            context = LocalContext.current // Pasamos el contexto actual para obtener la URI de la miniatura
-                        )
-                    }
+                                }
 
-                    items(
-                        items = allItems,
-                        key = { it.id },
-                        contentType = { CONTENT_TYPE_PLAYLIST },
-                    ) { item ->
-                        when (item) {
-                            is Playlist -> {
-                                PlaylistGridItem(
-                                    playlist = item,
-                                    fillMaxWidth = true,
-                                    modifier =
-                                        Modifier
-                                            .fillMaxWidth()
-                                            .combinedClickable(
-                                                onClick = {
-                                                    navController.navigate("local_playlist/${item.id}")
-                                                },
-                                                onLongClick = {
-                                                    haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                                                    menuState.show {
-                                                        PlaylistMenu(
-                                                            playlist = item,
-                                                            coroutineScope = coroutineScope,
-                                                            onDismiss = menuState::dismiss,
-                                                        )
-                                                    }
-                                                },
-                                            )
-                                            .animateItem(),
-                                    context = LocalContext.current // Pasamos el contexto actual para obtener la URI de la miniatura
-                                )
+                                else -> {}
                             }
-
-                            is Artist -> {
-                                ArtistGridItem(
-                                    artist = item,
-                                    fillMaxWidth = true,
-                                    modifier =
-                                        Modifier
-                                            .fillMaxWidth()
-                                            .combinedClickable(
-                                                onClick = {
-                                                    navController.navigate("artist/${item.id}")
-                                                },
-                                                onLongClick = {
-                                                    haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                                                    menuState.show {
-                                                        ArtistMenu(
-                                                            originalArtist = item,
-                                                            coroutineScope = coroutineScope,
-                                                            onDismiss = menuState::dismiss,
-                                                        )
-                                                    }
-                                                },
-                                            )
-                                            .animateItem(),
-                                )
-                            }
-
-                            is Album -> {
-                                AlbumGridItem(
-                                    album = item,
-                                    isActive = item.id == mediaMetadata?.album?.id,
-                                    isPlaying = isPlaying,
-                                    coroutineScope = coroutineScope,
-                                    fillMaxWidth = true,
-                                    modifier =
-                                        Modifier
-                                            .fillMaxWidth()
-                                            .combinedClickable(
-                                                onClick = {
-                                                    navController.navigate("album/${item.id}")
-                                                },
-                                                onLongClick = {
-                                                    haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                                                    menuState.show {
-                                                        AlbumMenu(
-                                                            originalAlbum = item,
-                                                            navController = navController,
-                                                            onDismiss = menuState::dismiss,
-                                                        )
-                                                    }
-                                                },
-                                            )
-                                            .animateItem(),
-                                )
-                            }
-
-                            else -> {}
                         }
                     }
+
+                    HideOnScrollFAB(
+                        lazyListState = lazyGridState,
+                        icon = R.drawable.add,
+                        onClick = {
+                            showCreatePlaylistDialog = true
+                        },
+                    )
                 }
+            }
         }
     }
 }

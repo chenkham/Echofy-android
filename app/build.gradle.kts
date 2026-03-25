@@ -22,9 +22,10 @@ android {
         applicationId = "com.Chenkham.Echofy"
         minSdk = 24
         targetSdk = 35
-        versionCode = 3
-        versionName = "2.2.0"
+        versionCode = 16
+        versionName = "3.2.1"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        multiDexEnabled = true
     }
 
     signingConfigs {
@@ -58,7 +59,10 @@ android {
         release {
             isMinifyEnabled = true
             isShrinkResources = true
-            isCrunchPngs = true
+            isCrunchPngs = false
+            ndk {
+                debugSymbolLevel = "FULL"
+            }
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
@@ -199,11 +203,13 @@ dependencies {
     implementation(libs.guava)
     implementation(libs.coroutines.guava)
     implementation(libs.concurrent.futures)
+    implementation("androidx.multidex:multidex:2.0.1")
 
     implementation(libs.activity)
     implementation(libs.navigation)
     implementation(libs.hilt.navigation)
     implementation(libs.datastore)
+    implementation("androidx.core:core-splashscreen:1.0.1")
 
     implementation(libs.compose.runtime)
     implementation(libs.compose.foundation)
@@ -226,13 +232,15 @@ dependencies {
     implementation(libs.media3)
     implementation(libs.media3.session)
     implementation(libs.media3.okhttp)
+    implementation(libs.media3.ui)
     implementation(libs.squigglyslider)
+    implementation(libs.image.cropper)
 
     implementation(libs.room.runtime)
     implementation(libs.kotlinx.serialization.json)
     implementation(libs.blurry)
     implementation(libs.material.ripple)
-    implementation(libs.room.runtime.android)
+
     // Removed material-icons-extended - it adds ~20MB. Use drawable resources instead.
     implementation(libs.glance.appwidget)
     implementation(libs.glance.material3)
@@ -249,6 +257,7 @@ dependencies {
     kapt(libs.hilt.compiler)
 
     implementation(projects.innertube)
+    implementation(projects.ytmusicapi)
     implementation(projects.kugou)
     implementation(projects.lrclib)
     implementation(projects.kizzy)
@@ -270,4 +279,23 @@ dependencies {
     implementation("com.google.firebase:firebase-inappmessaging-display-ktx")
     // Firebase Analytics (REQUIRED for In-App Messaging to work properly)
     implementation("com.google.firebase:firebase-analytics-ktx")
+    
+    // Google AdMob SDK for ads monetization
+    implementation("com.google.android.gms:play-services-ads:23.0.0")
+    
+    // Google Play Billing for subscriptions
+    implementation("com.android.billingclient:billing-ktx:7.0.0")
+
+    // Google Play In-App Updates
+    implementation("com.google.android.play:app-update:2.1.0")
+    implementation("com.google.android.play:app-update-ktx:2.1.0")
+
+    // Lottie for Seasonal Live Wallpapers
+    implementation("com.airbnb.android:lottie-compose:6.3.0")
+    
+    // Google Sign-In / One Tap
+    implementation("com.google.android.gms:play-services-auth:20.7.0")
+    implementation("androidx.credentials:credentials:1.2.0")
+    implementation("androidx.credentials:credentials-play-services-auth:1.2.0")
+    implementation("com.google.android.libraries.identity.googleid:googleid:1.1.0")
 }

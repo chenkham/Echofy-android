@@ -2,21 +2,30 @@
 
 import android.annotation.SuppressLint
 import android.content.Intent
+import androidx.compose.foundation.background
+import androidx.compose.foundation.basicMarquee
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.asPaddingValues
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.systemBars
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.ListItem
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -33,7 +42,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -52,31 +63,37 @@ import com.Chenkham.Echofy.constants.ListItemHeight
 import com.Chenkham.Echofy.constants.ListThumbnailSize
 import com.Chenkham.Echofy.constants.ThumbnailCornerRadius
 import com.Chenkham.Echofy.db.entities.SongEntity
+import com.Chenkham.Echofy.db.insert
 import com.Chenkham.Echofy.extensions.toMediaItem
 import com.Chenkham.Echofy.models.MediaMetadata
 import com.Chenkham.Echofy.models.toMediaMetadata
 import com.Chenkham.Echofy.playback.ExoDownloadService
 import com.Chenkham.Echofy.playback.queues.YouTubeQueue
-import com.Chenkham.Echofy.ui.component.DownloadGridMenu
-import com.Chenkham.Echofy.ui.component.GridMenu
-import com.Chenkham.Echofy.ui.component.GridMenuItem
 import com.Chenkham.Echofy.ui.component.ListDialog
-import com.Chenkham.Echofy.ui.component.ListItem
 import com.Chenkham.Echofy.utils.joinByBullet
 import com.Chenkham.Echofy.utils.makeTimeString
+import com.Chenkham.Echofy.ui.component.LocalAdManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import java.time.LocalDateTime
+import com.Chenkham.Echofy.ui.component.ListItem as EchofyListItem
+import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
+import androidx.compose.ui.input.nestedscroll.NestedScrollSource
+import androidx.compose.foundation.lazy.rememberLazyListState
 
+@OptIn(androidx.compose.foundation.ExperimentalFoundationApi::class)
 @SuppressLint("MutableCollectionMutableState")
 @Composable
 fun YouTubeSongMenu(
     song: SongItem,
     navController: NavController,
     onDismiss: () -> Unit,
+
 ) {
     val context = LocalContext.current
     val database = LocalDatabase.current
+    val adManager = LocalAdManager.current
     val playerConnection = LocalPlayerConnection.current ?: return
     val librarySong by database.song(song.id).collectAsState(initial = null)
     val download by LocalDownloadUtil.current.getDownload(song.id).collectAsState(initial = null)
@@ -122,7 +139,10 @@ fun YouTubeSongMenu(
         ListDialog(
             onDismiss = { showSelectArtistDialog = false },
         ) {
-            items(artists) { artist ->
+            items(
+                items = artists,
+                key = { it.id ?: it.name }
+            ) { artist ->
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
                     modifier =
@@ -154,6 +174,7 @@ fun YouTubeSongMenu(
                             fontWeight = FontWeight.Bold,
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis,
+                            modifier = Modifier.padding(horizontal = 8.dp)
                         )
                     }
                 }
@@ -161,194 +182,414 @@ fun YouTubeSongMenu(
         }
     }
 
-    ListItem(
-        title = song.title,
-        subtitle =
-            joinByBullet(
-                song.artists.joinToString { it.name },
-                song.duration?.let { makeTimeString(it * 1000L) },
-            ),
-        thumbnailContent = {
-            AsyncImage(
-                model = song.thumbnail,
-                contentDescription = null,
-                modifier =
-                    Modifier
-                        .size(ListThumbnailSize)
-                        .clip(RoundedCornerShape(ThumbnailCornerRadius)),
-            )
-        },
-        trailingContent = {
-            IconButton(
-                onClick = {
-                    database.transaction {
-                        librarySong.let { librarySong ->
-                            if (librarySong == null) {
-                                insert(song.toMediaMetadata(), SongEntity::toggleLike)
-                            } else {
-                                update(librarySong.song.toggleLike())
-                            }
-                        }
-                    }
-                },
-            ) {
-                Icon(
-                    painter = painterResource(if (librarySong?.song?.liked == true) R.drawable.favorite else R.drawable.favorite_border),
-                    tint = if (librarySong?.song?.liked == true) MaterialTheme.colorScheme.error else LocalContentColor.current,
-                    contentDescription = null,
-                )
-            }
-        },
-    )
+    // LazyListState to track scroll position
+    val lazyListState = rememberLazyListState()
 
-    HorizontalDivider()
+    // Nested scroll connection to properly handle scroll gestures
+    // Prevents vibration/bounce when over-scrolling at the top of the menu
+    val nestedScrollConnection = remember(lazyListState) {
+        object : NestedScrollConnection {
+            override fun onPreScroll(available: androidx.compose.ui.geometry.Offset, source: NestedScrollSource): androidx.compose.ui.geometry.Offset {
+                val isAtTop = !lazyListState.canScrollBackward
+                val isAtBottom = !lazyListState.canScrollForward
+                val isScrollingUp = available.y > 0
+                val isScrollingDown = available.y < 0
 
-    GridMenu(
-        contentPadding =
-            PaddingValues(
-                start = 8.dp,
-                top = 8.dp,
-                end = 8.dp,
-                bottom = 8.dp + WindowInsets.systemBars.asPaddingValues().calculateBottomPadding(),
-            ),
-    ) {
-        GridMenuItem(
-            icon = R.drawable.radio,
-            title = R.string.start_radio,
-        ) {
-            playerConnection.playQueue(YouTubeQueue.radio(song.toMediaMetadata()))
-            onDismiss()
-        }
-        GridMenuItem(
-            icon = R.drawable.playlist_play,
-            title = R.string.play_next,
-        ) {
-            playerConnection.playNext(song.toMediaItem())
-            onDismiss()
-        }
-        GridMenuItem(
-            icon = R.drawable.queue_music,
-            title = R.string.add_to_queue,
-        ) {
-            playerConnection.addToQueue((song.toMediaItem()))
-            onDismiss()
-        }
-        // Sync with Listen Together session - HOST ONLY
-        val room = com.Chenkham.Echofy.data.repository.ListenTogetherRepository.currentRoom.value
-        val prefs = context.getSharedPreferences("listen_together", android.content.Context.MODE_PRIVATE)
-        val isHost = prefs.getBoolean("is_host", false)
-        
-        if (room != null && isHost) {
-            GridMenuItem(
-                icon = R.drawable.people_filled,
-                title = R.string.sync_with_session,
-            ) {
-                coroutineScope.launch(Dispatchers.IO) {
-                    com.Chenkham.Echofy.data.repository.ListenTogetherRepository.updatePlaybackState(
-                        roomCode = room.roomCode,
-                        userId = room.hostId,
-                        trackId = song.id,
-                        trackTitle = song.title,
-                        trackArtist = song.artists.firstOrNull()?.name,
-                        trackThumbnail = song.thumbnail,
-                        playbackPosition = 0L,
-                        isPlaying = true
-                    )
-                    kotlinx.coroutines.withContext(Dispatchers.Main) {
-                        android.widget.Toast.makeText(context, context.getString(R.string.song_synced), android.widget.Toast.LENGTH_SHORT).show()
+                // When at top and trying to scroll up (pull down gesture), consume the scroll
+                // to prevent bounce/vibration, but allow small amount for dismiss gesture
+                if (isAtTop && isScrollingUp && source == NestedScrollSource.UserInput) {
+                    // Only pass through if it's a significant gesture (for dismiss)
+                    return if (available.y > 50f) {
+                        androidx.compose.ui.geometry.Offset.Zero
+                    } else {
+                        // Consume small scroll to prevent vibration
+                        available.copy(x = 0f)
                     }
                 }
-                onDismiss()
-            }
-        }
-        GridMenuItem(
-            icon = R.drawable.playlist_add,
-            title = R.string.add_to_playlist,
-        ) {
-            showChoosePlaylistDialog = true
-        }
-        DownloadGridMenu(
-            state = download?.state,
-            onDownload = {
-                database.transaction {
-                    insert(song.toMediaMetadata())
+
+                // When at bottom and trying to scroll down, consume to prevent bounce
+                if (isAtBottom && isScrollingDown) {
+                    return available.copy(x = 0f)
                 }
-                val downloadRequest =
-                    DownloadRequest
-                        .Builder(song.id, song.id.toUri())
-                        .setCustomCacheKey(song.id)
-                        .setData(song.title.toByteArray())
-                        .build()
-                DownloadService.sendAddDownload(
-                    context,
-                    ExoDownloadService::class.java,
-                    downloadRequest,
-                    false,
-                )
-            },
-            onRemoveDownload = {
-                DownloadService.sendRemoveDownload(
-                    context,
-                    ExoDownloadService::class.java,
-                    song.id,
-                    false,
-                )
-            },
-        )
-        if (artists.isNotEmpty()) {
-            GridMenuItem(
-                icon = R.drawable.artist,
-                title = R.string.view_artist,
-            ) {
-                if (artists.size == 1) {
-                    navController.navigate("artist/${artists[0].id}")
-                    onDismiss()
-                } else {
-                    showSelectArtistDialog = true
-                }
+
+                return androidx.compose.ui.geometry.Offset.Zero
             }
-        }
-        song.album?.let { album ->
-            GridMenuItem(
-                icon = R.drawable.album,
-                title = R.string.view_album,
-            ) {
-                navController.navigate("album/${album.id}")
-                onDismiss()
-            }
-        }
-        if (librarySong?.song?.inLibrary != null) {
-            GridMenuItem(
-                icon = R.drawable.library_add_check,
-                title = R.string.remove_from_library,
-            ) {
-                database.query {
-                    inLibrary(song.id, null)
+
+            override fun onPostScroll(
+                consumed: androidx.compose.ui.geometry.Offset,
+                available: androidx.compose.ui.geometry.Offset,
+                source: NestedScrollSource
+            ): androidx.compose.ui.geometry.Offset {
+                // Consume any leftover scroll to prevent vibration
+                val isAtTop = !lazyListState.canScrollBackward
+                val isAtBottom = !lazyListState.canScrollForward
+
+                if ((isAtTop && available.y > 0) || (isAtBottom && available.y < 0)) {
+                    return available.copy(x = 0f)
                 }
+                return androidx.compose.ui.geometry.Offset.Zero
             }
-        } else {
-            GridMenuItem(
-                icon = R.drawable.library_add,
-                title = R.string.add_to_library,
-            ) {
-                database.transaction {
-                    insert(song.toMediaMetadata())
-                    inLibrary(song.id, LocalDateTime.now())
-                }
-            }
-        }
-        GridMenuItem(
-            icon = R.drawable.share,
-            title = R.string.share,
-        ) {
-            val intent =
-                Intent().apply {
-                    action = Intent.ACTION_SEND
-                    type = "text/plain"
-                    putExtra(Intent.EXTRA_TEXT, song.shareLink)
-                }
-            context.startActivity(Intent.createChooser(intent, null))
-            onDismiss()
         }
     }
-}
+
+    LazyColumn(
+        state = lazyListState,
+        contentPadding = PaddingValues(bottom = 8.dp),
+        userScrollEnabled = true,
+        modifier = Modifier
+            .fillMaxWidth()
+            .nestedScroll(nestedScrollConnection)
+    ) {
+            item {
+                EchofyListItem(
+                    title = song.title,
+                    subtitle =
+                    joinByBullet(
+                        song.artists.joinToString { it.name },
+                        song.duration?.let { makeTimeString(it * 1000L) },
+                    ),
+                    thumbnailContent = {
+                        AsyncImage(
+                            model = song.thumbnail,
+                            contentDescription = null,
+                            modifier =
+                            Modifier
+                                .size(ListThumbnailSize)
+                                .clip(RoundedCornerShape(ThumbnailCornerRadius)),
+                        )
+                    },
+                    trailingContent = {
+                        IconButton(
+                            onClick = {
+                                database.transaction {
+                                    librarySong.let { librarySong ->
+                                        if (librarySong == null) {
+                                            insert(song.toMediaMetadata(), SongEntity::toggleLike)
+                                        } else {
+                                            update(librarySong.song.toggleLike())
+                                        }
+                                    }
+                                }
+                            },
+                        ) {
+                            Icon(
+                                painter = painterResource(if (librarySong?.song?.liked == true) R.drawable.heart_fill else R.drawable.heart),
+                                tint = if (librarySong?.song?.liked == true) MaterialTheme.colorScheme.error else LocalContentColor.current,
+                                contentDescription = null,
+                            )
+                        }
+                    },
+                )
+
+                HorizontalDivider()
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                // Quick action buttons row (4 buttons)
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 8.dp),
+                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+                ) {
+                    // Start radio button
+                    Column(
+                        modifier = Modifier
+                            .weight(1f)
+                            .background(
+                                color = MaterialTheme.colorScheme.surfaceVariant,
+                                shape = RoundedCornerShape(8.dp)
+                            )
+                            .clip(RoundedCornerShape(8.dp))
+                            .clickable {
+                                onDismiss()
+                                playerConnection.playQueue(YouTubeQueue.radio(song.toMediaMetadata()))
+                            }
+                            .padding(10.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                    ) {
+                        Icon(
+                            painter = painterResource(R.drawable.radio),
+                            contentDescription = null,
+                            modifier = Modifier.size(22.dp),
+                        )
+                        Text(
+                            text = stringResource(R.string.start_radio),
+                            style = MaterialTheme.typography.labelSmall,
+                            textAlign = TextAlign.Center,
+                            maxLines = 1,
+                            modifier = Modifier
+                                .basicMarquee()
+                                .padding(top = 4.dp),
+                        )
+                    }
+
+                    // Play next button
+                    Column(
+                        modifier = Modifier
+                            .weight(1f)
+                            .background(
+                                color = MaterialTheme.colorScheme.surfaceVariant,
+                                shape = RoundedCornerShape(8.dp)
+                            )
+                            .clip(RoundedCornerShape(8.dp))
+                            .clickable {
+                                onDismiss()
+                                playerConnection.playNext(song.toMediaItem())
+                            }
+                            .padding(10.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                    ) {
+                        Icon(
+                            painter = painterResource(R.drawable.playlist_play),
+                            contentDescription = null,
+                            modifier = Modifier.size(22.dp),
+                        )
+                        Text(
+                            text = stringResource(R.string.play_next),
+                            style = MaterialTheme.typography.labelSmall,
+                            textAlign = TextAlign.Center,
+                            maxLines = 1,
+                            modifier = Modifier
+                                .basicMarquee()
+                                .padding(top = 4.dp),
+                        )
+                    }
+
+                    // Add to playlist button
+                    Column(
+                        modifier = Modifier
+                            .weight(1f)
+                            .background(
+                                color = MaterialTheme.colorScheme.surfaceVariant,
+                                shape = RoundedCornerShape(8.dp)
+                            )
+                            .clip(RoundedCornerShape(8.dp))
+                            .clickable {
+                                showChoosePlaylistDialog = true
+                            }
+                            .padding(10.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                    ) {
+                        Icon(
+                            painter = painterResource(R.drawable.playlist_add),
+                            contentDescription = null,
+                            modifier = Modifier.size(22.dp),
+                        )
+                        Text(
+                            text = stringResource(R.string.add_to_playlist),
+                            style = MaterialTheme.typography.labelSmall,
+                            textAlign = TextAlign.Center,
+                            maxLines = 1,
+                            modifier = Modifier
+                                .basicMarquee()
+                                .padding(top = 4.dp),
+                        )
+                    }
+
+                    // Share button
+                    Column(
+                        modifier = Modifier
+                            .weight(1f)
+                            .background(
+                                color = MaterialTheme.colorScheme.surfaceVariant,
+                                shape = RoundedCornerShape(8.dp)
+                            )
+                            .clip(RoundedCornerShape(8.dp))
+                            .clickable {
+                                val intent =
+                                    Intent().apply {
+                                        action = Intent.ACTION_SEND
+                                        type = "text/plain"
+                                        putExtra(Intent.EXTRA_TEXT, song.shareLink)
+                                    }
+                                context.startActivity(Intent.createChooser(intent, null))
+                                onDismiss()
+                            }
+                            .padding(10.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                    ) {
+                        Icon(
+                            painter = painterResource(R.drawable.share),
+                            contentDescription = null,
+                            modifier = Modifier.size(22.dp),
+                        )
+                        Text(
+                            text = stringResource(R.string.share),
+                            style = MaterialTheme.typography.labelSmall,
+                            textAlign = TextAlign.Center,
+                            maxLines = 1,
+                            modifier = Modifier
+                                .basicMarquee()
+                                .padding(top = 4.dp),
+                        )
+                    }
+                }
+            }
+
+            // Menu items list
+            item {
+                ListItem(
+                    headlineContent = { Text(text = stringResource(R.string.add_to_queue)) },
+                    leadingContent = {
+                        Icon(
+                            painter = painterResource(R.drawable.queue_music),
+                            contentDescription = null,
+                        )
+                    },
+                    modifier = Modifier.clickable {
+                        onDismiss()
+                        playerConnection.addToQueue(song.toMediaItem())
+                    }
+                )
+            }
+
+            if (artists.isNotEmpty()) {
+                item {
+                    ListItem(
+                        headlineContent = { Text(text = stringResource(R.string.view_artist)) },
+                        leadingContent = {
+                            Icon(
+                                painter = painterResource(R.drawable.artist),
+                                contentDescription = null,
+                            )
+                        },
+                        modifier = Modifier.clickable {
+                            if (artists.size == 1) {
+                                navController.navigate("artist/${artists[0].id}")
+                                onDismiss()
+                            } else {
+                                showSelectArtistDialog = true
+                            }
+                        }
+                    )
+                }
+            }
+
+            song.album?.let { album ->
+                item {
+                    ListItem(
+                        headlineContent = { Text(text = stringResource(R.string.view_album)) },
+                        leadingContent = {
+                            Icon(
+                                painter = painterResource(R.drawable.album),
+                                contentDescription = null,
+                            )
+                        },
+                        modifier = Modifier.clickable {
+                            navController.navigate("album/${album.id}")
+                            onDismiss()
+                        }
+                    )
+                }
+            }
+
+            item {
+                ListItem(
+                    headlineContent = {
+                        Text(
+                            text = stringResource(
+                                if (librarySong?.song?.inLibrary != null) R.string.remove_from_library
+                                else R.string.add_to_library
+                            )
+                        )
+                    },
+                    leadingContent = {
+                        Icon(
+                            painter = painterResource(
+                                if (librarySong?.song?.inLibrary != null) R.drawable.library_add_check
+                                else R.drawable.library_add
+                            ),
+                            contentDescription = null,
+                        )
+                    },
+                    modifier = Modifier.clickable {
+                        if (librarySong?.song?.inLibrary != null) {
+                            database.query {
+                                inLibrary(song.id, null)
+                            }
+                        } else {
+                            database.transaction {
+                                insert(song.toMediaMetadata())
+                                inLibrary(song.id, LocalDateTime.now())
+                            }
+                        }
+                        onDismiss()
+                    }
+                )
+            }
+
+            item {
+                val performDownload = {
+                    database.transaction {
+                        insert(song.toMediaMetadata())
+                    }
+                    val downloadRequest =
+                        DownloadRequest
+                            .Builder(song.id, song.id.toUri())
+                            .setCustomCacheKey(song.id)
+                            .setData(song.title.toByteArray())
+                            .build()
+                    DownloadService.sendAddDownload(
+                        context,
+                        ExoDownloadService::class.java,
+                        downloadRequest,
+                        false,
+                    )
+                }
+
+                val downloadState = download?.state
+                ListItem(
+                    headlineContent = {
+                        Text(
+                            text = stringResource(
+                                when (downloadState) {
+                                    androidx.media3.exoplayer.offline.Download.STATE_COMPLETED -> R.string.remove_download
+                                    androidx.media3.exoplayer.offline.Download.STATE_DOWNLOADING,
+                                    androidx.media3.exoplayer.offline.Download.STATE_QUEUED -> R.string.downloading
+                                    else -> R.string.download
+                                }
+                            )
+                        )
+                    },
+                    leadingContent = {
+                        Icon(
+                            painter = painterResource(
+                                when (downloadState) {
+                                    androidx.media3.exoplayer.offline.Download.STATE_COMPLETED -> R.drawable.offline
+                                    androidx.media3.exoplayer.offline.Download.STATE_DOWNLOADING,
+                                    androidx.media3.exoplayer.offline.Download.STATE_QUEUED -> R.drawable.download
+                                    else -> R.drawable.download
+                                }
+                            ),
+                            contentDescription = null,
+                        )
+                    },
+                    modifier = Modifier.clickable {
+                        when (downloadState) {
+                            androidx.media3.exoplayer.offline.Download.STATE_COMPLETED -> {
+                                DownloadService.sendRemoveDownload(
+                                    context,
+                                    ExoDownloadService::class.java,
+                                    song.id,
+                                    false,
+                                )
+                            }
+                            androidx.media3.exoplayer.offline.Download.STATE_DOWNLOADING,
+                            androidx.media3.exoplayer.offline.Download.STATE_QUEUED -> {
+                                // Do nothing while downloading
+                            }
+                            else -> {
+                                if (adManager?.isPremium?.value != true) {
+                                    android.widget.Toast.makeText(context, R.string.premium_required, android.widget.Toast.LENGTH_SHORT).show()
+                                } else {
+                                    performDownload()
+                                }
+                            }
+                        }
+                        onDismiss()
+                    }
+                )
+            }
+        }
+    }

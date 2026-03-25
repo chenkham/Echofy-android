@@ -66,6 +66,7 @@ import com.Chenkham.Echofy.ui.component.HideOnScrollFAB
 import com.Chenkham.Echofy.ui.component.IconButton
 import com.Chenkham.Echofy.ui.component.LocalMenuState
 import com.Chenkham.Echofy.ui.component.NavigationTitle
+import com.Chenkham.Echofy.ui.component.PrefetchOnVisible
 import com.Chenkham.Echofy.ui.component.SongListItem
 import com.Chenkham.Echofy.ui.component.YouTubeListItem
 import com.Chenkham.Echofy.ui.menu.SelectionMediaMetadataMenu
@@ -222,6 +223,9 @@ fun HistoryScreen(
                         items = section.songs,
                         key = { "${section.title}_${it.id}" }
                     ) { song ->
+                        // INSTANT PLAYBACK: Prefetch URL when song becomes visible
+                        PrefetchOnVisible(mediaId = song.id)
+                        
                         YouTubeListItem(
                             item = song,
                             isActive = song.id == mediaMetadata?.id,
@@ -281,10 +285,14 @@ fun HistoryScreen(
                         )
                     }
 
-                    itemsIndexed(
-                        items = wrappedItems,
-                    ) { index, wrappedItem ->
+                    items(
+                        items = wrappedItems.filter { it.item in events },
+                        key = { it.item.event.id }
+                    ) { wrappedItem ->
                         val event = wrappedItem.item
+                        // INSTANT PLAYBACK: Prefetch URL when song becomes visible
+                        PrefetchOnVisible(mediaId = event.song.id)
+                        
                         SongListItem(
                             song = event.song,
                             isActive = event.song.id == mediaMetadata?.id,
@@ -324,8 +332,8 @@ fun HistoryScreen(
                                                 playerConnection.playQueue(
                                                     ListQueue(
                                                         title = dateAgoToString(dateAgo),
-                                                        items = wrappedItems.map { it.item.song.toMediaItem() },
-                                                        startIndex = index
+                                                    items = wrappedItems.map { it.item.song.toMediaItem() },
+                                                        startIndex = wrappedItems.indexOf(wrappedItem)
                                                     )
                                                 )
                                             }

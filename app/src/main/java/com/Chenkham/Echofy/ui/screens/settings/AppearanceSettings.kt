@@ -58,6 +58,8 @@ import com.Chenkham.Echofy.constants.PlayerBackgroundStyle
 import com.Chenkham.Echofy.constants.PlayerBackgroundStyleKey
 import com.Chenkham.Echofy.constants.PlayerButtonsStyle
 import com.Chenkham.Echofy.constants.PlayerButtonsStyleKey
+import com.Chenkham.Echofy.constants.SeasonalWallpaper
+import com.Chenkham.Echofy.constants.SeasonalWallpaperKey
 import com.Chenkham.Echofy.constants.PlayerTextAlignmentKey
 import com.Chenkham.Echofy.constants.PureBlackKey
 import com.Chenkham.Echofy.constants.RotateBackgroundKey
@@ -66,6 +68,8 @@ import com.Chenkham.Echofy.constants.SliderStyleKey
 import com.Chenkham.Echofy.constants.SlimNavBarKey
 import com.Chenkham.Echofy.constants.SmallButtonsShapeKey
 import com.Chenkham.Echofy.constants.SwipeThumbnailKey
+import com.Chenkham.Echofy.constants.PlaybackMode
+import com.Chenkham.Echofy.constants.PlaybackModeKey
 import com.Chenkham.Echofy.ui.component.AvatarSelector
 import com.Chenkham.Echofy.ui.component.DefaultDialog
 import com.Chenkham.Echofy.ui.component.EnumListPreference
@@ -82,6 +86,9 @@ import com.Chenkham.Echofy.utils.rememberEnumPreference
 import com.Chenkham.Echofy.utils.rememberPreference
 import me.saket.squiggles.SquigglySlider
 import timber.log.Timber
+
+import com.Chenkham.Echofy.constants.MiniPlayerStyle
+import com.Chenkham.Echofy.constants.MiniPlayerStyleKey
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -102,6 +109,11 @@ fun AppearanceSettings(
     val (darkMode, onDarkModeChange) = rememberEnumPreference(
         DarkModeKey,
         defaultValue = DarkMode.AUTO
+    )
+
+    val (miniPlayerStyle, onMiniPlayerStyleChange) = rememberEnumPreference(
+        MiniPlayerStyleKey,
+        defaultValue = MiniPlayerStyle.Slim
     )
 
     val (playerButtonsStyle, onPlayerButtonsStyleChange) = rememberEnumPreference(
@@ -125,7 +137,7 @@ fun AppearanceSettings(
     val (lyricsClick, onLyricsClickChange) = rememberPreference(LyricsClickKey, defaultValue = true)
     val (sliderStyle, onSliderStyleChange) = rememberEnumPreference(
         SliderStyleKey,
-        defaultValue = SliderStyle.SQUIGGLY
+        defaultValue = SliderStyle.SLIM
     )
     val (swipeThumbnail, onSwipeThumbnailChange) = rememberPreference(
         SwipeThumbnailKey,
@@ -156,12 +168,22 @@ fun AppearanceSettings(
         defaultValue = DefaultPlayPauseButtonShape
     )
 
-    val miniPlayerThumbnailShapeState = rememberPreference(
+    val (miniPlayerThumbnailShape, onMiniPlayerThumbnailShapeChange) = rememberPreference(
         key = MiniPlayerThumbnailShapeKey,
         defaultValue = DefaultMiniPlayerThumbnailShape
     )
 
+    val (seasonalWallpaper, onSeasonalWallpaperChange) = rememberEnumPreference(
+        key = SeasonalWallpaperKey,
+        defaultValue = SeasonalWallpaper.OFF
+    )
+
     val (slimNav, onSlimNavChange) = rememberPreference(SlimNavBarKey, defaultValue = false)
+
+    val (playbackMode, onPlaybackModeChange) = rememberEnumPreference(
+        key = PlaybackModeKey,
+        defaultValue = PlaybackMode.AUDIO
+    )
 
     val isSystemInDarkTheme = isSystemInDarkTheme()
     val useDarkTheme =
@@ -369,7 +391,15 @@ fun AppearanceSettings(
         SettingsGeneralCategory(
             title = stringResource(R.string.app_language),
             items = listOf(
-                { LanguagePreference() }
+                { LanguagePreference() },
+                {
+                    PreferenceEntry(
+                        title = { Text(stringResource(R.string.backpaper)) },
+                        description = stringResource(R.string.enable_backpaper_desc),
+                        icon = { Icon(painterResource(R.drawable.wallpaper), null) },
+                        onClick = { navController.navigate("settings/backpaper") }
+                    )
+                }
             )
         )
 
@@ -420,18 +450,31 @@ fun AppearanceSettings(
                     UnifiedShapeSelectorButton(
                         smallButtonsShape = smallButtonsShapeState.value,
                         playPauseShape = playPauseShapeState.value,
-                        miniPlayerShape = miniPlayerThumbnailShapeState.value,
-                        onSmallButtonsShapeSelected = { newShape ->
+                        miniPlayerShape = miniPlayerThumbnailShape,
+                        onSmallButtonsShapeSelected = { newShape: String ->
                             smallButtonsShapeState.value = newShape
                         },
-                        onPlayPauseShapeSelected = { newShape ->
+                        onPlayPauseShapeSelected = { newShape: String ->
                             playPauseShapeState.value = newShape
                         },
-                        onMiniPlayerShapeSelected = { newShape ->
-                            miniPlayerThumbnailShapeState.value = newShape
+                        onMiniPlayerShapeSelected = { newShape: String ->
+                            onMiniPlayerThumbnailShapeChange(newShape)
                         }
                     )
                 },
+
+                {EnumListPreference(
+                    title = { Text(stringResource(R.string.mini_player_style)) },
+                    icon = { Icon(painterResource(R.drawable.picture_in_picture_alt), null) },
+                    selectedValue = miniPlayerStyle,
+                    onValueSelected = { onMiniPlayerStyleChange(it) },
+                    valueText = {
+                        when (it) {
+                            MiniPlayerStyle.Floating -> stringResource(R.string.floating)
+                            MiniPlayerStyle.Slim -> stringResource(R.string.slim)
+                        }
+                    },
+                )},
 
                 {EnumListPreference(
                     title = { Text(stringResource(R.string.player_buttons_style)) },
@@ -466,6 +509,21 @@ fun AppearanceSettings(
                     checked = swipeThumbnail,
                     onCheckedChange = onSwipeThumbnailChange,
                 )},
+
+                {EnumListPreference(
+                    title = { Text(stringResource(R.string.playback_mode)) },
+                    icon = { Icon(painterResource(R.drawable.slow_motion_video), null) },
+                    selectedValue = playbackMode,
+                    onValueSelected = onPlaybackModeChange,
+                    valueText = {
+                        when (it) {
+                            PlaybackMode.AUDIO -> stringResource(R.string.playback_mode_audio)
+                            PlaybackMode.VIDEO -> stringResource(R.string.playback_mode_video)
+                        }
+                    },
+                )},
+
+
 
                 {SwitchPreference(
                     title = { Text(stringResource(R.string.Rotatelyricsbackground)) },

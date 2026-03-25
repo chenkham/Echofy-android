@@ -28,6 +28,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.toMutableStateList
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -59,6 +60,7 @@ import com.Chenkham.Echofy.playback.queues.ListQueue
 import com.Chenkham.Echofy.ui.component.HideOnScrollFAB
 import com.Chenkham.Echofy.ui.component.IconButton
 import com.Chenkham.Echofy.ui.component.LocalMenuState
+import com.Chenkham.Echofy.ui.component.PrefetchOnVisible
 import com.Chenkham.Echofy.ui.component.SongListItem
 import com.Chenkham.Echofy.ui.component.SortHeader
 import com.Chenkham.Echofy.ui.component.VerticalFastScroller
@@ -107,7 +109,7 @@ fun ArtistSongsScreen(
 
     // Envolver canciones para selecciÃ³n
     val wrappedSongs = remember(songs) {
-        songs.map { song -> ItemWrapper(song) }
+        songs.map { song -> ItemWrapper(song) }.toMutableStateList()
     }
 
     // Filtrar canciones por bÃºsqueda
@@ -186,6 +188,9 @@ fun ArtistSongsScreen(
                     items = filteredSongs,
                     key = { _, item -> item.item.id },
                 ) { index, songWrapper ->
+                    // INSTANT PLAYBACK: Prefetch URL when song becomes visible
+                    PrefetchOnVisible(mediaId = songWrapper.item.id)
+                    
                     SongListItem(
                         song = songWrapper.item,
                         showInLibraryIcon = true,

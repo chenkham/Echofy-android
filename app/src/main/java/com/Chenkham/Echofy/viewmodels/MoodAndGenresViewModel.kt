@@ -21,13 +21,21 @@ constructor() : ViewModel() {
     private val _isLoading = MutableStateFlow(true)
     val isLoading = _isLoading.asStateFlow()
 
+    private val _error = MutableStateFlow<String?>(null)
+    val error = _error.asStateFlow()
+
     init {
+        loadMoodAndGenres()
+    }
+
+    fun retry() {
         loadMoodAndGenres()
     }
 
     fun loadMoodAndGenres() {
         viewModelScope.launch {
             _isLoading.value = true
+            _error.value = null
             YouTube
                 .moodAndGenres()
                 .onSuccess {
@@ -35,6 +43,7 @@ constructor() : ViewModel() {
                     _isLoading.value = false
                 }.onFailure {
                     _isLoading.value = false
+                    _error.value = it.message ?: "Unknown error"
                     reportException(it)
                 }
         }

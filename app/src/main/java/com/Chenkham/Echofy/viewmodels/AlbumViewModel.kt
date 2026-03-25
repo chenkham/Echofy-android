@@ -6,6 +6,8 @@ import androidx.lifecycle.viewModelScope
 import com.Chenkham.innertube.YouTube
 import com.Chenkham.innertube.models.AlbumItem
 import com.Chenkham.Echofy.db.MusicDatabase
+import com.Chenkham.Echofy.db.insert
+import com.Chenkham.Echofy.db.update
 import com.Chenkham.Echofy.utils.reportException
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow

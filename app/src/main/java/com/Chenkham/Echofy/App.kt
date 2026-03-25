@@ -29,6 +29,7 @@ import com.Chenkham.Echofy.constants.ProxyUrlKey
 import com.Chenkham.Echofy.constants.SYSTEM_DEFAULT
 import com.Chenkham.Echofy.constants.UseLoginForBrowse
 import com.Chenkham.Echofy.constants.VisitorDataKey
+import com.Chenkham.Echofy.constants.VisitorDataTimestampKey
 import com.Chenkham.Echofy.extensions.toEnum
 import com.Chenkham.Echofy.extensions.toInetSocketAddress
 import com.Chenkham.Echofy.utils.dataStore
@@ -47,104 +48,225 @@ import kotlinx.coroutines.withContext
 import timber.log.Timber
 import java.net.Proxy
 import java.util.Locale
+import javax.inject.Inject
+import com.Chenkham.Echofy.ads.AdManager
+import com.Chenkham.Echofy.ads.SubscriptionManager
 
 @HiltAndroidApp
 class App : Application(), ImageLoaderFactory {
+    
+    @Inject
+    lateinit var adManager: AdManager
+    
+    @Inject
+    lateinit var subscriptionManager: SubscriptionManager
+
+    override fun attachBaseContext(base: Context) {
+        super.attachBaseContext(base)
+        androidx.multidex.MultiDex.install(this)
+    }
+    
     @OptIn(DelicateCoroutinesApi::class)
     override fun onCreate() {
         super.onCreate()
         instance = this;
         Timber.plant(Timber.DebugTree())
-
+        
+        // PERFORMANCE: Set locale immediately with system defaults (no IO blocking)
         val locale = Locale.getDefault()
-        val languageTag = locale.toLanguageTag().replace("-Hant", "") // replace zh-Hant-* to zh-*
-        YouTube.locale = YouTubeLocale(
-            gl = dataStore[ContentCountryKey]?.takeIf { it != SYSTEM_DEFAULT }
-                ?: locale.country.takeIf { it in CountryCodeToName }
-                ?: "US",
-            hl = dataStore[ContentLanguageKey]?.takeIf { it != SYSTEM_DEFAULT }
-                ?: locale.language.takeIf { it in LanguageCodeToName }
-                ?: languageTag.takeIf { it in LanguageCodeToName }
-                ?: "en"
-        )
+        val systemCountry = locale.country.takeIf { it in CountryCodeToName } ?: "US"
+        val languageTag = locale.toLanguageTag().replace("-Hant", "")
+        val systemLanguage = locale.language.takeIf { it in LanguageCodeToName }
+            ?: languageTag.takeIf { it in LanguageCodeToName }
+            ?: "en"
+
+        YouTube.locale = YouTubeLocale(gl = systemCountry, hl = systemLanguage)
+        
         if (languageTag == "zh-TW") {
             KuGou.useTraditionalChinese = true
         }
 
-        if (dataStore[ProxyEnabledKey] == true) {
-            try {
-                YouTube.proxy = Proxy(
-                    dataStore[ProxyTypeKey].toEnum(defaultValue = Proxy.Type.HTTP),
-                    dataStore[ProxyUrlKey]!!.toInetSocketAddress()
-                )
-            } catch (e: Exception) {
-                Toast.makeText(this, "Failed to parse proxy url.", LENGTH_SHORT).show()
-                reportException(e)
-            }
+        // PERFORMANCE: Phase 1 - Critical initialization (< 100ms delay)
+        GlobalScope.launch(Dispatchers.IO) {
+            kotlinx.coroutines.delay(50)
+            initializeVisitorData(systemCountry, systemLanguage)
         }
 
-        if (dataStore[UseLoginForBrowse] != false) {
-            YouTube.useLoginForBrowse = true
+        // PERFORMANCE: Phase 2 - User preferences (200ms delay)
+        GlobalScope.launch(Dispatchers.IO) {
+            kotlinx.coroutines.delay(200)
+            applyUserPreferences(systemCountry, systemLanguage)
         }
 
-        // CRITICAL FIX: Clear any stale visitorData that might have been cached with different locale
-        // This ensures visitorData is regenerated to match current locale settings
-        // Without this, a mismatch between visitorData's embedded location and locale causes 400 errors
-        GlobalScope.launch {
-            val savedVisitorData = dataStore.data.first()[VisitorDataKey]
-            if (savedVisitorData != null && savedVisitorData != "null") {
-                // Clear it to force regeneration with current locale
-                android.util.Log.d("App", "Clearing cached visitorData to force refresh with current locale")
-                dataStore.edit { settings ->
-                    settings.remove(VisitorDataKey)
-                }
-            }
+        // PERFORMANCE: Phase 3 - Auth/cookies (500ms delay)
+        GlobalScope.launch(Dispatchers.IO) {
+            kotlinx.coroutines.delay(500)
+            initializeAuthState()
+        }
+
+        // PERFORMANCE: Phase 4 - AdMob initialization (3 seconds delay)
+        GlobalScope.launch(Dispatchers.Main) {
+            kotlinx.coroutines.delay(3000)
+            adManager.initialize()
         }
         
-        GlobalScope.launch {
+        // PERFORMANCE: Phase 4.5 - Subscription Manager (3.5 seconds delay)
+        GlobalScope.launch(Dispatchers.Main) {
+            kotlinx.coroutines.delay(3500)
+            subscriptionManager.initialize()
+        }
+
+        // PERFORMANCE: Phase 5 - FCM topics (5 seconds delay)
+        GlobalScope.launch(Dispatchers.IO) {
+            kotlinx.coroutines.delay(5000)
+            subscribeToFcmTopics()
+        }
+
+        // PERFORMANCE: Phase 6 - Firebase In-App Messaging (4 seconds delay)
+        GlobalScope.launch(Dispatchers.Main) {
+            kotlinx.coroutines.delay(4000)
+            initializeFirebaseInAppMessaging()
+        }
+
+        // PERFORMANCE: Phase 7 - Welcome notification (6 seconds delay)
+        GlobalScope.launch(Dispatchers.Main) {
+            kotlinx.coroutines.delay(6000)
+            showWelcomeNotificationIfFirstLaunch()
+        }
+    }
+
+    /**
+     * Initialize visitorData for YouTube API calls.
+     * - If stored data is fresh (<6h), use it immediately.
+     * - Always schedules a periodic refresh every 6 hours.
+     * - Retries the fetch up to 3 times with exponential backoff on failure.
+     */
+    @OptIn(DelicateCoroutinesApi::class)
+    private fun initializeVisitorData(systemCountry: String, systemLanguage: String) {
+        GlobalScope.launch(Dispatchers.IO) {
+            // Observe store changes (e.g. after login/logout) and apply to YouTube
             dataStore.data
                 .map { it[VisitorDataKey] }
                 .distinctUntilChanged()
-                .collect { visitorData ->
-                    YouTube.visitorData = visitorData
-                        ?.takeIf { it != "null" } // Previously visitorData was sometimes saved as "null" due to a bug
-                        ?: YouTube.visitorData().onFailure {
-                            withContext(Dispatchers.Main) {
-                                Toast.makeText(this@App, "Failed to get visitorData.", LENGTH_SHORT)
-                                    .show()
-                            }
-                            reportException(it)
-                        }.getOrNull()?.also { newVisitorData ->
-                            android.util.Log.d("App", "New visitorData generated: ${newVisitorData.take(30)}...")
-                            dataStore.edit { settings ->
-                                settings[VisitorDataKey] = newVisitorData
-                            }
-                        }
+                .collect { stored ->
+                    YouTube.visitorData = stored?.takeIf { it.isNotBlank() && it != "null" }
                 }
         }
 
-        GlobalScope.launch {
+        GlobalScope.launch(Dispatchers.IO) {
+            // On startup: refresh only if stale (>6 hours old) or missing
+            val stored = dataStore.data.first()[VisitorDataKey]
+            val timestamp = dataStore.data.first()[VisitorDataTimestampKey] ?: 0L
+            val ageMs = System.currentTimeMillis() - timestamp
+            val sixHoursMs = 6 * 60 * 60 * 1000L
+
+            if (stored.isNullOrBlank() || stored == "null" || ageMs > sixHoursMs) {
+                android.util.Log.d("App", "VisitorData is stale (${ageMs / 1000}s old) or missing — refreshing")
+                fetchAndSaveVisitorData()
+            } else {
+                android.util.Log.d("App", "VisitorData is fresh (${ageMs / 1000}s old) — skipping startup refresh")
+                YouTube.visitorData = stored
+            }
+
+            // Periodic refresh: every 6 hours
+            while (true) {
+                kotlinx.coroutines.delay(sixHoursMs)
+                android.util.Log.d("App", "Periodic visitorData refresh triggered")
+                fetchAndSaveVisitorData()
+            }
+        }
+    }
+
+    /**
+     * Fetch fresh visitor data from YouTube with exponential backoff retry.
+     * Saves result to DataStore and applies it to [YouTube.visitorData] immediately.
+     */
+    @OptIn(DelicateCoroutinesApi::class)
+    private suspend fun fetchAndSaveVisitorData() {
+        val maxRetries = 3
+        val backoffDelaysMs = listOf(2_000L, 4_000L, 8_000L)
+
+        for (attempt in 1..maxRetries) {
+            android.util.Log.d("App", "Fetching visitorData (attempt $attempt/$maxRetries)")
+            val result = YouTube.visitorData()
+            if (result.isSuccess) {
+                val newData = result.getOrNull() ?: continue
+                android.util.Log.d("App", "VisitorData refreshed successfully: ${newData.take(20)}...")
+                YouTube.visitorData = newData
+                dataStore.edit { prefs ->
+                    prefs[VisitorDataKey] = newData
+                    prefs[VisitorDataTimestampKey] = System.currentTimeMillis()
+                }
+                return
+            } else {
+                val error = result.exceptionOrNull()
+                android.util.Log.w("App", "VisitorData fetch failed (attempt $attempt): ${error?.message}")
+                reportException(error ?: Exception("Unknown visitorData fetch error"))
+                if (attempt < maxRetries) {
+                    kotlinx.coroutines.delay(backoffDelaysMs[attempt - 1])
+                }
+            }
+        }
+        android.util.Log.e("App", "All $maxRetries visitorData fetch attempts failed")
+    }
+
+    /**
+     * Apply user preferences for proxy, locale, etc.
+     */
+    @OptIn(DelicateCoroutinesApi::class)
+    private fun applyUserPreferences(systemCountry: String, systemLanguage: String) {
+        GlobalScope.launch(Dispatchers.IO) {
+            val userCountry = dataStore[ContentCountryKey]?.takeIf { it != SYSTEM_DEFAULT }
+            val userLanguage = dataStore[ContentLanguageKey]?.takeIf { it != SYSTEM_DEFAULT }
+
+            if (userCountry != null || userLanguage != null) {
+                YouTube.locale = YouTubeLocale(
+                    gl = userCountry ?: systemCountry,
+                    hl = userLanguage ?: systemLanguage
+                )
+            }
+
+            if (dataStore[ProxyEnabledKey] == true) {
+                try {
+                    YouTube.proxy = Proxy(
+                        dataStore[ProxyTypeKey].toEnum(defaultValue = Proxy.Type.HTTP),
+                        dataStore[ProxyUrlKey]!!.toInetSocketAddress()
+                    )
+                } catch (e: Exception) {
+                    withContext(Dispatchers.Main) {
+                        Toast.makeText(this@App, "Failed to parse proxy url.", LENGTH_SHORT).show()
+                    }
+                    reportException(e)
+                }
+            }
+
+            if (dataStore[UseLoginForBrowse] != false) {
+                YouTube.useLoginForBrowse = true
+            }
+        }
+    }
+
+    /**
+     * Initialize authentication state (cookies, dataSyncId)
+     */
+    @OptIn(DelicateCoroutinesApi::class)
+    private fun initializeAuthState() {
+        // DataSyncId
+        GlobalScope.launch(Dispatchers.IO) {
             dataStore.data
                 .map { it[DataSyncIdKey] }
                 .distinctUntilChanged()
                 .collect { dataSyncId ->
                     YouTube.dataSyncId = dataSyncId?.let {
-                        /*
-                         * Workaround to avoid breaking older installations that have a dataSyncId
-                         * that contains "||" in it.
-                         * If the dataSyncId ends with "||" and contains only one id, then keep the
-                         * id before the "||".
-                         * If the dataSyncId contains "||" and is not at the end, then keep the
-                         * second id.
-                         * This is needed to keep using the same account as before.
-                         */
                         it.takeIf { !it.contains("||") }
                             ?: it.takeIf { it.endsWith("||") }?.substringBefore("||")
                             ?: it.substringAfter("||")
                     }
                 }
         }
-        GlobalScope.launch {
+
+        // Cookie
+        GlobalScope.launch(Dispatchers.IO) {
             dataStore.data
                 .map { it[InnerTubeCookieKey] }
                 .distinctUntilChanged()
@@ -152,22 +274,51 @@ class App : Application(), ImageLoaderFactory {
                     try {
                         YouTube.cookie = cookie
                     } catch (e: Exception) {
-                        // we now allow user input now, here be the demons. This serves as a last ditch effort to avoid a crash loop
                         Timber.e("Could not parse cookie. Clearing existing cookie. %s", e.message)
                         forgetAccount(this@App)
                     }
                 }
         }
+    }
+    
+    /**
+     * Called when the app is terminating. Clear cache if auto-clear preference is enabled.
+     */
+    @OptIn(DelicateCoroutinesApi::class)
+    override fun onTerminate() {
+        super.onTerminate()
         
-        // Subscribe to FCM topics for push notifications
-        subscribeToFcmTopics()
-        
-        // Initialize Firebase In-App Messaging at application level
-        // THIS IS CRITICAL - FIAM must be initialized before any Activity starts
-        initializeFirebaseInAppMessaging()
-        
-        // Show welcome notification for first-time users
-        showWelcomeNotificationIfFirstLaunch()
+        // Check if auto-clear cache is enabled
+        GlobalScope.launch(Dispatchers.IO) {
+            try {
+                val autoClearEnabled = dataStore[com.Chenkham.Echofy.constants.AutoClearCacheOnCloseKey] == true
+                if (autoClearEnabled) {
+                    Timber.d("Auto-clearing cache on app close")
+                    clearAllCaches()
+                }
+            } catch (e: Exception) {
+                Timber.e(e, "Failed to auto-clear cache")
+            }
+        }
+    }
+    
+    /**
+     * Clears all app caches (image cache and song cache).
+     */
+    private fun clearAllCaches() {
+        try {
+            // Clear image cache (Coil)
+            val imageCacheDir = cacheDir.resolve("coil")
+            imageCacheDir.deleteRecursively()
+            Timber.d("Image cache cleared")
+            
+            // Clear ExoPlayer cache
+            val playerCacheDir = cacheDir.resolve("exoplayer")
+            playerCacheDir.deleteRecursively()
+            Timber.d("Player cache cleared")
+        } catch (e: Exception) {
+            Timber.e(e, "Failed to clear caches")
+        }
     }
     
     /**
@@ -337,26 +488,54 @@ class App : Application(), ImageLoaderFactory {
     override fun newImageLoader(): ImageLoader {
         val cacheSize = dataStore[MaxImageCacheSizeKey]
 
+        // PERFORMANCE: Professional-grade image loading like Spotify/YT Music
+        // Key optimizations:
+        // 1. Larger memory cache (30%) for instant scrolling - commercial apps use 25-35%
+        // 2. Hardware bitmaps for GPU rendering (Android P+)
+        // 3. Aggressive caching policies - never re-validate cached images
+        // 4. NO crossfade for cached images - instant display
+        // 5. OkHttp with connection pooling for faster network loads
+        // 6. Weak references disabled - keep images longer in memory
+        // 7. Larger disk cache default (1GB) for offline performance
+
+        val okHttpClient = okhttp3.OkHttpClient.Builder()
+            .connectionPool(okhttp3.ConnectionPool(15, 5, java.util.concurrent.TimeUnit.MINUTES))
+            .connectTimeout(10, java.util.concurrent.TimeUnit.SECONDS)
+            .readTimeout(10, java.util.concurrent.TimeUnit.SECONDS)
+            .build()
+
         // will crash app if you set to 0 after cache starts being used
         if (cacheSize == 0) {
             return ImageLoader.Builder(this)
-                .crossfade(true)
+                .crossfade(false) // No crossfade for instant display
                 .respectCacheHeaders(false)
                 .allowHardware(Build.VERSION.SDK_INT >= Build.VERSION_CODES.P)
                 .diskCachePolicy(CachePolicy.DISABLED)
+                .okHttpClient(okHttpClient)
                 .build()
         }
 
         return ImageLoader.Builder(this)
-            .crossfade(true)
-            .respectCacheHeaders(false)
-            .allowHardware(Build.VERSION.SDK_INT >= Build.VERSION_CODES.P)
-            .diskCache(
+            .crossfade(false) // NO crossfade for instant display from cache
+            .respectCacheHeaders(false) // Don't re-validate cached images
+            .allowHardware(Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) // GPU rendering
+            .okHttpClient(okHttpClient)
+            .memoryCache {
+                coil.memory.MemoryCache.Builder(this)
+                    .maxSizePercent(0.30) // 30% of app memory for instant scrolling
+                    .strongReferencesEnabled(true) // Keep frequently used images
+                    .weakReferencesEnabled(false) // Don't use weak refs - keep images longer
+                    .build()
+            }
+            .diskCache {
                 DiskCache.Builder()
                     .directory(cacheDir.resolve("coil"))
-                    .maxSizeBytes((cacheSize ?: 512) * 1024 * 1024L)
+                    .maxSizeBytes((cacheSize ?: 1024) * 1024 * 1024L) // 1GB default cache
                     .build()
-            )
+            }
+            .memoryCachePolicy(CachePolicy.ENABLED)
+            .diskCachePolicy(cacheSize?.let { if (it > 0) CachePolicy.ENABLED else CachePolicy.DISABLED } ?: CachePolicy.ENABLED)
+            .networkCachePolicy(CachePolicy.ENABLED) // Cache network responses
             .build()
     }
 
