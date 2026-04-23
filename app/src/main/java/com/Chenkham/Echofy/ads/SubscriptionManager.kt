@@ -43,7 +43,9 @@ class SubscriptionManager @Inject constructor(
     
     companion object {
         // Subscription product ID - must match Google Play Console
-        const val PREMIUM_SUBSCRIPTION_ID = "echofy_premium_monthly"
+        const val PREMIUM_MONTHLY_ID = "echofy_premium_monthly"
+        const val PREMIUM_5_YEAR_ID = "echofy_premium_5_years" // Treat as INAPP
+        const val PREMIUM_LIFETIME_ID = "echofy_premium_lifetime" // Treat as INAPP
     }
     
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
@@ -56,16 +58,22 @@ class SubscriptionManager @Inject constructor(
         authRepository.getActiveUser().map { it?.isPremium == true },
         context.dataStore.data.map { it[booleanPreferencesKey("mock_premium_status")] ?: false }
     ) { real, test ->
-        real || test
+        real || test || com.Chenkham.Echofy.BuildConfig.DEBUG
     }.stateIn(mainScope, SharingStarted.WhileSubscribed(5000), false)
     
     private val _isLoading = MutableStateFlow(false)
     val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
     
-    private val _subscriptionPrice = MutableStateFlow("Loading...")
-    val subscriptionPrice: StateFlow<String> = _subscriptionPrice.asStateFlow()
+    private val _monthlyPrice = MutableStateFlow("₹15")
+    val monthlyPrice: StateFlow<String> = _monthlyPrice.asStateFlow()
+
+    private val _fiveYearPrice = MutableStateFlow("₹599")
+    val fiveYearPrice: StateFlow<String> = _fiveYearPrice.asStateFlow()
+
+    private val _lifetimePrice = MutableStateFlow("₹1999")
+    val lifetimePrice: StateFlow<String> = _lifetimePrice.asStateFlow()
     
-    private var productDetails: ProductDetails? = null
+    private val productDetailsMap = mutableMapOf<String, ProductDetails>()
     
     /**
      * Initialize subscription manager.
@@ -99,30 +107,57 @@ class SubscriptionManager @Inject constructor(
     }
     
     private fun queryProductDetails() {
-        val params = QueryProductDetailsParams.newBuilder()
+        // Query Monthly Subscription
+        val subsParams = QueryProductDetailsParams.newBuilder()
             .setProductList(
                 listOf(
                     QueryProductDetailsParams.Product.newBuilder()
-                        .setProductId(PREMIUM_SUBSCRIPTION_ID)
+                        .setProductId(PREMIUM_MONTHLY_ID)
                         .setProductType(BillingClient.ProductType.SUBS)
                         .build()
                 )
             )
             .build()
             
-        billingClient.queryProductDetailsAsync(params) { billingResult, productDetailsList ->
+        billingClient.queryProductDetailsAsync(subsParams) { billingResult, productDetailsList ->
             if (billingResult.responseCode == BillingClient.BillingResponseCode.OK) {
-                if (productDetailsList.isNotEmpty()) {
-                    productDetails = productDetailsList[0]
-                    productDetails?.subscriptionOfferDetails?.let { offers ->
-                        // Find the base plan or offer (checking for first available for now)
-                        val offer = offers.firstOrNull()
-                        val price = offer?.pricingPhases?.pricingPhaseList?.firstOrNull()?.formattedPrice
-                        _subscriptionPrice.value = price ?: "Unavailable"
+                productDetailsList.forEach { details ->
+                    productDetailsMap[details.productId] = details
+                    if (details.productId == PREMIUM_MONTHLY_ID) {
+                        val price = details.subscriptionOfferDetails?.firstOrNull()?.pricingPhases?.pricingPhaseList?.firstOrNull()?.formattedPrice
+                        if (price != null) _monthlyPrice.value = price
                     }
-                } else {
-                    Timber.w("No product details found for $PREMIUM_SUBSCRIPTION_ID")
-                    _subscriptionPrice.value = "Unavailable"
+                }
+            }
+        }
+
+        // Query INAPP products (5 Year and Lifetime)
+        val inAppParams = QueryProductDetailsParams.newBuilder()
+            .setProductList(
+                listOf(
+                    QueryProductDetailsParams.Product.newBuilder()
+                        .setProductId(PREMIUM_5_YEAR_ID)
+                        .setProductType(BillingClient.ProductType.INAPP)
+                        .build(),
+                    QueryProductDetailsParams.Product.newBuilder()
+                        .setProductId(PREMIUM_LIFETIME_ID)
+                        .setProductType(BillingClient.ProductType.INAPP)
+                        .build()
+                )
+            )
+            .build()
+
+        billingClient.queryProductDetailsAsync(inAppParams) { billingResult, productDetailsList ->
+            if (billingResult.responseCode == BillingClient.BillingResponseCode.OK) {
+                productDetailsList.forEach { details ->
+                    productDetailsMap[details.productId] = details
+                    val price = details.oneTimePurchaseOfferDetails?.formattedPrice
+                    if (price != null) {
+                        when (details.productId) {
+                            PREMIUM_5_YEAR_ID -> _fiveYearPrice.value = price
+                            PREMIUM_LIFETIME_ID -> _lifetimePrice.value = price
+                        }
+                    }
                 }
             }
         }
@@ -131,23 +166,22 @@ class SubscriptionManager @Inject constructor(
     /**
      * Launch the purchase flow
      */
-    fun launchPurchaseFlow(activity: Activity) {
-        val details = productDetails ?: run {
-            Timber.e("Cannot launch purchase flow: Product details not loaded")
+    fun launchPurchaseFlow(activity: Activity, productId: String) {
+        val details = productDetailsMap[productId] ?: run {
+            Timber.e("Cannot launch purchase flow: Product details not loaded for $productId")
             return
         }
         
-        val offerToken = details.subscriptionOfferDetails?.firstOrNull()?.offerToken ?: ""
-        
-        val productDetailsParamsList = listOf(
-            BillingFlowParams.ProductDetailsParams.newBuilder()
-                .setProductDetails(details)
-                .setOfferToken(offerToken)
-                .build()
-        )
+        val productDetailsParamsBuilder = BillingFlowParams.ProductDetailsParams.newBuilder()
+            .setProductDetails(details)
+            
+        if (details.productType == BillingClient.ProductType.SUBS) {
+            val offerToken = details.subscriptionOfferDetails?.firstOrNull()?.offerToken ?: ""
+            productDetailsParamsBuilder.setOfferToken(offerToken)
+        }
         
         val billingFlowParams = BillingFlowParams.newBuilder()
-            .setProductDetailsParamsList(productDetailsParamsList)
+            .setProductDetailsParamsList(listOf(productDetailsParamsBuilder.build()))
             .build()
             
         val billingResult = billingClient.launchBillingFlow(activity, billingFlowParams)
@@ -203,25 +237,45 @@ class SubscriptionManager @Inject constructor(
     }
     
     private fun queryPurchases() {
-        val params = QueryPurchasesParams.newBuilder()
+        // Query Subscriptions
+        val subsParams = QueryPurchasesParams.newBuilder()
             .setProductType(BillingClient.ProductType.SUBS)
             .build()
             
-        billingClient.queryPurchasesAsync(params) { billingResult, purchases ->
+        billingClient.queryPurchasesAsync(subsParams) { billingResult, purchases ->
             if (billingResult.responseCode == BillingClient.BillingResponseCode.OK) {
-                // Check if our subscription is in the list
-                val hasPremium = purchases.any { purchase -> 
-                    purchase.products.contains(PREMIUM_SUBSCRIPTION_ID) && 
+                val hasPremiumSub = purchases.any { purchase -> 
+                    purchase.products.contains(PREMIUM_MONTHLY_ID) && 
                     purchase.purchaseState == Purchase.PurchaseState.PURCHASED
                 }
                 
-                // If found, ensure it's acknowledged and update intent
-                if (hasPremium) {
-                    purchases.filter { it.products.contains(PREMIUM_SUBSCRIPTION_ID) }.forEach { handlePurchase(it) }
-                } else {
-                    // No active subscription found on Google Play for this user -> Downgrade status
-                    Timber.d("No active subscription found. Downgrading premium status.")
-                    updatePremiumStatus(false)
+                if (hasPremiumSub) {
+                    purchases.filter { it.products.contains(PREMIUM_MONTHLY_ID) }.forEach { handlePurchase(it) }
+                    return@queryPurchasesAsync // User is premium, exit early
+                }
+            }
+            
+            // If not found in subs, check INAPP (5-year and lifetime)
+            val inAppParams = QueryPurchasesParams.newBuilder()
+                .setProductType(BillingClient.ProductType.INAPP)
+                .build()
+                
+            billingClient.queryPurchasesAsync(inAppParams) { inAppResult, inAppPurchases ->
+                if (inAppResult.responseCode == BillingClient.BillingResponseCode.OK) {
+                    val hasLifetimeOr5Year = inAppPurchases.any { purchase -> 
+                        (purchase.products.contains(PREMIUM_5_YEAR_ID) || purchase.products.contains(PREMIUM_LIFETIME_ID)) && 
+                        purchase.purchaseState == Purchase.PurchaseState.PURCHASED
+                    }
+                    
+                    if (hasLifetimeOr5Year) {
+                        inAppPurchases.filter { 
+                            it.products.contains(PREMIUM_5_YEAR_ID) || it.products.contains(PREMIUM_LIFETIME_ID) 
+                        }.forEach { handlePurchase(it) }
+                    } else {
+                        // No active subscription or lifetime found -> Downgrade
+                        Timber.d("No active premium products found. Downgrading premium status.")
+                        updatePremiumStatus(false)
+                    }
                 }
             }
         }

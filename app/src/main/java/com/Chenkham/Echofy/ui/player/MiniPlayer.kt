@@ -1,4 +1,4 @@
-﻿package com.Chenkham.Echofy.ui.player
+package com.Chenkham.Echofy.ui.player
 
 import android.content.res.Configuration
 import androidx.compose.animation.AnimatedContent
@@ -183,7 +183,7 @@ fun MiniPlayer(
 
 
 
-    // AnimaciÃ³n INFINITA de rotaciÃ³n para el thumbnail
+    // Animación INFINITA de rotación para el thumbnail
     // Se ejecuta continuamente mientras isPlaying = true
     val infiniteTransition = rememberInfiniteTransition(label = "thumbnail_rotation")
     val thumbnailRotation by infiniteTransition.animateFloat(
@@ -191,7 +191,7 @@ fun MiniPlayer(
         targetValue = 360f,
         animationSpec = infiniteRepeatable(
             animation = tween(
-                durationMillis = 8000, // 8 segundos para una rotaciÃ³n completa (velocidad lenta)
+                durationMillis = 8000, // 8 segundos para una rotación completa (velocidad lenta)
                 easing = LinearEasing
             ),
             repeatMode = RepeatMode.Restart
@@ -296,7 +296,7 @@ fun MiniPlayer(
                                     if (isRightSwipe && canSkipPrevious) {
                                         playerConnection.player.seekToPreviousMediaItem()
                                     } else if (!isRightSwipe && canSkipNext) {
-                                        playerConnection.player.seekToNext()
+                                        playerConnection.seekToNext()
                                     }
                                 }
 
@@ -334,14 +334,14 @@ fun MiniPlayer(
                             contentAlignment = Alignment.Center,
                             modifier = Modifier
                                 .size(40.dp)
-                                .rotate(if (isPlaying) thumbnailRotation else 0f) // Solo rota cuando estÃ¡ reproduciendo
+                                .rotate(if (isPlaying) thumbnailRotation else 0f) // Solo rota cuando está reproduciendo
                                 .clip(currentThumbnailShape)
                                 .clickable {
                                     if (playbackState == Player.STATE_ENDED) {
                                         playerConnection.player.seekTo(0, 0)
                                         playerConnection.player.playWhenReady = true
                                     } else {
-                                        playerConnection.player.togglePlayPause()
+                                        playerConnection.togglePlayPause()
                                     }
                                 }
                         ) {
@@ -436,7 +436,7 @@ fun MiniPlayer(
 
                     IconButton(
                         enabled = canSkipNext,
-                        onClick = { playerConnection.player.seekToNext() },
+                        onClick = { playerConnection.seekToNext() },
                         modifier = Modifier.size(36.dp)
                     ) {
                         Icon(

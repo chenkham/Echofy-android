@@ -1,4 +1,4 @@
-﻿package com.Chenkham.Echofy.ui.screens.playlist
+package com.Chenkham.Echofy.ui.screens.playlist
 
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.combinedClickable
@@ -498,7 +498,7 @@ fun TopPlaylistScreen(
                                         onClick = {
                                             if (!selection) {
                                                 if (songWrapper.item.song.id == mediaMetadata?.id) {
-                                                    playerConnection.player.togglePlayPause()
+                                                    playerConnection.togglePlayPause()
                                                 } else {
                                                     playerConnection.playQueue(
                                                         ListQueue(

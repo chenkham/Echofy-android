@@ -1,4 +1,4 @@
-﻿package com.Chenkham.Echofy.ui.screens.settings
+package com.Chenkham.Echofy.ui.screens.settings
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -74,6 +75,9 @@ fun PrivacySettings(
     var showClearListenHistoryDialog by remember { mutableStateOf(false) }
     var showClearSearchHistoryDialog by remember { mutableStateOf(false) }
 
+    val context = androidx.compose.ui.platform.LocalContext.current
+    val adManager = com.Chenkham.Echofy.ui.component.LocalAdManager.current
+
     SettingsPage(
         title = stringResource(R.string.privacy),
         navController = navController,
@@ -83,10 +87,27 @@ fun PrivacySettings(
             title = stringResource(R.string.listen_history),
             items = listOf(
                 {SwitchPreference(
-                    title = { Text(stringResource(R.string.pause_listen_history)) },
+                    title = { Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text(stringResource(R.string.pause_listen_history))
+                        if (adManager?.isPremium?.value != true) {
+                            Spacer(Modifier.padding(4.dp))
+                            Icon(
+                                painter = painterResource(R.drawable.workspace_premium),
+                                contentDescription = "Premium",
+                                tint = MaterialTheme.colorScheme.primary,
+                                modifier = Modifier.size(16.dp)
+                            )
+                        }
+                    }},
                     icon = { Icon(painterResource(R.drawable.history), null) },
                     checked = pauseListenHistory,
-                    onCheckedChange = onPauseListenHistoryChange
+                    onCheckedChange = { checked ->
+                        if (adManager?.isPremium?.value == true || !checked) {
+                            onPauseListenHistoryChange(checked)
+                        } else {
+                            navController.navigate("premium")
+                        }
+                    }
                 )},
 
                 {PreferenceEntry(
@@ -100,10 +121,27 @@ fun PrivacySettings(
             title = stringResource(R.string.search_history),
             items = listOf(
                 {SwitchPreference(
-                    title = { Text(stringResource(R.string.pause_search_history)) },
+                    title = { Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text(stringResource(R.string.pause_search_history))
+                        if (adManager?.isPremium?.value != true) {
+                            Spacer(Modifier.padding(4.dp))
+                            Icon(
+                                painter = painterResource(R.drawable.workspace_premium),
+                                contentDescription = "Premium",
+                                tint = MaterialTheme.colorScheme.primary,
+                                modifier = Modifier.size(16.dp)
+                            )
+                        }
+                    }},
                     icon = { Icon(painterResource(R.drawable.search_off), null) },
                     checked = pauseSearchHistory,
-                    onCheckedChange = onPauseSearchHistoryChange
+                    onCheckedChange = { checked ->
+                        if (adManager?.isPremium?.value == true || !checked) {
+                            onPauseSearchHistoryChange(checked)
+                        } else {
+                            navController.navigate("premium")
+                        }
+                    }
                 )},
 
                 {PreferenceEntry(

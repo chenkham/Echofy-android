@@ -1,4 +1,4 @@
-﻿package com.Chenkham.Echofy.ui.screens
+package com.Chenkham.Echofy.ui.screens
 
 import android.content.ContentValues
 import android.content.Context
@@ -182,7 +182,7 @@ fun AlbumScreen(
                                 .size(AlbumThumbnailSize)
                                 .clip(RoundedCornerShape(ThumbnailCornerRadius))
                         ) {
-                            // Mostrar la imagen del Ã¡lbum
+                            // Mostrar la imagen del álbum
                             AsyncImage(
                                 model = albumWithSongs.album.thumbnailUrl,
                                 contentDescription = null,
@@ -190,7 +190,7 @@ fun AlbumScreen(
                                 contentScale = ContentScale.Crop
                             )
 
-                            // BotÃ³n de descarga superpuesto
+                            // Botón de descarga superpuesto
                             IconButton(
                                 onClick = {
                                     // Lanza una coroutine para guardar la imagen
@@ -205,9 +205,9 @@ fun AlbumScreen(
                                     }
                                 },
                                 modifier = Modifier
-                                    .align(Alignment.BottomEnd) // Ubicar el botÃ³n en la esquina inferior derecha
+                                    .align(Alignment.BottomEnd) // Ubicar el botón en la esquina inferior derecha
                                     .padding(8.dp) // Margen desde el borde
-                                    .size(40.dp) // Hacerlo mÃ¡s pequeÃ±o
+                                    .size(40.dp) // Hacerlo más pequeño
                                     .clip(RoundedCornerShape(24.dp)) // Bordes redondeados
                                     .background(
                                         MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.6f) // Fondo semitransparente
@@ -215,8 +215,8 @@ fun AlbumScreen(
                             ) {
                                 Icon(
                                     painter = painterResource(R.drawable.download),
-                                    contentDescription = "Guardar imagen en galerÃ­a",
-                                    tint = MaterialTheme.colorScheme.onSecondaryContainer // Color del Ã­cono
+                                    contentDescription = "Guardar imagen en galería",
+                                    tint = MaterialTheme.colorScheme.onSecondaryContainer // Color del ícono
                                 )
                             }
                         }
@@ -483,7 +483,7 @@ fun AlbumScreen(
                                     onClick = {
                                         if (!selection) {
                                             if (songWrapper.item.id == mediaMetadata?.id) {
-                                                playerConnection.player.togglePlayPause()
+                                                playerConnection.togglePlayPause()
                                             } else {
                                                 playerConnection.service.getAutomix(playlistId)
                                                 playerConnection.playQueue(
@@ -683,7 +683,7 @@ suspend fun saveAlbumImageToGallery(context: Context, imageUrl: String, albumTit
         if (drawable != null) {
             val bitmap = drawable.toBitmap()
 
-            // Usar el tÃ­tulo del Ã¡lbum para el nombre del archivo
+            // Usar el título del álbum para el nombre del archivo
             val displayName = "${albumTitle.replace(" ", "_")}.png"
             val mimeType = "image/png" // Tipo MIME para PNG
 
@@ -705,7 +705,7 @@ suspend fun saveAlbumImageToGallery(context: Context, imageUrl: String, albumTit
                     bitmap.compress(Bitmap.CompressFormat.JPEG, 100, outputStream)
                 }
 
-                // Mostrar un mensaje de Ã©xito
+                // Mostrar un mensaje de éxito
                 withContext(Dispatchers.Main) {
                     Toast.makeText(
                         context,

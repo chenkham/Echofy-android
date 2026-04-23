@@ -1,4 +1,4 @@
-﻿package com.Chenkham.Echofy.ui.screens.search
+package com.Chenkham.Echofy.ui.screens.search
 
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
@@ -192,7 +192,7 @@ fun LocalSearchScreen(
                                             database.insertRecentSearchSong(RecentSearchSong(songId = item.id))
                                         }
                                         if (item.id == mediaMetadata?.id) {
-                                            playerConnection.player.togglePlayPause()
+                                            playerConnection.togglePlayPause()
                                         } else {
                                             val songs = result.map
                                                 .getOrDefault(LocalFilter.SONG, emptyList())

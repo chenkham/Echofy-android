@@ -1,0 +1,10 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <!-- Speech bubble outline for lyrics - Apple Music style -->
+    <path
+        android:fillColor="@android:color/white"
+        android:pathData="M12,3 C7.029,3 3,6.582 3,11 C3,13.244 4.044,15.273 5.756,16.728 L5,21 L9.532,18.876 C10.322,19.047 11.153,19.143 12,19.143 C16.971,19.143 21,15.561 21,11 C21,6.582 16.971,3 12,3 Z" />
+</vector>

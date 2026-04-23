@@ -33,11 +33,25 @@ class PremiumViewModel @Inject constructor(
             initialValue = false
         )
 
-    val subscriptionPrice = subscriptionManager.subscriptionPrice
+    val monthlyPrice = subscriptionManager.monthlyPrice
         .stateIn(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(5000),
-            initialValue = ""
+            initialValue = "₹15"
+        )
+
+    val fiveYearPrice = subscriptionManager.fiveYearPrice
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000),
+            initialValue = "₹599"
+        )
+
+    val lifetimePrice = subscriptionManager.lifetimePrice
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000),
+            initialValue = "₹1999"
         )
     
     fun enablePremium() {
@@ -54,8 +68,8 @@ class PremiumViewModel @Inject constructor(
         }
     }
 
-    fun launchBillingFlow(activity: android.app.Activity) {
-        subscriptionManager.launchPurchaseFlow(activity)
+    fun launchBillingFlow(activity: android.app.Activity, productId: String) {
+        subscriptionManager.launchPurchaseFlow(activity, productId)
     }
 
     fun restorePurchases() {

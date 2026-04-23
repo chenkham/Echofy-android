@@ -1,4 +1,4 @@
-﻿package com.Chenkham.innertube
+package com.Chenkham.innertube
 
 import com.Chenkham.innertube.models.Context
 import com.Chenkham.innertube.models.YouTubeClient

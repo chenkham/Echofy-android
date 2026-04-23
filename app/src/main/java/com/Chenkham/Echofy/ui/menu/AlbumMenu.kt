@@ -1,4 +1,4 @@
-﻿package com.Chenkham.Echofy.ui.menu
+package com.Chenkham.Echofy.ui.menu
 
 import android.annotation.SuppressLint
 import com.Chenkham.Echofy.ui.component.LocalAdManager

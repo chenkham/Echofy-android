@@ -1,4 +1,4 @@
-﻿package com.Chenkham.Echofy.ui.player
+package com.Chenkham.Echofy.ui.player
 
 import android.content.res.Configuration
 import android.content.Intent
@@ -105,6 +105,7 @@ import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.StrokeCap
 import com.Chenkham.Echofy.constants.PlaybackMode
 import com.Chenkham.Echofy.constants.PlaybackModeKey
+import com.Chenkham.Echofy.constants.EnableListenTogetherKey
 import com.Chenkham.Echofy.utils.rememberEnumPreference
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.lerp
@@ -154,6 +155,7 @@ import com.Chenkham.Echofy.constants.PlayerHorizontalPadding
 import com.Chenkham.Echofy.constants.PlayerTextAlignmentKey
 import com.Chenkham.Echofy.constants.PureBlackKey
 import com.Chenkham.Echofy.constants.QueuePeekHeight
+import com.Chenkham.Echofy.constants.RealTimeVisualizerKey
 import com.Chenkham.Echofy.constants.ShowLyricsKey
 import com.Chenkham.Echofy.constants.SliderStyle
 import com.Chenkham.Echofy.constants.SliderStyleKey
@@ -189,7 +191,14 @@ import com.Chenkham.Echofy.ui.component.StandardBannerAdView
 import com.Chenkham.Echofy.ui.component.MediumRectangleAdView
 import android.app.Activity
 import com.Chenkham.Echofy.constants.BackpaperScreen
+import com.Chenkham.Echofy.constants.LiveFluidColorPalette
+import com.Chenkham.Echofy.constants.LiveFluidColorPaletteKey
+import com.Chenkham.Echofy.constants.LiveFluidBackgroundKey
 import com.Chenkham.Echofy.ui.component.BackpaperBackground
+import com.Chenkham.Echofy.ui.component.LiveFluidBackground
+import com.Chenkham.Echofy.ui.component.RealTimeAudioVisualizer
+import com.Chenkham.Echofy.ui.component.fallbackColors
+import com.Chenkham.Echofy.ui.component.prefersArtworkColors
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
@@ -266,7 +275,33 @@ fun BottomSheetPlayer(
     val canSkipPrevious by playerConnection.canSkipPrevious.collectAsState()
     val canSkipNext by playerConnection.canSkipNext.collectAsState()
 
+    // Haptic Bass Beats — premium feature
+    val hapticBassEnabled by rememberPreference(com.Chenkham.Echofy.constants.HapticBassBeatsKey, defaultValue = false)
+    val adManager = com.Chenkham.Echofy.ui.component.LocalAdManager.current
+    val isPremiumForHaptic = adManager?.isPremium?.value == true
+    androidx.compose.runtime.LaunchedEffect(isPlaying, hapticBassEnabled, isPremiumForHaptic) {
+        if (isPlaying && hapticBassEnabled && isPremiumForHaptic) {
+            val vibrator = context.getSystemService(android.content.Context.VIBRATOR_SERVICE) as? android.os.Vibrator
+            while (true) {
+                if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+                    vibrator?.vibrate(android.os.VibrationEffect.createOneShot(30, 40))
+                } else {
+                    @Suppress("DEPRECATION")
+                    vibrator?.vibrate(30)
+                }
+                kotlinx.coroutines.delay(480L) // ~125 BPM rhythm pulse
+            }
+        }
+    }
+
     val showLyrics by rememberPreference(ShowLyricsKey, defaultValue = false)
+    val liveFluidBackground by rememberPreference(LiveFluidBackgroundKey, defaultValue = false)
+    val realTimeVisualizer by rememberPreference(RealTimeVisualizerKey, defaultValue = false)
+    val liveFluidPalette by rememberEnumPreference(
+        LiveFluidColorPaletteKey,
+        LiveFluidColorPalette.ALBUM
+    )
+    val useArtworkFluidColors = liveFluidBackground && liveFluidPalette.prefersArtworkColors()
 
     val sliderStyle by rememberEnumPreference(SliderStyleKey, SliderStyle.SLIM)
 
@@ -306,6 +341,19 @@ fun BottomSheetPlayer(
         animationSpec = tween(durationMillis = 700, easing = FastOutSlowInEasing),
         label = "overlayAlpha"
     )
+    val liveFluidAlpha by animateFloatAsState(
+        targetValue = if (state.isExpanded && liveFluidBackground) {
+            when (playerBackground) {
+                PlayerBackgroundStyle.DEFAULT -> 0.92f
+                PlayerBackgroundStyle.BLUR -> 0.42f
+                PlayerBackgroundStyle.GRADIENT -> 0.58f
+            }
+        } else {
+            0f
+        },
+        animationSpec = tween(durationMillis = 900, easing = FastOutSlowInEasing),
+        label = "liveFluidAlpha"
+    )
 
 
     val playerButtonsStyle by rememberEnumPreference(
@@ -316,20 +364,20 @@ fun BottomSheetPlayer(
         playerConnection.service.addToQueueAutomix(automix[0], 0)
     }
 
-    LaunchedEffect(mediaMetadata?.thumbnailUrl, playerBackground, useBlackBackground) {
+    LaunchedEffect(mediaMetadata?.thumbnailUrl, playerBackground, useBlackBackground, useArtworkFluidColors) {
         // Update image URL for smooth transitions
         backgroundImageUrl = mediaMetadata?.thumbnailUrl
 
-        if (useBlackBackground && playerBackground != PlayerBackgroundStyle.BLUR) {
+        if (useBlackBackground && !useArtworkFluidColors && playerBackground != PlayerBackgroundStyle.BLUR) {
             gradientColors = listOf(Color.Black, Color.Black)
             return@LaunchedEffect
         }
-        if (useBlackBackground && playerBackground != PlayerBackgroundStyle.GRADIENT) {
+        if (useBlackBackground && !useArtworkFluidColors && playerBackground != PlayerBackgroundStyle.GRADIENT) {
             gradientColors = listOf(Color.Black, Color.Black)
             return@LaunchedEffect
         }
 
-        if (playerBackground == PlayerBackgroundStyle.GRADIENT) {
+        if (playerBackground == PlayerBackgroundStyle.GRADIENT || useArtworkFluidColors) {
             // PERFORMANCE FIX: Only extract colors if URL actually changed
             val currentUrl = mediaMetadata?.thumbnailUrl
             if (currentUrl != null) {
@@ -618,9 +666,19 @@ fun BottomSheetPlayer(
     
     val actionButtonColor = MaterialTheme.colorScheme.surfaceVariant
     val downloadUtil = LocalDownloadUtil.current
+    val enableListenTogether by rememberPreference(EnableListenTogetherKey, defaultValue = false)
 
     var showDetailsDialog by rememberSaveable {
         mutableStateOf(false)
+    }
+    var showEchofyJamSheet by rememberSaveable {
+        mutableStateOf(false)
+    }
+
+    if (showEchofyJamSheet) {
+        com.Chenkham.Echofy.ui.component.EchofyJamSheet(
+            onDismiss = { showEchofyJamSheet = false }
+        )
     }
 
     if (showDetailsDialog) {
@@ -718,82 +776,89 @@ fun BottomSheetPlayer(
                     .background(bottomSheetBackgroundColor)
             ) {
                 BackpaperBackground(screen = BackpaperScreen.PLAYER) {
-                when (playerBackground) {
-                    PlayerBackgroundStyle.BLUR -> {
-                        AnimatedContent(
-                            targetState = mediaMetadata?.thumbnailUrl,
-                            transitionSpec = {
-                                fadeIn(tween(800)).togetherWith(fadeOut(tween(800)))
-                            },
-                            label = "blurBackground"
-                        ) { thumbnailUrl ->
-                            if (thumbnailUrl != null) {
-                                Box(modifier = Modifier.alpha(backgroundAlpha)) {
-                                    AsyncImage(
-                                        model = ImageRequest.Builder(context)
-                                            .data(thumbnailUrl)
-                                            .size(100, 100)
-                                            .allowHardware(false)
-                                            .build(),
-                                        contentDescription = null,
-                                        contentScale = ContentScale.Crop,
-                                        modifier = Modifier
-                                            .fillMaxSize()
-                                            .graphicsLayer {
-                                                if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S) {
-                                                    renderEffect = android.graphics.RenderEffect.createBlurEffect(
-                                                        50f, 50f, android.graphics.Shader.TileMode.MIRROR
-                                                    ).asComposeRenderEffect()
+                    when (playerBackground) {
+                        PlayerBackgroundStyle.BLUR -> {
+                            AnimatedContent(
+                                targetState = mediaMetadata?.thumbnailUrl,
+                                transitionSpec = {
+                                    fadeIn(tween(800)).togetherWith(fadeOut(tween(800)))
+                                },
+                                label = "blurBackground"
+                            ) { thumbnailUrl ->
+                                if (thumbnailUrl != null) {
+                                    Box(modifier = Modifier.alpha(backgroundAlpha)) {
+                                        AsyncImage(
+                                            model = ImageRequest.Builder(context)
+                                                .data(thumbnailUrl)
+                                                .size(100, 100)
+                                                .allowHardware(false)
+                                                .build(),
+                                            contentDescription = null,
+                                            contentScale = ContentScale.Crop,
+                                            modifier = Modifier
+                                                .fillMaxSize()
+                                                .graphicsLayer {
+                                                    if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S) {
+                                                        renderEffect = android.graphics.RenderEffect.createBlurEffect(
+                                                            50f, 50f, android.graphics.Shader.TileMode.MIRROR
+                                                        ).asComposeRenderEffect()
+                                                    }
                                                 }
-                                            }
-                                    )
+                                        )
+                                        Box(
+                                            modifier = Modifier
+                                                .fillMaxSize()
+                                                .background(Color.Black.copy(alpha = 0.3f))
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                        PlayerBackgroundStyle.GRADIENT -> {
+                            AnimatedContent(
+                                targetState = gradientColors,
+                                transitionSpec = {
+                                    fadeIn(tween(800)).togetherWith(fadeOut(tween(800)))
+                                },
+                                label = "gradientBackground"
+                            ) { colors ->
+                                if (colors.isNotEmpty()) {
+                                    val gradientColorStops = if (colors.size >= 3) {
+                                        arrayOf(
+                                            0.0f to colors[0],
+                                            0.5f to colors[1],
+                                            1.0f to colors[2]
+                                        )
+                                    } else {
+                                        arrayOf(
+                                            0.0f to colors[0],
+                                            0.6f to colors[0].copy(alpha = 0.7f),
+                                            1.0f to Color.Black
+                                        )
+                                    }
                                     Box(
-                                        modifier = Modifier
+                                        Modifier
                                             .fillMaxSize()
-                                            .background(Color.Black.copy(alpha = 0.3f))
+                                            .alpha(backgroundAlpha)
+                                            .background(Brush.verticalGradient(colorStops = gradientColorStops))
+                                            .background(Color.Black.copy(alpha = 0.2f))
                                     )
                                 }
                             }
                         }
-                    }
-                    PlayerBackgroundStyle.GRADIENT -> {
-                        AnimatedContent(
-                            targetState = gradientColors,
-                            transitionSpec = {
-                                fadeIn(tween(800)).togetherWith(fadeOut(tween(800)))
-                            },
-                            label = "gradientBackground"
-                        ) { colors ->
-                            if (colors.isNotEmpty()) {
-                                val gradientColorStops = if (colors.size >= 3) {
-                                    arrayOf(
-                                        0.0f to colors[0],
-                                        0.5f to colors[1],
-                                        1.0f to colors[2]
-                                    )
-                                } else {
-                                    arrayOf(
-                                        0.0f to colors[0],
-                                        0.6f to colors[0].copy(alpha = 0.7f),
-                                        1.0f to Color.Black
-                                    )
-                                }
-                                Box(
-                                    Modifier
-                                        .fillMaxSize()
-                                        .alpha(backgroundAlpha)
-                                        .background(Brush.verticalGradient(colorStops = gradientColorStops))
-                                        .background(Color.Black.copy(alpha = 0.2f))
-                                )
-                            }
+                        else -> {
+                            PlayerBackgroundStyle.DEFAULT
                         }
                     }
-                    else -> {
-                        PlayerBackgroundStyle.DEFAULT
+                    if (liveFluidAlpha > 0f) {
+                        LiveFluidBackground(
+                            colors = if (useArtworkFluidColors) gradientColors else emptyList(),
+                            alpha = liveFluidAlpha,
+                            fallbackColors = liveFluidPalette.fallbackColors(),
+                        )
                     }
                 }
             }
-        }
         },
         onDismiss = {
             playerConnection.service.clearAutomix()
@@ -1084,7 +1149,13 @@ fun BottomSheetPlayer(
                                 )
                             } else {
                                 Box(
-                                    modifier = Modifier.fillMaxSize().clickable { showSleepTimerDialog = true },
+                                    modifier = Modifier.fillMaxSize().clickable { 
+                                        if (adManager?.isPremium?.value == true) {
+                                            showSleepTimerDialog = true 
+                                        } else {
+                                            android.widget.Toast.makeText(context, "Sleep Timer is a Premium feature!", android.widget.Toast.LENGTH_SHORT).show()
+                                        }
+                                    },
                                     contentAlignment = Alignment.Center
                                 ) {
                                     Image(
@@ -1099,8 +1170,6 @@ fun BottomSheetPlayer(
                     }
             }
 
-
-            Spacer(Modifier.height(6.dp))
 
             PlayerProgressSection(
                 playerConnection = playerConnection,
@@ -1335,30 +1404,52 @@ fun BottomSheetPlayer(
                             )
                         }
 
-                        // More options (3-dot menu)
-                        Box(
-                            contentAlignment = Alignment.Center,
-                            modifier = Modifier
-                                .size(44.dp)
-                                .clip(CircleShape)
-                                .clickable {
-                                    menuState.show {
-                                        PlayerMenu(
-                                            mediaMetadata = mediaMetadata ?: return@show,
-                                            navController = navController,
-                                            onShowDetailsDialog = { showDetailsDialog = true },
-                                            onDismiss = menuState::dismiss,
-                                            onNavigateAway = { state.collapseSoft() },
-                                        )
-                                    }
-                                },
+                        Row(
+                            horizontalArrangement = Arrangement.spacedBy(10.dp),
+                            verticalAlignment = Alignment.CenterVertically,
                         ) {
-                            Image(
-                                painter = painterResource(R.drawable.more_vert),
-                                contentDescription = stringResource(R.string.acc_more_options),
-                                colorFilter = ColorFilter.tint(onBackgroundColor),
-                                modifier = Modifier.size(24.dp),
-                            )
+                            if (enableListenTogether) {
+                                Box(
+                                    contentAlignment = Alignment.Center,
+                                    modifier = Modifier
+                                        .size(44.dp)
+                                        .clip(CircleShape)
+                                        .clickable { showEchofyJamSheet = true },
+                                ) {
+                                    Image(
+                                        painter = painterResource(R.drawable.group),
+                                        contentDescription = "Start Together",
+                                        colorFilter = ColorFilter.tint(onBackgroundColor),
+                                        modifier = Modifier.size(24.dp),
+                                    )
+                                }
+                            }
+
+                            // More options (3-dot menu)
+                            Box(
+                                contentAlignment = Alignment.Center,
+                                modifier = Modifier
+                                    .size(44.dp)
+                                    .clip(CircleShape)
+                                    .clickable {
+                                        menuState.show {
+                                            PlayerMenu(
+                                                mediaMetadata = mediaMetadata ?: return@show,
+                                                navController = navController,
+                                                onShowDetailsDialog = { showDetailsDialog = true },
+                                                onDismiss = menuState::dismiss,
+                                                onNavigateAway = { state.collapseSoft() },
+                                            )
+                                        }
+                                    },
+                            ) {
+                                Image(
+                                    painter = painterResource(R.drawable.more_vert),
+                                    contentDescription = stringResource(R.string.acc_more_options),
+                                    colorFilter = ColorFilter.tint(onBackgroundColor),
+                                    modifier = Modifier.size(24.dp),
+                                )
+                            }
                         }
                     }
 
@@ -1530,30 +1621,52 @@ fun BottomSheetPlayer(
                                 )
                             }
 
-                            // More options (3-dot menu)
-                            Box(
-                                contentAlignment = Alignment.Center,
-                                modifier = Modifier
-                                    .size(44.dp)
-                                    .clip(CircleShape)
-                                    .clickable {
-                                        menuState.show {
-                                            PlayerMenu(
-                                                mediaMetadata = mediaMetadata ?: return@show,
-                                                navController = navController,
-                                                onShowDetailsDialog = { showDetailsDialog = true },
-                                                onDismiss = menuState::dismiss,
-                                                onNavigateAway = { state.collapseSoft() },
-                                            )
-                                        }
-                                    },
+                            Row(
+                                horizontalArrangement = Arrangement.spacedBy(10.dp),
+                                verticalAlignment = Alignment.CenterVertically,
                             ) {
-                                Image(
-                                    painter = painterResource(R.drawable.more_vert),
-                                    contentDescription = stringResource(R.string.acc_more_options),
-                                    colorFilter = ColorFilter.tint(onBackgroundColor),
-                                    modifier = Modifier.size(24.dp),
-                                )
+                                if (enableListenTogether) {
+                                    Box(
+                                        contentAlignment = Alignment.Center,
+                                        modifier = Modifier
+                                            .size(44.dp)
+                                            .clip(CircleShape)
+                                            .clickable { showEchofyJamSheet = true },
+                                    ) {
+                                        Image(
+                                            painter = painterResource(R.drawable.group),
+                                            contentDescription = "Start Together",
+                                            colorFilter = ColorFilter.tint(onBackgroundColor),
+                                            modifier = Modifier.size(24.dp),
+                                        )
+                                    }
+                                }
+
+                                // More options (3-dot menu)
+                                Box(
+                                    contentAlignment = Alignment.Center,
+                                    modifier = Modifier
+                                        .size(44.dp)
+                                        .clip(CircleShape)
+                                        .clickable {
+                                            menuState.show {
+                                                PlayerMenu(
+                                                    mediaMetadata = mediaMetadata ?: return@show,
+                                                    navController = navController,
+                                                    onShowDetailsDialog = { showDetailsDialog = true },
+                                                    onDismiss = menuState::dismiss,
+                                                    onNavigateAway = { state.collapseSoft() },
+                                                )
+                                            }
+                                        },
+                                ) {
+                                    Image(
+                                        painter = painterResource(R.drawable.more_vert),
+                                        contentDescription = stringResource(R.string.acc_more_options),
+                                        colorFilter = ColorFilter.tint(onBackgroundColor),
+                                        modifier = Modifier.size(24.dp),
+                                    )
+                                }
                             }
                         }
                     }
@@ -1663,7 +1776,7 @@ fun SwitchOption(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun PlayerProgressSection(
+fun PlayerProgressSection(
     playerConnection: com.Chenkham.Echofy.playback.PlayerConnection,
     sliderStyle: SliderStyle,
     color: Color,

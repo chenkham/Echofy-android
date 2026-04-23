@@ -1,4 +1,4 @@
-﻿package com.Chenkham.Echofy.ui.component
+package com.Chenkham.Echofy.ui.component
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.OverscrollEffect
@@ -64,7 +64,7 @@ fun BottomSheetMenu(
     val focusManager = LocalFocusManager.current
     val maxSheetHeight = LocalConfiguration.current.screenHeightDp.dp * 0.9f
     val sheetState = rememberModalBottomSheetState(
-        skipPartiallyExpanded = true
+        skipPartiallyExpanded = false
     )
 
     if (state.isVisible) {

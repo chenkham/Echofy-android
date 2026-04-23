@@ -1,4 +1,4 @@
-﻿package com.Chenkham.Echofy.ui.menu
+package com.Chenkham.Echofy.ui.menu
 
 import com.Chenkham.Echofy.db.addSongToPlaylist
 import com.Chenkham.Echofy.db.insert as insertMediaMetadata
@@ -262,47 +262,15 @@ fun PlayerMenu(
 
     // Nested scroll connection to properly handle scroll gestures
     // Prevents vibration/bounce when over-scrolling at the top of the menu
-    val nestedScrollConnection = remember(lazyListState) {
+    val nestedScrollConnection = remember {
         object : NestedScrollConnection {
-            override fun onPreScroll(available: androidx.compose.ui.geometry.Offset, source: NestedScrollSource): androidx.compose.ui.geometry.Offset {
-                val isAtTop = !lazyListState.canScrollBackward
-                val isAtBottom = !lazyListState.canScrollForward
-                val isScrollingUp = available.y > 0
-                val isScrollingDown = available.y < 0
-
-                // When at top and trying to scroll up (pull down gesture), consume the scroll
-                // to prevent bounce/vibration, but allow small amount for dismiss gesture
-                if (isAtTop && isScrollingUp && source == NestedScrollSource.UserInput) {
-                    // Only pass through if it's a significant gesture (for dismiss)
-                    return if (available.y > 50f) {
-                        androidx.compose.ui.geometry.Offset.Zero
-                    } else {
-                        // Consume small scroll to prevent vibration
-                        available.copy(x = 0f)
-                    }
-                }
-
-                // When at bottom and trying to scroll down, consume to prevent bounce
-                if (isAtBottom && isScrollingDown) {
-                    return available.copy(x = 0f)
-                }
-
-                return androidx.compose.ui.geometry.Offset.Zero
-            }
-
             override fun onPostScroll(
                 consumed: androidx.compose.ui.geometry.Offset,
                 available: androidx.compose.ui.geometry.Offset,
                 source: NestedScrollSource
             ): androidx.compose.ui.geometry.Offset {
-                // Consume any leftover scroll to prevent vibration
-                val isAtTop = !lazyListState.canScrollBackward
-                val isAtBottom = !lazyListState.canScrollForward
-
-                if ((isAtTop && available.y > 0) || (isAtBottom && available.y < 0)) {
-                    return available.copy(x = 0f)
-                }
-                return androidx.compose.ui.geometry.Offset.Zero
+                // Only consume leftover overflow to prevent bounce at edges
+                return available
             }
         }
     }

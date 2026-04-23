@@ -1,4 +1,4 @@
-﻿package com.Chenkham.Echofy.ui.component
+package com.Chenkham.Echofy.ui.component
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -13,7 +13,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
@@ -23,28 +22,30 @@ import androidx.compose.ui.unit.dp
 import com.Chenkham.innertube.YouTube
 import com.Chenkham.Echofy.LocalDatabase
 import com.Chenkham.Echofy.R
+import com.Chenkham.Echofy.db.entities.Playlist
 import com.Chenkham.Echofy.db.entities.PlaylistEntity
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import java.time.LocalDateTime
 
 import android.widget.Toast
 import androidx.compose.ui.platform.LocalContext
-import androidx.datastore.preferences.core.booleanPreferencesKey
-import androidx.datastore.preferences.core.stringPreferencesKey
-import kotlinx.coroutines.flow.map
 import androidx.compose.runtime.collectAsState
 import com.Chenkham.Echofy.constants.InnerTubeCookieKey
 import com.Chenkham.Echofy.utils.dataStore
+import kotlinx.coroutines.flow.firstOrNull
+import kotlinx.coroutines.flow.map
 
 @Composable
 fun CreatePlaylistDialog(
     onDismiss: () -> Unit,
     initialTextFieldValue: String? = null,
     allowSyncing: Boolean = true,
+    onCreated: suspend (Playlist) -> Unit = {},
 ) {
     val database = LocalDatabase.current
-    val coroutineScope = rememberCoroutineScope()
+    val workerScope = remember { CoroutineScope(Dispatchers.IO) }
     var syncedPlaylist by remember { mutableStateOf(false) }
     
     val context = LocalContext.current
@@ -59,26 +60,55 @@ fun CreatePlaylistDialog(
         initialTextFieldValue = TextFieldValue(initialTextFieldValue ?: ""),
         onDismiss = onDismiss,
         onDone = { playlistName ->
-            coroutineScope.launch(Dispatchers.IO) {
+            workerScope.launch {
                 val browseId = if (syncedPlaylist && isLoggedIn) {
                     val result = YouTube.createPlaylist(playlistName)
-                    if (result.isFailure) {
+                    val createdBrowseId = result.getOrNull()?.removePrefix("VL")
+
+                    if (createdBrowseId == null) {
                         launch(Dispatchers.Main) {
                             Toast.makeText(context, "Error creating playlist", Toast.LENGTH_SHORT).show()
                         }
+                        return@launch
                     }
-                    result.getOrNull()
+
+                    createdBrowseId
                 } else null
-                
-                database.query {
-                    insert(
-                        PlaylistEntity(
-                            name = playlistName,
-                            browseId = browseId?.toString(),
-                            bookmarkedAt = LocalDateTime.now(),
-                            isEditable = true,
-                        )
-                    )
+
+                val now = LocalDateTime.now()
+                val existingPlaylist =
+                    browseId?.let {
+                        database.playlistByBrowseId(it).firstOrNull()
+                            ?: database.playlistByBrowseId("VL$it").firstOrNull()
+                    }
+
+                val localPlaylist =
+                    if (existingPlaylist != null) {
+                        val updatedPlaylist =
+                            existingPlaylist.playlist.copy(
+                                name = playlistName,
+                                browseId = browseId,
+                                bookmarkedAt = existingPlaylist.playlist.bookmarkedAt ?: now,
+                                lastUpdateTime = now,
+                                isEditable = true,
+                            )
+                        database.update(updatedPlaylist)
+                        database.playlist(updatedPlaylist.id).firstOrNull()
+                    } else {
+                        val playlistEntity =
+                            PlaylistEntity(
+                                name = playlistName,
+                                browseId = browseId,
+                                bookmarkedAt = now,
+                                lastUpdateTime = now,
+                                isEditable = true,
+                            )
+                        database.insert(playlistEntity)
+                        database.playlist(playlistEntity.id).firstOrNull()
+                    }
+
+                localPlaylist?.let {
+                    onCreated(it)
                 }
             }
         },

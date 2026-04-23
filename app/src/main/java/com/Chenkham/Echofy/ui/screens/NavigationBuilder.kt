@@ -1,4 +1,4 @@
-﻿package com.Chenkham.Echofy.ui.screens
+package com.Chenkham.Echofy.ui.screens
 
 import android.annotation.SuppressLint
 import android.os.Build
@@ -43,6 +43,8 @@ import com.Chenkham.Echofy.ui.screens.settings.StorageSettings
 import com.Chenkham.Echofy.ui.screens.settings.EqualizerScreen
 import com.Chenkham.Echofy.ui.screens.settings.BackpaperSettings
 import com.Chenkham.Echofy.ui.screens.settings.SaverSettings
+import com.Chenkham.Echofy.ui.screens.settings.PremiumFeaturesSettings
+import com.Chenkham.Echofy.ui.screens.settings.PremiumVisualsSettings
 import com.Chenkham.Echofy.ui.utils.TouchBlockingWrapper
 import kotlinx.coroutines.launch
 
@@ -453,6 +455,16 @@ fun NavGraphBuilder.navigationBuilder(
     composable("settings/saver") {
         TouchBlockingWrapper {
             SaverSettings(navController, scrollBehavior)
+        }
+    }
+    composable("settings/together_controls") {
+        TouchBlockingWrapper {
+            PremiumFeaturesSettings(navController, scrollBehavior)
+        }
+    }
+    composable("settings/player_visuals") {
+        TouchBlockingWrapper {
+            PremiumVisualsSettings(navController, scrollBehavior)
         }
     }
     composable(

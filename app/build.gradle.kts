@@ -22,8 +22,8 @@ android {
         applicationId = "com.Chenkham.Echofy"
         minSdk = 24
         targetSdk = 35
-        versionCode = 16
-        versionName = "3.2.1"
+        versionCode = 17
+        versionName = "3.2.2"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         multiDexEnabled = true
     }
@@ -272,12 +272,11 @@ dependencies {
     // Appwrite SDK for Listen Together feature (v5.1.0 fixes OkHttp conflicts)
     implementation("io.appwrite:sdk-for-android:5.1.0")
     
-    // Firebase for push notifications via Appwrite Messaging
+    // Firebase — push notifications only (FCM, Analytics, FIAM)
+    // firebase-auth and firebase-database removed; Together now uses Appwrite
     implementation(platform("com.google.firebase:firebase-bom:32.7.0"))
     implementation("com.google.firebase:firebase-messaging-ktx")
-    // Firebase In-App Messaging for modal cards and banners
     implementation("com.google.firebase:firebase-inappmessaging-display-ktx")
-    // Firebase Analytics (REQUIRED for In-App Messaging to work properly)
     implementation("com.google.firebase:firebase-analytics-ktx")
     
     // Google AdMob SDK for ads monetization

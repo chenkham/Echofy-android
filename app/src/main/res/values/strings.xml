@@ -1,4 +1,4 @@
-﻿﻿<resources>
+﻿<resources>
     <!-- Bottom navigation -->
     <string name="home">Home</string>
     <string name="songs">Songs</string>
@@ -299,8 +299,8 @@
     <!-- Settings -->
     <string name="settings">Settings</string>
     <string name="login_settings">Login settings</string>
-    <string name="use_login_for_browse">Use login for browsing premium content</string>
-    <string name="use_login_for_browse_desc">This can shows premium-only albums if you are logged in with a Premium account</string>
+    <string name="use_login_for_browse">Use login for browsing exclusive content</string>
+    <string name="use_login_for_browse_desc">This can show exclusive albums if you are logged in with a Pro account</string>
 
     <string name="general_settings">General settings</string>
 
@@ -732,4 +732,7 @@
     <string name="join_telegram">Join our Telegram community</string>
     <string name="whatsapp">WhatsApp</string>
     <string name="join_whatsapp">Join our WhatsApp community</string>
+    <string name="jam_registry_url"></string>
+    <string name="jam_invite_base_url"></string>
+    <string name="jam_room_allocate_url"></string>
 </resources>

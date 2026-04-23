@@ -1,4 +1,4 @@
-﻿package com.Chenkham.Echofy.ui.screens.playlist
+package com.Chenkham.Echofy.ui.screens.playlist
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.ExperimentalFoundationApi
@@ -182,7 +182,7 @@ fun OnlinePlaylistScreen(
 
 
     LaunchedEffect(playlist?.id) {
-        // Restaurar posiciÃ³n si cambias de playlist
+        // Restaurar posición si cambias de playlist
         if (playlist?.id != null) {
             lazyListState.scrollToItem(0)
         }
@@ -446,7 +446,7 @@ fun OnlinePlaylistScreen(
                                             onClick = {
                                                 if (!selection) {
                                                     if (song.item.second.id == mediaMetadata?.id) {
-                                                        playerConnection.player.togglePlayPause()
+                                                        playerConnection.togglePlayPause()
                                                     } else {
                                                         playerConnection.service.getAutomix(
                                                             playlistId = playlist.id

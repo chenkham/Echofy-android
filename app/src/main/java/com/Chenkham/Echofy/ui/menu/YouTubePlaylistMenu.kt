@@ -1,4 +1,4 @@
-﻿package com.Chenkham.Echofy.ui.menu
+package com.Chenkham.Echofy.ui.menu
 
 import android.annotation.SuppressLint
 import android.content.Intent
@@ -14,9 +14,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.systemBars
-import androidx.compose.foundation.lazy.grid.GridCells
-import androidx.compose.foundation.lazy.grid.GridItemSpan
-import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -270,12 +268,11 @@ fun YouTubePlaylistMenu(
         }
     }
 
-    LazyVerticalGrid(
-        columns = GridCells.Fixed(2),
+    LazyColumn(
         modifier = Modifier.fillMaxWidth(),
         contentPadding = PaddingValues(bottom = 16.dp)
     ) {
-        item(span = { GridItemSpan(2) }) {
+        item {
             Column {
                 YouTubeListItem(
                     item = playlist,

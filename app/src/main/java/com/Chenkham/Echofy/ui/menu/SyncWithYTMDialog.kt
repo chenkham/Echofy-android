@@ -150,7 +150,7 @@ fun SyncWithYTMDialog(
                                 coroutineScope.launch(Dispatchers.IO) {
                                     // 1. Create YTM playlist with the same name
                                     val browseIdResult = YouTube.createPlaylist(playlist.playlist.name)
-                                    val browseId = browseIdResult.getOrNull()
+                                    val browseId = browseIdResult.getOrNull()?.removePrefix("VL")
                                     if (browseId == null) {
                                         launch(Dispatchers.Main) {
                                             Toast.makeText(
@@ -165,14 +165,14 @@ fun SyncWithYTMDialog(
                                     database.query {
                                         update(
                                             playlist.playlist.copy(
-                                                browseId = browseId.toString(),
+                                                browseId = browseId,
                                                 lastUpdateTime = LocalDateTime.now()
                                             )
                                         )
                                     }
                                     // 3. Add all local songs to the new YTM playlist
                                     songs.forEach { song ->
-                                        YouTube.addToPlaylist(browseId.toString(), song.id)
+                                        YouTube.addToPlaylist(browseId, song.id)
                                     }
                                     launch(Dispatchers.Main) {
                                         Toast.makeText(

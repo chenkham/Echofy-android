@@ -39,6 +39,7 @@ import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarScrollBehavior
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -126,11 +127,58 @@ fun BackpaperSettings(
         }
     }
     
+    val adManager = com.Chenkham.Echofy.ui.component.LocalAdManager.current
+    val isPremium = adManager?.isPremium?.collectAsState()?.value == true
+
     SettingsPage(
         title = stringResource(R.string.backpaper),
         navController = navController,
         scrollBehavior = scrollBehavior
     ) {
+        if (!isPremium) {
+            // Premium upsell banner
+            androidx.compose.material3.Card(
+                modifier = androidx.compose.ui.Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp),
+                colors = androidx.compose.material3.CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.primaryContainer
+                ),
+                shape = androidx.compose.foundation.shape.RoundedCornerShape(16.dp)
+            ) {
+                Column(
+                    modifier = androidx.compose.ui.Modifier.padding(20.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    Icon(
+                        painterResource(R.drawable.wallpaper),
+                        contentDescription = null,
+                        modifier = androidx.compose.ui.Modifier.size(48.dp),
+                        tint = MaterialTheme.colorScheme.primary
+                    )
+                    Text(
+                        "Live Fluid Backgrounds",
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Text(
+                        "Set beautiful wallpapers across the entire app with Echofy Premium.",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                    )
+                    androidx.compose.material3.Button(
+                        onClick = { navController.navigate("premium") },
+                        modifier = androidx.compose.ui.Modifier.fillMaxWidth()
+                    ) {
+                        Text("Upgrade to Premium ✦")
+                    }
+                }
+            }
+            return@SettingsPage
+        }
+
         // Enable/Disable toggle
         SwitchPreference(
             title = { Text(stringResource(R.string.enable_backpaper)) },

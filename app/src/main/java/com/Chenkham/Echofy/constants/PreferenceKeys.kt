@@ -85,6 +85,14 @@ val EnableLastFMScrobblingKey = booleanPreferencesKey("enableLastFMScrobbling")
 val LastFMUseNowPlaying = booleanPreferencesKey("lastFMUseNowPlaying")
 val AudioOffload = booleanPreferencesKey("audioOffload")
 
+// Premium feature preference keys
+val HapticBassBeatsKey = booleanPreferencesKey("hapticBassBeats")
+val ShakeToSkipKey = booleanPreferencesKey("shakeToSkip")
+val HardwareVolButtonSkipKey = booleanPreferencesKey("hardwareVolButtonSkip")
+val CrossfadeEnabledKey = booleanPreferencesKey("crossfadeEnabled")
+val VisualizerEnabledKey = booleanPreferencesKey("visualizerEnabled")
+val CustomAppIconKey = intPreferencesKey("customAppIcon")
+
 // Built-in Equalizer settings
 val EqualizerEnabledKey = booleanPreferencesKey("equalizerEnabled")
 val EqualizerPresetKey = intPreferencesKey("equalizerPreset") // -1 = Custom, 0+ = preset index
@@ -321,6 +329,11 @@ enum class MiniPlayerStyle {
     Slim
 }
 
+enum class PlayerLayoutStyle {
+    CLASSIC,
+    APPLE_MUSIC
+}
+
 val TopSize = stringPreferencesKey("topSize")
 val HistoryDuration = floatPreferencesKey("historyDuration")
 
@@ -334,6 +347,7 @@ val PlayerVolumeKey = floatPreferencesKey("playerVolume")
 val RepeatModeKey = intPreferencesKey("repeatMode")
 val PlayerButtonsStyleKey = stringPreferencesKey("player_buttons_style")
 val MiniPlayerStyleKey = stringPreferencesKey("mini_player_style")
+val PlayerLayoutStyleKey = stringPreferencesKey("player_layout_style")
 
 val SearchSourceKey = stringPreferencesKey("searchSource")
 val SwipeThumbnailKey = booleanPreferencesKey("swipeThumbnail")
@@ -608,3 +622,27 @@ val IsGuestModeKey = booleanPreferencesKey("is_guest_mode")
 val ChartCountryKey = stringPreferencesKey("chartCountry")
 
 val VoiceControlEnabledKey = booleanPreferencesKey("voiceControlEnabled")
+
+// Pro Feature Toggles
+val SeamlessDJCrossfadeKey = booleanPreferencesKey("seamlessDJCrossfade")
+val AudioSpeedPitchKey = booleanPreferencesKey("audioSpeedPitch")
+val InstagramShareCardsKey = booleanPreferencesKey("instagramShareCards")
+val BatchOfflineLyricsKey = booleanPreferencesKey("batchOfflineLyrics")
+val IncognitoModeKey = booleanPreferencesKey("incognitoMode")
+val CustomFontKey = stringPreferencesKey("customFont")
+val LiveFluidBackgroundKey = booleanPreferencesKey("liveFluidBackground")
+val LiveFluidColorPaletteKey = stringPreferencesKey("liveFluidColorPalette")
+val RealTimeVisualizerKey = booleanPreferencesKey("realTimeVisualizer")
+
+enum class LiveFluidColorPalette {
+    ALBUM,
+    ECHOFY,
+    OCEAN,
+    SUNSET,
+    ROSE,
+    EMERALD,
+    MONO,
+}
+
+val PremiumCustomIconEnabledKey = booleanPreferencesKey("premiumAppIconEnabled")
+val PremiumCustomFontEnabledKey = booleanPreferencesKey("premiumCustomFontEnabled")

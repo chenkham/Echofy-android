@@ -109,11 +109,19 @@ import com.Chenkham.Echofy.extensions.mediaItems
 import com.Chenkham.Echofy.extensions.metadata
 import com.Chenkham.Echofy.extensions.toMediaItem
 import com.Chenkham.Echofy.extensions.toQueue
+import com.Chenkham.Echofy.jam.AppwriteTogetherSessionManager
+import com.Chenkham.Echofy.jam.JamParticipantRole
+import com.Chenkham.Echofy.jam.JamPlaybackSnapshot
+import com.Chenkham.Echofy.jam.JamPlaybackTransportState
+import com.Chenkham.Echofy.jam.JamQueueItem
+import com.Chenkham.Echofy.jam.JamQueueSeed
+import com.Chenkham.Echofy.jam.JamSessionPhase
 import com.Chenkham.Echofy.lyrics.LyricsHelper
 import com.Chenkham.Echofy.models.PersistPlayerState
 import com.Chenkham.Echofy.models.PersistQueue
 import com.Chenkham.Echofy.models.toMediaMetadata
 import com.Chenkham.Echofy.playback.queues.EmptyQueue
+import com.Chenkham.Echofy.playback.queues.ListQueue
 import com.Chenkham.Echofy.playback.queues.Queue
 import com.Chenkham.Echofy.playback.queues.YouTubeQueue
 import com.Chenkham.Echofy.playback.queues.filterExplicit
@@ -219,6 +227,9 @@ class MusicService :
     val waitingForNetworkConnection = MutableStateFlow(false)
     private val isNetworkConnected = MutableStateFlow(false)
 
+    lateinit var wifiJamManager: WifiJamManager
+    lateinit var jamSessionManager: AppwriteTogetherSessionManager
+
     private var currentQueue: Queue = EmptyQueue
     var queueTitle: String? = null
 
@@ -267,6 +278,11 @@ class MusicService :
     @Volatile private var bassBoostStrength = 500
     @Volatile private var equalizerPreset = 0
     @Volatile private var equalizerBandLevels = ""
+    @Volatile private var crossfadeEnabled = false
+    @Volatile private var shakeToSkipEnabled = false
+    @Volatile private var hapticBassEnabled = false
+
+    private var shakeDetector: com.Chenkham.Echofy.utils.ShakeDetector? = null
 
     private val PauseRemoteListenHistoryKey = booleanPreferencesKey("pauseRemoteListenHistory")
 
@@ -278,12 +294,17 @@ class MusicService :
     private var discordRpc: DiscordRPC? = null
     private var lastPlaybackSpeed = 1.0f
     private var discordUpdateJob: Job? = null
+    private var jamPlaybackHeartbeatJob: Job? = null
 
     val automixItems = MutableStateFlow<List<MediaItem>>(emptyList())
     private val songUrlCache = ConcurrentHashMap<String, Pair<String, Long>>()
     
     // Add prefetch cache for upcoming songs
     private val prefetchJobs = ConcurrentHashMap<String, Job>()
+    private var lastJamQueueSyncFingerprint: String? = null
+    private var lastGuestJamQueueFingerprint: String? = null
+    private var lastAppliedJamRoomId: String? = null
+    private var jamAddMode = false
 
     fun prefetchPlaybackData(mediaId: String, preloadToCache: Boolean = false) {
         if (songUrlCache.containsKey(mediaId)) {
@@ -511,6 +532,22 @@ class MusicService :
              setReferenceCounted(false)
         }
 
+        // Shake to Skip — premium gesture feature
+        shakeDetector = com.Chenkham.Echofy.utils.ShakeDetector {
+            if (shakeToSkipEnabled && player.nextMediaItemIndex != androidx.media3.common.C.INDEX_UNSET) {
+                player.seekToNextMediaItem()
+                // Light haptic acknowledgement
+                val vibrator = getSystemService(Context.VIBRATOR_SERVICE) as? android.os.Vibrator
+                if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+                    vibrator?.vibrate(android.os.VibrationEffect.createOneShot(80, android.os.VibrationEffect.DEFAULT_AMPLITUDE))
+                } else {
+                    @Suppress("DEPRECATION")
+                    vibrator?.vibrate(80)
+                }
+            }
+        }
+        shakeDetector?.let { com.Chenkham.Echofy.utils.ShakeDetector.register(this, it) }
+
         mediaLibrarySessionCallback.apply {
             toggleLike = ::toggleLike
             toggleLibrary = ::toggleLibrary
@@ -562,6 +599,21 @@ class MusicService :
         scope.launch { dataStore.data.map { it[BassBoostStrengthKey] ?: 500 }.distinctUntilChanged().collect { bassBoostStrength = it } }
         scope.launch { dataStore.data.map { it[EqualizerPresetKey] ?: 0 }.distinctUntilChanged().collect { equalizerPreset = it } }
         scope.launch { dataStore.data.map { it[EqualizerBandLevelsKey] ?: "" }.distinctUntilChanged().collect { equalizerBandLevels = it } }
+        scope.launch {
+            dataStore.data.map { it[com.Chenkham.Echofy.constants.CrossfadeEnabledKey] ?: false }.distinctUntilChanged().collect { enabled ->
+                crossfadeEnabled = enabled
+                // Apply crossfade via ExoPlayer transition period
+                if (::player.isInitialized) {
+                    Timber.tag(TAG).d("Crossfade preference changed: $enabled")
+                }
+            }
+        }
+        scope.launch {
+            dataStore.data.map { it[com.Chenkham.Echofy.constants.ShakeToSkipKey] ?: false }.distinctUntilChanged().collect { shakeToSkipEnabled = it }
+        }
+        scope.launch {
+            dataStore.data.map { it[com.Chenkham.Echofy.constants.HapticBassBeatsKey] ?: false }.distinctUntilChanged().collect { hapticBassEnabled = it }
+        }
         
         // Async volume init
         scope.launch {
@@ -598,6 +650,103 @@ class MusicService :
         playerVolume.debounce(1000).collect(scope) { volume ->
             dataStore.edit { settings ->
                 settings[PlayerVolumeKey] = volume
+            }
+        }
+
+        wifiJamManager = WifiJamManager(scope)
+        jamSessionManager = AppwriteTogetherSessionManager(applicationContext, scope)
+        startJamPlaybackHeartbeat()
+        scope.launch {
+            jamSessionManager.sessionState.collect { state ->
+                val session = state.session
+                val roomId = session?.roomCode?.roomId
+                if (roomId == null || state.phase == JamSessionPhase.IDLE || state.phase == JamSessionPhase.ERROR) {
+                    lastAppliedJamRoomId = null
+                    lastGuestJamQueueFingerprint = null
+                    return@collect
+                }
+                if (roomId == lastAppliedJamRoomId) return@collect
+                lastAppliedJamRoomId = roomId
+                lastJamQueueSyncFingerprint = null
+                lastGuestJamQueueFingerprint = null
+
+                if (session.role == JamParticipantRole.HOST) {
+                    if (state.phase == JamSessionPhase.HOSTING) {
+                        constrainHostPlayerToCurrentSong()
+                        syncJamStateNow()
+                    }
+                } else {
+                    if (state.phase == JamSessionPhase.JOINED) {
+                        player.stop()
+                        player.clearMediaItems()
+                        jamSessionManager.remotePlayback.value?.let(::applyRemoteJamPlayback)
+                        applySharedJamQueueToGuestPlayer(jamSessionManager.queueSnapshot.value)
+                    }
+                }
+            }
+        }
+
+        // Guest handling: listen for incoming jam events and sync playback
+        scope.launch {
+            wifiJamManager.incomingEvents.collect { event ->
+                if (event == null) return@collect
+                
+                // Only act on events if we are currently a guest
+                if (wifiJamManager.isGuest.value) {
+                    when (event.type) {
+                        "SYNC" -> {
+                            // If it's a new media ID, set it and prepare
+                            if (event.mediaId.isNotBlank() && player.currentMediaItem?.mediaId != event.mediaId) {
+                                // Add single item for now. 
+                                // Ideally, we'd also sync the entire queue if needed.
+                                val mediaItem = MediaItem.Builder()
+                                    .setMediaId(event.mediaId)
+                                    .build()
+                                player.setMediaItem(mediaItem, event.positionMs)
+                                player.prepare()
+                            } else {
+                                // Just sync position if we drifted too far (e.g. > 1 sec)
+                                if (kotlin.math.abs(player.currentPosition - event.positionMs) > 1000) {
+                                    player.seekTo(event.positionMs)
+                                }
+                            }
+                            player.setPlaybackSpeed(event.playbackSpeed)
+                            // Play state sync is handled by PLAY / PAUSE events
+                        }
+                        "PLAY" -> {
+                            player.playWhenReady = true
+                        }
+                        "PAUSE" -> {
+                            player.playWhenReady = false
+                        }
+                    }
+                }
+            }
+        }
+
+        scope.launch {
+            jamSessionManager.remotePlayback.collect { snapshot ->
+                if (snapshot == null) return@collect
+                val session = jamSessionManager.sessionState.value.session ?: return@collect
+                if (
+                    session.role == JamParticipantRole.GUEST ||
+                    (session.role == JamParticipantRole.HOST &&
+                        jamAllowsGuestControls() &&
+                        snapshot.issuedByParticipantId != session.participantId)
+                ) {
+                    applyRemoteJamPlayback(snapshot)
+                }
+            }
+        }
+
+        scope.launch {
+            jamSessionManager.queueSnapshot.collect { queueItems ->
+                val session = jamSessionManager.sessionState.value.session ?: return@collect
+                if (session.role == JamParticipantRole.HOST) {
+                    applySharedJamQueueToHostPlayer(queueItems)
+                } else {
+                    applySharedJamQueueToGuestPlayer(queueItems)
+                }
             }
         }
 
@@ -1229,6 +1378,10 @@ class MusicService :
         player.prepare()
     }
 
+    fun seedJamQueueFromPlayerIfNeeded() {
+        publishFirebaseJamQueueSnapshot()
+    }
+
     private fun toggleLibrary() {
         database.query {
             currentSong.value?.let {
@@ -1459,6 +1612,26 @@ class MusicService :
     ) {
         lastPlaybackSpeed = -1.0f // forzar actualización de canción
 
+        // WiFi Jam Broadcast
+        if (this::wifiJamManager.isInitialized && wifiJamManager.isHost.value && mediaItem != null) {
+            wifiJamManager.broadcastEvent(
+                WifiJamEvent(
+                    type = "SYNC",
+                    mediaId = mediaItem.mediaId,
+                    positionMs = 0L,
+                    playbackSpeed = player.playbackParameters.speed
+                )
+            )
+        }
+        if (mediaItem != null) {
+            publishFirebaseJamPlayback(
+                playbackState = currentJamPlaybackState(),
+                positionMs = 0L,
+                mediaId = mediaItem.mediaId,
+            )
+        }
+        publishFirebaseJamQueueSnapshot()
+
         setupLoudnessEnhancer()
 
         discordUpdateJob?.cancel()
@@ -1540,6 +1713,23 @@ class MusicService :
 
         // Cuando termina la reproducciÃ³n, ocultar notificaciÃ³n si la cola estÃ¡ vacÃ­a
         if (playbackState == Player.STATE_ENDED) {
+            val session = if (this::jamSessionManager.isInitialized) {
+                jamSessionManager.sessionState.value.session
+            } else {
+                null
+            }
+            if (session?.role == JamParticipantRole.HOST && jamSessionManager.queueSnapshot.value.isNotEmpty()) {
+                jamSessionManager.popNextQueueItem()?.let { selection ->
+                    val syncedQueue = buildList {
+                        add(selection.nextItem.toMediaMetadata().toMediaItem())
+                        addAll(selection.remainingQueue.map { it.toMediaMetadata().toMediaItem() })
+                    }
+                    player.setMediaItems(syncedQueue)
+                    player.prepare()
+                    player.play()
+                    lastJamQueueSyncFingerprint = null
+                }
+            }
             scope.launch {
                 delay(1000)
                 if (!player.isPlaying && player.mediaItemCount == 0) {
@@ -1562,7 +1752,26 @@ class MusicService :
             }
         }
 
+        // WiFi Jam Broadcast
+        if (this::wifiJamManager.isInitialized && wifiJamManager.isHost.value) {
+            wifiJamManager.broadcastEvent(
+                WifiJamEvent(
+                    type = if (playWhenReady) "PLAY" else "PAUSE",
+                    mediaId = player.currentMediaItem?.mediaId ?: "",
+                    positionMs = player.currentPosition,
+                    playbackSpeed = player.playbackParameters.speed
+                )
+            )
+        }
+
         // Actualizar notificaciÃ³n cuando cambia el estado de reproducciÃ³n
+        publishFirebaseJamPlayback(
+            playbackState = if (playWhenReady) {
+                JamPlaybackTransportState.PLAYING
+            } else {
+                JamPlaybackTransportState.PAUSED
+            },
+        )
         scope.launch {
             delay(300)
             updateNotification()
@@ -1592,9 +1801,24 @@ class MusicService :
             }
         }
 
-        if (events.containsAny(EVENT_TIMELINE_CHANGED, EVENT_POSITION_DISCONTINUITY)) {
+        if (events.containsAny(Player.EVENT_TIMELINE_CHANGED, Player.EVENT_POSITION_DISCONTINUITY)) {
             currentMediaMetadata.value = player.currentMetadata
+            
+            // WiFi Jam Broadcast
+            if (this::wifiJamManager.isInitialized && wifiJamManager.isHost.value) {
+                wifiJamManager.broadcastEvent(
+                    WifiJamEvent(
+                        type = "SYNC",
+                        mediaId = player.currentMediaItem?.mediaId ?: "",
+                        positionMs = player.currentPosition,
+                        playbackSpeed = player.playbackParameters.speed
+                    )
+                )
+            }
+            
             // Forzar actualizaciÃ³n de notificaciÃ³n para asegurar que la imagen se cargue
+            publishFirebaseJamPlayback()
+            publishFirebaseJamQueueSnapshot()
             scope.launch {
                 delay(200)
                 updateNotification()
@@ -2082,6 +2306,385 @@ class MusicService :
         }
     }
 
+    fun seekToNextJamAware() {
+        val session = if (this::jamSessionManager.isInitialized) {
+            jamSessionManager.sessionState.value.session
+        } else {
+            null
+        }
+        val canControlPlayback = session == null ||
+            session.role == JamParticipantRole.HOST ||
+            jamAllowsGuestControls()
+        if (!canControlPlayback) {
+            return
+        }
+        if (session?.role == JamParticipantRole.HOST && jamSessionManager.queueSnapshot.value.isNotEmpty()) {
+            jamSessionManager.popNextQueueItem()?.let { selection ->
+                val syncedQueue = buildList {
+                    add(selection.nextItem.toMediaMetadata().toMediaItem())
+                    addAll(selection.remainingQueue.map { it.toMediaMetadata().toMediaItem() })
+                }
+                player.setMediaItems(syncedQueue)
+                player.prepare()
+                player.playWhenReady = true
+                lastJamQueueSyncFingerprint = null
+            }
+            return
+        }
+
+        if (player.hasNextMediaItem()) {
+            player.seekToNext()
+            player.prepare()
+            player.playWhenReady = true
+        }
+    }
+
+    fun seekToPreviousJamAware() {
+        val session = if (this::jamSessionManager.isInitialized) {
+            jamSessionManager.sessionState.value.session
+        } else {
+            null
+        }
+        val canControlPlayback = session == null ||
+            session.role == JamParticipantRole.HOST ||
+            jamAllowsGuestControls()
+        if (!canControlPlayback) {
+            return
+        }
+        if (player.hasPreviousMediaItem() || player.currentPosition > 3_000) {
+            player.seekToPrevious()
+            player.prepare()
+            player.playWhenReady = true
+        }
+    }
+
+    private fun currentJamPlaybackState(): JamPlaybackTransportState =
+        when {
+            player.playbackState == Player.STATE_BUFFERING -> JamPlaybackTransportState.BUFFERING
+            player.playWhenReady -> JamPlaybackTransportState.PLAYING
+            else -> JamPlaybackTransportState.PAUSED
+        }
+
+    private fun publishFirebaseJamPlayback(
+        playbackState: JamPlaybackTransportState = currentJamPlaybackState(),
+        positionMs: Long = player.currentPosition,
+        mediaId: String = player.currentMediaItem?.mediaId.orEmpty(),
+    ) {
+        if (!this::jamSessionManager.isInitialized) return
+        val currentMetadata = player.currentMediaItem?.metadata ?: currentMediaMetadata.value
+        jamSessionManager.publishPlaybackState(
+            mediaId = mediaId,
+            title = currentMetadata?.title.orEmpty(),
+            artist = currentMetadata?.artists?.joinToString { it.name }.orEmpty(),
+            thumbnailUrl = currentMetadata?.thumbnailUrl.orEmpty(),
+            durationSeconds = currentMetadata?.duration ?: -1,
+            positionMs = positionMs,
+            playbackSpeed = player.playbackParameters.speed,
+            playbackState = playbackState,
+        )
+    }
+
+    private fun startJamPlaybackHeartbeat() {
+        jamPlaybackHeartbeatJob?.cancel()
+        jamPlaybackHeartbeatJob = scope.launch {
+            while (isActive) {
+                delay(JAM_PLAYBACK_HEARTBEAT_MS)
+                val session = jamSessionManager.sessionState.value.session ?: continue
+                if (session.role != JamParticipantRole.HOST) continue
+                if (player.currentMediaItem == null || player.playbackState == Player.STATE_IDLE) continue
+                publishFirebaseJamPlayback()
+            }
+        }
+    }
+
+    private fun publishFirebaseJamQueueSnapshot() {
+        if (!this::jamSessionManager.isInitialized) return
+        val session = jamSessionManager.sessionState.value.session ?: return
+        if (session.role == JamParticipantRole.HOST) {
+            jamSessionManager.reconcileHostQueue(buildJamQueueSeeds())
+        }
+    }
+
+    private fun buildJamQueueSeeds(): List<JamQueueSeed> {
+        val startIndex = when {
+            player.mediaItemCount == 0 -> return emptyList()
+            player.currentMediaItemIndex in 0 until player.mediaItemCount -> player.currentMediaItemIndex + 1
+            else -> 0
+        }
+        return player.mediaItems
+            .drop(startIndex.coerceAtLeast(0))
+            .mapNotNull { mediaItem ->
+                val metadata = mediaItem.metadata ?: return@mapNotNull null
+                JamQueueSeed(
+                    mediaId = mediaItem.mediaId,
+                    title = metadata.title,
+                    artist = metadata.artists.joinToString { it.name },
+                    thumbnailUrl = metadata.thumbnailUrl.orEmpty(),
+                    durationSeconds = metadata.duration,
+                )
+            }
+    }
+
+    private fun buildJamQueueFingerprint(
+        roomId: String,
+        queueSeeds: List<JamQueueSeed>,
+    ): String {
+        val queuePart = queueSeeds.joinToString(separator = "|") { seed ->
+            listOf(
+                seed.mediaId,
+                seed.title,
+                seed.artist,
+                seed.durationSeconds.toString(),
+            ).joinToString(separator = "~")
+        }
+        return "$roomId::$queuePart"
+    }
+
+    private fun updateCurrentQueueFromMediaItems(mediaItems: List<MediaItem>) {
+        currentQueue = ListQueue(
+            title = "Jam",
+            items = mediaItems,
+            startIndex = 0,
+            position = 0L,
+        )
+    }
+
+    internal fun applySharedJamQueueToHostPlayer(queueItems: List<JamQueueItem>) {
+        val session = jamSessionManager.sessionState.value.session ?: return
+        if (session.role != JamParticipantRole.HOST) return
+
+        val remoteQueueSeeds = queueItems.map { item ->
+            JamQueueSeed(
+                mediaId = item.mediaId,
+                title = item.title,
+                artist = item.artist,
+                thumbnailUrl = item.thumbnailUrl,
+                durationSeconds = item.durationSeconds,
+            )
+        }
+        val remoteFingerprint = buildJamQueueFingerprint(
+            roomId = session.roomCode.roomId,
+            queueSeeds = remoteQueueSeeds,
+        )
+        val localFingerprint = buildJamQueueFingerprint(
+            roomId = session.roomCode.roomId,
+            queueSeeds = buildJamQueueSeeds(),
+        )
+        if (remoteFingerprint == localFingerprint) {
+            lastJamQueueSyncFingerprint = remoteFingerprint
+            return
+        }
+
+        lastJamQueueSyncFingerprint = remoteFingerprint
+        val newItems = queueItems.map { it.toMediaMetadata().toMediaItem() }
+
+        if (player.currentMediaItem == null) {
+            player.setMediaItems(newItems)
+            updateCurrentQueueFromMediaItems(newItems)
+            player.prepare()
+            player.playWhenReady = true
+        } else {
+            val startIndex = player.currentMediaItemIndex + 1
+            if (player.mediaItemCount > startIndex) {
+                player.removeMediaItems(startIndex, player.mediaItemCount)
+            }
+            player.addMediaItems(startIndex, newItems)
+            updateCurrentQueueFromMediaItems(player.mediaItems)
+        }
+    }
+
+    private fun applySharedJamQueueToGuestPlayer(queueItems: List<JamQueueItem>) {
+        val session = jamSessionManager.sessionState.value.session ?: return
+        if (session.role != JamParticipantRole.GUEST) return
+
+        val remotePlayback = jamSessionManager.remotePlayback.value
+        val remoteQueueSeeds = queueItems.map { item ->
+            JamQueueSeed(
+                mediaId = item.mediaId,
+                title = item.title,
+                artist = item.artist,
+                thumbnailUrl = item.thumbnailUrl,
+                durationSeconds = item.durationSeconds,
+            )
+        }
+        val remoteFingerprint = buildJamQueueFingerprint(
+            roomId = session.roomCode.roomId,
+            queueSeeds = remoteQueueSeeds,
+        )
+        if (remoteFingerprint == lastGuestJamQueueFingerprint) return
+
+        val currentMediaItem = player.currentMediaItem ?: remotePlayback
+            ?.takeIf { it.mediaId.isNotBlank() }
+            ?.toMediaMetadata()
+            ?.toMediaItem()
+        if (currentMediaItem == null && queueItems.isEmpty()) {
+            return
+        }
+        
+        lastGuestJamQueueFingerprint = remoteFingerprint
+        val newItems = queueItems.map { it.toMediaMetadata().toMediaItem() }
+
+        if (player.currentMediaItem == null) {
+            val rebuiltQueue = buildList {
+                currentMediaItem?.let(::add)
+                addAll(newItems)
+            }
+            if (rebuiltQueue.isEmpty()) return
+            player.setMediaItems(rebuiltQueue)
+            updateCurrentQueueFromMediaItems(rebuiltQueue)
+            player.prepare()
+        } else {
+            val startIndex = player.currentMediaItemIndex + 1
+            if (player.mediaItemCount > startIndex) {
+                player.removeMediaItems(startIndex, player.mediaItemCount)
+            }
+            player.addMediaItems(startIndex, newItems)
+            updateCurrentQueueFromMediaItems(player.mediaItems)
+        }
+    }
+
+    private fun applyRemoteJamPlayback(snapshot: JamPlaybackSnapshot) {
+        if (snapshot.mediaId.isBlank()) return
+
+        // Add a small predictive offset to compensate for Appwrite Realtime delivery latency (~300ms typical)
+        val deliveryCompensationMs = if (snapshot.playbackState == JamPlaybackTransportState.PLAYING) 300L else 0L
+        val targetPosition = snapshot.expectedPositionAt(jamSessionManager.currentServerTimeMs()) + deliveryCompensationMs
+
+        if (player.currentMediaItem?.mediaId != snapshot.mediaId) {
+            val mediaItem = snapshot.toMediaMetadata().toMediaItem()
+            player.setMediaItems(listOf(mediaItem), 0, targetPosition)
+            updateCurrentQueueFromMediaItems(listOf(mediaItem))
+            player.prepare()
+            lastGuestJamQueueFingerprint = null
+        } else if (kotlin.math.abs(player.currentPosition - targetPosition) > 200L) {
+            // Tighter threshold: sync if more than 200ms off (was 1000ms)
+            player.seekTo(targetPosition)
+        }
+
+        player.setPlaybackSpeed(snapshot.playbackSpeed)
+        player.playWhenReady = snapshot.playbackState != JamPlaybackTransportState.PAUSED
+    }
+
+    fun syncJamStateNow() {
+        if (!this::jamSessionManager.isInitialized) return
+        publishFirebaseJamPlayback()
+    }
+
+    fun currentPlaybackQueueForJam(): List<com.Chenkham.Echofy.models.MediaMetadata> {
+        if (player.mediaItemCount == 0) return emptyList()
+        val startIndex = when {
+            player.currentMediaItemIndex in 0 until player.mediaItemCount -> player.currentMediaItemIndex
+            else -> 0
+        }
+        return player.mediaItems
+            .drop(startIndex)
+            .mapNotNull { it.metadata }
+    }
+
+    fun replacePlayerQueueForJam(items: List<com.Chenkham.Echofy.models.MediaMetadata>) {
+        if (items.isEmpty()) return
+        val playWhenReady = player.playWhenReady || player.currentMediaItem == null
+        val mediaItems = items.map { it.toMediaItem() }
+        player.setMediaItems(mediaItems)
+        updateCurrentQueueFromMediaItems(mediaItems)
+        player.prepare()
+        player.playWhenReady = playWhenReady
+    }
+
+    fun seedJamQueue(items: List<com.Chenkham.Echofy.models.MediaMetadata>) {
+        if (!this::jamSessionManager.isInitialized) return
+        jamSessionManager.replaceQueue(items)
+        lastJamQueueSyncFingerprint = null
+    }
+
+    private fun constrainHostPlayerToCurrentSong() {
+        val currentMediaItem = player.currentMediaItem ?: return
+        val shouldPlay = player.playWhenReady
+        val currentPositionMs = if (player.currentPosition >= 0) player.currentPosition else 0L
+        val mediaItems = listOf(currentMediaItem)
+        player.setMediaItems(mediaItems, 0, currentPositionMs)
+        updateCurrentQueueFromMediaItems(mediaItems)
+        player.prepare()
+        player.playWhenReady = shouldPlay
+    }
+
+    fun enqueueItemsIntoJam(items: List<MediaItem>): Boolean {
+        if (!this::jamSessionManager.isInitialized) return false
+        val session = jamSessionManager.sessionState.value.session ?: return false
+        val jamItems = items.mapNotNull { mediaItem ->
+            val metadata = mediaItem.metadata ?: return@mapNotNull null
+            jamSessionManager.enqueueSong(metadata).getOrNull()
+        }
+        if (jamItems.isEmpty()) return false
+        if (session.role == JamParticipantRole.HOST) {
+            applySharedJamQueueToHostPlayer(jamSessionManager.queueSnapshot.value)
+        }
+        return true
+    }
+
+    fun enableJamAddMode() {
+        jamAddMode = true
+    }
+
+    private fun consumeJamAddMode(queue: Queue): Boolean {
+        if (!jamAddMode) return false
+        jamAddMode = false
+
+        val selectedItem = when {
+            queue.preloadItem != null -> queue.preloadItem?.toMediaItem()
+            queue is ListQueue -> queue.items.getOrNull(queue.startIndex)
+            else -> null
+        }
+
+        if (selectedItem != null) {
+            return enqueueItemsIntoJam(listOf(selectedItem))
+        }
+
+        scope.launch {
+            runCatching {
+                withContext(Dispatchers.IO) { queue.getInitialStatus() }
+            }.getOrNull()
+                ?.let { status ->
+                    status.items.getOrNull(status.mediaItemIndex.coerceAtLeast(0))
+                }
+                ?.let { item ->
+                    enqueueItemsIntoJam(listOf(item))
+                }
+        }
+
+        return true
+    }
+
+    fun jamAllowsGuestControls(): Boolean =
+        if (this::jamSessionManager.isInitialized) {
+            jamSessionManager.roomMeta.value?.allowGuestControls ?: true
+        } else {
+            true
+        }
+
+    fun canCurrentJamParticipantControlPlayback(): Boolean {
+        val role = currentJamParticipantRole() ?: return true
+        return role == JamParticipantRole.HOST || jamAllowsGuestControls()
+    }
+
+    fun isJamSessionActive(): Boolean {
+        if (!this::jamSessionManager.isInitialized) return false
+        val phase = jamSessionManager.sessionState.value.phase
+        return phase == JamSessionPhase.HOSTING || phase == JamSessionPhase.JOINED
+    }
+
+    fun currentJamParticipantRole(): JamParticipantRole? =
+        if (this::jamSessionManager.isInitialized) jamSessionManager.sessionState.value.session?.role else null
+
+    fun handleJamAwarePlayQueue(queue: Queue): Boolean {
+        if (!isJamSessionActive()) return false
+        if (consumeJamAddMode(queue)) {
+            return true
+        }
+        Log.d(TAG, "Ignoring local playQueue while Jam is active")
+        return true
+    }
+
     private fun saveQueueToDisk() {
         if (player.playbackState == STATE_IDLE && player.mediaItemCount == 0) {
             filesDir.resolve(PERSISTENT_AUTOMIX_FILE).delete()
@@ -2184,9 +2787,15 @@ class MusicService :
         }
         discordRpc = null
         releaseLoudnessEnhancer()
+        shakeDetector?.let { com.Chenkham.Echofy.utils.ShakeDetector.unregister(this, it) }
+        shakeDetector = null
         mediaSession.release()
         player.removeListener(this)
         player.removeListener(sleepTimer)
+        if (this::jamSessionManager.isInitialized) {
+            jamSessionManager.shutdown()
+        }
+        jamPlaybackHeartbeatJob?.cancel()
         player.release()
         super.onDestroy()
     }
@@ -2243,6 +2852,7 @@ class MusicService :
         private const val MAX_GAIN_MB = 800 // Maximum gain in millibels (8 dB)
         private const val MIN_GAIN_MB = -800 // Minimum gain in millibels (-8 dB)
 
+        private const val JAM_PLAYBACK_HEARTBEAT_MS = 3_000L
         private const val TAG = "MusicService"
     }
 }

@@ -1,40 +1,62 @@
-﻿package com.Chenkham.Echofy.ui.screens.library
+package com.Chenkham.Echofy.ui.screens.library
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.pulltorefresh.PullToRefreshDefaults.Indicator
+import androidx.compose.material3.pulltorefresh.pullToRefresh
+import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
+import com.Chenkham.Echofy.LocalPlayerAwareWindowInsets
 import com.Chenkham.Echofy.R
+import com.Chenkham.Echofy.ads.AdManager
+import com.Chenkham.Echofy.constants.BackpaperScreen
 import com.Chenkham.Echofy.constants.ChipSortTypeKey
 import com.Chenkham.Echofy.constants.LibraryFilter
-import com.Chenkham.Echofy.ui.component.ChipsRow
-import com.Chenkham.Echofy.ui.component.BannerAdView
-import com.Chenkham.Echofy.ads.AdManager
-import com.Chenkham.Echofy.utils.rememberEnumPreference
-import com.Chenkham.Echofy.constants.BackpaperScreen
 import com.Chenkham.Echofy.ui.component.BackpaperBackground
+import com.Chenkham.Echofy.ui.component.BannerAdView
+import com.Chenkham.Echofy.ui.component.ChipsRow
+import com.Chenkham.Echofy.utils.rememberEnumPreference
+import com.Chenkham.Echofy.viewmodels.LibraryAlbumsViewModel
+import com.Chenkham.Echofy.viewmodels.LibraryArtistsViewModel
+import com.Chenkham.Echofy.viewmodels.LibraryMixViewModel
+import com.Chenkham.Echofy.viewmodels.LibraryPlaylistsViewModel
+import com.Chenkham.Echofy.viewmodels.LibrarySongsViewModel
+import kotlinx.coroutines.launch
 
-
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun LibraryScreen(
     navController: NavController,
     adManager: AdManager? = null,
 ) {
     var filterType by rememberEnumPreference(ChipSortTypeKey, LibraryFilter.LIBRARY)
+    val libraryMixViewModel: LibraryMixViewModel = hiltViewModel()
+    val libraryPlaylistsViewModel: LibraryPlaylistsViewModel = hiltViewModel()
+    val librarySongsViewModel: LibrarySongsViewModel = hiltViewModel()
+    val libraryAlbumsViewModel: LibraryAlbumsViewModel = hiltViewModel()
+    val libraryArtistsViewModel: LibraryArtistsViewModel = hiltViewModel()
+    val coroutineScope = rememberCoroutineScope()
+    var isRefreshing by rememberSaveable { mutableStateOf(false) }
+    val pullRefreshState = rememberPullToRefreshState()
 
     val filterContent = @Composable {
         Row {
@@ -55,51 +77,96 @@ fun LibraryScreen(
                             it
                         }
                 },
-                modifier = Modifier.weight(1f),
+                modifier = Modifier.fillMaxWidth(),
             )
         }
     }
 
-
-
-    BackpaperBackground(screen = BackpaperScreen.LIBRARY) {
-    Column(
-        modifier = Modifier.fillMaxSize(),
+    val onRefresh: () -> Unit = remember(
+        filterType,
+        libraryMixViewModel,
+        libraryPlaylistsViewModel,
+        librarySongsViewModel,
+        libraryAlbumsViewModel,
+        libraryArtistsViewModel,
     ) {
-        // Main content takes remaining space
-        Box(
-            modifier = Modifier.weight(1f),
-        ) {
-            when (filterType) {
-                LibraryFilter.LIBRARY -> LibraryMixScreen(navController, filterContent)
-                LibraryFilter.PLAYLISTS -> LibraryPlaylistsScreen(navController, filterContent)
-                LibraryFilter.SONGS -> LibrarySongsScreen(
-                    navController,
-                    { filterType = LibraryFilter.LIBRARY })
-
-                LibraryFilter.ALBUMS -> LibraryAlbumsScreen(
-                    navController,
-                    { filterType = LibraryFilter.LIBRARY })
-
-                LibraryFilter.ARTISTS -> LibraryArtistsScreen(
-                    navController,
-                    { filterType = LibraryFilter.LIBRARY })
+        {
+            coroutineScope.launch {
+                isRefreshing = true
+                try {
+                    when (filterType) {
+                        LibraryFilter.LIBRARY -> libraryMixViewModel.refresh().join()
+                        LibraryFilter.PLAYLISTS -> libraryPlaylistsViewModel.refresh().join()
+                        LibraryFilter.SONGS -> librarySongsViewModel.refresh().join()
+                        LibraryFilter.ALBUMS -> libraryAlbumsViewModel.refresh().join()
+                        LibraryFilter.ARTISTS -> libraryArtistsViewModel.refresh().join()
+                    }
+                } finally {
+                    isRefreshing = false
+                }
             }
-        }
-        
-        // Banner ad at the bottom
-        adManager?.let { manager ->
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .background(MaterialTheme.colorScheme.surface)
-            ) {
-                BannerAdView(
-                    adManager = manager,
-                    modifier = Modifier.fillMaxWidth()
-                )
-            }
+            Unit
         }
     }
-}
+
+    BackpaperBackground(screen = BackpaperScreen.LIBRARY) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .pullToRefresh(
+                    state = pullRefreshState,
+                    isRefreshing = isRefreshing,
+                    onRefresh = onRefresh,
+                ),
+            contentAlignment = Alignment.TopStart,
+        ) {
+            Column(
+                modifier = Modifier.fillMaxSize(),
+            ) {
+                Box(
+                    modifier = Modifier.weight(1f),
+                ) {
+                    when (filterType) {
+                        LibraryFilter.LIBRARY -> LibraryMixScreen(navController, filterContent)
+                        LibraryFilter.PLAYLISTS -> LibraryPlaylistsScreen(navController, filterContent)
+                        LibraryFilter.SONGS -> LibrarySongsScreen(
+                            navController,
+                            { filterType = LibraryFilter.LIBRARY },
+                        )
+
+                        LibraryFilter.ALBUMS -> LibraryAlbumsScreen(
+                            navController,
+                            { filterType = LibraryFilter.LIBRARY },
+                        )
+
+                        LibraryFilter.ARTISTS -> LibraryArtistsScreen(
+                            navController,
+                            { filterType = LibraryFilter.LIBRARY },
+                        )
+                    }
+                }
+
+                adManager?.let { manager ->
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .background(MaterialTheme.colorScheme.surface),
+                    ) {
+                        BannerAdView(
+                            adManager = manager,
+                            modifier = Modifier.fillMaxWidth(),
+                        )
+                    }
+                }
+            }
+
+            Indicator(
+                isRefreshing = isRefreshing,
+                state = pullRefreshState,
+                modifier = Modifier
+                    .align(Alignment.TopCenter)
+                    .padding(LocalPlayerAwareWindowInsets.current.asPaddingValues()),
+            )
+        }
+    }
 }

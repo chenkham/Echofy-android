@@ -1,4 +1,4 @@
-﻿package com.Chenkham.Echofy.ui.screens
+package com.Chenkham.Echofy.ui.screens
 
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.clickable
@@ -162,7 +162,7 @@ fun YouTubeBrowseScreen(
                                                 Modifier
                                                     .clickable {
                                                         if (song.id == mediaMetadata?.id) {
-                                                            playerConnection.player.togglePlayPause()
+                                                            playerConnection.togglePlayPause()
                                                         } else {
                                                             playerConnection.playQueue(
                                                                 YouTubeQueue(

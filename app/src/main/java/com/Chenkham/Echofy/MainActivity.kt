@@ -152,6 +152,8 @@ import androidx.core.content.ContextCompat
 import androidx.core.net.toUri
 import androidx.core.util.Consumer
 import androidx.core.view.WindowCompat
+import androidx.datastore.preferences.core.edit
+import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
@@ -213,7 +215,11 @@ import com.Chenkham.Echofy.ui.component.TopSearch
 import com.Chenkham.Echofy.ui.component.rememberBottomSheetState
 import com.Chenkham.Echofy.ui.component.shimmer.ShimmerTheme
 import com.Chenkham.Echofy.ui.menu.YouTubeSongMenu
+import com.Chenkham.Echofy.ui.player.AppleBottomSheetPlayer
 import com.Chenkham.Echofy.ui.player.BottomSheetPlayer
+import com.Chenkham.Echofy.constants.PlayerLayoutStyleKey
+import com.Chenkham.Echofy.constants.PlayerLayoutStyle
+import com.Chenkham.Echofy.jam.JamRoomCode
 import com.Chenkham.Echofy.ui.screens.Screens
 import com.Chenkham.Echofy.ui.screens.navigationBuilder
 
@@ -295,6 +301,9 @@ class MainActivity : ComponentActivity() {
         private const val CONTROL_PLAY_PAUSE = 1
         private const val CONTROL_NEXT = 2
         private const val CONTROL_PREVIOUS = 3
+        private val JamRegistryUrlKey = stringPreferencesKey("jam_registry_url_override")
+        private val JamInviteBaseUrlKey = stringPreferencesKey("jam_invite_base_url_override")
+        private val JamAllocationUrlKey = stringPreferencesKey("jam_room_allocate_url_override")
         const val ACTION_SEARCH = "com.Chenkham.Echofy.action.SEARCH"
         const val ACTION_EXPLORE = "com.Chenkham.Echofy.action.EXPLORE"
         const val ACTION_LIBRARY = "com.Chenkham.Echofy.action.LIBRARY"
@@ -339,6 +348,7 @@ class MainActivity : ComponentActivity() {
         }
 
     private var latestVersionName: String by mutableStateOf(BuildConfig.VERSION_NAME)
+    private var pendingJamRoomCode by mutableStateOf<String?>(null)
 
     override fun onStart() {
         super.onStart()
@@ -409,6 +419,59 @@ class MainActivity : ComponentActivity() {
 
     override fun onStop() {
         super.onStop()
+    }
+
+    // Hardware Volume Button Skip — premium feature
+    private var volumeDownLongPressStartTime = 0L
+    private var volumeUpLongPressStartTime = 0L
+    private val LONG_PRESS_THRESHOLD_MS = 600L
+
+    override fun dispatchKeyEvent(event: android.view.KeyEvent): Boolean {
+        // Only intercept if the premium feature is active
+        val hwSkipEnabled = runCatching {
+            kotlinx.coroutines.runBlocking {
+                dataStore.data.map { it[com.Chenkham.Echofy.constants.HardwareVolButtonSkipKey] ?: false }.first()
+            }
+        }.getOrDefault(false)
+        val isPremium = adManager.isPremium.value
+
+        if (isPremium && hwSkipEnabled) {
+            when (event.keyCode) {
+                android.view.KeyEvent.KEYCODE_VOLUME_DOWN -> {
+                    when (event.action) {
+                        android.view.KeyEvent.ACTION_DOWN -> {
+                            if (volumeDownLongPressStartTime == 0L)
+                                volumeDownLongPressStartTime = System.currentTimeMillis()
+                        }
+                        android.view.KeyEvent.ACTION_UP -> {
+                            val held = System.currentTimeMillis() - volumeDownLongPressStartTime
+                            volumeDownLongPressStartTime = 0L
+                            if (held >= LONG_PRESS_THRESHOLD_MS) {
+                                playerConnection?.player?.seekToPreviousMediaItem()
+                                return true // consume — skip volume change
+                            }
+                        }
+                    }
+                }
+                android.view.KeyEvent.KEYCODE_VOLUME_UP -> {
+                    when (event.action) {
+                        android.view.KeyEvent.ACTION_DOWN -> {
+                            if (volumeUpLongPressStartTime == 0L)
+                                volumeUpLongPressStartTime = System.currentTimeMillis()
+                        }
+                        android.view.KeyEvent.ACTION_UP -> {
+                            val held = System.currentTimeMillis() - volumeUpLongPressStartTime
+                            volumeUpLongPressStartTime = 0L
+                            if (held >= LONG_PRESS_THRESHOLD_MS) {
+                                playerConnection?.player?.seekToNextMediaItem()
+                                return true // consume — skip volume change
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        return super.dispatchKeyEvent(event)
     }
 
     override fun onDestroy() {
@@ -897,6 +960,7 @@ class MainActivity : ComponentActivity() {
                             collapsedBound = bottomInset + (if (shouldShowNavigationBar) NavigationBarHeight else 0.dp) + MiniPlayerHeight,
                             expandedBound = maxHeight,
                         )
+                        
 
                     val playerAwareWindowInsets =
                         remember(
@@ -1532,15 +1596,28 @@ class MainActivity : ComponentActivity() {
                                 }
                             },
                             bottomBar = {
+                                val playerLayoutStyle by rememberEnumPreference(PlayerLayoutStyleKey, defaultValue = PlayerLayoutStyle.CLASSIC)
+                                val isPremium = LocalAdManager.current?.isPremium?.collectAsState()?.value == true
                                 Box {
-                                    BottomSheetPlayer(
-                                        state = playerBottomSheetState,
-                                        navController = navController,
-                                        onOpenFullscreenLyrics = {
-                                            showFullscreenLyrics = true
-                                        },
-                                        modifier = Modifier.fillMaxSize()
-                                    )
+                                    if (playerLayoutStyle == PlayerLayoutStyle.APPLE_MUSIC && isPremium) {
+                                        AppleBottomSheetPlayer(
+                                            state = playerBottomSheetState,
+                                            navController = navController,
+                                            onOpenFullscreenLyrics = {
+                                                showFullscreenLyrics = true
+                                            },
+                                            modifier = Modifier.fillMaxSize()
+                                        )
+                                    } else {
+                                        BottomSheetPlayer(
+                                            state = playerBottomSheetState,
+                                            navController = navController,
+                                            onOpenFullscreenLyrics = {
+                                                showFullscreenLyrics = true
+                                            },
+                                            modifier = Modifier.fillMaxSize()
+                                        )
+                                    }
 
                                     AnimatedVisibility(
                                         visible = showFullscreenLyrics,
@@ -1877,6 +1954,13 @@ class MainActivity : ComponentActivity() {
                                 }
                             }
                         }
+
+                        pendingJamRoomCode?.let { roomCode ->
+                            com.Chenkham.Echofy.ui.component.EchofyJamSheet(
+                                onDismiss = { pendingJamRoomCode = null },
+                                initialRoomCode = roomCode,
+                            )
+                        }
                     }
 
                     LaunchedEffect(shouldShowSearchBar, openSearchImmediately) {
@@ -1910,10 +1994,19 @@ class MainActivity : ComponentActivity() {
 
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
+        setIntent(intent)
         handleIntent(intent)
     }
 
     private fun handleIntent(intent: Intent) {
+        if (handleJamConfigIntent(intent)) {
+            return
+        }
+
+        if (handleJamJoinIntent(intent)) {
+            return
+        }
+
         // Handle Google Assistant "Play [query]" intent
         if (intent.action == android.provider.MediaStore.INTENT_ACTION_MEDIA_PLAY_FROM_SEARCH) {
             lifecycleScope.launch {
@@ -1974,6 +2067,93 @@ class MainActivity : ComponentActivity() {
                 }
             }
         }
+    }
+
+    private fun handleJamJoinIntent(intent: Intent): Boolean {
+        val rawText = intent.extras?.getString(Intent.EXTRA_TEXT)
+        val uriCandidates = buildList {
+            intent.data?.let(::add)
+            rawText?.let { text ->
+                runCatching { Uri.parse(text.trim()) }.getOrNull()?.let(::add)
+            }
+        }
+
+        val roomCode = uriCandidates
+            .firstNotNullOfOrNull(::extractJamRoomCode)
+            ?: rawText
+                ?.trim()
+                ?.uppercase()
+                ?.takeIf { JamRoomCode.parse(it) != null }
+            ?: return false
+
+        pendingJamRoomCode = roomCode
+        Toast.makeText(this, "Together invite ready", Toast.LENGTH_SHORT).show()
+        return true
+    }
+
+    private fun handleJamConfigIntent(intent: Intent): Boolean {
+        val uri = intent.data ?: return false
+        if (uri.scheme?.lowercase() != "echofy" || uri.host?.lowercase() != "config") {
+            return false
+        }
+
+        val registryUrl = uri.getQueryParameter("jamRegistryUrl")
+            ?: uri.getQueryParameter("registryUrl")
+        val inviteBaseUrl = uri.getQueryParameter("jamInviteBaseUrl")
+            ?: uri.getQueryParameter("inviteBaseUrl")
+        val allocationUrl = uri.getQueryParameter("jamRoomAllocateUrl")
+            ?: uri.getQueryParameter("roomAllocateUrl")
+
+        if (registryUrl.isNullOrBlank() && inviteBaseUrl.isNullOrBlank() && allocationUrl.isNullOrBlank()) {
+            Toast.makeText(this, "No Jam config found in this link", Toast.LENGTH_SHORT).show()
+            return true
+        }
+
+        lifecycleScope.launch {
+            dataStore.edit { preferences ->
+                registryUrl?.trim()?.takeIf { it.isNotBlank() }?.let {
+                    preferences[JamRegistryUrlKey] = it
+                }
+                inviteBaseUrl?.trim()?.takeIf { it.isNotBlank() }?.let {
+                    preferences[JamInviteBaseUrlKey] = it.removeSuffix("/")
+                }
+                allocationUrl?.trim()?.takeIf { it.isNotBlank() }?.let {
+                    preferences[JamAllocationUrlKey] = it
+                }
+            }
+            playerConnection?.service?.jamSessionManager?.refreshRegistry(forceRefresh = true)
+            Toast.makeText(
+                this@MainActivity,
+                "Echofy Together control plane connected",
+                Toast.LENGTH_SHORT,
+            ).show()
+        }
+        return true
+    }
+
+    private fun extractJamRoomCode(uri: Uri): String? {
+        val normalizedScheme = uri.scheme?.lowercase()
+        val normalizedHost = uri.host?.lowercase()
+
+        val candidate = when {
+            normalizedScheme == "echofy" && normalizedHost in setOf("jam", "r") ->
+                uri.pathSegments.firstOrNull()
+
+            normalizedScheme == "echofy" && normalizedHost == "join" ->
+                uri.getQueryParameter("room")
+                    ?: uri.getQueryParameter("roomCode")
+                    ?: uri.getQueryParameter("code")
+
+            uri.pathSegments.firstOrNull()?.lowercase() == "r" ->
+                uri.pathSegments.getOrNull(1)
+
+            else -> null
+        }
+
+        return candidate
+            ?.trim()
+            ?.uppercase()
+            ?.takeIf { JamRoomCode.parse(it) != null }
     }
 
     private fun playSmartPlaylist(playlistId: String) {

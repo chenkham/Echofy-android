@@ -1,4 +1,4 @@
-﻿@file:OptIn(ExperimentalCoroutinesApi::class)
+@file:OptIn(ExperimentalCoroutinesApi::class)
 
 package com.Chenkham.Echofy.viewmodels
 
@@ -54,6 +54,7 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flatMapLatest
@@ -140,6 +141,11 @@ constructor(
     fun syncLibrarySongs() {
         viewModelScope.launch(Dispatchers.IO) { syncUtils.syncLibrarySongs() }
     }
+
+    fun refresh(): Job = viewModelScope.launch(Dispatchers.IO) {
+        syncUtils.syncLibrarySongs()
+        syncUtils.syncLikedSongs()
+    }
 }
 
 @HiltViewModel
@@ -168,6 +174,10 @@ constructor(
 
     fun sync() {
         viewModelScope.launch(Dispatchers.IO) { syncUtils.syncArtistsSubscriptions() }
+    }
+
+    fun refresh(): Job = viewModelScope.launch(Dispatchers.IO) {
+        syncUtils.syncArtistsSubscriptions()
     }
 
     init {
@@ -220,6 +230,10 @@ constructor(
         viewModelScope.launch(Dispatchers.IO) { syncUtils.syncLikedAlbums() }
     }
 
+    fun refresh(): Job = viewModelScope.launch(Dispatchers.IO) {
+        syncUtils.syncLikedAlbums()
+    }
+
     init {
         viewModelScope.launch(Dispatchers.IO) {
             allAlbums.collect { albums ->
@@ -269,24 +283,17 @@ constructor(
         viewModelScope.launch(Dispatchers.IO) { syncUtils.syncSavedPlaylists() }
     }
 
+    fun refresh(): Job = viewModelScope.launch(Dispatchers.IO) {
+        syncUtils.syncSavedPlaylists()
+    }
+
     val topValue =
         context.dataStore.data
             .map { it[TopSize] ?: "50" }
             .distinctUntilChanged()
 
-    init {
-        // Auto-sync YT Music playlists when ViewModel is created (i.e. when Library screen loads),
-        // so playlists appear immediately without the user needing to tap the Playlists tab first.
-        viewModelScope.launch(Dispatchers.IO) {
-            val ytmSync = context.dataStore.data
-                .map { it[YtmSyncKey] ?: true }
-                .stateIn(viewModelScope, SharingStarted.Eagerly, true)
-                .value
-            if (ytmSync) {
-                syncUtils.syncSavedPlaylists()
-            }
-        }
-    }
+    // Note: sync is triggered by LibraryPlaylistsScreen's LaunchedEffect(Unit) calling viewModel.sync()
+    // Do NOT add auto-sync here in init{} — it causes race conditions and duplicate playlists
 }
 
 @HiltViewModel
@@ -380,17 +387,13 @@ constructor(
                     }
             }
         }
-        // Auto-sync YT Music saved playlists so they appear immediately on Library open
-        // without the user needing to tap the Playlists filter chip first.
-        viewModelScope.launch(Dispatchers.IO) {
-            val ytmSync = context.dataStore.data
-                .map { it[YtmSyncKey] ?: true }
-                .stateIn(viewModelScope, SharingStarted.Eagerly, true)
-                .value
-            if (ytmSync) {
-                syncUtils.syncSavedPlaylists()
-            }
-        }
+        // Note: sync is triggered by LibraryPlaylistsScreen's LaunchedEffect(Unit) calling viewModel.sync()
+        // Do NOT add auto-sync here in init{} — it causes race conditions and duplicate playlists
+    }
+    fun refresh(): Job = viewModelScope.launch(Dispatchers.IO) {
+        syncUtils.syncArtistsSubscriptions()
+        syncUtils.syncLikedAlbums()
+        syncUtils.syncSavedPlaylists()
     }
 }
 

@@ -1,0 +1,8 @@
+name = "echofy-jam-control"
+main = "src/worker.js"
+compatibility_date = "2026-04-17"
+workers_dev = true
+
+[[kv_namespaces]]
+binding = "JAM_REGISTRY"
+id = "f33c1070f3884c479cc35784615cfca4"

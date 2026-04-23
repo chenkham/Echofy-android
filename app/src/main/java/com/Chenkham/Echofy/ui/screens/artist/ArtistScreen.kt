@@ -1,4 +1,4 @@
-﻿package com.Chenkham.Echofy.ui.screens.artist
+package com.Chenkham.Echofy.ui.screens.artist
 
 import android.annotation.SuppressLint
 import android.content.ClipData
@@ -238,7 +238,7 @@ fun ArtistScreen(
                                     .fillMaxWidth()
                                     .padding(horizontal = 16.dp, vertical = 12.dp)
                             ) {
-                                // BotÃ³n Suscribirse/Suscrito
+                                // Botón Suscribirse/Suscrito
                                 Button(
                                     onClick = {
                                         database.transaction {
@@ -294,7 +294,7 @@ fun ArtistScreen(
 
                                 Spacer(Modifier.weight(1f))
 
-                                // BotÃ³n Shuffle
+                                // Botón Shuffle
                                 artistPage.artist.shuffleEndpoint?.let { shuffleEndpoint ->
                                     Surface(
                                         shape = CircleShape,
@@ -316,7 +316,7 @@ fun ArtistScreen(
                                     }
                                 }
 
-                                // BotÃ³n Compartir
+                                // Botón Compartir
                                 Surface(
                                     shape = CircleShape,
                                     color = MaterialTheme.colorScheme.surfaceVariant,
@@ -394,7 +394,7 @@ fun ArtistScreen(
                                 .combinedClickable(
                                     onClick = {
                                         if (song.id == mediaMetadata?.id) {
-                                            playerConnection.player.togglePlayPause()
+                                            playerConnection.togglePlayPause()
                                         } else {
                                             playerConnection.playQueue(
                                                 YouTubeQueue(
@@ -468,7 +468,7 @@ fun ArtistScreen(
                                     .combinedClickable(
                                         onClick = {
                                             if (song.id == mediaMetadata?.id) {
-                                                playerConnection.player.togglePlayPause()
+                                                playerConnection.togglePlayPause()
                                             } else {
                                                 playerConnection.playQueue(
                                                     YouTubeQueue(
@@ -645,7 +645,7 @@ fun ArtistScreen(
         }
     }
 
-    // TopAppBar con transiciÃ³n suave
+    // TopAppBar con transición suave
     TopAppBar(
         title = {
             if (!transparentAppBar) {

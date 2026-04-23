@@ -1,0 +1,257 @@
+﻿﻿package com.Chenkham.Echofy.utils
+
+import com.Chenkham.innertube.YouTube
+import com.Chenkham.innertube.models.AlbumItem
+import com.Chenkham.innertube.models.ArtistItem
+import com.Chenkham.innertube.models.PlaylistItem
+import com.Chenkham.innertube.models.SongItem
+import com.Chenkham.innertube.utils.completed
+import com.Chenkham.innertube.utils.completedLibraryPage
+import com.Chenkham.Echofy.db.MusicDatabase
+import com.Chenkham.Echofy.db.entities.ArtistEntity
+import com.Chenkham.Echofy.db.entities.PlaylistEntity
+import com.Chenkham.Echofy.db.entities.PlaylistSongMap
+import com.Chenkham.Echofy.db.entities.SongEntity
+import com.Chenkham.Echofy.db.insert
+import com.Chenkham.Echofy.db.update
+import com.Chenkham.Echofy.models.toMediaMetadata
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.firstOrNull
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
+import java.time.LocalDateTime
+import javax.inject.Inject
+import javax.inject.Singleton
+
+
+@Singleton
+class SyncUtils @Inject constructor(
+    val database: MusicDatabase,
+) {
+    private val playlistSyncMutex = Mutex()
+
+    suspend fun syncLikedSongs() {
+        YouTube.playlist("LM").completed().onSuccess { page ->
+            val songs = page.songs.reversed()
+
+            database.likedSongsByNameAsc().first()
+                .filterNot { it.id in songs.map(SongItem::id) }
+                .forEach { database.update(it.song.localToggleLike()) }
+
+            songs.forEach { song ->
+                val dbSong = database.song(song.id).firstOrNull()
+                database.transaction {
+                    when (dbSong) {
+                        null -> insert(song.toMediaMetadata(), SongEntity::localToggleLike)
+                        else -> if (!dbSong.song.liked) update(dbSong.song.localToggleLike())
+                    }
+                }
+            }
+        }
+    }
+
+    suspend fun syncLibrarySongs() {
+        YouTube.library("FEmusic_liked_videos").completedLibraryPage().onSuccess { page ->
+            val songs = page.items.filterIsInstance<SongItem>().reversed()
+
+            database.songsByNameAsc().first()
+                .filterNot { it.id in songs.map(SongItem::id) }
+                .forEach { database.update(it.song.toggleLibrary()) }
+
+            songs.forEach { song ->
+                val dbSong = database.song(song.id).firstOrNull()
+                database.transaction {
+                    when (dbSong) {
+                        null -> insert(song.toMediaMetadata(), SongEntity::toggleLibrary)
+                        else -> if (dbSong.song.inLibrary == null) update(dbSong.song.toggleLibrary())
+                    }
+                }
+            }
+        }
+    }
+
+    suspend fun syncLikedAlbums() {
+        YouTube.library("FEmusic_liked_albums").completedLibraryPage().onSuccess { page ->
+            val albums = page.items.filterIsInstance<AlbumItem>().reversed()
+
+            database.albumsLikedByNameAsc().first()
+                .filterNot { it.id in albums.map(AlbumItem::id) }
+                .forEach { database.update(it.album.localToggleLike()) }
+
+            albums.forEach { album ->
+                val dbAlbum = database.album(album.id).firstOrNull()
+                YouTube.album(album.browseId).onSuccess { albumPage ->
+                    when (dbAlbum) {
+                        null -> {
+                            database.insert(albumPage)
+                            database.album(album.id).firstOrNull()?.let {
+                                database.update(it.album.localToggleLike())
+                            }
+                        }
+                        else -> if (dbAlbum.album.bookmarkedAt == null)
+                            database.update(dbAlbum.album.localToggleLike())
+                    }
+                }
+            }
+        }
+    }
+
+    suspend fun syncArtistsSubscriptions() {
+        YouTube.library("FEmusic_library_corpus_artists").completedLibraryPage().onSuccess { page ->
+            val artists = page.items.filterIsInstance<ArtistItem>()
+
+            database.artistsBookmarkedByNameAsc().first()
+                .filterNot { it.id in artists.map(ArtistItem::id) }
+                .forEach { database.update(it.artist.localToggleLike()) }
+
+            artists.forEach { artist ->
+                val dbArtist = database.artist(artist.id).firstOrNull()
+                database.transaction {
+                    when (dbArtist) {
+                        null -> {
+                            insert(
+                                ArtistEntity(
+                                    id = artist.id,
+                                    name = artist.title,
+                                    thumbnailUrl = artist.thumbnail,
+                                    channelId = artist.channelId,
+                                    bookmarkedAt = LocalDateTime.now()
+                                )
+                            )
+                        }
+                        else -> if (dbArtist.artist.bookmarkedAt == null)
+                            update(dbArtist.artist.localToggleLike())
+                    }
+                }
+            }
+        }
+    }
+
+    suspend fun syncSavedPlaylists() = playlistSyncMutex.withLock {
+        YouTube.library("FEmusic_liked_playlists").completedLibraryPage().onSuccess { page ->
+            val playlistList = page.items.filterIsInstance<PlaylistItem>()
+                .filterNot { it.id == "LM" || it.id == "SE" }
+                .reversed()
+            val playlistIds = playlistList.map(PlaylistItem::id).toSet()
+
+            var dbPlaylists = database.playlistsByNameAsc().first()
+
+            dbPlaylists
+                .filter { !it.playlist.browseId.isNullOrBlank() }
+                .groupBy { it.playlist.browseId!! }
+                .values
+                .filter { it.size > 1 }
+                .forEach { duplicates ->
+                    val keep = duplicates.maxWithOrNull(
+                        compareBy<com.Chenkham.Echofy.db.entities.Playlist>(
+                            { it.songCount },
+                            { if (it.playlist.isEditable) 1 else 0 },
+                            { it.playlist.lastUpdateTime ?: LocalDateTime.MIN },
+                        )
+                    ) ?: return@forEach
+                    duplicates
+                        .filterNot { it.id == keep.id }
+                        .forEach { database.delete(it.playlist) }
+                }
+
+            dbPlaylists = database.playlistsByNameAsc().first()
+
+            dbPlaylists
+                .filterNot { it.playlist.browseId in playlistIds }
+                .filterNot { it.playlist.browseId == null }
+                .filterNot {
+                    val lastUpdate = it.playlist.lastUpdateTime ?: it.playlist.createdAt
+                    lastUpdate != null && lastUpdate.isAfter(java.time.LocalDateTime.now().minusMinutes(10))
+                }
+                .forEach { database.update(it.playlist.localToggleLike()) }
+
+            playlistList.forEach { playlist ->
+                var playlistEntity = dbPlaylists.find { playlist.id == it.playlist.browseId }?.playlist
+                if (playlistEntity == null) {
+                    val localUnsyncedMatch = dbPlaylists.singleOrNull {
+                        it.playlist.browseId.isNullOrBlank() &&
+                                it.playlist.isEditable &&
+                                it.playlist.name.trim().equals(playlist.title.trim(), ignoreCase = true)
+                    }
+
+                    if (localUnsyncedMatch != null) {
+                        playlistEntity = localUnsyncedMatch.playlist.copy(
+                            name = playlist.title,
+                            browseId = playlist.id,
+                            isEditable = playlist.isEditable,
+                            bookmarkedAt = localUnsyncedMatch.playlist.bookmarkedAt ?: LocalDateTime.now(),
+                            lastUpdateTime = LocalDateTime.now(),
+                            remoteSongCount = parsePlaylistSongCount(playlist.songCountText),
+                            playEndpointParams = playlist.playEndpoint?.params,
+                            shuffleEndpointParams = playlist.shuffleEndpoint?.params,
+                            radioEndpointParams = playlist.radioEndpoint?.params,
+                        )
+                        database.update(playlistEntity)
+                        dbPlaylists = dbPlaylists.map {
+                            if (it.id == localUnsyncedMatch.id) it.copy(playlist = playlistEntity)
+                            else it
+                        }
+                    } else {
+                        playlistEntity = PlaylistEntity(
+                            name = playlist.title,
+                            browseId = playlist.id,
+                            isEditable = playlist.isEditable,
+                            bookmarkedAt = LocalDateTime.now(),
+                            remoteSongCount = parsePlaylistSongCount(playlist.songCountText),
+                            playEndpointParams = playlist.playEndpoint?.params,
+                            shuffleEndpointParams = playlist.shuffleEndpoint?.params,
+                            radioEndpointParams = playlist.radioEndpoint?.params,
+                        )
+                        database.insert(playlistEntity)
+                        dbPlaylists = dbPlaylists + com.Chenkham.Echofy.db.entities.Playlist(
+                            playlist = playlistEntity,
+                            songCount = 0,
+                            thumbnails = emptyList(),
+                        )
+                    }
+                } else {
+                    database.update(playlistEntity, playlist)
+                }
+
+                syncPlaylist(playlist.id, playlistEntity.id)
+            }
+        }
+    }
+
+    suspend fun syncPlaylist(browseId: String, playlistId: String) {
+        var playlistPage = YouTube.playlist(browseId).completed().getOrNull() ?: return
+        val localPlaylist = database.playlist(playlistId).firstOrNull()
+        val remoteSongIds = playlistPage.songs.map(SongItem::id).toSet()
+        val missingLocalSongIds =
+            if (localPlaylist?.playlist?.isEditable == true) {
+                database.playlistSongs(playlistId).first()
+                    .map { it.song.id }
+                    .filterNot(remoteSongIds::contains)
+                    .distinct()
+            } else {
+                emptyList()
+            }
+
+        if (missingLocalSongIds.isNotEmpty()) {
+            missingLocalSongIds.forEach { songId ->
+                YouTube.addToPlaylist(browseId, songId)
+            }
+            playlistPage = YouTube.playlist(browseId).completed().getOrNull() ?: playlistPage
+        }
+
+        database.transaction {
+            clearPlaylist(playlistId)
+            playlistPage.songs
+                .map(SongItem::toMediaMetadata)
+                .onEach(::insert)
+                .mapIndexed { position, song ->
+                    PlaylistSongMap(
+                        songId = song.id,
+                        playlistId = playlistId,
+                        position = position,
+                        setVideoId = song.setVideoId
+                    )
+                }.forEach(::insert)
+        }
+    }
+}

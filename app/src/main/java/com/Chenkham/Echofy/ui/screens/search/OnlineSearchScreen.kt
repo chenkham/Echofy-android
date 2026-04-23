@@ -1,4 +1,4 @@
-﻿package com.Chenkham.Echofy.ui.screens.search
+package com.Chenkham.Echofy.ui.screens.search
 
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
@@ -167,7 +167,7 @@ fun OnlineSearchScreen(
                             isPlaying = isPlaying,
                             onClick = {
                                 if (song.id == mediaMetadata?.id) {
-                                    playerConnection.player.togglePlayPause()
+                                    playerConnection.togglePlayPause()
                                 } else {
                                     playerConnection.playQueue(
                                         YouTubeQueue(
@@ -294,7 +294,7 @@ fun OnlineSearchScreen(
                                         database.insertRecentSearchSong(RecentSearchSong(songId = item.id))
                                     }
                                     if (item.id == mediaMetadata?.id) {
-                                        playerConnection.player.togglePlayPause()
+                                        playerConnection.togglePlayPause()
                                     } else {
                                         playerConnection.playQueue(
                                             YouTubeQueue(

@@ -1,4 +1,4 @@
-﻿package com.Chenkham.Echofy.ui.screens
+package com.Chenkham.Echofy.ui.screens
 
 import android.annotation.SuppressLint
 import android.webkit.CookieManager
@@ -23,6 +23,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.navigation.NavController
+import com.Chenkham.Echofy.ui.screens.Screens
 import com.Chenkham.innertube.YouTube
 import com.Chenkham.innertube.utils.parseCookieString
 import com.Chenkham.Echofy.LocalPlayerAwareWindowInsets
@@ -237,8 +238,8 @@ fun LoginScreen(navController: NavController, chained: Boolean = false) {
             if (chained) {
                 androidx.compose.material3.TextButton(
                     onClick = {
-                        navController.navigate("settings/account") {
-                            popUpTo("settings/account") { inclusive = true }
+                        navController.navigate(Screens.Home.route) {
+                            popUpTo(0) { inclusive = true }
                         }
                     }
                 ) {

@@ -1,4 +1,4 @@
-﻿package com.Chenkham.Echofy.ui.screens.settings
+package com.Chenkham.Echofy.ui.screens.settings
 
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -14,6 +14,9 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarScrollBehavior
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.navigation.NavController
@@ -82,6 +85,9 @@ fun PlayerSettings(
         defaultValue = true
     )
 
+    val context = androidx.compose.ui.platform.LocalContext.current
+    val adManager = com.Chenkham.Echofy.ui.component.LocalAdManager.current
+
     SettingsPage(
         title = stringResource(R.string.player_and_audio),
         navController = navController,
@@ -112,10 +118,27 @@ fun PlayerSettings(
                 )},
 
                 {SwitchPreference(
-                    title = { Text(stringResource(R.string.audio_normalization)) },
+                    title = { androidx.compose.foundation.layout.Row(verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
+                        Text(stringResource(R.string.audio_normalization))
+                        if (adManager?.isPremium?.value != true) {
+                            androidx.compose.foundation.layout.Spacer(Modifier.padding(4.dp))
+                            Icon(
+                                painter = painterResource(R.drawable.workspace_premium),
+                                contentDescription = "Premium",
+                                tint = androidx.compose.material3.MaterialTheme.colorScheme.primary,
+                                modifier = Modifier.size(16.dp)
+                            )
+                        }
+                    }},
                     icon = { Icon(painterResource(R.drawable.volume_up), null) },
                     checked = audioNormalization,
-                    onCheckedChange = onAudioNormalizationChange
+                    onCheckedChange = { checked ->
+                        if (adManager?.isPremium?.value == true || !checked) {
+                            onAudioNormalizationChange(checked)
+                        } else {
+                            navController.navigate("premium")
+                        }
+                    }
                 )},
             )
         )

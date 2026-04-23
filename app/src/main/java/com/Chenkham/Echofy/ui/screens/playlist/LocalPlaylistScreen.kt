@@ -1,4 +1,4 @@
-﻿package com.Chenkham.Echofy.ui.screens.playlist
+package com.Chenkham.Echofy.ui.screens.playlist
 
 import android.annotation.SuppressLint
 import android.net.Uri
@@ -596,7 +596,7 @@ fun LocalPlaylistScreen(
                                             .combinedClickable(
                                                 onClick = {
                                                     if (song.song.id == mediaMetadata?.id) {
-                                                        playerConnection.player.togglePlayPause()
+                                                        playerConnection.togglePlayPause()
                                                     } else {
                                                         playerConnection.playQueue(
                                                             ListQueue(
@@ -735,7 +735,7 @@ fun LocalPlaylistScreen(
                                                 onClick = {
                                                     if (!selection) {
                                                         if (songWrapper.item.song.id == mediaMetadata?.id) {
-                                                            playerConnection.player.togglePlayPause()
+                                                            playerConnection.togglePlayPause()
                                                         } else {
                                                             playerConnection.playQueue(
                                                                 ListQueue(
@@ -920,6 +920,8 @@ fun LocalPlaylistHeader(
     val database = LocalDatabase.current
     val syncUtils = LocalSyncUtils.current
     val scope = rememberCoroutineScope()
+    val adManager = com.Chenkham.Echofy.ui.component.LocalAdManager.current
+    val isPremium = adManager?.isPremium?.collectAsState()?.value == true
 
     val playlistLength = remember(songs) {
         songs.fastSumBy { it.song.song.duration }
@@ -977,7 +979,7 @@ fun LocalPlaylistHeader(
                 .size(AlbumThumbnailSize)
                 .clip(RoundedCornerShape(ThumbnailCornerRadius))
                 .clickable(enabled = editable) {
-                    if (editable) imagePickerLauncher.launch("image/*")
+                    if (editable) { if (isPremium) imagePickerLauncher.launch("image/*") else android.widget.Toast.makeText(context, "Premium Feature", android.widget.Toast.LENGTH_SHORT).show() }
                 }
 
             Box(modifier = imageModifier) {
@@ -1065,7 +1067,10 @@ fun LocalPlaylistHeader(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         IconButton(
-                            onClick = { imagePickerLauncher.launch("image/*") },
+                            onClick = { 
+                                if (isPremium) imagePickerLauncher.launch("image/*") 
+                                else android.widget.Toast.makeText(context, "Premium Feature", android.widget.Toast.LENGTH_SHORT).show() 
+                            },
                             modifier = Modifier.size(24.dp)
                         ) {
                             Icon(
@@ -1180,24 +1185,33 @@ fun LocalPlaylistHeader(
 
                         else -> {
                             IconButton(onClick = {
-                                songs.forEach { song ->
-                                    val downloadRequest = DownloadRequest.Builder(
-                                        song.song.id, song.song.id.toUri()
-                                    )
-                                        .setCustomCacheKey(song.song.id)
-                                        .setData(song.song.song.title.toByteArray())
-                                        .build()
-
-                                    DownloadService.sendAddDownload(
+                                if (!isPremium) {
+                                    android.widget.Toast.makeText(
                                         context,
-                                        ExoDownloadService::class.java,
-                                        downloadRequest,
-                                        false
-                                    )
+                                        "Batch playlist download is a Premium feature! ?",
+                                        android.widget.Toast.LENGTH_SHORT
+                                    ).show()
+                                } else {
+                                    songs.forEach { song ->
+                                        val downloadRequest = DownloadRequest.Builder(
+                                            song.song.id, song.song.id.toUri()
+                                        )
+                                            .setCustomCacheKey(song.song.id)
+                                            .setData(song.song.song.title.toByteArray())
+                                            .build()
+                                        DownloadService.sendAddDownload(
+                                            context,
+                                            ExoDownloadService::class.java,
+                                            downloadRequest,
+                                            false
+                                        )
+                                    }
                                 }
                             }) {
                                 Icon(
-                                    painter = painterResource(R.drawable.download),
+                                    painter = painterResource(
+                                        if (isPremium) R.drawable.download else R.drawable.workspace_premium
+                                    ),
                                     contentDescription = null
                                 )
                             }

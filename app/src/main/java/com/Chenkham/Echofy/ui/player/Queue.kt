@@ -1,4 +1,4 @@
-﻿package com.Chenkham.Echofy.ui.player
+package com.Chenkham.Echofy.ui.player
 
 import android.annotation.SuppressLint
 import android.text.format.Formatter
@@ -319,7 +319,7 @@ fun Queue(
                         to.index - headerItems,
                     )
 
-                    // Mover la lÃ³gica de onDragEnd aquÃ­
+                    // Mover la lógica de onDragEnd aquí
                     val safeFrom = (from.index - headerItems).coerceIn(0, mutableQueueWindows.lastIndex)
                     val safeTo = (to.index - headerItems).coerceIn(0, mutableQueueWindows.lastIndex)
                     val toAdjusted = if (safeTo == 0) 1 else safeTo
@@ -522,7 +522,7 @@ fun Queue(
                                                         }
                                                     } else {
                                                         if (index == currentWindowIndex) {
-                                                            playerConnection.player.togglePlayPause()
+                                                            playerConnection.togglePlayPause()
                                                         } else {
                                                             playerConnection.player.seekToDefaultPosition(
                                                                 window.firstPeriodIndex,

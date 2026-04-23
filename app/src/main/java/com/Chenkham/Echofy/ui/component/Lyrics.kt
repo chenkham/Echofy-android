@@ -138,6 +138,9 @@ import com.Chenkham.Echofy.constants.LyricsScrollKey
 import com.Chenkham.Echofy.constants.LyricsTextPositionKey
 import com.Chenkham.Echofy.constants.PlayerBackgroundStyle
 import com.Chenkham.Echofy.constants.PlayerBackgroundStyleKey
+import com.Chenkham.Echofy.constants.PlayerLayoutStyle
+import com.Chenkham.Echofy.constants.PlayerLayoutStyleKey
+import com.Chenkham.Echofy.ui.component.LocalAdManager
 import com.Chenkham.Echofy.constants.RotateBackgroundKey
 import com.Chenkham.Echofy.constants.ShowLyricsKey
 import com.Chenkham.Echofy.constants.SliderStyle
@@ -188,7 +191,7 @@ fun Lyrics(
     val isFullscreen = onNavigateBack != null
     val sliderStyle by rememberEnumPreference(SliderStyleKey, SliderStyle.DEFAULT)
     val landscapeOffset = configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
-    val lyricsTextPosition by rememberEnumPreference(LyricsTextPositionKey, LyricsPosition.CENTER)
+    val savedLyricsTextPosition by rememberEnumPreference(LyricsTextPositionKey, LyricsPosition.CENTER)
     val changeLyrics by rememberPreference(LyricsClickKey, true)
     val scrollLyrics by rememberPreference(LyricsScrollKey, true)
     val animateLyrics by rememberPreference(AnimateLyricsKey, true)
@@ -276,10 +279,17 @@ fun Lyrics(
     val canSkipNext by playerConnection.canSkipNext.collectAsState()
     val currentSong by playerConnection.currentSong.collectAsState(initial = null)
 
-    val playerBackground by rememberEnumPreference(
+    val savedPlayerBackground by rememberEnumPreference(
         key = PlayerBackgroundStyleKey,
         defaultValue = PlayerBackgroundStyle.DEFAULT
     )
+    
+    val playerLayoutStyle by rememberEnumPreference(PlayerLayoutStyleKey, defaultValue = PlayerLayoutStyle.CLASSIC)
+    val isPremium = LocalAdManager.current?.isPremium?.collectAsState()?.value == true
+
+    val isAppleStyle = playerLayoutStyle == PlayerLayoutStyle.APPLE_MUSIC && isPremium
+    val lyricsTextPosition = if (isAppleStyle) LyricsPosition.LEFT else savedLyricsTextPosition
+    val playerBackground = if (isAppleStyle) PlayerBackgroundStyle.BLUR else savedPlayerBackground
 
     val darkTheme by rememberEnumPreference(DarkModeKey, defaultValue = DarkMode.AUTO)
     val isSystemInDarkTheme = isSystemInDarkTheme()
@@ -1049,7 +1059,7 @@ fun Lyrics(
                                         playerConnection.player.seekTo(0, 0)
                                         playerConnection.player.playWhenReady = true
                                     } else {
-                                        playerConnection.player.togglePlayPause()
+                                        playerConnection.togglePlayPause()
                                     }
                                 },
                                 modifier = Modifier.size(64.dp)

@@ -1,4 +1,4 @@
-﻿package com.Chenkham.Echofy.ui.player
+package com.Chenkham.Echofy.ui.player
 
 import android.content.Context
 import androidx.compose.animation.AnimatedVisibility
@@ -56,7 +56,7 @@ import com.Chenkham.Echofy.R
 
 @Composable
 fun Thumbnail(
-    onOpenFullscreenLyrics: () -> Unit, // NUEVO PARÃMETRO
+    onOpenFullscreenLyrics: () -> Unit, // NUEVO PARÁMETRO
     modifier: Modifier = Modifier,
     changeColor: Boolean = false,
 ) {
@@ -117,7 +117,7 @@ fun Thumbnail(
                                         }
                                     } else if (offsetX < -300) {
                                         if (playerConnection.player.nextMediaItemIndex != -1) {
-                                            playerConnection.player.seekToNext()
+                                            playerConnection.seekToNext()
                                         }
                                     }
                                     offsetX = 0f

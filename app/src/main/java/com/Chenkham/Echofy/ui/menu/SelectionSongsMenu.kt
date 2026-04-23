@@ -1,4 +1,4 @@
-﻿package com.Chenkham.Echofy.ui.menu
+package com.Chenkham.Echofy.ui.menu
 
 import com.Chenkham.Echofy.db.insert
 import com.Chenkham.Echofy.db.addSongToPlaylist

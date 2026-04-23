@@ -33,6 +33,7 @@ import com.Chenkham.Echofy.ui.component.IconButton
 import com.Chenkham.Echofy.ui.utils.backToMain
 import com.Chenkham.Echofy.utils.rememberPreference
 import kotlinx.serialization.json.Json
+import androidx.compose.runtime.collectAsState
 
 // Frequency bands for 5-band EQ
 data class FrequencyBand(
@@ -73,6 +74,47 @@ fun EqualizerScreen(
     navController: NavController,
 ) {
     val playerConnection = LocalPlayerConnection.current
+    val adManager = com.Chenkham.Echofy.ui.component.LocalAdManager.current
+    val isPremium = adManager?.isPremium?.collectAsState()?.value == true
+
+    // Non-premium users: show upgrade screen
+    if (!isPremium) {
+        androidx.compose.foundation.layout.Box(
+            modifier = Modifier.fillMaxSize(),
+            contentAlignment = Alignment.Center
+        ) {
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(16.dp),
+                modifier = Modifier.padding(32.dp)
+            ) {
+                Icon(
+                    painterResource(R.drawable.graphic_eq),
+                    contentDescription = null,
+                    modifier = Modifier.size(72.dp),
+                    tint = MaterialTheme.colorScheme.primary
+                )
+                Text(
+                    "Custom EQ Presets",
+                    style = MaterialTheme.typography.headlineSmall,
+                    fontWeight = FontWeight.Bold
+                )
+                Text(
+                    "Save and apply your own EQ presets with Echofy Premium.",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                )
+                Button(onClick = { navController.navigate("premium") }) {
+                    Text("Upgrade to Premium")
+                }
+                TextButton(onClick = navController::navigateUp) {
+                    Text("Go Back")
+                }
+            }
+        }
+        return
+    }
 
     // Preferences
     var eqEnabled by rememberPreference(EqualizerEnabledKey, false)

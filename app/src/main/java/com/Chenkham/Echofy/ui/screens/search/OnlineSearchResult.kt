@@ -1,4 +1,4 @@
-﻿package com.Chenkham.Echofy.ui.screens.search
+package com.Chenkham.Echofy.ui.screens.search
 
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
@@ -172,7 +172,7 @@ fun OnlineSearchResult(
                             when (item) {
                                 is SongItem -> {
                                     if (item.id == mediaMetadata?.id) {
-                                        playerConnection.player.togglePlayPause()
+                                        playerConnection.togglePlayPause()
                                     } else {
                                         playerConnection.playQueue(
                                             YouTubeQueue(

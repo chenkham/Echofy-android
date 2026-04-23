@@ -1,4 +1,4 @@
-﻿package com.Chenkham.Echofy.utils
+package com.Chenkham.Echofy.utils
 
 import com.Chenkham.innertube.YouTube
 import com.Chenkham.innertube.models.AlbumItem
@@ -17,6 +17,8 @@ import com.Chenkham.Echofy.db.update
 import com.Chenkham.Echofy.models.toMediaMetadata
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.firstOrNull
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import java.time.LocalDateTime
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -26,8 +28,12 @@ import javax.inject.Singleton
 class SyncUtils @Inject constructor(
     val database: MusicDatabase,
 ) {
+    // Mutex to prevent concurrent syncSavedPlaylists calls from racing
+    private val playlistSyncMutex = Mutex()
+
     suspend fun syncLikedSongs() {
         YouTube.playlist("LM").completed().onSuccess { page ->
+
             val songs = page.songs.reversed()
 
             database.likedSongsByNameAsc().first()
@@ -123,32 +129,58 @@ class SyncUtils @Inject constructor(
         }
     }
 
-    suspend fun syncSavedPlaylists() {
+    suspend fun syncSavedPlaylists() = playlistSyncMutex.withLock {
         YouTube.library("FEmusic_liked_playlists").completedLibraryPage().onSuccess { page ->
             val playlistList = page.items.filterIsInstance<PlaylistItem>()
                 .filterNot { it.id == "LM" ||  it.id == "SE" }
                 .reversed()
-            val dbPlaylists = database.playlistsByNameAsc().first()
 
-            dbPlaylists.filterNot { it.playlist.browseId in playlistList.map(PlaylistItem::id) }
-                .filterNot { it.playlist.browseId == null }
+            // Step 1: Clean up any duplicate playlists sharing the same browseId
+            // (caused by historical VL-prefix bug or race conditions)
+            val dbPlaylists = database.playlistsByNameAsc().first()
+            val groupedByRemote = dbPlaylists.filter { it.playlist.browseId != null }
+                .groupBy { it.playlist.browseId!!.removePrefix("VL") }
+            groupedByRemote.values.filter { it.size > 1 }.forEach { duplicates ->
+                val sorted = duplicates.sortedBy { it.playlist.createdAt }
+                sorted.drop(1).forEach { duplicate ->
+                    database.delete(duplicate.playlist)
+                }
+            }
+
+            // Step 2: Un-bookmark any local synced playlists that no longer exist on YTM
+            val freshDbPlaylists = database.playlistsByNameAsc().first()
+            freshDbPlaylists
+                .filter { it.playlist.browseId != null }
+                .filterNot { it.playlist.browseId!!.removePrefix("VL") in playlistList.map(PlaylistItem::id) }
                 .forEach { database.update(it.playlist.localToggleLike()) }
 
-            playlistList.onEach { playlist ->
-                var playlistEntity = dbPlaylists.find { playlist.id == it.playlist.browseId }?.playlist
-                if (playlistEntity == null) {
+            // Step 3: For each remote playlist, find or create the local entity
+            playlistList.forEach { playlist ->
+                // CRITICAL: Do a FRESH DB lookup for each playlist to avoid race conditions
+                // with CreatePlaylistDialog which may have just inserted this browseId
+                val existingPlaylist = database.playlistByBrowseId(playlist.id).firstOrNull()
+                    ?: database.playlistByBrowseId("VL${playlist.id}").firstOrNull()
+
+                val playlistEntity: PlaylistEntity
+                if (existingPlaylist != null) {
+                    // Found existing - update it with latest remote data and fix browseId if needed
+                    playlistEntity = existingPlaylist.playlist
+                    if (playlistEntity.browseId != playlist.id) {
+                        // Fix any lingering VL-prefixed browseId
+                        database.update(playlistEntity.copy(browseId = playlist.id))
+                    }
+                    database.update(playlistEntity, playlist)
+                } else {
+                    // Truly new playlist from YTM - create locally
                     playlistEntity = PlaylistEntity(
                         name = playlist.title,
                         browseId = playlist.id,
                         isEditable = playlist.isEditable,
                         bookmarkedAt = LocalDateTime.now(),
-                        remoteSongCount = playlist.songCountText?.let {
-                            Regex("""\d+""").find(it)?.value?.toIntOrNull()
-                        }
+                        remoteSongCount = playlist.songCountText?.replace(Regex("""\D"""), "")?.toIntOrNull()
                     )
-
                     database.insert(playlistEntity)
-                } else database.update(playlistEntity, playlist)
+                }
 
                 syncPlaylist(playlist.id, playlistEntity.id)
             }

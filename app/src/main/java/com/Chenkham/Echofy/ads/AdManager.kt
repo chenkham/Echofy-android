@@ -103,9 +103,9 @@ class AdManager @Inject constructor(
                     preferences[MockSubscriptionKey] ?: false
                 }
                 
-                // Combine: Premium if either Real OR Test is true
+                // Combine: Premium if either Real OR Test is true, or if Debug build
                 combine(realPremiumFlow, testPremiumFlow) { real, test ->
-                    real || test
+                    real || test || com.Chenkham.Echofy.BuildConfig.DEBUG
                 }.collectLatest { isPremium ->
                     isPremiumUser = isPremium
                     Timber.d("AdManager: Premium status updated to $isPremium")

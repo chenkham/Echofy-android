@@ -1,4 +1,4 @@
-﻿package com.Chenkham.Echofy.ui.menu
+package com.Chenkham.Echofy.ui.menu
 
 import com.Chenkham.Echofy.db.insert
 import com.Chenkham.Echofy.db.update
@@ -17,6 +17,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import com.Chenkham.Echofy.LocalDatabase
@@ -28,9 +29,8 @@ import com.Chenkham.Echofy.extensions.toMediaItem
 import com.Chenkham.Echofy.playback.queues.ListQueue
 import com.Chenkham.Echofy.ui.component.ArtistListItem
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.lazy.grid.GridCells
-import androidx.compose.foundation.lazy.grid.GridItemSpan
-import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.layout.fillMaxWidth
 import com.Chenkham.Echofy.ui.component.GridMenuItem
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -51,13 +51,13 @@ fun ArtistMenu(
     val artist = artistState.value ?: originalArtist
 
 
-    LazyVerticalGrid(
-        columns = GridCells.Fixed(2),
+    LazyColumn(
+        modifier = Modifier.fillMaxWidth(),
         contentPadding = PaddingValues(
             bottom = WindowInsets.systemBars.asPaddingValues().calculateBottomPadding() + 8.dp
         ),
     ) {
-        item(span = { GridItemSpan(2) }) {
+        item {
             Column {
                 ArtistListItem(
                     artist = artist,

@@ -1,4 +1,4 @@
-﻿package com.Chenkham.Echofy.ui.component
+package com.Chenkham.Echofy.ui.component
 
 import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
@@ -15,9 +15,8 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.lazy.grid.GridCells
-import androidx.compose.foundation.lazy.grid.LazyGridScope
-import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
@@ -44,28 +43,26 @@ import androidx.media3.exoplayer.offline.Download
 import com.Chenkham.Echofy.R
 import com.Chenkham.Echofy.utils.makeTimeString
 
-val GridMenuItemHeight = 96.dp
+val GridMenuItemHeight = 56.dp
 
 /**
- * Simple 2-column grid menu without lazy loading for better performance
- * Similar to YouTube Music's player menu design
+ * Converted to a standard vertical list based on user request ("use lazy columns for all 3dot")
  */
 @Composable
 fun GridMenu(
     modifier: Modifier = Modifier,
     contentPadding: PaddingValues = PaddingValues(0.dp),
-    content: LazyGridScope.() -> Unit,
+    content: LazyListScope.() -> Unit,
 ) {
-    LazyVerticalGrid(
-        columns = GridCells.Fixed(2),
-        modifier = modifier,
+    LazyColumn(
+        modifier = modifier.fillMaxWidth(),
         contentPadding = contentPadding,
         content = content
     )
 }
 
 /**
- * Simple grid menu item composable for non-lazy usage
+ * Standard list menu item composable for non-lazy usage
  */
 @Composable
 fun SimpleGridMenuItem(
@@ -76,29 +73,28 @@ fun SimpleGridMenuItem(
     enabled: Boolean = true,
     onClick: () -> Unit,
 ) {
-    Column(
+    Row(
         modifier = modifier
+            .fillMaxWidth()
             .clip(RoundedCornerShape(12.dp))
             .height(GridMenuItemHeight)
             .clickable(enabled = enabled, onClick = onClick)
             .alpha(if (enabled) 1f else 0.5f)
-            .padding(horizontal = 8.dp, vertical = 12.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
+            .padding(horizontal = 16.dp),
+        verticalAlignment = Alignment.CenterVertically
     ) {
         Icon(
             painter = painterResource(icon),
             contentDescription = title,
             tint = tint,
-            modifier = Modifier.size(28.dp)
+            modifier = Modifier.size(24.dp)
         )
-        Spacer(modifier = Modifier.height(8.dp))
+        Spacer(modifier = Modifier.width(16.dp))
         Text(
             text = title,
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurface,
-            textAlign = TextAlign.Center,
-            maxLines = 2,
+            maxLines = 1,
             overflow = TextOverflow.Ellipsis
         )
     }
@@ -123,7 +119,7 @@ fun SimpleGridMenuItem(
     )
 }
 
-fun LazyGridScope.GridMenuItem(
+fun LazyListScope.GridMenuItem(
     modifier: Modifier = Modifier,
     @DrawableRes icon: Int,
     tint: @Composable () -> Color = { LocalContentColor.current },
@@ -137,7 +133,7 @@ fun LazyGridScope.GridMenuItem(
             painter = painterResource(icon),
             tint = tint(),
             contentDescription = null,
-            modifier = Modifier.size(28.dp)
+            modifier = Modifier.size(24.dp)
         )
     },
     title = title,
@@ -145,7 +141,7 @@ fun LazyGridScope.GridMenuItem(
     onClick = onClick
 )
 
-fun LazyGridScope.GridMenuItem(
+fun LazyListScope.GridMenuItem(
     modifier: Modifier = Modifier,
     icon: @Composable BoxScope.() -> Unit,
     @StringRes title: Int,
@@ -153,8 +149,9 @@ fun LazyGridScope.GridMenuItem(
     onClick: () -> Unit,
 ) {
     item {
-        Column(
+        Row(
             modifier = modifier
+                .fillMaxWidth()
                 .clip(RoundedCornerShape(12.dp))
                 .height(GridMenuItemHeight)
                 .clickable(
@@ -162,22 +159,20 @@ fun LazyGridScope.GridMenuItem(
                     onClick = onClick
                 )
                 .alpha(if (enabled) 1f else 0.5f)
-                .padding(horizontal = 8.dp, vertical = 12.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center
+                .padding(horizontal = 16.dp),
+            verticalAlignment = Alignment.CenterVertically
         ) {
             Box(
-                modifier = Modifier.size(28.dp),
+                modifier = Modifier.size(24.dp),
                 contentAlignment = Alignment.Center,
                 content = icon
             )
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.width(16.dp))
             Text(
                 text = stringResource(title),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurface,
-                textAlign = TextAlign.Center,
-                maxLines = 2,
+                maxLines = 1,
                 overflow = TextOverflow.Ellipsis
             )
         }
@@ -185,7 +180,7 @@ fun LazyGridScope.GridMenuItem(
 }
 
 
-fun LazyGridScope.DownloadGridMenu(
+fun LazyListScope.DownloadGridMenu(
     @Download.State state: Int?,
     onRemoveDownload: () -> Unit,
     onDownload: () -> Unit,
@@ -222,38 +217,37 @@ fun LazyGridScope.DownloadGridMenu(
     }
 }
 
-fun LazyGridScope.SleepTimerGridMenu(
+fun LazyListScope.SleepTimerGridMenu(
     modifier: Modifier = Modifier,
     sleepTimerTimeLeft: Long,
     enabled: Boolean = true,
     onClick: () -> Unit
 ) {
     item {
-        Column(
+        Row(
             modifier = modifier
+                .fillMaxWidth()
                 .clip(RoundedCornerShape(12.dp))
                 .height(GridMenuItemHeight)
                 .clickable(onClick = onClick)
-                .padding(horizontal = 8.dp, vertical = 12.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center
+                .padding(horizontal = 16.dp),
+            verticalAlignment = Alignment.CenterVertically
         ) {
             Icon(
                 painterResource(R.drawable.bedtime),
                 contentDescription = null,
                 modifier = Modifier
-                    .size(28.dp)
+                    .size(24.dp)
                     .alpha(if (enabled) 1f else 0.5f)
             )
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.width(16.dp))
             Text(
                 text = if (enabled) makeTimeString(sleepTimerTimeLeft) else stringResource(
                     id = R.string.sleep_timer
                 ),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurface,
-                textAlign = TextAlign.Center,
-                maxLines = 2
+                maxLines = 1
             )
         }
     }

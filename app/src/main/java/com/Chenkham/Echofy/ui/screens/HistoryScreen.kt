@@ -1,4 +1,4 @@
-﻿package com.Chenkham.Echofy.ui.screens
+package com.Chenkham.Echofy.ui.screens
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.ExperimentalFoundationApi
@@ -253,7 +253,7 @@ fun HistoryScreen(
                                 .combinedClickable(
                                     onClick = {
                                         if (song.id == mediaMetadata?.id) {
-                                            playerConnection.player.togglePlayPause()
+                                            playerConnection.togglePlayPause()
                                         } else {
                                             playerConnection.playQueue(
                                                 YouTubeQueue.radio(song.toMediaMetadata())
@@ -327,7 +327,7 @@ fun HistoryScreen(
                                     onClick = {
                                         if (!selection) {
                                             if (event.song.id == mediaMetadata?.id) {
-                                                playerConnection.player.togglePlayPause()
+                                                playerConnection.togglePlayPause()
                                             } else {
                                                 playerConnection.playQueue(
                                                     ListQueue(

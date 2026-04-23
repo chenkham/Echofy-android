@@ -1,4 +1,4 @@
-﻿package com.Chenkham.Echofy.ui.screens.artist
+package com.Chenkham.Echofy.ui.screens.artist
 
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.clickable
@@ -170,7 +170,7 @@ fun ArtistItemsScreen(
                                 when (item) {
                                     is SongItem -> {
                                         if (item.id == mediaMetadata?.id) {
-                                            playerConnection.player.togglePlayPause()
+                                            playerConnection.togglePlayPause()
                                         } else {
                                             playerConnection.playQueue(
                                                 YouTubeQueue(

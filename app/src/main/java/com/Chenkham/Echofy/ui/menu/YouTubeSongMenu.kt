@@ -1,4 +1,4 @@
-﻿package com.Chenkham.Echofy.ui.menu
+package com.Chenkham.Echofy.ui.menu
 
 import android.annotation.SuppressLint
 import android.content.Intent
@@ -95,6 +95,7 @@ fun YouTubeSongMenu(
     val database = LocalDatabase.current
     val adManager = LocalAdManager.current
     val playerConnection = LocalPlayerConnection.current ?: return
+    val isJamActive = playerConnection.service.isJamSessionActive()
     val librarySong by database.song(song.id).collectAsState(initial = null)
     val download by LocalDownloadUtil.current.getDownload(song.id).collectAsState(initial = null)
     val coroutineScope = rememberCoroutineScope()
@@ -430,7 +431,15 @@ fun YouTubeSongMenu(
             // Menu items list
             item {
                 ListItem(
-                    headlineContent = { Text(text = stringResource(R.string.add_to_queue)) },
+                    headlineContent = {
+                        Text(
+                            text = if (isJamActive) {
+                                "Add to Together queue"
+                            } else {
+                                stringResource(R.string.add_to_queue)
+                            },
+                        )
+                    },
                     leadingContent = {
                         Icon(
                             painter = painterResource(R.drawable.queue_music),

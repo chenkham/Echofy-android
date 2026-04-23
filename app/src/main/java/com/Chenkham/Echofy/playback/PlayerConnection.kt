@@ -22,6 +22,7 @@ import com.Chenkham.Echofy.extensions.currentMetadata
 import com.Chenkham.Echofy.extensions.getCurrentQueueIndex
 import com.Chenkham.Echofy.extensions.getQueueWindows
 import com.Chenkham.Echofy.extensions.metadata
+import com.Chenkham.Echofy.jam.JamParticipantRole
 import com.Chenkham.Echofy.playback.MusicService.MusicBinder
 import com.Chenkham.Echofy.playback.queues.Queue
 import com.Chenkham.Echofy.utils.reportException
@@ -354,6 +355,9 @@ class PlayerConnection(
 
 
     fun playQueue(queue: Queue) {
+        if (service.handleJamAwarePlayQueue(queue)) {
+            return
+        }
         service.playQueue(queue)
     }
 
@@ -370,6 +374,10 @@ class PlayerConnection(
     fun playNext(items: List<MediaItem>) {
         try {
             Log.d(TAG, "Adding ${items.size} items to play next")
+            if (service.isJamSessionActive()) {
+                service.enqueueItemsIntoJam(items)
+                return
+            }
             service.playNext(items)
         } catch (e: Exception) {
             Log.e(TAG, "Error adding items to play next", e)
@@ -382,6 +390,10 @@ class PlayerConnection(
     fun addToQueue(items: List<MediaItem>) {
         try {
             Log.d(TAG, "Adding ${items.size} items to queue")
+            if (service.isJamSessionActive()) {
+                service.enqueueItemsIntoJam(items)
+                return
+            }
             service.addToQueue(items)
         } catch (e: Exception) {
             Log.e(TAG, "Error adding items to queue", e)
@@ -417,11 +429,7 @@ class PlayerConnection(
     fun seekToNext() {
         try {
             Log.d(TAG, "Seeking to next track")
-            if (player.hasNextMediaItem()) {
-                player.seekToNext()
-                player.prepare()
-                player.playWhenReady = true
-            }
+            service.seekToNextJamAware()
         } catch (e: Exception) {
             Log.e(TAG, "Error seeking to next", e)
             reportException(e)
@@ -431,11 +439,7 @@ class PlayerConnection(
     fun seekToPrevious() {
         try {
             Log.d(TAG, "Seeking to previous track")
-            if (player.hasPreviousMediaItem() || player.currentPosition > 3000) {
-                player.seekToPrevious()
-                player.prepare()
-                player.playWhenReady = true
-            }
+            service.seekToPreviousJamAware()
         } catch (e: Exception) {
             Log.e(TAG, "Error seeking to previous", e)
             reportException(e)
@@ -444,6 +448,10 @@ class PlayerConnection(
 
     fun togglePlayPause() {
         try {
+            if (!service.canCurrentJamParticipantControlPlayback()) {
+                Log.d(TAG, "Ignoring local play/pause because guest Jam playback is host-controlled")
+                return
+            }
             val newPlayWhenReady = !player.playWhenReady
             Log.d(TAG, "Toggling play/pause to: $newPlayWhenReady")
 

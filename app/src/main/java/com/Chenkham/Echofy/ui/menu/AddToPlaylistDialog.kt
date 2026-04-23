@@ -1,4 +1,4 @@
-﻿package com.Chenkham.Echofy.ui.menu
+package com.Chenkham.Echofy.ui.menu
 
 import com.Chenkham.Echofy.db.addSongToPlaylist
 
@@ -38,6 +38,7 @@ import com.Chenkham.Echofy.ui.component.PlaylistListItem
 import com.Chenkham.Echofy.utils.rememberPreference
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 @Composable
 fun AddToPlaylistDialog(
@@ -71,6 +72,41 @@ fun AddToPlaylistDialog(
     }
     var duplicates by remember {
         mutableStateOf(emptyList<String>())
+    }
+
+    suspend fun syncSongIdsToYouTube(playlist: Playlist, selectedSongIds: List<String>) {
+        val browseId = playlist.playlist.browseId ?: return
+        selectedSongIds.forEach { songId ->
+            YouTube.addToPlaylist(browseId, songId)
+        }
+    }
+
+    suspend fun handlePlaylistSelection(playlist: Playlist) {
+        val selectedSongIds = songIds ?: onGetSong(playlist).also { songIds = it }
+
+        if (selectedSongIds.isEmpty()) {
+            withContext(Dispatchers.Main) {
+                onDismiss()
+            }
+            return
+        }
+
+        val duplicateSongIds = database.playlistDuplicates(playlist.id, selectedSongIds)
+        if (duplicateSongIds.isNotEmpty()) {
+            withContext(Dispatchers.Main) {
+                selectedPlaylist = playlist
+                duplicates = duplicateSongIds
+                showDuplicateDialog = true
+            }
+            return
+        }
+
+        database.addSongToPlaylist(playlist, selectedSongIds)
+        syncSongIdsToYouTube(playlist, selectedSongIds)
+
+        withContext(Dispatchers.Main) {
+            onDismiss()
+        }
     }
 
     // Reset cached song IDs whenever the dialog is reopened so we always
@@ -116,22 +152,7 @@ fun AddToPlaylistDialog(
                     modifier = Modifier.clickable {
                         selectedPlaylist = playlist
                         coroutineScope.launch(Dispatchers.IO) {
-                            if (songIds == null) {
-                                songIds = onGetSong(playlist)
-                            }
-                            duplicates = database.playlistDuplicates(playlist.id, songIds!!)
-                            if (duplicates.isNotEmpty()) {
-                                showDuplicateDialog = true
-                            } else {
-                                onDismiss()
-                                database.addSongToPlaylist(playlist, songIds!!)
-
-                                playlist.playlist.browseId?.let { plist ->
-                                    songIds?.forEach {
-                                        YouTube.addToPlaylist(plist, it)
-                                    }
-                                }
-                            }
+                            handlePlaylistSelection(playlist)
                         }
                     }
                 )
@@ -143,7 +164,13 @@ fun AddToPlaylistDialog(
         CreatePlaylistDialog(
             onDismiss = { showCreatePlaylistDialog = false },
             initialTextFieldValue = initialTextFieldValue,
-            allowSyncing = allowSyncing
+            allowSyncing = allowSyncing,
+            onCreated = { createdPlaylist ->
+                withContext(Dispatchers.Main) {
+                    showCreatePlaylistDialog = false
+                }
+                handlePlaylistSelection(createdPlaylist)
+            }
         )
     }
 
@@ -154,15 +181,19 @@ fun AddToPlaylistDialog(
             buttons = {
                 TextButton(
                     onClick = {
+                        val playlist = selectedPlaylist ?: return@TextButton
+                        val selectedSongIds = songIds.orEmpty().filterNot { duplicates.contains(it) }
                         showDuplicateDialog = false
-                        onDismiss()
-                        database.transaction {
-                            addSongToPlaylist(
-                                selectedPlaylist!!,
-                                songIds!!.filter {
-                                    !duplicates.contains(it)
+                        coroutineScope.launch(Dispatchers.IO) {
+                            if (selectedSongIds.isNotEmpty()) {
+                                database.transaction {
+                                    addSongToPlaylist(playlist, selectedSongIds)
                                 }
-                            )
+                                syncSongIdsToYouTube(playlist, selectedSongIds)
+                            }
+                            withContext(Dispatchers.Main) {
+                                onDismiss()
+                            }
                         }
                     }
                 ) {
@@ -171,10 +202,19 @@ fun AddToPlaylistDialog(
 
                 TextButton(
                     onClick = {
+                        val playlist = selectedPlaylist ?: return@TextButton
+                        val selectedSongIds = songIds.orEmpty()
                         showDuplicateDialog = false
-                        onDismiss()
-                        database.transaction {
-                            addSongToPlaylist(selectedPlaylist!!, songIds!!)
+                        coroutineScope.launch(Dispatchers.IO) {
+                            if (selectedSongIds.isNotEmpty()) {
+                                database.transaction {
+                                    addSongToPlaylist(playlist, selectedSongIds)
+                                }
+                                syncSongIdsToYouTube(playlist, selectedSongIds)
+                            }
+                            withContext(Dispatchers.Main) {
+                                onDismiss()
+                            }
                         }
                     }
                 ) {

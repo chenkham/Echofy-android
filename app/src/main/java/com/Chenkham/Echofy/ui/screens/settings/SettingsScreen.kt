@@ -129,7 +129,7 @@ fun PremiumSubscriptionCard(
 ) {
     val isSubscribed by subscriptionManager.isSubscribed.collectAsState()
     val isLoading by subscriptionManager.isLoading.collectAsState()
-    val price by subscriptionManager.subscriptionPrice.collectAsState()
+    val price by subscriptionManager.monthlyPrice.collectAsState()
     
     Spacer(Modifier.height(16.dp))
     
@@ -172,17 +172,9 @@ fun PremiumSubscriptionCard(
                     )
                     Column {
                         Text(
-                            text = if (isSubscribed) "Premium Active" else "Go Premium",
+                            text = if (isSubscribed) "Pro Active" else "Echofy Pro",
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Bold
-                        )
-                        Text(
-                            text = if (isSubscribed) 
-                                "Enjoying ad-free experience" 
-                            else 
-                                "Remove all ads for just $price",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
                 }
@@ -194,7 +186,7 @@ fun PremiumSubscriptionCard(
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     Button(
-                        onClick = { subscriptionManager.launchPurchaseFlow(activity) },
+                        onClick = { subscriptionManager.launchPurchaseFlow(activity, com.Chenkham.Echofy.ads.SubscriptionManager.PREMIUM_MONTHLY_ID) },
                         enabled = !isLoading,
                         modifier = Modifier.weight(1f),
                         shape = RoundedCornerShape(12.dp)
@@ -206,7 +198,7 @@ fun PremiumSubscriptionCard(
                                 color = MaterialTheme.colorScheme.onPrimary
                             )
                         } else {
-                            Text("Subscribe")
+                            Text("Unlock")
                         }
                     }
                     
@@ -867,6 +859,86 @@ fun SettingsScreen(
             )
         )
 
+        val adManager = com.Chenkham.Echofy.ui.component.LocalAdManager.current
+        val isPremium = adManager?.isPremium?.value == true
+
+        Spacer(Modifier.height(16.dp))
+
+        // Premium Features Category
+        SettingsCategory(
+            title = "Premium Labs",
+            items = listOf(
+                SettingsCategoryItem(
+                    icon = painterResource(R.drawable.waves),
+                    title = {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Text(
+                                text = "Together & Controls",
+                                style = MaterialTheme.typography.titleMedium
+                            )
+                            Spacer(Modifier.width(8.dp))
+                            Icon(
+                                painter = painterResource(R.drawable.workspace_premium),
+                                contentDescription = "Premium",
+                                tint = MaterialTheme.colorScheme.primary,
+                                modifier = Modifier.size(16.dp)
+                            )
+                        }
+                    },
+                    description = {
+                        Text(
+                            text = "Together (Beta), Haptic Bass, Shake to Skip",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    },
+                    trailingContent = {
+                        Icon(
+                            painter = painterResource(R.drawable.arrow_forward),
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.size(20.dp)
+                        )
+                    },
+                    onClick = { navController.navigate("settings/together_controls") }
+                ),
+                SettingsCategoryItem(
+                    icon = painterResource(R.drawable.palette),
+                    title = {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Text(
+                                text = "Player Visuals",
+                                style = MaterialTheme.typography.titleMedium
+                            )
+                            Spacer(Modifier.width(8.dp))
+                            Icon(
+                                painter = painterResource(R.drawable.workspace_premium),
+                                contentDescription = "Premium",
+                                tint = MaterialTheme.colorScheme.primary,
+                                modifier = Modifier.size(16.dp)
+                            )
+                        }
+                    },
+                    description = {
+                        Text(
+                            text = "Fluid Backgrounds, Real-Time Visualizer",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    },
+                    trailingContent = {
+                        Icon(
+                            painter = painterResource(R.drawable.arrow_forward),
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.size(20.dp)
+                        )
+                    },
+                    onClick = { navController.navigate("settings/player_visuals") }
+                ),
+            )
+        )
+
         Spacer(Modifier.height(16.dp))
 
         // Community Section
@@ -897,31 +969,6 @@ fun SettingsScreen(
                         )
                     },
                     onClick = { uriHandler.openUri("https://t.me/echofyapp") }
-                ),
-                SettingsCategoryItem(
-                    icon = painterResource(R.drawable.group),
-                    title = {
-                        Column {
-                            Text(
-                                text = stringResource(R.string.whatsapp),
-                                style = MaterialTheme.typography.titleMedium
-                            )
-                            Text(
-                                text = stringResource(R.string.join_whatsapp),
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                        }
-                    },
-                    trailingContent = {
-                        Icon(
-                            painter = painterResource(R.drawable.arrow_forward),
-                            contentDescription = null,
-                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                            modifier = Modifier.size(20.dp)
-                        )
-                    },
-                    onClick = { uriHandler.openUri("https://chat.whatsapp.com/ItflzF589v46iXvUWBk6r3") }
                 ),
             )
         )

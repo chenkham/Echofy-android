@@ -1,4 +1,4 @@
-﻿package com.Chenkham.Echofy.ui.screens.settings
+package com.Chenkham.Echofy.ui.screens.settings
 
 import android.os.Build
 import androidx.compose.animation.AnimatedVisibility
@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -24,6 +25,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBarScrollBehavior
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -89,6 +91,7 @@ import timber.log.Timber
 
 import com.Chenkham.Echofy.constants.MiniPlayerStyle
 import com.Chenkham.Echofy.constants.MiniPlayerStyleKey
+import com.Chenkham.Echofy.ui.component.LocalAdManager
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -96,6 +99,9 @@ fun AppearanceSettings(
     navController: NavController,
     scrollBehavior: TopAppBarScrollBehavior,
 ) {
+    val adManager = LocalAdManager.current
+    val isPremium = adManager?.isPremium?.collectAsState()?.value == true
+    val context = androidx.compose.ui.platform.LocalContext.current
     val (dynamicTheme, onDynamicThemeChange) = rememberPreference(
         DynamicThemeKey,
         defaultValue = true
@@ -373,12 +379,33 @@ fun AppearanceSettings(
                 )},
                 {AnimatedVisibility(useDarkTheme) {
                     SwitchPreference(
-                        title = { Text(stringResource(R.string.pure_black)) },
+                        title = { 
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Text(stringResource(R.string.pure_black))
+                                if (!isPremium) {
+                                    Spacer(Modifier.width(8.dp))
+                                    Icon(
+                                        painter = painterResource(R.drawable.diamond_filled),
+                                        contentDescription = "Premium Feature",
+                                        modifier = Modifier.size(16.dp),
+                                        tint = MaterialTheme.colorScheme.tertiary
+                                    )
+                                }
+                            }
+                        },
                         icon = { Icon(painterResource(R.drawable.contrast), null) },
                         checked = pureBlack && useDarkTheme,
                         onCheckedChange = { newValue ->
                             if (useDarkTheme) {
-                                onPureBlackChange(newValue)
+                                if (isPremium) {
+                                    onPureBlackChange(newValue)
+                                } else {
+                                    try {
+                                        navController.navigate("premium")
+                                    } catch (e: Exception) {
+                                        android.widget.Toast.makeText(context, "This is a Premium feature!", android.widget.Toast.LENGTH_SHORT).show()
+                                    }
+                                }
                             }
                         },
                         isEnabled = useDarkTheme

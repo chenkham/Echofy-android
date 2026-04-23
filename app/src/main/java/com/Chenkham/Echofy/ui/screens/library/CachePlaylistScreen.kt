@@ -1,4 +1,4 @@
-﻿package com.Chenkham.Echofy.ui.screens.library
+package com.Chenkham.Echofy.ui.screens.library
 
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.combinedClickable
@@ -273,7 +273,7 @@ fun CachePlaylistScreen(
                                 onClick = {
                                     if (!selection) {
                                         if (songWrapper.item.id == mediaMetadata?.id) {
-                                            playerConnection.player.togglePlayPause()
+                                            playerConnection.togglePlayPause()
                                         } else {
                                             playerConnection.playQueue(
                                                 ListQueue(

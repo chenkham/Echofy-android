@@ -1,0 +1,20 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <!-- Apple Music queue icon - three lines with music note style -->
+    <path
+        android:fillColor="@android:color/white"
+        android:pathData="M3,7 L16,7 C16.552,7 17,6.552 17,6 C17,5.448 16.552,5 16,5 L3,5 C2.448,5 2,5.448 2,6 C2,6.552 2.448,7 3,7 Z" />
+    <path
+        android:fillColor="@android:color/white"
+        android:pathData="M3,13 L13,13 C13.552,13 14,12.552 14,12 C14,11.448 13.552,11 13,11 L3,11 C2.448,11 2,11.448 2,12 C2,12.552 2.448,13 3,13 Z" />
+    <path
+        android:fillColor="@android:color/white"
+        android:pathData="M3,19 L10,19 C10.552,19 11,18.552 11,18 C11,17.448 10.552,17 10,17 L3,17 C2.448,17 2,17.448 2,18 C2,18.552 2.448,19 3,19 Z" />
+    <!-- Music note dot -->
+    <path
+        android:fillColor="@android:color/white"
+        android:pathData="M19.5,9 C17.567,9 16,10.567 16,12.5 L16,18.5 C16,19.881 17.119,21 18.5,21 C19.881,21 21,19.881 21,18.5 C21,17.119 19.881,16 18.5,16 C18.164,16 17.845,16.066 17.553,16.184 L17.553,12.5 C17.553,11.422 18.421,10.553 19.5,10.553 L21,10.553 L21,9 Z" />
+</vector>

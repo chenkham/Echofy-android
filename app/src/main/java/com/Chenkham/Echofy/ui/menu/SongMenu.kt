@@ -1,4 +1,4 @@
-﻿package com.Chenkham.Echofy.ui.menu
+package com.Chenkham.Echofy.ui.menu
 
 import com.Chenkham.Echofy.db.update
 import com.Chenkham.Echofy.ui.component.LocalAdManager
@@ -121,6 +121,7 @@ fun SongMenu(
     val database = LocalDatabase.current
     val downloadUtil = LocalDownloadUtil.current
     val playerConnection = LocalPlayerConnection.current ?: return
+    val isJamActive = playerConnection.service.isJamSessionActive()
     // Optimized: use remember to avoid recomposition lag
     val songState = remember(originalSong.id) { 
         database.song(originalSong.id) 
@@ -224,12 +225,8 @@ fun SongMenu(
 
     AddToPlaylistDialog(
         isVisible = showChoosePlaylistDialog,
-        onGetSong = { playlist ->
-            coroutineScope.launch(Dispatchers.IO) {
-                playlist.playlist.browseId?.let { browseId ->
-                    YouTube.addToPlaylist(browseId, song.id)
-                }
-            }
+        onGetSong = { _ ->
+            // Just return the song ID — AddToPlaylistDialog handles YTM sync itself
             listOf(song.id)
         },
         onDismiss = {
@@ -504,62 +501,15 @@ fun SongMenu(
                             .clip(RoundedCornerShape(8.dp))
                             .clickable {
                                 onDismiss()
-                                scope.launch(Dispatchers.IO) {
-                                    try {
-                                        withContext(Dispatchers.Main) {
-                                            Toast.makeText(context, "Generating share card...", Toast.LENGTH_SHORT).show()
-                                        }
-                                        
-                                        // Generate branded share card
-                                        val shareCard = com.Chenkham.Echofy.utils.ShareCardGenerator.generateShareCard(
-                                            context = context,
-                                            songTitle = song.title,
-                                            artistName = song.artists.joinToString { it.name },
-                                            albumArtUrl = song.thumbnailUrl
-                                        )
-                                        
-                                        // Save to cache directory
-                                        val cacheDir = File(context.cacheDir, "share_cards")
-                                        cacheDir.mkdirs()
-                                        val imageFile = File(cacheDir, "echofy_share_${System.currentTimeMillis()}.png")
-                                        
-                                        imageFile.outputStream().use { out ->
-                                            shareCard.compress(Bitmap.CompressFormat.PNG, 100, out)
-                                        }
-                                        
-                                        // Share via FileProvider
-                                        val uri = androidx.core.content.FileProvider.getUriForFile(
-                                            context,
-                                            "${context.packageName}.fileprovider",
-                                            imageFile
-                                        )
-                                        
-                                        val intent = Intent().apply {
-                                            action = Intent.ACTION_SEND
-                                            type = "image/png"
-                                            putExtra(Intent.EXTRA_STREAM, uri)
-                                            putExtra(Intent.EXTRA_TEXT, "Check out this song on Echofy!\n${song.title} - ${song.artists.joinToString { it.name }}")
-                                            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-                                        }
-                                        
-                                        withContext(Dispatchers.Main) {
-                                            context.startActivity(Intent.createChooser(intent, "Share via"))
-                                        }
-                                    } catch (e: Exception) {
-                                        android.util.Log.e("ShareCard", "Failed to generate share card", e)
-                                        withContext(Dispatchers.Main) {
-                                            Toast.makeText(context, "Share card failed: ${e.message}. Using text share.", Toast.LENGTH_LONG).show()
-                                            
-                                            // Fallback to text sharing
-                                            val fallbackIntent = Intent().apply {
-                                                action = Intent.ACTION_SEND
-                                                type = "text/plain"
-                                                putExtra(Intent.EXTRA_TEXT, "Check out this song on Echofy!\n${song.title} - ${song.artists.joinToString { it.name }}\nhttps://music.youtube.com/watch?v=${song.id}")
-                                            }
-                                            context.startActivity(Intent.createChooser(fallbackIntent, "Share via"))
-                                        }
-                                    }
+                                val shareIntent = Intent().apply {
+                                    action = Intent.ACTION_SEND
+                                    type = "text/plain"
+                                    putExtra(
+                                        Intent.EXTRA_TEXT,
+                                        "Check out this song on Echofy!\n${song.title} - ${song.artists.joinToString { it.name }}\nhttps://music.youtube.com/watch?v=${song.id}"
+                                    )
                                 }
+                                context.startActivity(Intent.createChooser(shareIntent, "Share via"))
                             }
                             .padding(12.dp),
                         horizontalAlignment = Alignment.CenterHorizontally,
@@ -614,7 +564,15 @@ fun SongMenu(
 
             item {
                 ListItem(
-                    headlineContent = { Text(text = stringResource(R.string.add_to_queue)) },
+                    headlineContent = {
+                        Text(
+                            text = if (isJamActive) {
+                                "Add to Together queue"
+                            } else {
+                                stringResource(R.string.add_to_queue)
+                            },
+                        )
+                    },
                     leadingContent = {
                         Icon(
                             painter = painterResource(R.drawable.queue_music),

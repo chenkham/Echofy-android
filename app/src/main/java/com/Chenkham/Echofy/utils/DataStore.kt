@@ -1,4 +1,4 @@
-﻿package com.Chenkham.Echofy.utils
+package com.Chenkham.Echofy.utils
 
 import android.content.Context
 import androidx.compose.runtime.Composable
@@ -55,12 +55,18 @@ fun <T> rememberPreference(
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
 
+    val initialValue = remember {
+        runBlocking {
+            context.dataStore.data.first()[key] ?: defaultValue
+        }
+    }
+
     val state =
         remember {
             context.dataStore.data
                 .map { it[key] ?: defaultValue }
                 .distinctUntilChanged()
-        }.collectAsState(initial = defaultValue)
+        }.collectAsState(initial = initialValue)
 
     return remember {
         object : MutableState<T> {
@@ -89,12 +95,18 @@ inline fun <reified T : Enum<T>> rememberEnumPreference(
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
 
+    val initialValue = remember {
+        runBlocking {
+            context.dataStore.data.first()[key]?.toEnum(defaultValue) ?: defaultValue
+        }
+    }
+
     val state =
         remember {
             context.dataStore.data
                 .map { it[key].toEnum(defaultValue = defaultValue) }
                 .distinctUntilChanged()
-        }.collectAsState(initial = defaultValue)
+        }.collectAsState(initial = initialValue)
 
     return remember {
         object : MutableState<T> {

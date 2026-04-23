@@ -1,4 +1,4 @@
-﻿package com.Chenkham.Echofy.ui.screens
+package com.Chenkham.Echofy.ui.screens
 
 import android.content.Context
 import androidx.compose.foundation.ExperimentalFoundationApi
@@ -273,7 +273,7 @@ fun StatsScreen(
                                     .combinedClickable(
                                         onClick = {
                                             if (song.id == mediaMetadata?.id) {
-                                                playerConnection.player.togglePlayPause()
+                                                playerConnection.togglePlayPause()
                                             } else {
                                                 playerConnection.playQueue(
                                                     YouTubeQueue(

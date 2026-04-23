@@ -93,3 +93,20 @@ lint/tmp/
 .kotlin
 app/release
 output-metadata.json
+
+# AI/Build Junk
+build_output*.txt
+errors.txt
+*.py
+*.cs
+*.json
+git_status.txt
+node_modules/
+package-lock.json
+response.txt
+tmp_body.json
+
+# Keep specific json files if needed
+!google-services.json
+!firebase-messaging.json
+
