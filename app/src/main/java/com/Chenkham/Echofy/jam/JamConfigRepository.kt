@@ -55,7 +55,9 @@ class JamRemoteConfigRepository(
 
     override suspend fun refresh(forceRefresh: Boolean) {
         val current = _registry.value
-        if (!forceRefresh && current.shards.isNotEmpty() && current != bootstrapRegistry) {
+        // Bootstrap already has valid shards — don't block startup with a network call
+        if (!forceRefresh && current.shards.isNotEmpty()) {
+            Timber.tag(TAG).d("Registry has ${current.shards.size} shards, skipping remote fetch")
             return
         }
 
@@ -179,7 +181,7 @@ class JamRemoteConfigRepository(
         return appContext.optionalString("jam_registry_url")
             ?.trim()
             ?.takeIf { it.isNotBlank() }
-            ?: DEFAULT_REGISTRY_URL
+            ?: null
     }
 
     private suspend fun resolveAllocationUrl(): String? {
@@ -218,7 +220,6 @@ class JamRemoteConfigRepository(
         val JamRegistryUrlKey = stringPreferencesKey("jam_registry_url_override")
         val JamInviteBaseUrlKey = stringPreferencesKey("jam_invite_base_url_override")
         val JamAllocationUrlKey = stringPreferencesKey("jam_room_allocate_url_override")
-        private const val DEFAULT_REGISTRY_URL = "https://config.echofy.com/jam-registry.json"
         private const val TAG = "JamRemoteConfig"
 
         private fun deriveAllocationUrl(registryUrl: String): String? {

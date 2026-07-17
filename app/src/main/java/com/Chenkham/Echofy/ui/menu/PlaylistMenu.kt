@@ -373,9 +373,7 @@ fun PlaylistMenu(
             DownloadGridMenu(
                 state = downloadState,
                 onDownload = {
-                    val isPremium = adManager?.isPremium?.value == true
-                    if (isPremium) {
-                        songs.forEach { song ->
+                    songs.forEach { song ->
                         val downloadRequest =
                             DownloadRequest
                                 .Builder(song.id, song.id.toUri())
@@ -390,10 +388,7 @@ fun PlaylistMenu(
                         )
                     }
                     Toast.makeText(context, "Download started", Toast.LENGTH_SHORT).show()
-                } else {
-                    Toast.makeText(context, R.string.premium_required, Toast.LENGTH_SHORT).show()
-                }
-            },
+                },
                 onRemoveDownload = {
                     showRemoveDownloadDialog = true
                 },

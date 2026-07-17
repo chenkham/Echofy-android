@@ -119,101 +119,6 @@ import com.Chenkham.Echofy.constants.BackpaperScreen
 import com.Chenkham.Echofy.constants.VoiceControlEnabledKey
 import com.Chenkham.Echofy.ui.component.BackpaperBackground
 
-/**
- * Premium Subscription Card for ad-free experience
- */
-@Composable
-fun PremiumSubscriptionCard(
-    subscriptionManager: SubscriptionManager,
-    activity: Activity
-) {
-    val isSubscribed by subscriptionManager.isSubscribed.collectAsState()
-    val isLoading by subscriptionManager.isLoading.collectAsState()
-    val price by subscriptionManager.monthlyPrice.collectAsState()
-    
-    Spacer(Modifier.height(16.dp))
-    
-    ElevatedCard(
-        elevation = CardDefaults.cardElevation(defaultElevation = 8.dp),
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = if (isSubscribed) 
-                MaterialTheme.colorScheme.primaryContainer
-            else 
-                MaterialTheme.colorScheme.surfaceContainerHigh
-        ),
-        shape = RoundedCornerShape(24.dp)
-    ) {
-        Column(
-            modifier = Modifier.padding(20.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Row(
-                    horizontalArrangement = Arrangement.spacedBy(12.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Icon(
-                        painter = painterResource(
-                            if (isSubscribed) R.drawable.verified_user else R.drawable.workspace_premium
-                        ),
-                        contentDescription = null,
-                        tint = if (isSubscribed) 
-                            MaterialTheme.colorScheme.primary 
-                        else 
-                            MaterialTheme.colorScheme.secondary,
-                        modifier = Modifier.size(28.dp)
-                    )
-                    Column {
-                        Text(
-                            text = if (isSubscribed) "Pro Active" else "Echofy Pro",
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold
-                        )
-                    }
-                }
-            }
-            
-            if (!isSubscribed) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    Button(
-                        onClick = { subscriptionManager.launchPurchaseFlow(activity, com.Chenkham.Echofy.ads.SubscriptionManager.PREMIUM_MONTHLY_ID) },
-                        enabled = !isLoading,
-                        modifier = Modifier.weight(1f),
-                        shape = RoundedCornerShape(12.dp)
-                    ) {
-                        if (isLoading) {
-                            CircularProgressIndicator(
-                                modifier = Modifier.size(16.dp),
-                                strokeWidth = 2.dp,
-                                color = MaterialTheme.colorScheme.onPrimary
-                            )
-                        } else {
-                            Text("Unlock")
-                        }
-                    }
-                    
-                    OutlinedButton(
-                        onClick = { subscriptionManager.restorePurchases() },
-                        enabled = !isLoading,
-                        shape = RoundedCornerShape(12.dp)
-                    ) {
-                        Text("Restore")
-                    }
-                }
-            }
-        }
-    }
-}
 
 @SuppressLint("ObsoleteSdkInt")
 @RequiresApi(Build.VERSION_CODES.TIRAMISU)
@@ -517,14 +422,11 @@ fun VoiceControlCard(
 fun SettingsScreen(
     latestVersion: Long,
     navController: NavController,
-    scrollBehavior: TopAppBarScrollBehavior,
+    scrollBehavior: TopAppBarScrollBehavior
 ) {
     val uriHandler = LocalUriHandler.current
-    val mainViewModel: MainViewModel = hiltViewModel()
-    val activeUser by mainViewModel.activeUser.collectAsState()
-
     BackpaperBackground(screen = BackpaperScreen.SETTINGS) {
-    Column(
+        Column(
         Modifier
             .windowInsetsPadding(LocalPlayerAwareWindowInsets.current.only(WindowInsetsSides.Horizontal + WindowInsetsSides.Bottom))
             .verticalScroll(rememberScrollState())
@@ -545,7 +447,7 @@ fun SettingsScreen(
         val isCookieLoggedIn = remember(innerTubeCookie) {
             "SAPISID" in parseCookieString(innerTubeCookie)
         }
-        val isLoggedIn = isCookieLoggedIn || activeUser != null
+        val isLoggedIn = isCookieLoggedIn
 
         Column(
             modifier = Modifier
@@ -580,17 +482,6 @@ fun SettingsScreen(
                             ),
                         contentAlignment = Alignment.Center
                     ) {
-                        if (activeUser != null) {
-                             AsyncImage(
-                                model = ImageRequest.Builder(LocalContext.current)
-                                    .data(activeUser?.photoUrl)
-                                    .crossfade(true)
-                                    .build(),
-                                contentDescription = "Avatar of ${activeUser?.displayName}",
-                                modifier = Modifier.fillMaxSize().clip(CircleShape),
-                                contentScale = ContentScale.Crop
-                            )
-                        } else {
                             when {
                                 currentSelection is AvatarSelection.Custom && !imageLoadError -> {
                                     AsyncImage(
@@ -715,7 +606,6 @@ fun SettingsScreen(
                                     }
                                 }
                             }
-                        }
                     }
 
                     // Online status indicator (optional)
@@ -740,7 +630,7 @@ fun SettingsScreen(
 
                 // Name with subtle animation
                 AnimatedContent(
-                    targetState = if (activeUser != null) activeUser!!.displayName ?: "User" else accountName.replace("@", "").takeIf { it.isNotBlank() } ?: "",
+                    targetState = accountName.replace("@", "").takeIf { it.isNotBlank() } ?: "Guest",
                     transitionSpec = { fadeIn() togetherWith fadeOut() },
                     label = "username"
                 ) { name ->
@@ -822,6 +712,16 @@ fun SettingsScreen(
                     onClick = { navController.navigate("account_settings") }
                 ),
                 SettingsCategoryItem(
+                    icon = painterResource(R.drawable.group),
+                    title = { Text("Together & Controls") },
+                    onClick = { navController.navigate("settings/premium_features") }
+                ),
+                SettingsCategoryItem(
+                    icon = painterResource(R.drawable.palette),
+                    title = { Text("Player Visuals") },
+                    onClick = { navController.navigate("settings/player_visuals") }
+                ),
+                SettingsCategoryItem(
                     icon = painterResource(R.drawable.palette),
                     title = { Text(stringResource(R.string.appearance)) },
                     onClick = { navController.navigate("settings/appearance") }
@@ -859,87 +759,6 @@ fun SettingsScreen(
             )
         )
 
-        val adManager = com.Chenkham.Echofy.ui.component.LocalAdManager.current
-        val isPremium = adManager?.isPremium?.value == true
-
-        Spacer(Modifier.height(16.dp))
-
-        // Premium Features Category
-        SettingsCategory(
-            title = "Premium Labs",
-            items = listOf(
-                SettingsCategoryItem(
-                    icon = painterResource(R.drawable.waves),
-                    title = {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Text(
-                                text = "Together & Controls",
-                                style = MaterialTheme.typography.titleMedium
-                            )
-                            Spacer(Modifier.width(8.dp))
-                            Icon(
-                                painter = painterResource(R.drawable.workspace_premium),
-                                contentDescription = "Premium",
-                                tint = MaterialTheme.colorScheme.primary,
-                                modifier = Modifier.size(16.dp)
-                            )
-                        }
-                    },
-                    description = {
-                        Text(
-                            text = "Together (Beta), Haptic Bass, Shake to Skip",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    },
-                    trailingContent = {
-                        Icon(
-                            painter = painterResource(R.drawable.arrow_forward),
-                            contentDescription = null,
-                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                            modifier = Modifier.size(20.dp)
-                        )
-                    },
-                    onClick = { navController.navigate("settings/together_controls") }
-                ),
-                SettingsCategoryItem(
-                    icon = painterResource(R.drawable.palette),
-                    title = {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Text(
-                                text = "Player Visuals",
-                                style = MaterialTheme.typography.titleMedium
-                            )
-                            Spacer(Modifier.width(8.dp))
-                            Icon(
-                                painter = painterResource(R.drawable.workspace_premium),
-                                contentDescription = "Premium",
-                                tint = MaterialTheme.colorScheme.primary,
-                                modifier = Modifier.size(16.dp)
-                            )
-                        }
-                    },
-                    description = {
-                        Text(
-                            text = "Fluid Backgrounds, Real-Time Visualizer",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    },
-                    trailingContent = {
-                        Icon(
-                            painter = painterResource(R.drawable.arrow_forward),
-                            contentDescription = null,
-                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                            modifier = Modifier.size(20.dp)
-                        )
-                    },
-                    onClick = { navController.navigate("settings/player_visuals") }
-                ),
-            )
-        )
-
-        Spacer(Modifier.height(16.dp))
 
         // Community Section
         SettingsCategory(

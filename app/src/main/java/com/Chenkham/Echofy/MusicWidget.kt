@@ -4,6 +4,7 @@ import android.annotation.SuppressLint
 import android.app.PendingIntent
 import android.appwidget.AppWidgetManager
 import android.appwidget.AppWidgetProvider
+import android.content.BroadcastReceiver.PendingResult
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
@@ -56,7 +57,7 @@ class MusicWidget : AppWidgetProvider() {
         if (playerConnection != null) {
             handleActionWithPlayerConnection(context, intent.action, playerConnection)
         } else {
-            handleActionWithMediaController(context, intent.action)
+            handleActionWithMediaController(context, intent.action, goAsync())
         }
     }
 
@@ -102,9 +103,10 @@ class MusicWidget : AppWidgetProvider() {
         }
     }
 
-    private fun handleActionWithMediaController(context: Context, action: String?) {
+    private fun handleActionWithMediaController(context: Context, action: String?, pendingResult: PendingResult? = null) {
         if (action == ACTION_OPEN_APP) {
             openApp(context)
+            pendingResult?.finish()
             return
         }
 
@@ -182,11 +184,11 @@ class MusicWidget : AppWidgetProvider() {
                     widgetIds.forEach { updateWidgetWithPlayer(context, appWidgetManager, it, controller, false) }
                 }
                 
-                // Release controller
-                MediaController.releaseFuture(controllerFuture)
-                
             } catch (e: Exception) {
                 // Ignore, unable to connect
+            } finally {
+                MediaController.releaseFuture(controllerFuture)
+                pendingResult?.finish()
             }
         }
     }
@@ -240,6 +242,16 @@ class MusicWidget : AppWidgetProvider() {
         const val ACTION_STATE_CHANGED = "com.Chenkham.Echofy.ACTION_STATE_CHANGED"
         const val ACTION_UPDATE_PROGRESS = "com.Chenkham.Echofy.ACTION_UPDATE_PROGRESS"
 
+        @Volatile
+        private var sharedImageLoader: ImageLoader? = null
+
+        private fun widgetImageLoader(context: Context): ImageLoader =
+            sharedImageLoader ?: synchronized(this) {
+                sharedImageLoader ?: ImageLoader(context.applicationContext).also {
+                    sharedImageLoader = it
+                }
+            }
+
         fun updateAllWidgets(context: Context) {
             val appWidgetManager = AppWidgetManager.getInstance(context)
             val widgetIds = appWidgetManager.getAppWidgetIds(
@@ -257,9 +269,10 @@ class MusicWidget : AppWidgetProvider() {
                         try {
                             val controller = withContext(Dispatchers.IO) { controllerFuture.get() }
                             widgetIds.forEach { updateWidgetWithPlayer(context, appWidgetManager, it, controller, false) }
-                            MediaController.releaseFuture(controllerFuture)
                         } catch (e: Exception) {
                             widgetIds.forEach { updateWidgetWithPlayer(context, appWidgetManager, it, null, false) }
+                        } finally {
+                            MediaController.releaseFuture(controllerFuture)
                         }
                     }
                 }
@@ -358,11 +371,12 @@ class MusicWidget : AppWidgetProvider() {
                     // Verificar si ya tenemos una imagen cargada para evitar recargas frecuentes
                     CoroutineScope(Dispatchers.IO).launch {
                         try {
-                            val request = ImageRequest.Builder(context)
+                            val appContext = context.applicationContext
+                            val request = ImageRequest.Builder(appContext)
                                 .data(thumbnailUrl)
                                 .size(160, 160) // Optimizado para el widget
                                 .build()
-                            val drawable = ImageLoader(context).execute(request).drawable
+                            val drawable = widgetImageLoader(appContext).execute(request).drawable
                             drawable?.let {
                                 views.setImageViewBitmap(R.id.widget_album_art, it.toBitmap())
                                 appWidgetManager.partiallyUpdateAppWidget(appWidgetId, views)

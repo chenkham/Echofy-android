@@ -1,6 +1,5 @@
-﻿package com.Chenkham.Echofy.ui.component
+package com.Chenkham.Echofy.ui.component
 
-import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
@@ -15,9 +14,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Badge
 import androidx.compose.material3.BadgedBox
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ProvideTextStyle
@@ -39,7 +35,6 @@ fun SettingsCategory(
             .fillMaxWidth()
             .padding(horizontal = 16.dp)
     ) {
-        // Section title
         title?.let {
             Text(
                 text = it,
@@ -49,13 +44,9 @@ fun SettingsCategory(
             )
         }
 
-        // Settings list (Flat design)
         Column {
-            items.forEachIndexed { index, item ->
-                Material3SettingsItemRow(
-                    item = item,
-                    showDivider = index < items.size - 1
-                )
+            items.forEach { item ->
+                Material3SettingsItemRow(item = item)
             }
         }
     }
@@ -71,7 +62,6 @@ fun SettingsGeneralCategory(
             .fillMaxWidth()
             .padding(horizontal = 16.dp)
     ) {
-        // Section title
         title?.let {
             Text(
                 text = it,
@@ -81,128 +71,97 @@ fun SettingsGeneralCategory(
             )
         }
 
-        // Settings list (Flat design)
         Column {
-            items.forEachIndexed { index, item ->
+            items.forEach { item ->
                 item()
-                if (index < items.size - 1) {
-                    HorizontalDivider(
-                        modifier = Modifier.padding(
-                            start = 76.dp,
-                            end = 20.dp
-                        ),
-                        thickness = 0.5.dp,
-                        color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f)
-                    )
-                }
             }
         }
     }
 }
 
-/** Individual settings item row with Material 3 styling */
 @Composable
 private fun Material3SettingsItemRow(
     item: SettingsCategoryItem,
-    showDivider: Boolean
 ) {
-    Column {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .clip(RoundedCornerShape(12.dp))
-                .clickable(
-                    enabled = item.onClick != null,
-                    onClick = { item.onClick?.invoke() }
-                )
-                .padding(horizontal = 20.dp, vertical = 16.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            // Icon with background
-            item.icon?.let { icon ->
-                Box(
-                    modifier = Modifier
-                        .size(40.dp)
-                        .clip(RoundedCornerShape(12.dp))
-                        .background(
-                            MaterialTheme.colorScheme.primary.copy(
-                                alpha = if (item.isHighlighted) 0.15f else 0.1f
-                            )
-                        ),
-                    contentAlignment = Alignment.Center
-                ) {
-                    if (item.showBadge) {
-                        BadgedBox(
-                            badge = {
-                                Badge(
-                                    containerColor = MaterialTheme.colorScheme.error
-                                )
-                            }
-                        ) {
-                            Icon(
-                                painter = icon,
-                                contentDescription = null,
-                                tint = if (item.isHighlighted)
-                                    MaterialTheme.colorScheme.primary
-                                else
-                                    MaterialTheme.colorScheme.primary.copy(alpha = 0.9f),
-                                modifier = Modifier.size(24.dp)
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(12.dp))
+            .clickable(
+                enabled = item.onClick != null,
+                onClick = { item.onClick?.invoke() }
+            )
+            .padding(horizontal = 20.dp, vertical = 20.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        item.icon?.let { icon ->
+            Box(
+                modifier = Modifier
+                    .size(40.dp)
+                    .clip(RoundedCornerShape(12.dp))
+                    .background(
+                        MaterialTheme.colorScheme.primary.copy(
+                            alpha = if (item.isHighlighted) 0.15f else 0.1f
+                        )
+                    ),
+                contentAlignment = Alignment.Center
+            ) {
+                if (item.showBadge) {
+                    BadgedBox(
+                        badge = {
+                            Badge(
+                                containerColor = MaterialTheme.colorScheme.error
                             )
                         }
-                    } else {
+                    ) {
                         Icon(
                             painter = icon,
                             contentDescription = null,
-                            tint = if (item.isHighlighted)
+                            tint = if (item.isHighlighted) {
                                 MaterialTheme.colorScheme.primary
-                            else
-                                MaterialTheme.colorScheme.primary.copy(alpha = 0.9f),
+                            } else {
+                                MaterialTheme.colorScheme.primary.copy(alpha = 0.9f)
+                            },
                             modifier = Modifier.size(24.dp)
                         )
                     }
-                }
-
-                Spacer(modifier = Modifier.width(16.dp))
-            }
-
-            // Title and description
-            Column(
-                modifier = Modifier.weight(1f)
-            ) {
-                // Title content
-                ProvideTextStyle(MaterialTheme.typography.titleMedium) {
-                    item.title()
-                }
-
-                // Description if provided
-                item.description?.let { desc ->
-                    Spacer(modifier = Modifier.height(2.dp))
-                    desc()
+                } else {
+                    Icon(
+                        painter = icon,
+                        contentDescription = null,
+                        tint = if (item.isHighlighted) {
+                            MaterialTheme.colorScheme.primary
+                        } else {
+                            MaterialTheme.colorScheme.primary.copy(alpha = 0.9f)
+                        },
+                        modifier = Modifier.size(24.dp)
+                    )
                 }
             }
 
-            // Trailing content
-            item.trailingContent?.let { trailing ->
-                Spacer(modifier = Modifier.width(8.dp))
-                trailing()
+            Spacer(modifier = Modifier.width(16.dp))
+        }
+
+        Column(
+            modifier = Modifier.weight(1f)
+        ) {
+            ProvideTextStyle(MaterialTheme.typography.titleMedium) {
+                item.title()
+            }
+
+            item.description?.let { desc ->
+                Spacer(modifier = Modifier.height(2.dp))
+                desc()
             }
         }
 
-        // Divider
-        if (showDivider) {
-            HorizontalDivider(
-                modifier = Modifier.padding(
-                    start = if (item.icon != null) 76.dp else 20.dp,
-                    end = 20.dp
-                ),
-                thickness = 0.5.dp,
-                color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f)
-            )
+        item.trailingContent?.let { trailing ->
+            Spacer(modifier = Modifier.width(8.dp))
+            trailing()
         }
     }
 }
 
-/** Data class for Material 3 settings item */
 data class SettingsCategoryItem(
     val icon: Painter? = null,
     val title: @Composable () -> Unit,

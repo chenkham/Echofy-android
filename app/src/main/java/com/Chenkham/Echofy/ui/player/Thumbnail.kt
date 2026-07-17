@@ -54,6 +54,19 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import com.Chenkham.Echofy.R
 
+private fun guessedThumbnailAspectRatio(url: String?): Float {
+    if (url.isNullOrBlank()) return 1f
+    return if (
+        url.contains("i.ytimg.com", ignoreCase = true) ||
+        url.contains("ytimg.com/vi", ignoreCase = true) ||
+        url.contains("vi_webp", ignoreCase = true)
+    ) {
+        16f / 9f
+    } else {
+        1f
+    }
+}
+
 @Composable
 fun Thumbnail(
     onOpenFullscreenLyrics: () -> Unit, // NUEVO PARÁMETRO
@@ -82,6 +95,10 @@ fun Thumbnail(
     }
 
     var offsetX by remember { mutableFloatStateOf(0f) }
+    var thumbnailAspectRatio by remember(mediaMetadata?.thumbnailUrl) {
+        mutableFloatStateOf(guessedThumbnailAspectRatio(mediaMetadata?.thumbnailUrl))
+    }
+    val isWideThumbnail = thumbnailAspectRatio > 1.18f
 
     Box(modifier = modifier) {
         AnimatedVisibility(
@@ -96,8 +113,8 @@ fun Thumbnail(
                     Modifier
                         .fillMaxWidth() // SOLO ancho completo, no altura
                         .then(
-                            // No padding for video mode - edge-to-edge
-                            if (playbackMode == PlaybackMode.VIDEO) Modifier
+                            // Wide video-style covers should use the available width so no artwork is cropped.
+                            if (playbackMode == PlaybackMode.VIDEO || isWideThumbnail) Modifier
                             else Modifier.padding(horizontal = PlayerHorizontalPadding)
                         )
                         .pointerInput(Unit) {
@@ -147,18 +164,23 @@ fun Thumbnail(
                     AsyncImage(
                         model = mediaMetadata?.thumbnailUrl,
                         contentDescription = null,
-                        contentScale = ContentScale.Crop,
+                        contentScale = ContentScale.Fit,
+                        onSuccess = { state ->
+                            val drawable = state.result.drawable
+                            val width = drawable.intrinsicWidth
+                            val height = drawable.intrinsicHeight
+                            if (width > 0 && height > 0) {
+                                thumbnailAspectRatio = (width.toFloat() / height.toFloat()).coerceIn(0.75f, 1.9f)
+                            }
+                        },
                         modifier = Modifier
                             .offset { IntOffset(offsetX.roundToInt(), 0) }
                             .fillMaxWidth()
-                            .aspectRatio(1f)
+                            .aspectRatio(thumbnailAspectRatio)
                             .clip(RoundedCornerShape(cornerRadius * 2))
+                            .background(Color.Black.copy(alpha = 0.10f))
                             .pointerInput(Unit) {
                                 detectTapGestures(
-                                    onTap = {
-                                        // Toggle in-place lyrics instead of fullscreen
-                                        showLyrics = !showLyrics
-                                    },
                                     onDoubleTap = { offset ->
                                         if (offset.x < size.width / 2) {
                                             playerConnection.player.seekBack()

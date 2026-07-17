@@ -1,4 +1,4 @@
-﻿package com.Chenkham.Echofy.viewmodels
+package com.Chenkham.Echofy.viewmodels
 
 import android.content.Context
 import androidx.lifecycle.ViewModel
@@ -31,6 +31,7 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import timber.log.Timber
 import java.util.concurrent.atomic.AtomicBoolean
 import javax.inject.Inject
 
@@ -148,16 +149,10 @@ class HomeViewModel @Inject constructor(
 
             // 2. YouTube Home page
             val homePageDeferred = async(Dispatchers.IO) {
-                android.util.Log.d("HomeViewModel", "=== API DEBUG ===")
-                android.util.Log.d("HomeViewModel", "visitorData: ${YouTube.visitorData}")
-                android.util.Log.d("HomeViewModel", "locale.gl: ${YouTube.locale.gl}")
-                android.util.Log.d("HomeViewModel", "locale.hl: ${YouTube.locale.hl}")
-                android.util.Log.d("HomeViewModel", "cookie: ${YouTube.cookie?.take(50) ?: "null"}")
-                
                 YouTube.home().onSuccess { 
-                    android.util.Log.d("HomeViewModel", "YouTube.home() SUCCESS")
+                    Timber.d("YouTube.home() loaded")
                 }.onFailure {
-                    android.util.Log.e("HomeViewModel", "YouTube.home() FAILED: ${it.message}")
+                    Timber.w("YouTube.home() failed: ${it.message}")
                     reportException(it)
                 }.getOrNull()
             }
@@ -249,7 +244,8 @@ class HomeViewModel @Inject constructor(
 
         allYtItems.value = similarRecommendations.value?.flatMap { it.items }.orEmpty() +
                 homePage.value?.sections?.flatMap { it.items }.orEmpty() +
-                explorePage.value?.newReleaseAlbums.orEmpty()
+                explorePage.value?.newReleaseAlbums.orEmpty() +
+                explorePage.value?.trendingSongs.orEmpty()
 
             isLoading.value = false
             hasInitialLoadCompleted.set(true)

@@ -1,7 +1,6 @@
 package com.Chenkham.Echofy.jam
 
 import android.content.Context
-import com.Chenkham.Echofy.appwrite.AppwriteConfig
 
 /**
  * Builds the default [JamRegistry] backed by Appwrite.

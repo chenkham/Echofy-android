@@ -2,77 +2,54 @@ package com.Chenkham.Echofy.ui.screens.premium
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.Chenkham.Echofy.auth.AuthRepository
-import com.Chenkham.Echofy.ads.SubscriptionManager
-import com.Chenkham.Echofy.db.entities.UserEntity
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
 class PremiumViewModel @Inject constructor(
-    private val authRepository: AuthRepository,
-    private val subscriptionManager: SubscriptionManager
+    private val donationRepository: DonationRepository,
 ) : ViewModel() {
-    
-    val activeUser: StateFlow<UserEntity?> = authRepository.getActiveUser()
-        .stateIn(
-            scope = viewModelScope,
-            started = SharingStarted.WhileSubscribed(5000),
-            initialValue = null
-        )
-    
-    val isPremium: StateFlow<Boolean> = subscriptionManager.isSubscribed
-        .stateIn(
-            scope = viewModelScope,
-            started = SharingStarted.WhileSubscribed(5000),
-            initialValue = false
-        )
 
-    val monthlyPrice = subscriptionManager.monthlyPrice
-        .stateIn(
-            scope = viewModelScope,
-            started = SharingStarted.WhileSubscribed(5000),
-            initialValue = "₹15"
-        )
+    private val _uiState = MutableStateFlow(SupportUiState())
+    val uiState = _uiState.asStateFlow()
 
-    val fiveYearPrice = subscriptionManager.fiveYearPrice
-        .stateIn(
-            scope = viewModelScope,
-            started = SharingStarted.WhileSubscribed(5000),
-            initialValue = "₹599"
-        )
-
-    val lifetimePrice = subscriptionManager.lifetimePrice
-        .stateIn(
-            scope = viewModelScope,
-            started = SharingStarted.WhileSubscribed(5000),
-            initialValue = "₹1999"
-        )
-    
-    fun enablePremium() {
-        // Only for internal testing/mocking if needed, but primarily use billing
-         viewModelScope.launch {
-             // For now, this might be a debug option or removed
-             // authRepository.setPremiumStatus(true)
-         }
+    init {
+        refreshSupporters()
     }
-    
-    fun disablePremium() {
+
+    fun refreshSupporters() {
         viewModelScope.launch {
-            authRepository.setPremiumStatus(false)
+            _uiState.update { it.copy(isLoading = true, errorMessage = null) }
+            runCatching {
+                val topSupporters = donationRepository.loadTopSupporters()
+                val latestSupporters = donationRepository.loadLatestSupporters()
+                _uiState.update {
+                    it.copy(
+                        topSupporters = topSupporters,
+                        latestSupporters = latestSupporters,
+                        isLoading = false,
+                        errorMessage = null,
+                    )
+                }
+            }.onFailure { error ->
+                _uiState.update {
+                    it.copy(
+                        isLoading = false,
+                        errorMessage = error.message ?: "Unable to load supporters",
+                    )
+                }
+            }
         }
     }
-
-    fun launchBillingFlow(activity: android.app.Activity, productId: String) {
-        subscriptionManager.launchPurchaseFlow(activity, productId)
-    }
-
-    fun restorePurchases() {
-        subscriptionManager.restorePurchases()
-    }
 }
+
+data class SupportUiState(
+    val topSupporters: List<DonationSupporter> = emptyList(),
+    val latestSupporters: List<DonationSupporter> = emptyList(),
+    val isLoading: Boolean = false,
+    val errorMessage: String? = null,
+)

@@ -44,6 +44,7 @@ import com.Chenkham.Echofy.db.likedSongs
 import com.Chenkham.Echofy.db.playlists
 import com.Chenkham.Echofy.db.songs
 import com.Chenkham.Echofy.db.update
+import com.Chenkham.Echofy.db.uploadedSongs
 import com.Chenkham.Echofy.extensions.reversed
 import com.Chenkham.Echofy.extensions.toEnum
 import com.Chenkham.Echofy.playback.DownloadUtil
@@ -90,6 +91,7 @@ constructor(
                 when (filter) {
                     SongFilter.LIBRARY -> database.songs(sortType, descending)
                     SongFilter.LIKED -> database.likedSongs(sortType, descending)
+                    SongFilter.UPLOADED -> database.uploadedSongs(sortType, descending)
                     SongFilter.DOWNLOADED ->
                         downloadUtil.downloads.flatMapLatest { downloads ->
                             database
@@ -140,6 +142,10 @@ constructor(
 
     fun syncLibrarySongs() {
         viewModelScope.launch(Dispatchers.IO) { syncUtils.syncLibrarySongs() }
+    }
+
+    fun syncUploadedSongs() {
+        viewModelScope.launch(Dispatchers.IO) { syncUtils.syncUploadedSongs() }
     }
 
     fun refresh(): Job = viewModelScope.launch(Dispatchers.IO) {

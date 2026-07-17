@@ -14,6 +14,11 @@ import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -60,6 +65,8 @@ import com.Chenkham.Echofy.constants.PlayerBackgroundStyle
 import com.Chenkham.Echofy.constants.PlayerBackgroundStyleKey
 import com.Chenkham.Echofy.constants.PlayerButtonsStyle
 import com.Chenkham.Echofy.constants.PlayerButtonsStyleKey
+import com.Chenkham.Echofy.constants.PlayerLayoutStyle
+import com.Chenkham.Echofy.constants.PlayerLayoutStyleKey
 import com.Chenkham.Echofy.constants.SeasonalWallpaper
 import com.Chenkham.Echofy.constants.SeasonalWallpaperKey
 import com.Chenkham.Echofy.constants.PlayerTextAlignmentKey
@@ -109,7 +116,7 @@ fun AppearanceSettings(
     val (playerTextAlignment, onPlayerTextAlignmentChange) =
         rememberEnumPreference(
             PlayerTextAlignmentKey,
-            defaultValue = PlayerTextAlignment.CENTER,
+            defaultValue = PlayerTextAlignment.SIDED,
         )
 
     val (darkMode, onDarkModeChange) = rememberEnumPreference(
@@ -121,6 +128,7 @@ fun AppearanceSettings(
         MiniPlayerStyleKey,
         defaultValue = MiniPlayerStyle.Slim
     )
+
 
     val (playerButtonsStyle, onPlayerButtonsStyleChange) = rememberEnumPreference(
         PlayerButtonsStyleKey,
@@ -151,7 +159,7 @@ fun AppearanceSettings(
     )
     val (gridItemSize, onGridItemSizeChange) = rememberEnumPreference(
         GridItemsSizeKey,
-        defaultValue = GridItemSize.BIG
+        defaultValue = GridItemSize.SMALL
     )
     val (animateLyrics, onAnimateLyricsChange) = rememberPreference(
         AnimateLyricsKey,
@@ -226,9 +234,10 @@ fun AppearanceSettings(
                 showSliderOptionDialog = false
             }
         ) {
-            Row(
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
                 Column(
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.spacedBy(4.dp),
@@ -297,6 +306,10 @@ fun AppearanceSettings(
                         style = MaterialTheme.typography.labelLarge
                     )
                 }
+            }
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
                 Column(
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.spacedBy(4.dp),
@@ -345,8 +358,66 @@ fun AppearanceSettings(
                         style = MaterialTheme.typography.labelLarge
                     )
                 }
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(4.dp),
+                    modifier = Modifier
+                        .aspectRatio(1f)
+                        .weight(1f)
+                        .clip(RoundedCornerShape(16.dp))
+                        .border(
+                            1.dp,
+                            if (sliderStyle == SliderStyle.YOUTUBE_MUSIC) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outlineVariant,
+                            RoundedCornerShape(16.dp)
+                        )
+                        .clickable {
+                            onSliderStyleChange(SliderStyle.YOUTUBE_MUSIC)
+                            showSliderOptionDialog = false
+                        }
+                        .padding(16.dp)
+                ) {
+                    var sliderValue by remember {
+                        mutableFloatStateOf(0.5f)
+                    }
+                    Slider(
+                        value = sliderValue,
+                        valueRange = 0f..1f,
+                        onValueChange = {
+                            sliderValue = it
+                        },
+                        thumb = { Spacer(modifier = Modifier.size(0.dp)) },
+                        track = { sliderState ->
+                            Box(
+                                modifier = Modifier
+                                    .height(2.dp)
+                                    .fillMaxWidth()
+                                    .background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.2f))
+                            ) {
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxHeight()
+                                        .fillMaxWidth(fraction = sliderState.value)
+                                        .background(MaterialTheme.colorScheme.onSurface)
+                                )
+                            }
+                        },
+                        modifier = Modifier
+                            .weight(1f)
+                            .pointerInput(Unit) {
+                                detectTapGestures(
+                                    onPress = {}
+                                )
+                            }
+                    )
+
+                    Text(
+                        text = "YT Music",
+                        style = MaterialTheme.typography.labelLarge
+                    )
+                }
             }
         }
+    }
     }
 
 
@@ -410,15 +481,7 @@ fun AppearanceSettings(
                         },
                         isEnabled = useDarkTheme
                     )
-                }}
-            )
-        )
-
-        // Language preferences
-        SettingsGeneralCategory(
-            title = stringResource(R.string.app_language),
-            items = listOf(
-                { LanguagePreference() },
+                }},
                 {
                     PreferenceEntry(
                         title = { Text(stringResource(R.string.backpaper)) },
@@ -427,6 +490,14 @@ fun AppearanceSettings(
                         onClick = { navController.navigate("settings/backpaper") }
                     )
                 }
+            )
+        )
+
+        // Language preferences
+        SettingsGeneralCategory(
+            title = stringResource(R.string.app_language),
+            items = listOf(
+                { LanguagePreference() }
             )
         )
 
@@ -490,6 +561,7 @@ fun AppearanceSettings(
                     )
                 },
 
+
                 {EnumListPreference(
                     title = { Text(stringResource(R.string.mini_player_style)) },
                     icon = { Icon(painterResource(R.drawable.picture_in_picture_alt), null) },
@@ -523,6 +595,7 @@ fun AppearanceSettings(
                             SliderStyle.DEFAULT -> stringResource(R.string.default_)
                             SliderStyle.SQUIGGLY -> stringResource(R.string.squiggly)
                             SliderStyle.SLIM -> stringResource(R.string.slim)
+                            SliderStyle.YOUTUBE_MUSIC -> "YT Music"
                         },
                     icon = { Icon(painterResource(R.drawable.sliders), null) },
                     onClick = {
@@ -701,3 +774,4 @@ enum class PlayerTextAlignment {
     SIDED,
     CENTER,
 }
+

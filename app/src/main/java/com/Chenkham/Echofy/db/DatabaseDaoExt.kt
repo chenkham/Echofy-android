@@ -111,6 +111,42 @@ fun DatabaseDao.likedSongs(
     SongSortType.PLAY_TIME -> likedSongsByPlayTimeAsc()
 }.map { it.reversed(descending) }
 
+fun DatabaseDao.uploadedSongs(
+    sortType: SongSortType,
+    descending: Boolean,
+) = when (sortType) {
+    SongSortType.CREATE_DATE -> uploadedSongsByCreateDateAsc()
+    SongSortType.NAME ->
+        uploadedSongsByNameAsc().map { songs ->
+            val collator = Collator.getInstance(Locale.getDefault())
+            collator.strength = Collator.PRIMARY
+            songs.sortedWith(compareBy(collator) { it.song.title })
+        }
+
+    SongSortType.ARTIST ->
+        uploadedSongsByRowIdAsc().map { songs ->
+            val collator = Collator.getInstance(Locale.getDefault())
+            collator.strength = Collator.PRIMARY
+            songs
+                .sortedWith(
+                    compareBy(collator) { song ->
+                        song.artists.joinToString(
+                            "",
+                        ) { it.name }
+                    },
+                ).groupBy { it.album?.title }
+                .flatMap { (_, songsByAlbum) ->
+                    songsByAlbum.sortedBy { album ->
+                        album.artists.joinToString(
+                            "",
+                        ) { it.name }
+                    }
+                }
+        }
+
+    SongSortType.PLAY_TIME -> uploadedSongsByPlayTimeAsc()
+}.map { it.reversed(descending) }
+
 fun DatabaseDao.artistSongs(
     artistId: String,
     sortType: ArtistSongSortType,

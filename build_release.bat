@@ -4,7 +4,7 @@ echo Echofy Release Build Script
 echo ============================================
 echo.
 
-cd /d "C:\Users\chenk\AndroidStudioProjects\OpenTune"
+cd /d "%~dp0"
 
 REM Check if keystore already exists
 if exist "echofy-release-key.jks" (

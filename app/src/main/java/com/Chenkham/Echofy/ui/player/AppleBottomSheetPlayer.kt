@@ -178,13 +178,11 @@ fun AppleBottomSheetPlayer(
     val canSkipPrevious by playerConnection.canSkipPrevious.collectAsState()
     val canSkipNext by playerConnection.canSkipNext.collectAsState()
 
-    // Haptic bass beats (Premium only)
+    // Haptic bass beats (now free for all)
     val hapticBassEnabled by rememberPreference(HapticBassBeatsKey, defaultValue = false)
-    val adManager = LocalAdManager.current
-    val isPremium = adManager?.isPremium?.collectAsState()?.value == true
 
-    LaunchedEffect(isPlaying, hapticBassEnabled, isPremium) {
-        if (isPlaying && hapticBassEnabled && isPremium) {
+    LaunchedEffect(isPlaying, hapticBassEnabled) {
+        if (isPlaying && hapticBassEnabled) {
             val vibrator = context.getSystemService(android.content.Context.VIBRATOR_SERVICE) as? android.os.Vibrator
             while (isActive) {
                 if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
@@ -460,7 +458,8 @@ fun AppleBottomSheetPlayer(
                     playbackState = playbackState,
                     canSkipPrevious = canSkipPrevious,
                     canSkipNext = canSkipNext,
-                    color = safeTextColor
+                    color = safeTextColor,
+                    playPauseShape = androidx.compose.foundation.shape.CircleShape
                 )
 
                 Spacer(modifier = Modifier.height(24.dp))
@@ -1113,7 +1112,8 @@ fun ApplePlaybackControls(
     playbackState: Int,
     canSkipPrevious: Boolean,
     canSkipNext: Boolean,
-    color: Color
+    color: Color,
+    playPauseShape: androidx.compose.ui.graphics.Shape
 ) {
     Row(
         modifier = Modifier.fillMaxWidth(),
@@ -1136,7 +1136,7 @@ fun ApplePlaybackControls(
         }
 
         Box(
-            modifier = Modifier.size(76.dp).clip(CircleShape)
+            modifier = Modifier.size(76.dp).clip(playPauseShape)
                 .background(color.copy(alpha = 0.1f))
                 .clickable(indication = null, interactionSource = remember { MutableInteractionSource() }) {
                     if (playbackState == STATE_ENDED) {
@@ -1212,5 +1212,62 @@ fun AppleFooter(
                 modifier = Modifier.size(24.dp)
             )
         }
+    }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// MAIN VIEW COMPONENT
+// ─────────────────────────────────────────────────────────────────────────────
+@Composable
+fun ApplePinnedPlayerControls(
+    playerConnection: com.Chenkham.Echofy.playback.PlayerConnection,
+    isPlaying: Boolean,
+    playbackState: Int,
+    canSkipPrevious: Boolean,
+    canSkipNext: Boolean,
+    currentState: ApplePlayerState,
+    color: Color,
+    showVisualizer: Boolean = false,
+    playPauseShape: androidx.compose.ui.graphics.Shape,
+    modifier: Modifier = Modifier,
+    onLyricsClick: () -> Unit,
+    onQueueClick: () -> Unit,
+) {
+    Column(modifier = modifier.fillMaxWidth()) {
+        if (showVisualizer) {
+            RealTimeAudioVisualizer(
+                audioSessionId = playerConnection.player.audioSessionId,
+                color = color,
+                isActive = isPlaying
+            )
+            Spacer(modifier = Modifier.height(12.dp))
+        }
+
+        AppleProgressSection(
+            playerConnection = playerConnection,
+            color = color,
+            isPlaying = isPlaying
+        )
+
+        Spacer(modifier = Modifier.height(12.dp))
+
+        ApplePlaybackControls(
+            playerConnection = playerConnection,
+            isPlaying = isPlaying,
+            playbackState = playbackState,
+            canSkipPrevious = canSkipPrevious,
+            canSkipNext = canSkipNext,
+            color = color,
+            playPauseShape = playPauseShape
+        )
+
+        Spacer(modifier = Modifier.height(24.dp))
+
+        AppleFooter(
+            currentState = currentState,
+            color = color,
+            onLyricsClick = onLyricsClick,
+            onQueueClick = onQueueClick
+        )
     }
 }

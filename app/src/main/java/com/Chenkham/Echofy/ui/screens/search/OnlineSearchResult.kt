@@ -52,6 +52,7 @@ import com.Chenkham.Echofy.LocalPlayerAwareWindowInsets
 import com.Chenkham.Echofy.LocalPlayerConnection
 import com.Chenkham.Echofy.R
 import com.Chenkham.Echofy.db.entities.SearchHistory
+import com.Chenkham.Echofy.db.insert
 import com.Chenkham.Echofy.constants.AppBarHeight
 import com.Chenkham.Echofy.constants.SearchFilterHeight
 import com.Chenkham.Echofy.extensions.togglePlayPause
@@ -148,6 +149,14 @@ fun OnlineSearchResult(
         }
         YouTubeListItem(
             item = item,
+            badges = {
+                if (item.explicit) {
+                    Icon(
+                        painter = painterResource(R.drawable.explicit),
+                        contentDescription = null,
+                    )
+                }
+            },
             isActive =
                 when (item) {
                     is SongItem -> mediaMetadata?.id == item.id

@@ -1,11 +1,14 @@
-﻿package com.Chenkham.Echofy.ui.screens
+package com.Chenkham.Echofy.ui.screens
 
 import android.content.res.Configuration.ORIENTATION_LANDSCAPE
+import android.net.Uri
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
@@ -20,6 +23,8 @@ import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.grid.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -48,27 +53,15 @@ import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.Chenkham.Echofy.LocalPlayerAwareWindowInsets
 import com.Chenkham.Echofy.R
-import com.Chenkham.Echofy.ads.AdManager
 import com.Chenkham.Echofy.constants.BackpaperScreen
 import com.Chenkham.Echofy.ui.component.BackpaperBackground
-import com.Chenkham.Echofy.ui.component.BannerAdView
-import com.Chenkham.Echofy.ui.component.IconButton
 import com.Chenkham.Echofy.ui.component.NavigationTitle
-import com.Chenkham.Echofy.ui.utils.backToMain
 import com.Chenkham.Echofy.viewmodels.MoodAndGenresViewModel
 import com.Chenkham.Echofy.ui.component.ErrorScreen
 
-import androidx.compose.ui.zIndex
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Tab
-import androidx.compose.material3.TabRow
-import androidx.compose.material3.TabRowDefaults
-import androidx.compose.material3.TabRowDefaults.tabIndicatorOffset
-import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.input.nestedscroll.nestedScroll
 import com.Chenkham.Echofy.viewmodels.ChartsViewModel
 import com.Chenkham.Echofy.viewmodels.PodcastsViewModel
 
@@ -77,20 +70,24 @@ import com.Chenkham.Echofy.viewmodels.PodcastsViewModel
 fun ExploreScreen(
     navController: NavController,
     scrollBehavior: TopAppBarScrollBehavior,
-    viewModel: MoodAndGenresViewModel = hiltViewModel(),
-    adManager: AdManager? = null,
+    initialTab: String? = null,
+    viewModel: MoodAndGenresViewModel = hiltViewModel()
 ) {
     val chartsViewModel: ChartsViewModel = hiltViewModel()
     val podcastsViewModel: PodcastsViewModel = hiltViewModel()
 
     val tabs = remember {
         listOf(
-            "genres" to R.string.genres,
-            "charts" to R.string.charts,
-            "podcasts" to R.string.podcasts
+            ExploreTabItem("genres", R.string.genres, R.drawable.explore),
+            ExploreTabItem("charts", R.string.charts, R.drawable.trending_up),
+            ExploreTabItem("podcasts", R.string.podcasts, R.drawable.podcast)
         )
     }
-    var selectedTab by rememberSaveable { mutableStateOf(0) }
+    var selectedTab by rememberSaveable {
+        mutableStateOf(
+            tabs.indexOfFirst { it.key == initialTab }.takeIf { it >= 0 } ?: 0
+        )
+    }
 
     BackpaperBackground(screen = BackpaperScreen.EXPLORE) {
         Column(
@@ -102,33 +99,12 @@ fun ExploreScreen(
                         .calculateTopPadding() + with(androidx.compose.ui.platform.LocalDensity.current) { scrollBehavior.state.heightOffset.toDp() }
                 )
         ) {
-            // TabRow for navigation
-            TabRow(
-                selectedTabIndex = selectedTab,
-                containerColor = MaterialTheme.colorScheme.surface,
-                contentColor = MaterialTheme.colorScheme.onSurface,
-                indicator = { tabPositions ->
-                    TabRowDefaults.SecondaryIndicator(
-                        Modifier.tabIndicatorOffset(tabPositions[selectedTab]),
-                        color = MaterialTheme.colorScheme.primary
-                    )
-                },
-                divider = {}
-            ) {
-                tabs.forEachIndexed { index, (key, titleRes) ->
-                    Tab(
-                        selected = selectedTab == index,
-                        onClick = { selectedTab = index },
-                        text = { 
-                            Text(
-                                text = stringResource(titleRes),
-                                style = MaterialTheme.typography.titleSmall,
-                                fontWeight = if (selectedTab == index) FontWeight.Bold else FontWeight.Normal
-                            ) 
-                        }
-                    )
-                }
-            }
+            ExploreTabSelector(
+                tabs = tabs,
+                selectedTab = selectedTab,
+                onTabSelected = { selectedTab = it },
+                modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp)
+            )
             
             // Tab content
             Box(
@@ -137,9 +113,73 @@ fun ExploreScreen(
                     .weight(1f)
             ) {
                 when (selectedTab) {
-                    0 -> GenresTab(navController, viewModel, adManager)
-                    1 -> ChartsTab(navController, chartsViewModel, adManager)
-                    2 -> PodcastsTab(navController, podcastsViewModel, adManager)
+                    0 -> GenresTab(navController, viewModel)
+                    1 -> ChartsTab(navController, chartsViewModel)
+                    2 -> PodcastsTab(navController, podcastsViewModel)
+                }
+            }
+        }
+    }
+}
+
+private data class ExploreTabItem(
+    val key: String,
+    val titleRes: Int,
+    val icon: Int,
+)
+
+@Composable
+private fun ExploreTabSelector(
+    tabs: List<ExploreTabItem>,
+    selectedTab: Int,
+    onTabSelected: (Int) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Row(
+        modifier = modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(10.dp),
+    ) {
+        tabs.forEachIndexed { index, tab ->
+            val selected = selectedTab == index
+            Card(
+                modifier = Modifier
+                    .weight(1f)
+                    .height(54.dp)
+                    .clickable { onTabSelected(index) },
+                shape = RoundedCornerShape(18.dp),
+                colors = CardDefaults.cardColors(
+                    containerColor = if (selected) {
+                        MaterialTheme.colorScheme.primaryContainer
+                    } else {
+                        MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.54f)
+                    },
+                    contentColor = if (selected) {
+                        MaterialTheme.colorScheme.onPrimaryContainer
+                    } else {
+                        MaterialTheme.colorScheme.onSurfaceVariant
+                    },
+                ),
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(horizontal = 12.dp),
+                    horizontalArrangement = Arrangement.Center,
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Icon(
+                        painter = painterResource(tab.icon),
+                        contentDescription = null,
+                        modifier = Modifier.size(20.dp),
+                    )
+                    Spacer(Modifier.size(8.dp))
+                    Text(
+                        text = stringResource(tab.titleRes),
+                        style = MaterialTheme.typography.labelLarge,
+                        fontWeight = if (selected) FontWeight.Bold else FontWeight.SemiBold,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
                 }
             }
         }
@@ -149,8 +189,7 @@ fun ExploreScreen(
 @Composable
 private fun GenresTab(
     navController: NavController,
-    viewModel: MoodAndGenresViewModel,
-    adManager: AdManager?
+    viewModel: MoodAndGenresViewModel
 ) {
     val localConfiguration = LocalConfiguration.current
     val isLandscape = localConfiguration.orientation == ORIENTATION_LANDSCAPE
@@ -166,8 +205,7 @@ private fun GenresTab(
             PaddingValues(
                 start = 16.dp,
                 end = 16.dp,
-                top = 16.dp,
-                bottom = bottom + if (adManager?.shouldShowAds() == true) 60.dp else 16.dp
+                bottom = bottom + 16.dp
             )
         },
         horizontalArrangement = Arrangement.spacedBy(16.dp),
@@ -226,28 +264,12 @@ private fun GenresTab(
         }
     }
 
-    // Banner ad at the bottom
-    adManager?.let { manager ->
-        if (manager.shouldShowAds()) {
-            Box(
-                modifier = Modifier
-                    .fillMaxSize(),
-                contentAlignment = Alignment.BottomCenter
-            ) {
-                BannerAdView(
-                    adManager = manager,
-                    modifier = Modifier.fillMaxWidth()
-                )
-            }
-        }
-    }
 }
 
 @Composable
 private fun ChartsTab(
     navController: NavController,
-    viewModel: ChartsViewModel,
-    adManager: AdManager?
+    viewModel: ChartsViewModel
 ) {
     val charts by viewModel.charts.collectAsState()
     val isLoading by viewModel.isLoading.collectAsState()
@@ -384,8 +406,7 @@ private fun ChartsTab(
 @Composable
 private fun PodcastsTab(
     navController: NavController,
-    viewModel: PodcastsViewModel,
-    adManager: AdManager?
+    viewModel: PodcastsViewModel
 ) {
     val podcastPage by viewModel.podcastPage.collectAsState()
     val isLoading by viewModel.isLoading.collectAsState()
@@ -429,7 +450,9 @@ private fun PodcastsTab(
                             color = 0,
                             onClick = { 
                                 val id = item.podcastId ?: item.browseId
-                                navController.navigate("podcast/$id")
+                                if (!id.isNullOrBlank()) {
+                                    navController.navigate("podcast/${Uri.encode(id)}")
+                                }
                             }
                         )
                     }

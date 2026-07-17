@@ -13,6 +13,9 @@ plugins {
     id("com.google.gms.google-services")
 }
 
+fun String.toBuildConfigString(): String =
+    "\"" + replace("\\", "\\\\").replace("\"", "\\\"") + "\""
+
 android {
     namespace = "com.Chenkham.Echofy"
     //noinspection GradleDependency
@@ -22,10 +25,36 @@ android {
         applicationId = "com.Chenkham.Echofy"
         minSdk = 24
         targetSdk = 35
-        versionCode = 17
-        versionName = "3.2.2"
+        versionCode = 23
+        versionName = "4.0.5"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         multiDexEnabled = true
+
+        val localProperties = Properties()
+        val localPropertiesFile = rootProject.file("local.properties")
+        if (localPropertiesFile.exists()) {
+            localProperties.load(localPropertiesFile.inputStream())
+        }
+
+        val lastFmKey = localProperties.getProperty("LASTFM_API_KEY") ?: System.getenv("LASTFM_API_KEY") ?: "dummy_api_key"
+        val lastFmSecret = localProperties.getProperty("LASTFM_SECRET") ?: System.getenv("LASTFM_SECRET") ?: "dummy_api_secret"
+        fun appProperty(name: String, fallback: String): String =
+            localProperties.getProperty(name)
+                ?: providers.gradleProperty(name).orNull
+                ?: System.getenv(name)
+                ?: fallback
+
+        val appwriteEndpoint = appProperty("APPWRITE_ENDPOINT", "https://fra.cloud.appwrite.io/v1")
+        val appwriteProjectId = appProperty("APPWRITE_PROJECT_ID", "69f0c83d001d9fc244d4")
+        val appwriteDatabaseId = appProperty("APPWRITE_DATABASE_ID", "echofy")
+        val appwriteSelfSigned = appProperty("APPWRITE_SELF_SIGNED", "false").toBooleanStrictOrNull() ?: false
+
+        buildConfigField("String", "LASTFM_API_KEY", "\"$lastFmKey\"")
+        buildConfigField("String", "LASTFM_SECRET", "\"$lastFmSecret\"")
+        buildConfigField("String", "APPWRITE_ENDPOINT", appwriteEndpoint.toBuildConfigString())
+        buildConfigField("String", "APPWRITE_PROJECT_ID", appwriteProjectId.toBuildConfigString())
+        buildConfigField("String", "APPWRITE_DATABASE_ID", appwriteDatabaseId.toBuildConfigString())
+        buildConfigField("boolean", "APPWRITE_SELF_SIGNED", appwriteSelfSigned.toString())
     }
 
     signingConfigs {
@@ -137,7 +166,7 @@ android {
         compose = true
     }
 
-    // ✅  TODO a Java 21
+    // âœ…  TODO a Java 21
     compileOptions {
         isCoreLibraryDesugaringEnabled = true
         sourceCompatibility = JavaVersion.VERSION_21
@@ -269,16 +298,16 @@ dependencies {
 
     implementation(libs.timber)
     
-    // Appwrite SDK for Listen Together feature (v5.1.0 fixes OkHttp conflicts)
+    // Appwrite SDK for Listen Together feature
     implementation("io.appwrite:sdk-for-android:5.1.0")
     
-    // Firebase — push notifications only (FCM, Analytics, FIAM)
+    // Firebase — push notifications and analytics
     // firebase-auth and firebase-database removed; Together now uses Appwrite
     implementation(platform("com.google.firebase:firebase-bom:32.7.0"))
     implementation("com.google.firebase:firebase-messaging-ktx")
-    implementation("com.google.firebase:firebase-inappmessaging-display-ktx")
     implementation("com.google.firebase:firebase-analytics-ktx")
-    
+    implementation("androidx.media:media:1.7.0")
+
     // Google AdMob SDK for ads monetization
     implementation("com.google.android.gms:play-services-ads:23.0.0")
     
@@ -298,3 +327,6 @@ dependencies {
     implementation("androidx.credentials:credentials-play-services-auth:1.2.0")
     implementation("com.google.android.libraries.identity.googleid:googleid:1.1.0")
 }
+
+
+

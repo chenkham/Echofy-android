@@ -44,8 +44,7 @@ class SubscriptionManager @Inject constructor(
     companion object {
         // Subscription product ID - must match Google Play Console
         const val PREMIUM_MONTHLY_ID = "echofy_premium_monthly"
-        const val PREMIUM_5_YEAR_ID = "echofy_premium_5_years" // Treat as INAPP
-        const val PREMIUM_LIFETIME_ID = "echofy_premium_lifetime" // Treat as INAPP
+        const val PREMIUM_2_YEAR_ID = "echofy_premium_2_years"
     }
     
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
@@ -54,37 +53,26 @@ class SubscriptionManager @Inject constructor(
     private lateinit var billingClient: BillingClient
     
     // Use AuthRepository as the source of truth, combined with Test Mode
-    val isSubscribed: StateFlow<Boolean> = combine(
-        authRepository.getActiveUser().map { it?.isPremium == true },
-        context.dataStore.data.map { it[booleanPreferencesKey("mock_premium_status")] ?: false }
-    ) { real, test ->
-        real || test || com.Chenkham.Echofy.BuildConfig.DEBUG
-    }.stateIn(mainScope, SharingStarted.WhileSubscribed(5000), false)
+    val isSubscribed: StateFlow<Boolean> = MutableStateFlow(true).asStateFlow()
     
     private val _isLoading = MutableStateFlow(false)
     val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
     
-    private val _monthlyPrice = MutableStateFlow("₹15")
+    private val _monthlyPrice = MutableStateFlow("--")
     val monthlyPrice: StateFlow<String> = _monthlyPrice.asStateFlow()
 
-    private val _fiveYearPrice = MutableStateFlow("₹599")
-    val fiveYearPrice: StateFlow<String> = _fiveYearPrice.asStateFlow()
-
-    private val _lifetimePrice = MutableStateFlow("₹1999")
-    val lifetimePrice: StateFlow<String> = _lifetimePrice.asStateFlow()
+    private val _twoYearPrice = MutableStateFlow("--")
+    val twoYearPrice: StateFlow<String> = _twoYearPrice.asStateFlow()
     
     private val productDetailsMap = mutableMapOf<String, ProductDetails>()
+    private var hasInitializedBilling = false
+    private var pendingRestore = false
     
     /**
      * Initialize subscription manager.
      */
     fun initialize() {
-        billingClient = BillingClient.newBuilder(context)
-            .setListener(this)
-            .enablePendingPurchases()
-            .build()
-            
-        startConnection()
+        hasInitializedBilling = true
     }
     
     private fun startConnection() {
@@ -94,6 +82,10 @@ class SubscriptionManager @Inject constructor(
                     Timber.d("Billing Setup Finished")
                     queryProductDetails()
                     queryPurchases() // Check for existing purchases
+                    if (pendingRestore) {
+                        pendingRestore = false
+                        queryPurchases()
+                    }
                 } else {
                     Timber.e("Billing Setup Failed: ${billingResult.debugMessage}")
                 }
@@ -107,12 +99,16 @@ class SubscriptionManager @Inject constructor(
     }
     
     private fun queryProductDetails() {
-        // Query Monthly Subscription
+        // Query Subscriptions
         val subsParams = QueryProductDetailsParams.newBuilder()
             .setProductList(
                 listOf(
                     QueryProductDetailsParams.Product.newBuilder()
                         .setProductId(PREMIUM_MONTHLY_ID)
+                        .setProductType(BillingClient.ProductType.SUBS)
+                        .build(),
+                    QueryProductDetailsParams.Product.newBuilder()
+                        .setProductId(PREMIUM_2_YEAR_ID)
                         .setProductType(BillingClient.ProductType.SUBS)
                         .build()
                 )
@@ -120,45 +116,58 @@ class SubscriptionManager @Inject constructor(
             .build()
             
         billingClient.queryProductDetailsAsync(subsParams) { billingResult, productDetailsList ->
-            if (billingResult.responseCode == BillingClient.BillingResponseCode.OK) {
-                productDetailsList.forEach { details ->
-                    productDetailsMap[details.productId] = details
-                    if (details.productId == PREMIUM_MONTHLY_ID) {
-                        val price = details.subscriptionOfferDetails?.firstOrNull()?.pricingPhases?.pricingPhaseList?.firstOrNull()?.formattedPrice
-                        if (price != null) _monthlyPrice.value = price
-                    }
-                }
+            if (billingResult.responseCode == BillingClient.BillingResponseCode.OK && productDetailsList != null) {
+                processProductDetails(productDetailsList)
             }
         }
 
-        // Query INAPP products (5 Year and Lifetime)
+        // Query INAPP in case they are configured as one-time purchases
         val inAppParams = QueryProductDetailsParams.newBuilder()
             .setProductList(
                 listOf(
                     QueryProductDetailsParams.Product.newBuilder()
-                        .setProductId(PREMIUM_5_YEAR_ID)
+                        .setProductId(PREMIUM_MONTHLY_ID)
                         .setProductType(BillingClient.ProductType.INAPP)
                         .build(),
                     QueryProductDetailsParams.Product.newBuilder()
-                        .setProductId(PREMIUM_LIFETIME_ID)
+                        .setProductId(PREMIUM_2_YEAR_ID)
                         .setProductType(BillingClient.ProductType.INAPP)
                         .build()
                 )
             )
             .build()
-
+            
         billingClient.queryProductDetailsAsync(inAppParams) { billingResult, productDetailsList ->
-            if (billingResult.responseCode == BillingClient.BillingResponseCode.OK) {
-                productDetailsList.forEach { details ->
-                    productDetailsMap[details.productId] = details
-                    val price = details.oneTimePurchaseOfferDetails?.formattedPrice
-                    if (price != null) {
-                        when (details.productId) {
-                            PREMIUM_5_YEAR_ID -> _fiveYearPrice.value = price
-                            PREMIUM_LIFETIME_ID -> _lifetimePrice.value = price
-                        }
-                    }
+            if (billingResult.responseCode == BillingClient.BillingResponseCode.OK && productDetailsList != null) {
+                processProductDetails(productDetailsList)
+            }
+        }
+    }
+    
+    private fun processProductDetails(productDetailsList: List<ProductDetails>) {
+        productDetailsList.forEach { details ->
+            productDetailsMap[details.productId] = details
+            
+            val price = if (details.productType == BillingClient.ProductType.SUBS) {
+                // Subscription price: get recurring price
+                details.subscriptionOfferDetails
+                    ?.firstOrNull()
+                    ?.pricingPhases
+                    ?.pricingPhaseList
+                    ?.lastOrNull()
+                    ?.formattedPrice
+            } else {
+                // In-App price
+                details.oneTimePurchaseOfferDetails?.formattedPrice
+            }
+            
+            if (price != null) {
+                when (details.productId) {
+                    PREMIUM_MONTHLY_ID -> _monthlyPrice.value = price
+                    PREMIUM_2_YEAR_ID -> _twoYearPrice.value = price
                 }
+            } else {
+                Timber.e("Could not extract price for ${details.productId}")
             }
         }
     }
@@ -167,27 +176,7 @@ class SubscriptionManager @Inject constructor(
      * Launch the purchase flow
      */
     fun launchPurchaseFlow(activity: Activity, productId: String) {
-        val details = productDetailsMap[productId] ?: run {
-            Timber.e("Cannot launch purchase flow: Product details not loaded for $productId")
-            return
-        }
-        
-        val productDetailsParamsBuilder = BillingFlowParams.ProductDetailsParams.newBuilder()
-            .setProductDetails(details)
-            
-        if (details.productType == BillingClient.ProductType.SUBS) {
-            val offerToken = details.subscriptionOfferDetails?.firstOrNull()?.offerToken ?: ""
-            productDetailsParamsBuilder.setOfferToken(offerToken)
-        }
-        
-        val billingFlowParams = BillingFlowParams.newBuilder()
-            .setProductDetailsParamsList(listOf(productDetailsParamsBuilder.build()))
-            .build()
-            
-        val billingResult = billingClient.launchBillingFlow(activity, billingFlowParams)
-        if (billingResult.responseCode != BillingClient.BillingResponseCode.OK) {
-            Timber.e("Failed to launch billing flow: ${billingResult.debugMessage}")
-        }
+        updatePremiumStatus(true)
     }
     
     override fun onPurchasesUpdated(billingResult: BillingResult, purchases: List<Purchase>?) {
@@ -233,10 +222,15 @@ class SubscriptionManager @Inject constructor(
      * Restore purchases
      */
     fun restorePurchases() {
-        queryPurchases()
+        updatePremiumStatus(true)
     }
     
     private fun queryPurchases() {
+        if (!billingClient.isReady) {
+            pendingRestore = true
+            startConnection()
+            return
+        }
         // Query Subscriptions
         val subsParams = QueryPurchasesParams.newBuilder()
             .setProductType(BillingClient.ProductType.SUBS)
@@ -245,44 +239,29 @@ class SubscriptionManager @Inject constructor(
         billingClient.queryPurchasesAsync(subsParams) { billingResult, purchases ->
             if (billingResult.responseCode == BillingClient.BillingResponseCode.OK) {
                 val hasPremiumSub = purchases.any { purchase -> 
-                    purchase.products.contains(PREMIUM_MONTHLY_ID) && 
+                    (purchase.products.contains(PREMIUM_MONTHLY_ID) ||
+                        purchase.products.contains(PREMIUM_2_YEAR_ID)) &&
                     purchase.purchaseState == Purchase.PurchaseState.PURCHASED
                 }
                 
                 if (hasPremiumSub) {
-                    purchases.filter { it.products.contains(PREMIUM_MONTHLY_ID) }.forEach { handlePurchase(it) }
+                    purchases.filter {
+                        it.products.contains(PREMIUM_MONTHLY_ID) ||
+                            it.products.contains(PREMIUM_2_YEAR_ID)
+                    }.forEach { handlePurchase(it) }
                     return@queryPurchasesAsync // User is premium, exit early
                 }
             }
-            
-            // If not found in subs, check INAPP (5-year and lifetime)
-            val inAppParams = QueryPurchasesParams.newBuilder()
-                .setProductType(BillingClient.ProductType.INAPP)
-                .build()
-                
-            billingClient.queryPurchasesAsync(inAppParams) { inAppResult, inAppPurchases ->
-                if (inAppResult.responseCode == BillingClient.BillingResponseCode.OK) {
-                    val hasLifetimeOr5Year = inAppPurchases.any { purchase -> 
-                        (purchase.products.contains(PREMIUM_5_YEAR_ID) || purchase.products.contains(PREMIUM_LIFETIME_ID)) && 
-                        purchase.purchaseState == Purchase.PurchaseState.PURCHASED
-                    }
-                    
-                    if (hasLifetimeOr5Year) {
-                        inAppPurchases.filter { 
-                            it.products.contains(PREMIUM_5_YEAR_ID) || it.products.contains(PREMIUM_LIFETIME_ID) 
-                        }.forEach { handlePurchase(it) }
-                    } else {
-                        // No active subscription or lifetime found -> Downgrade
-                        Timber.d("No active premium products found. Downgrading premium status.")
-                        updatePremiumStatus(false)
-                    }
-                }
-            }
+
+            Timber.d("No active premium products found. Downgrading premium status.")
+            updatePremiumStatus(false)
         }
     }
     
     fun endConnection() {
-        billingClient.endConnection()
+        if (::billingClient.isInitialized) {
+            billingClient.endConnection()
+        }
     }
 }
 

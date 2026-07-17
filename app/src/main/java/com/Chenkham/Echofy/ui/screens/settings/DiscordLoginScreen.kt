@@ -1,4 +1,4 @@
-﻿package com.Chenkham.Echofy.ui.screens.settings
+package com.Chenkham.Echofy.ui.screens.settings
 
 import android.annotation.SuppressLint
 import android.util.Log
@@ -90,28 +90,48 @@ fun DiscordLoginScreen(navController: NavController) {
                                 """
                                 (function() {
                                     try {
-                                        var token = localStorage.getItem("token");
+                                        var req = window.webpackChunkdiscord_app.push([
+                                            [Math.random()], {}, (req) => {
+                                                for (const m of Object.keys(req.c).map((x) => req.c[x].exports).filter((x) => x)) {
+                                                    if (m.default && m.default.getToken !== undefined) {
+                                                        return m.default.getToken();
+                                                    }
+                                                    if (m.getToken !== undefined) {
+                                                        return m.getToken();
+                                                    }
+                                                }
+                                            }
+                                        ]);
+                                        
+                                        var token = null;
+                                        for (const m of req) {
+                                            if (typeof m === 'string') {
+                                                token = m;
+                                                break;
+                                            }
+                                        }
+
                                         if (token) {
-                                            Android.onRetrieveToken(token.slice(1, -1));
+                                            Android.onRetrieveToken(token);
                                         } else {
-                                            // fallback Ø¥Ù„Ù‰ alert (Ù…Ù†Ø·Ù‚ kizzy)
+                                            // Fallback
                                             var i = document.createElement('iframe');
                                             document.body.appendChild(i);
                                             setTimeout(function() {
                                                 try {
                                                     var alt = i.contentWindow.localStorage.token;
                                                     if (alt) {
-                                                        alert(alt.slice(1, -1));
+                                                        Android.onRetrieveToken(alt.replace(/"/g, ''));
                                                     } else {
-                                                        alert("null");
+                                                        Android.onRetrieveToken("null");
                                                     }
                                                 } catch (e) {
-                                                    alert("error");
+                                                    Android.onRetrieveToken("error");
                                                 }
                                             }, 1000);
                                         }
                                     } catch (e) {
-                                        alert("error");
+                                        Android.onRetrieveToken("error");
                                     }
                                 })();
                                 """.trimIndent(), null

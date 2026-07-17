@@ -345,11 +345,6 @@ fun AlbumScreen(
                                     else -> {
                                         IconButton(
                                             onClick = {
-                                                if (adManager?.isPremium?.value != true) {
-                                                    Toast.makeText(context, R.string.premium_required, Toast.LENGTH_SHORT).show()
-                                                    return@IconButton
-                                                }
-
                                                 albumWithSongs.songs.forEach { song ->
                                                     val downloadRequest =
                                                         DownloadRequest

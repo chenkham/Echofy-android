@@ -386,30 +386,22 @@ fun AutoPlaylistScreen(
                                                     else -> {
                                                         IconButton(
                                                             onClick = {
-                                                                if (adManager?.isPremium?.value != true) {
-                                                                    android.widget.Toast.makeText(
+                                                                songs!!.forEach { song ->
+                                                                    val downloadRequest =
+                                                                        DownloadRequest
+                                                                            .Builder(
+                                                                                song.song.id,
+                                                                                song.song.id.toUri(),
+                                                                            )
+                                                                            .setCustomCacheKey(song.song.id)
+                                                                            .setData(song.song.title.toByteArray())
+                                                                            .build()
+                                                                    DownloadService.sendAddDownload(
                                                                         context,
-                                                                        R.string.premium_required,
-                                                                        android.widget.Toast.LENGTH_SHORT
-                                                                    ).show()
-                                                                } else {
-                                                                    songs!!.forEach { song ->
-                                                                        val downloadRequest =
-                                                                            DownloadRequest
-                                                                                .Builder(
-                                                                                    song.song.id,
-                                                                                    song.song.id.toUri(),
-                                                                                )
-                                                                                .setCustomCacheKey(song.song.id)
-                                                                                .setData(song.song.title.toByteArray())
-                                                                                .build()
-                                                                        DownloadService.sendAddDownload(
-                                                                            context,
-                                                                            ExoDownloadService::class.java,
-                                                                            downloadRequest,
-                                                                            false,
-                                                                        )
-                                                                    }
+                                                                        ExoDownloadService::class.java,
+                                                                        downloadRequest,
+                                                                        false,
+                                                                    )
                                                                 }
                                                             },
                                                         ) {

@@ -18,7 +18,7 @@ data class WifiJamEvent(
     val type: String,          // "SYNC", "PLAY", "PAUSE", "NEXT", "PREV", "SEEK"
     val mediaId: String = "",  // Current videoId/mediaId
     val positionMs: Long = 0L, // Current playback position
-    val playbackSpeed: Float = 1.0f // current speed
+    val playbackSpeed: Float = 1f,
 )
 
 /**

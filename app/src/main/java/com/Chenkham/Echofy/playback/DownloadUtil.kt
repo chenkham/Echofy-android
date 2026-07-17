@@ -1,4 +1,4 @@
-﻿package com.Chenkham.Echofy.playback
+package com.Chenkham.Echofy.playback
 
 import android.content.Context
 import android.net.ConnectivityManager
@@ -105,7 +105,15 @@ constructor(
 
             songUrlCache[mediaId] =
                 streamUrl to System.currentTimeMillis() + (playbackData.streamExpiresInSeconds * 1000L)
-            dataSpec.withUri(streamUrl.toUri())
+                
+            val finalBuilder = dataSpec.withUri(streamUrl.toUri())
+                .buildUpon()
+                
+            if (playbackData.userAgent != null) {
+                finalBuilder.setHttpRequestHeaders(mapOf("User-Agent" to playbackData.userAgent))
+            }
+            
+            finalBuilder.build()
         }
     val downloadNotificationHelper =
         DownloadNotificationHelper(context, ExoDownloadService.CHANNEL_ID)

@@ -15,6 +15,9 @@ interface UserDao {
     
     @Query("SELECT * FROM user WHERE isActive = 1 LIMIT 1")
     suspend fun getActiveUserOnce(): UserEntity?
+
+    @Query("UPDATE user SET isPremium = :isPremium WHERE isActive = 1")
+    suspend fun updateActiveUserPremiumStatus(isPremium: Boolean): Int
     
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertUser(user: UserEntity): Long
@@ -33,6 +36,4 @@ interface UserDao {
     @Query("DELETE FROM user")
     suspend fun deleteAllUsers(): Int
 
-    @Query("UPDATE user SET isPremium = :isPremium WHERE googleId = :googleId")
-    suspend fun updatePremiumStatus(googleId: String, isPremium: Boolean): Int
 }

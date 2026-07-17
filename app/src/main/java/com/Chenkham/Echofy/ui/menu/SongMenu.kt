@@ -727,24 +727,20 @@ fun SongMenu(
                                 )
                             },
                             modifier = Modifier.clickable {
-                                if (adManager?.isPremium?.value == true) {
-                                    val downloadRequest =
-                                        DownloadRequest
-                                            .Builder(song.id, song.id.toUri())
-                                            .setCustomCacheKey(song.id)
-                                            .setData(song.song.title.toByteArray())
-                                            .build()
-                                    DownloadService.sendAddDownload(
-                                        context,
-                                        ExoDownloadService::class.java,
-                                        downloadRequest,
-                                        false,
-                                    )
-                                    Toast.makeText(context, "Download started", Toast.LENGTH_SHORT).show()
-                                } else {
-                                    Toast.makeText(context, R.string.premium_required, Toast.LENGTH_SHORT).show()
-                                }
-                                }
+                                val downloadRequest =
+                                    DownloadRequest
+                                        .Builder(song.id, song.id.toUri())
+                                        .setCustomCacheKey(song.id)
+                                        .setData(song.song.title.toByteArray())
+                                        .build()
+                                DownloadService.sendAddDownload(
+                                    context,
+                                    ExoDownloadService::class.java,
+                                    downloadRequest,
+                                    false,
+                                )
+                                android.widget.Toast.makeText(context, "Download started", android.widget.Toast.LENGTH_SHORT).show()
+                            }
                         )
                     }
                 }

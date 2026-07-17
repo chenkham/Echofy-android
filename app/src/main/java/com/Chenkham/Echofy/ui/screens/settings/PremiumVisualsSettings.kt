@@ -39,8 +39,7 @@ fun PremiumVisualsSettings(
     navController: NavController,
     scrollBehavior: TopAppBarScrollBehavior,
 ) {
-    val adManager = LocalAdManager.current
-    val isPremium = adManager?.isPremium?.collectAsState()?.value == true
+    val isPremium = true
 
     val (liveFluidBackground, onLiveFluidBackgroundChange) = rememberPreference(
         LiveFluidBackgroundKey,
@@ -91,18 +90,7 @@ fun PremiumVisualsSettings(
             items = buildList {
                 add {
                     SwitchPreference(
-                        title = {
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                Text("Live Fluid Background")
-                                Spacer(Modifier.padding(4.dp))
-                                Icon(
-                                    painterResource(R.drawable.workspace_premium),
-                                    contentDescription = "Premium",
-                                    tint = MaterialTheme.colorScheme.primary,
-                                    modifier = Modifier.size(14.dp),
-                                )
-                            }
-                        },
+                        title = { Text("Live Fluid Background") },
                         description = "Animated flowing color meshes on player",
                         icon = { Icon(painterResource(R.drawable.palette), null) },
                         checked = liveFluidBackground,
@@ -128,18 +116,7 @@ fun PremiumVisualsSettings(
                 }
                 add {
                     SwitchPreference(
-                        title = {
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                Text("Real-Time Visualizer")
-                                Spacer(Modifier.padding(4.dp))
-                                Icon(
-                                    painterResource(R.drawable.workspace_premium),
-                                    contentDescription = "Premium",
-                                    tint = MaterialTheme.colorScheme.primary,
-                                    modifier = Modifier.size(14.dp),
-                                )
-                            }
-                        },
+                        title = { Text("Real-Time Visualizer") },
                         description = "Audio spectrum bars on now playing",
                         icon = { Icon(painterResource(R.drawable.equalizer), null) },
                         checked = realTimeVisualizer,

@@ -103,7 +103,7 @@ data class JamRoomCode(
     val roomToken: String,
 ) {
     val roomCode: String
-        get() = "$shardId-$roomToken"
+        get() = roomToken
 
     val roomId: String
         get() = "${shardId.lowercase()}_${roomToken.lowercase()}"
@@ -122,11 +122,12 @@ data class JamRoomCode(
         fun parse(rawCode: String): JamRoomCode? {
             val normalized = rawCode.trim().uppercase()
             val parts = normalized.split("-", limit = 2)
-            if (parts.size != 2) return null
-            val shardId = parts[0]
-            val token = parts[1]
-            if (shardId.length != 2 || token.length < 4) return null
-            if (!shardId.all(Char::isDigit)) return null
+            val (shardId, token) = if (parts.size == 2) {
+                parts[0] to parts[1]
+            } else {
+                "01" to normalized
+            }
+            if (token.length < 4) return null
             if (!token.all { it in roomCodeAlphabet }) return null
             return JamRoomCode(shardId = shardId, roomToken = token)
         }
@@ -149,6 +150,9 @@ data class JamParticipant(
     val joinedAtEpochMs: Long = 0L,
     val lastSeenAtEpochMs: Long = 0L,
 ) {
+    /** First letter of displayName, uppercased — used for avatar circles */
+    val nameInitial: String
+        get() = displayName.firstOrNull()?.uppercase() ?: "?"
     companion object {
         fun fromMap(map: Map<*, *>): JamParticipant? {
             val participantId = map["participantId"] as? String ?: return null
@@ -174,6 +178,8 @@ data class JamRoomMeta(
     val shardId: String = "",
     val hostParticipantId: String,
     val hostAuthUid: String = "",
+    val hostName: String = "",
+    val requireApproval: Boolean = false,
     val allowGuestControls: Boolean = true,
     val createdAtEpochMs: Long = 0L,
     val lastActivityAtEpochMs: Long = 0L,
@@ -207,6 +213,8 @@ data class JamRoomMeta(
                 shardId              = map["shardId"] as? String ?: "",
                 hostParticipantId    = hostParticipantId,
                 hostAuthUid          = map["hostAuthUid"] as? String ?: "",
+                hostName             = map["hostName"] as? String ?: "",
+                requireApproval      = map["requireApproval"] as? Boolean ?: false,
                 allowGuestControls   = map["allowGuestControls"] as? Boolean ?: true,
                 createdAtEpochMs     = (map["createdAtEpochMs"] as? Number)?.toLong() ?: 0L,
                 lastActivityAtEpochMs= (map["lastActivityAtEpochMs"] as? Number)?.toLong() ?: 0L,
@@ -314,6 +322,53 @@ data class JamPlaybackSnapshot(
                 queueVersion = queueVersion,
                 issuedByParticipantId = issuedByParticipantId,
                 issuedByAuthUid = issuedByAuthUid,
+            )
+        }
+    }
+}
+
+data class JamPlaybackState(
+    val playbackState: JamPlaybackTransportState = JamPlaybackTransportState.PAUSED,
+    val basePositionMs: Long = 0L,
+    val updatedAtEpochMs: Long = 0L,
+    val stateVersion: Long = 0L,
+) {
+    fun toMap(): Map<String, Any> {
+        return mapOf(
+            "playbackState" to playbackState.name,
+            "basePositionMs" to basePositionMs,
+            "updatedAtEpochMs" to updatedAtEpochMs,
+            "stateVersion" to stateVersion,
+        )
+    }
+
+    /**
+     * Helper to calculate the estimated playback position right now
+     * based on the last known start point and elapsed time.
+     */
+    fun currentEstimatedPositionMs(nowEpochMs: Long = System.currentTimeMillis()): Long {
+        if (playbackState != JamPlaybackTransportState.PLAYING) return basePositionMs
+        val deltaMs = (nowEpochMs - updatedAtEpochMs).coerceAtLeast(0L)
+        return basePositionMs + deltaMs
+    }
+
+    companion object {
+        fun fromMap(map: Map<String, Any>): JamPlaybackState {
+            val rawState = map["playbackState"] as? String
+            val playbackState = rawState?.let {
+                runCatching { JamPlaybackTransportState.valueOf(it) }.getOrNull()
+            }
+                ?: JamPlaybackTransportState.PAUSED
+
+            val basePositionMs = (map["basePositionMs"] as? Number)?.toLong() ?: 0L
+            val updatedAtEpochMs = (map["updatedAtEpochMs"] as? Number)?.toLong() ?: 0L
+            val stateVersion = (map["stateVersion"] as? Number)?.toLong() ?: 0L
+
+            return JamPlaybackState(
+                playbackState = playbackState,
+                basePositionMs = basePositionMs,
+                updatedAtEpochMs = updatedAtEpochMs,
+                stateVersion = stateVersion,
             )
         }
     }

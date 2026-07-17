@@ -306,6 +306,11 @@ fun Queue(
                 queueWindows.sumOf { it.mediaItem.metadata!!.duration }
             }
 
+        // Show all songs in the queue, including currently playing
+        val filteredQueueWindows = remember(mutableQueueWindows.toList(), currentWindowIndex) {
+            mutableQueueWindows.toList()
+        }
+
         val coroutineScope = rememberCoroutineScope()
 
         val headerItems = 1
@@ -314,15 +319,17 @@ fun Queue(
             lazyListState = lazyListState,
             onMove = { from, to ->
                 if (to.index >= headerItems && from.index >= headerItems) {
+                    val adjustedFrom = from.index - headerItems
+                    val adjustedTo = to.index - headerItems
+
                     mutableQueueWindows.move(
-                        from.index - headerItems,
-                        to.index - headerItems,
+                        adjustedFrom,
+                        adjustedTo,
                     )
 
                     // Mover la lógica de onDragEnd aquí
-                    val safeFrom = (from.index - headerItems).coerceIn(0, mutableQueueWindows.lastIndex)
-                    val safeTo = (to.index - headerItems).coerceIn(0, mutableQueueWindows.lastIndex)
-                    val toAdjusted = if (safeTo == 0) 1 else safeTo
+                    val safeFrom = adjustedFrom.coerceIn(0, mutableQueueWindows.lastIndex)
+                    val safeTo = adjustedTo.coerceIn(0, mutableQueueWindows.lastIndex)
 
                     if (!playerConnection.player.shuffleModeEnabled) {
                         playerConnection.player.moveMediaItem(safeFrom, safeTo)
@@ -349,8 +356,8 @@ fun Queue(
             }
         }
 
-        LaunchedEffect(mutableQueueWindows) {
-            if (currentWindowIndex != -1) {
+        LaunchedEffect(filteredQueueWindows) {
+            if (currentWindowIndex != -1 && currentWindowIndex < filteredQueueWindows.size) {
                 lazyListState.scrollToItem(currentWindowIndex)
             }
         }
@@ -406,9 +413,12 @@ fun Queue(
                 }
 
                 itemsIndexed(
-                    items = mutableQueueWindows,
+                    items = filteredQueueWindows,
                     key = { _, item -> item.uid.hashCode() },
-                ) { index, window ->
+                ) { displayIndex, window ->
+                    // Calculate the actual index in the original queue
+                    val actualIndex = displayIndex
+                    
                     ReorderableItem(
                         state = reorderableState, // Cambiar reorderableState por state
                         key = window.uid.hashCode(),
@@ -457,7 +467,7 @@ fun Queue(
                                 MediaMetadataListItem(
                                     mediaMetadata = window.mediaItem.metadata!!,
                                     isSelected = selection && window.mediaItem.metadata!! in selectedSongs,
-                                    isActive = index == currentWindowIndex,
+                                    isActive = displayIndex == currentWindowIndex,
                                     isPlaying = isPlaying,
                                     trailingContent = {
                                         if (!locked) {
@@ -471,6 +481,18 @@ fun Queue(
                                                     contentDescription = null,
                                                 )
                                             }
+                                        }
+                                        IconButton(
+                                            onClick = {
+                                                haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                                playerConnection.removeFromQueue(actualIndex)
+                                            },
+                                        ) {
+                                            Icon(
+                                                painter = painterResource(R.drawable.close),
+                                                contentDescription = stringResource(R.string.remove_from_queue),
+                                                tint = LocalContentColor.current,
+                                            )
                                         }
                                         IconButton(
                                             onClick = {
@@ -521,15 +543,11 @@ fun Queue(
                                                             selectedItems.add(currentItem)
                                                         }
                                                     } else {
-                                                        if (index == currentWindowIndex) {
-                                                            playerConnection.togglePlayPause()
-                                                        } else {
-                                                            playerConnection.player.seekToDefaultPosition(
-                                                                window.firstPeriodIndex,
-                                                            )
-                                                            playerConnection.player.playWhenReady =
-                                                                true
-                                                        }
+                                                        // Play the selected song from queue
+                                                        playerConnection.player.seekToDefaultPosition(
+                                                            window.firstPeriodIndex,
+                                                        )
+                                                        playerConnection.player.playWhenReady = true
                                                     }
                                                 },
                                                 onLongClick = {
@@ -685,8 +703,8 @@ fun Queue(
                     Text(
                         text = pluralStringResource(
                             R.plurals.n_song,
-                            queueWindows.size,
-                            queueWindows.size
+                            filteredQueueWindows.size,
+                            filteredQueueWindows.size
                         ),
                         style = MaterialTheme.typography.bodyMedium,
                     )
@@ -726,11 +744,11 @@ fun Queue(
                     )
                     IconButton(
                         onClick = {
-                            if (count == mutableQueueWindows.size) {
+                            if (count == filteredQueueWindows.size) {
                                 selectedSongs.clear()
                                 selectedItems.clear()
                             } else {
-                                queueWindows
+                                filteredQueueWindows
                                     .filter { it.mediaItem.metadata!! !in selectedSongs }
                                     .forEach {
                                         selectedSongs.add(it.mediaItem.metadata!!)
@@ -742,7 +760,7 @@ fun Queue(
                         Icon(
                             painter =
                                 painterResource(
-                                    if (count == mutableQueueWindows.size) {
+                                    if (count == filteredQueueWindows.size) {
                                         R.drawable.deselect
                                     } else {
                                         R.drawable.select_all

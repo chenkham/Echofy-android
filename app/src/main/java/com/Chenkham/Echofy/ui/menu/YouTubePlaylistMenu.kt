@@ -416,21 +416,17 @@ fun YouTubePlaylistMenu(
             DownloadGridMenu(
                 state = downloadState,
                 onDownload = {
-                    if (adManager?.isPremium?.value != true) {
-                        android.widget.Toast.makeText(context, R.string.premium_required, android.widget.Toast.LENGTH_SHORT).show()
-                    } else {
-                        songs.forEach { song ->
-                            val downloadRequest = DownloadRequest.Builder(song.id, song.id.toUri())
-                                .setCustomCacheKey(song.id)
-                                .setData(song.title.toByteArray())
-                                .build()
-                            DownloadService.sendAddDownload(
-                                context,
-                                ExoDownloadService::class.java,
-                                downloadRequest,
-                                false
-                            )
-                        }
+                    songs.forEach { song ->
+                        val downloadRequest = DownloadRequest.Builder(song.id, song.id.toUri())
+                            .setCustomCacheKey(song.id)
+                            .setData(song.title.toByteArray())
+                            .build()
+                        DownloadService.sendAddDownload(
+                            context,
+                            ExoDownloadService::class.java,
+                            downloadRequest,
+                            false
+                        )
                     }
                 },
                 onRemoveDownload = {

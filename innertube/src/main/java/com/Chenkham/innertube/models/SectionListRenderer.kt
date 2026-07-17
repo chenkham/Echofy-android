@@ -1,4 +1,4 @@
-﻿package com.Chenkham.innertube.models
+package com.Chenkham.innertube.models
 
 import com.Chenkham.innertube.models.response.BrowseResponse
 import kotlinx.serialization.ExperimentalSerializationApi
@@ -48,5 +48,17 @@ data class SectionListRenderer(
         val musicResponsiveHeaderRenderer: BrowseResponse.Header.MusicHeaderRenderer?, // mantiene compatibilidad
         val musicEditablePlaylistDetailHeaderRenderer: BrowseResponse.Header.MusicEditablePlaylistDetailHeaderRenderer?, // mantiene compatibilidad
         val gridRenderer: GridRenderer?,
+        val itemSectionRenderer: ItemSectionRenderer?,
     )
 }
+
+@Serializable
+data class ItemSectionRenderer(
+    val contents: List<Content>?,
+) {
+    @Serializable
+    data class Content(
+        val musicResponsiveListItemRenderer: MusicResponsiveListItemRenderer?,
+    )
+}
+

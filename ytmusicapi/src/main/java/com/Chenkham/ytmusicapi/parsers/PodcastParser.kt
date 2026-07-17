@@ -156,7 +156,12 @@ object PodcastParser {
      */
     fun parsePodcast(data: JsonObject): PodcastItem? {
         val title = navString(data, NavPath.TITLE_TEXT, true) ?: return null
-        val browseId = navString(data, NavPath.TITLE + NavPath.NAVIGATION_BROWSE_ID, true) ?: return null
+        val podcastId = navString(data, listOf("thumbnailOverlay", "musicItemThumbnailOverlayRenderer",
+            "content", "musicPlayButtonRenderer", "playNavigationEndpoint", "watchPlaylistEndpoint", "playlistId"), true)
+        val browseId = navString(data, NavPath.TITLE + NavPath.NAVIGATION_BROWSE_ID, true)
+            ?: navString(data, NavPath.NAVIGATION_BROWSE_ID, true)
+            ?: podcastId
+            ?: return null
         
         // Channel info from subtitle
         val subtitleRuns = data["subtitle"]?.let { (it as? JsonObject)?.get("runs") } as? JsonArray
@@ -164,10 +169,6 @@ object PodcastParser {
         val channelName = channelRun?.get("text")?.jsonPrimitive?.content
         val channelId = channelRun?.let { navString(it, NavPath.NAVIGATION_BROWSE_ID, true) }
         val channel = if (channelName != null) Author(name = channelName, id = channelId) else null
-        
-        // Podcast ID from thumbnail overlay
-        val podcastId = navString(data, listOf("thumbnailOverlay", "musicItemThumbnailOverlayRenderer", 
-            "content", "musicPlayButtonRenderer", "playNavigationEndpoint", "watchPlaylistEndpoint", "playlistId"), true)
         
         val thumbnails = ChartsParser.parseThumbnails(data)
         

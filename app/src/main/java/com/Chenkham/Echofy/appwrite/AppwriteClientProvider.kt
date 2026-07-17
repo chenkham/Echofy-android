@@ -18,7 +18,7 @@ object AppwriteClientProvider {
         client ?: Client(context.applicationContext)
             .setEndpoint(AppwriteConfig.ENDPOINT)
             .setProject(AppwriteConfig.PROJECT_ID)
-            .setSelfSigned(false)   // flip to true only for local dev with self-signed TLS
+            .setSelfSigned(AppwriteConfig.SELF_SIGNED)
             .also { client = it }
     }
 

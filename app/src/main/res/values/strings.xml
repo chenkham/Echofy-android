@@ -1,4 +1,4 @@
-﻿<resources>
+<resources>
     <!-- Bottom navigation -->
     <string name="home">Home</string>
     <string name="songs">Songs</string>
@@ -54,6 +54,7 @@
     <string name="quick_picks">Quick picks</string>
     <string name="quick_picks_empty">Listen to songs to generate your quick picks</string>
     <string name="new_release_albums">New releases</string>
+    <string name="trending_songs">Trending songs</string>
     <string name="forgotten_favorites">Forgotten favorites</string>
     <string name="similar_to">Similar to</string>
     <string name="keep_listening">Keep listening</string>
@@ -82,7 +83,7 @@
     <string name="search_library">Search libraryâ€¦</string>
     <string name="filter_library">Library</string>
     <string name="filter_liked">Liked</string>
-    <string name="filter_downloaded">Downloaded</string>
+    <string name="filter_downloaded">Downloaded</string>`n    <string name="filter_uploaded">Uploaded</string>
     <string name="filter_all">All</string>
     <string name="filter_songs">Songs</string>
     <string name="filter_videos">Videos</string>
@@ -343,10 +344,13 @@
     <string name="content">Content</string>
     <string name="google">Google</string>
     <string name="discord">Discord</string>
+    <string name="integration">Integration</string>
     <string name="login">Login</string>
     <string name="advanced_login">Advanced login (token)</string>
     <string name="logout">Logout</string>
     <string name="not_logged_in">Not logged in</string>
+    <string name="connected">Connected</string>
+    <string name="not_configured">Not configured</string>
     <string name="token_hidden">Tap to show token</string>
     <string name="token_shown">Tap again to copy or edit</string>
     <string name="token_adv_login_description">This is an ADVANCED login method. As an alternative to the web portal, you may directly enter or update your login token here. For example, this can speed up logging in on multiple devices. Please note that any invalid token formats the app fails to parse will not be accepted</string>
@@ -443,7 +447,32 @@
     <string name="restore_failed">Failed to restore backup</string>
 
     <string name="discord_integration">Discord integration</string>
+    <string name="discord_gateway_description">Show the current song through Discord Gateway Rich Presence</string>
     <string name="discord_information">Echofy uses the KizzyRPC library to set your Discord account\'s status. This involves using the Discord Gateway connection, which may be considered a violation of Discord\'s TOS. However, there are no known cases of user accounts being suspended for this reason. Use at your own risk.  OpenTunne will only extract your token, and everything else is stored locally.</string>
+    <string name="lastfm_integration">Last.fm integration gateway</string>
+    <string name="lastfm_login_description">Connect a Last.fm API account to scrobble tracks and publish now-playing updates.</string>
+    <string name="lastfm_ready_description">Ready to send now-playing updates and scrobbles.</string>
+    <string name="lastfm_api_credentials">API credentials</string>
+    <string name="lastfm_api_key">Last.fm API key</string>
+    <string name="lastfm_api_secret">Last.fm shared secret</string>
+    <string name="lastfm_create_api_account">Create Last.fm API account</string>
+    <string name="lastfm_create_api_account_description">Open Last.fm to create or manage your API key and shared secret.</string>
+    <string name="lastfm_authorization">Authorization</string>
+    <string name="lastfm_request_token">Request token and authorize</string>
+    <string name="lastfm_request_token_description">Gets a desktop auth token, then opens Last.fm so you can grant access.</string>
+    <string name="lastfm_complete_sign_in">Complete sign in</string>
+    <string name="lastfm_complete_sign_in_description">After granting access on Last.fm, exchange the token for a session key.</string>
+    <string name="lastfm_open_authorization_page">Open authorization page again</string>
+    <string name="lastfm_enable_scrobbling">Enable scrobbling</string>
+    <string name="lastfm_enable_scrobbling_description">Submit a scrobble after the configured playback threshold.</string>
+    <string name="lastfm_now_playing">Update now playing</string>
+    <string name="lastfm_now_playing_description">Tell Last.fm when a new song starts playing.</string>
+    <string name="lastfm_scrobble_delay_percent">Scrobble after percent</string>
+    <string name="lastfm_scrobble_delay_seconds">Scrobble after seconds</string>
+    <string name="lastfm_min_song_duration">Minimum song duration</string>
+    <string name="lastfm_gateway">Gateway</string>
+    <string name="lastfm_gateway_methods">Supported Last.fm methods</string>
+    <string name="lastfm_docs_note">The gateway signs authenticated calls, sends write methods over POST, and exposes the Last.fm method list for future features.</string>
     <string name="dismiss">Dismiss</string>
     <string name="options">Options</string>
     <string name="preview">Preview</string>
@@ -502,6 +531,7 @@
     <string name="SearchResutls">Search Results</string>
     <string name="Sujestions">Suggestions</string>
     <string name="SearchHistory">Search History</string>
+    <string name="recent_searches">Recent searches</string>
     <string name="collapse">Collapse</string>
     <string name="expand">Expand</string>
     <string name="reset_to_default">Reset to default</string>
@@ -690,7 +720,7 @@
     <string name="choose_custom_photo">Choose Custom Photo</string>
     <string name="apply_to_screens">Apply to Screens</string>
     <string name="premium_required">This feature is for Premium users only</string>
-    <string name="premium">Premium</string>
+    <string name="premium">Support</string>
 
     <!-- Accessibility Strings -->
     <string name="song_cover">Song cover</string>

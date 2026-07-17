@@ -282,7 +282,7 @@ fun SmallGridItem(
         modifier =
             modifier
                 .fillMaxHeight()
-                .width(GridThumbnailHeight * thumbnailRatio)
+                .width(SmallGridThumbnailHeight * thumbnailRatio)
                 .padding(12.dp),
     ) {
         BoxWithConstraints(

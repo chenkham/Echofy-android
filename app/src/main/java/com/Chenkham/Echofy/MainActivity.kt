@@ -177,6 +177,7 @@ import com.Chenkham.Echofy.constants.DarkModeKey
 import com.Chenkham.Echofy.constants.DefaultOpenTabKey
 import com.Chenkham.Echofy.constants.DisableScreenshotKey
 import com.Chenkham.Echofy.constants.DynamicThemeKey
+import com.Chenkham.Echofy.constants.HardwareVolButtonSkipKey
 import com.Chenkham.Echofy.constants.MiniPlayerHeight
 import com.Chenkham.Echofy.constants.NavigationBarAnimationSpec
 import com.Chenkham.Echofy.constants.NavigationBarHeight
@@ -261,7 +262,6 @@ import java.net.URLDecoder
 import java.net.URLEncoder
 import javax.inject.Inject
 import kotlin.time.Duration.Companion.days
-import com.google.firebase.inappmessaging.FirebaseInAppMessaging
 import kotlin.time.Duration.Companion.minutes
 import com.Chenkham.Echofy.ads.AdManager
 import com.Chenkham.Echofy.BuildConfig
@@ -294,6 +294,7 @@ class MainActivity : ComponentActivity() {
     private var pipEnabled = true
     private var autoClearCache = false
     private var stopMusicOnTaskClear = false
+    private var hardwareVolumeSkipEnabled = false
 
     companion object {
         private const val ACTION_PIP_CONTROL = "com.Chenkham.Echofy.PIP_CONTROL"
@@ -427,15 +428,7 @@ class MainActivity : ComponentActivity() {
     private val LONG_PRESS_THRESHOLD_MS = 600L
 
     override fun dispatchKeyEvent(event: android.view.KeyEvent): Boolean {
-        // Only intercept if the premium feature is active
-        val hwSkipEnabled = runCatching {
-            kotlinx.coroutines.runBlocking {
-                dataStore.data.map { it[com.Chenkham.Echofy.constants.HardwareVolButtonSkipKey] ?: false }.first()
-            }
-        }.getOrDefault(false)
-        val isPremium = adManager.isPremium.value
-
-        if (isPremium && hwSkipEnabled) {
+        if (hardwareVolumeSkipEnabled) {
             when (event.keyCode) {
                 android.view.KeyEvent.KEYCODE_VOLUME_DOWN -> {
                     when (event.action) {
@@ -647,6 +640,15 @@ class MainActivity : ComponentActivity() {
                 }
         }
 
+        lifecycleScope.launch {
+            dataStore.data
+                .map { it[HardwareVolButtonSkipKey] ?: false }
+                .distinctUntilChanged()
+                .collectLatest { enabled ->
+                    hardwareVolumeSkipEnabled = enabled
+                }
+        }
+
         intent?.let { handleIntent(it) }
 
         // Bind the MusicService so it doesn't die when the app drops to the background unless the user swipes to close it
@@ -682,26 +684,6 @@ class MainActivity : ComponentActivity() {
                     if (checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
                         notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
                     }
-                }
-            }
-            
-            // Initialize Firebase In-App Messaging to trigger on every app open
-            LaunchedEffect(Unit) {
-                kotlinx.coroutines.delay(3500) // Let UI render fully first to avoid frame drops
-                try {
-                    // Enable data collection for In-App Messaging (required for images)
-                    FirebaseInAppMessaging.getInstance().isAutomaticDataCollectionEnabled = true
-                    // Ensure messages are NOT suppressed
-                    FirebaseInAppMessaging.getInstance().setMessagesSuppressed(false)
-                    
-                    // Trigger the "app_open" event to show In-App Messages on every launch
-                    FirebaseInAppMessaging.getInstance().triggerEvent("app_open")
-                    // Also trigger for welcome and promotion events
-                    FirebaseInAppMessaging.getInstance().triggerEvent("promotion")
-                    FirebaseInAppMessaging.getInstance().triggerEvent("welcome_back")
-                    Log.d("MainActivity", "Firebase In-App Messaging triggered")
-                } catch (e: Exception) {
-                    Log.e("MainActivity", "Firebase FIAM error: ${e.message}")
                 }
             }
             
@@ -769,7 +751,7 @@ class MainActivity : ComponentActivity() {
             var showFullscreenLyrics by remember { mutableStateOf(false) }
 
 
-            val enableDynamicTheme by rememberPreference(DynamicThemeKey, defaultValue = false)
+            val enableDynamicTheme by rememberPreference(DynamicThemeKey, defaultValue = true)
             val darkTheme by rememberEnumPreference(DarkModeKey, defaultValue = DarkMode.AUTO)
 
             val pureBlack by rememberPreference(PureBlackKey, defaultValue = false)
@@ -855,8 +837,9 @@ class MainActivity : ComponentActivity() {
                              is AuthState.Unauthenticated -> {
                                  // Only navigate to sign_in if we are NOT there and NOT in onboarding/splash
                                  // And wait until we are sure we're not loading (handled by Loading state)
-                                 if (currentRoute != "sign_in" && currentRoute != "splash" && currentRoute != "onboarding") {
-                                     navController.navigate("sign_in") {
+                                 if (false && currentRoute?.startsWith("login") != true && currentRoute != "splash" && currentRoute != "onboarding") {
+                                     navController.navigate("login") {
+
                                          // Don't pop Home, just put Sign In on top so back button works if we want?
                                          // Or prevent back? Typically prevent back.
                                          popUpTo(Screens.Home.route) { inclusive = true } 
@@ -1597,9 +1580,8 @@ class MainActivity : ComponentActivity() {
                             },
                             bottomBar = {
                                 val playerLayoutStyle by rememberEnumPreference(PlayerLayoutStyleKey, defaultValue = PlayerLayoutStyle.CLASSIC)
-                                val isPremium = LocalAdManager.current?.isPremium?.collectAsState()?.value == true
                                 Box {
-                                    if (playerLayoutStyle == PlayerLayoutStyle.APPLE_MUSIC && isPremium) {
+                                    if (playerLayoutStyle == PlayerLayoutStyle.APPLE_MUSIC) {
                                         AppleBottomSheetPlayer(
                                             state = playerBottomSheetState,
                                             navController = navController,
@@ -2011,10 +1993,9 @@ class MainActivity : ComponentActivity() {
         if (intent.action == android.provider.MediaStore.INTENT_ACTION_MEDIA_PLAY_FROM_SEARCH) {
             lifecycleScope.launch {
                 val isEnabled = dataStore.data.first()[com.Chenkham.Echofy.constants.VoiceControlEnabledKey] ?: false
-                val isPremium = authRepository.getActiveUser().first()?.isPremium == true
 
-                if (!isEnabled || !isPremium) {
-                   Toast.makeText(this@MainActivity, "Premium + Voice Control required", Toast.LENGTH_SHORT).show()
+                if (!isEnabled) {
+                   Toast.makeText(this@MainActivity, "Voice Control not enabled", Toast.LENGTH_SHORT).show()
                    return@launch 
                 }
 

@@ -76,7 +76,6 @@ fun PrivacySettings(
     var showClearSearchHistoryDialog by remember { mutableStateOf(false) }
 
     val context = androidx.compose.ui.platform.LocalContext.current
-    val adManager = com.Chenkham.Echofy.ui.component.LocalAdManager.current
 
     SettingsPage(
         title = stringResource(R.string.privacy),
@@ -89,25 +88,10 @@ fun PrivacySettings(
                 {SwitchPreference(
                     title = { Row(verticalAlignment = Alignment.CenterVertically) {
                         Text(stringResource(R.string.pause_listen_history))
-                        if (adManager?.isPremium?.value != true) {
-                            Spacer(Modifier.padding(4.dp))
-                            Icon(
-                                painter = painterResource(R.drawable.workspace_premium),
-                                contentDescription = "Premium",
-                                tint = MaterialTheme.colorScheme.primary,
-                                modifier = Modifier.size(16.dp)
-                            )
-                        }
                     }},
                     icon = { Icon(painterResource(R.drawable.history), null) },
                     checked = pauseListenHistory,
-                    onCheckedChange = { checked ->
-                        if (adManager?.isPremium?.value == true || !checked) {
-                            onPauseListenHistoryChange(checked)
-                        } else {
-                            navController.navigate("premium")
-                        }
-                    }
+                    onCheckedChange = onPauseListenHistoryChange
                 )},
 
                 {PreferenceEntry(
@@ -123,25 +107,10 @@ fun PrivacySettings(
                 {SwitchPreference(
                     title = { Row(verticalAlignment = Alignment.CenterVertically) {
                         Text(stringResource(R.string.pause_search_history))
-                        if (adManager?.isPremium?.value != true) {
-                            Spacer(Modifier.padding(4.dp))
-                            Icon(
-                                painter = painterResource(R.drawable.workspace_premium),
-                                contentDescription = "Premium",
-                                tint = MaterialTheme.colorScheme.primary,
-                                modifier = Modifier.size(16.dp)
-                            )
-                        }
                     }},
                     icon = { Icon(painterResource(R.drawable.search_off), null) },
                     checked = pauseSearchHistory,
-                    onCheckedChange = { checked ->
-                        if (adManager?.isPremium?.value == true || !checked) {
-                            onPauseSearchHistoryChange(checked)
-                        } else {
-                            navController.navigate("premium")
-                        }
-                    }
+                    onCheckedChange = onPauseSearchHistoryChange
                 )},
 
                 {PreferenceEntry(

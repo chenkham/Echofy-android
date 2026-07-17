@@ -445,6 +445,9 @@ fun HomeScreen(
                                 "stats" -> navController.navigate("stats")
                                 "liked" -> navController.navigate("auto_playlist/liked")
                                 "downloads" -> navController.navigate("auto_playlist/downloaded")
+
+
+
                                 "account" -> if (isLoggedIn) navController.navigate("account")
                             }
                         },
@@ -539,6 +542,32 @@ fun HomeScreen(
                 }
             }
             
+            // Trending Songs section from explorePage
+            explorePage?.trendingSongs?.takeIf { it.isNotEmpty() }?.let { trendingSongs ->
+                item(key = "trending_songs_title") {
+                    NavigationTitle(
+                        title = stringResource(R.string.trending_songs),
+                        modifier = Modifier.animateItem()
+                    )
+                }
+
+                item(key = "trending_songs_row") {
+                    LazyRow(
+                        contentPadding = WindowInsets.systemBars
+                            .only(WindowInsetsSides.Horizontal)
+                            .asPaddingValues(),
+                        modifier = Modifier.animateItem()
+                    ) {
+                        itemsIndexed(
+                            items = trendingSongs,
+                            key = { index, item -> "trending_${item.id}" }
+                        ) { index, item ->
+                            ytGridItem(item)
+                        }
+                    }
+                }
+            }
+
             // Native ad placement - shows between content sections
             adManager?.let { manager ->
                 item(key = "ad_native_1") {

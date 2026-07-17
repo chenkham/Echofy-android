@@ -42,6 +42,7 @@ enum class SliderStyle {
     DEFAULT,
     SQUIGGLY,
     SLIM,
+    YOUTUBE_MUSIC
 }
 
 const val SYSTEM_DEFAULT = "SYSTEM_DEFAULT"
@@ -83,6 +84,11 @@ val ScrobbleMinSongDurationKey = intPreferencesKey("scrobbleMinSongDuration")
 val ScrobbleDelaySecondsKey = intPreferencesKey("scrobbleDelaySeconds")
 val EnableLastFMScrobblingKey = booleanPreferencesKey("enableLastFMScrobbling")
 val LastFMUseNowPlaying = booleanPreferencesKey("lastFMUseNowPlaying")
+val LastFmApiKeyKey = stringPreferencesKey("lastFmApiKey")
+val LastFmApiSecretKey = stringPreferencesKey("lastFmApiSecret")
+val LastFmSessionKeyKey = stringPreferencesKey("lastFmSessionKey")
+val LastFmUsernameKey = stringPreferencesKey("lastFmUsername")
+val LastFmTokenKey = stringPreferencesKey("lastFmToken")
 val AudioOffload = booleanPreferencesKey("audioOffload")
 
 // Premium feature preference keys
@@ -184,7 +190,7 @@ enum class LibraryViewType {
 enum class SongFilter {
     LIBRARY,
     LIKED,
-    DOWNLOADED
+    DOWNLOADED, UPLOADED
 }
 
 enum class ArtistFilter {

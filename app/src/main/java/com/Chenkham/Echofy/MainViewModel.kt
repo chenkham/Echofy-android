@@ -42,7 +42,7 @@ class MainViewModel @Inject constructor(
         when {
             user != null -> AuthState.Authenticated(user)
             isGuest -> AuthState.Guest
-            else -> AuthState.Unauthenticated
+            else -> AuthState.Guest
         }
     }.stateIn(
         scope = viewModelScope,

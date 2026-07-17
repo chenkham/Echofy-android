@@ -22,6 +22,9 @@ class AuthRepository @Inject constructor(
     fun getActiveUser(): Flow<UserEntity?> = userDao.getActiveUser()
     
     suspend fun getActiveUserOnce(): UserEntity? = userDao.getActiveUserOnce()
+
+    suspend fun setPremiumStatus(isPremium: Boolean): Int =
+        userDao.updateActiveUserPremiumStatus(isPremium)
     
     suspend fun signInWithGoogle(webClientId: String, activityContext: Context): Result<UserEntity> {
         return try {
@@ -73,10 +76,5 @@ class AuthRepository @Inject constructor(
         userDao.deleteUser(googleId)
     }
 
-    suspend fun setPremiumStatus(isPremium: Boolean) {
-        val user = userDao.getActiveUserOnce()
-        if (user != null) {
-            userDao.updatePremiumStatus(user.googleId, isPremium)
-        }
-    }
+
 }

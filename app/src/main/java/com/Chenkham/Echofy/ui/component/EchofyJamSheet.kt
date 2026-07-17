@@ -37,11 +37,13 @@ import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.SheetValue
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
@@ -137,6 +139,7 @@ fun EchofyJamSheet(
     val canSkipPrevious by playerConnection.canSkipPrevious.collectAsState()
     val canSkipNext by playerConnection.canSkipNext.collectAsState()
     val playlists by database.playlistsByCreateDateAsc().collectAsState(initial = emptyList())
+    val remotePlayback by jamSessionManager.remotePlayback.collectAsState()
 
     var screen by rememberSaveable { mutableStateOf(JamSheetScreen.HOME) }
     var showInviteSheet by rememberSaveable { mutableStateOf(false) }
@@ -146,13 +149,14 @@ fun EchofyJamSheet(
     var selectedSeedOption by rememberSaveable { mutableStateOf(JamSeedOption.CURRENT_QUEUE) }
     var transientError by rememberSaveable { mutableStateOf<String?>(null) }
     var isWorking by rememberSaveable { mutableStateOf(false) }
+    var workingMessage by rememberSaveable { mutableStateOf<String?>(null) }
 
     val session = sessionState.session
     val roomCode = session?.roomCode?.roomCode.orEmpty()
     val inviteLink = remember(registry, roomCode) { buildInviteLink(registry, roomCode) }
     val hostParticipant = remember(participants, session) {
         participants.firstOrNull { it.role == JamParticipantRole.HOST }
-            ?: session?.displayName?.let {
+            ?: session?.takeIf { it.role == JamParticipantRole.HOST }?.displayName?.let {
                 JamParticipant(
                     participantId = session.participantId,
                     displayName = it,
@@ -161,11 +165,13 @@ fun EchofyJamSheet(
                 )
             }
     }
-    val jamTitle = remember(hostParticipant, roomCode) {
-        val hostName = hostParticipant?.displayName?.takeIf { it.isNotBlank() }
+    val jamTitle = remember(participants, session, roomCode, roomMeta) {
+        val hostName = roomMeta?.hostName?.takeIf { it.isNotBlank() }
+            ?: participants.firstOrNull { it.role == JamParticipantRole.HOST }?.displayName
+            ?: session?.takeIf { it.role == JamParticipantRole.HOST }?.displayName
         when {
             hostName != null -> "$hostName's Together"
-            roomCode.isNotBlank() -> "Together $roomCode"
+            roomCode.isNotBlank() -> "Together Session"
             else -> "Echofy Together"
         }
     }
@@ -191,26 +197,30 @@ fun EchofyJamSheet(
     }
 
     ModalBottomSheet(
-        onDismissRequest = onDismiss,
-        sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
-        modifier = Modifier.fillMaxHeight(0.98f),
+        onDismissRequest = { if (!isWorking) onDismiss() },
+        sheetState = rememberModalBottomSheetState(
+            skipPartiallyExpanded = true,
+            confirmValueChange = { !isWorking }
+        ),
+        modifier = Modifier.fillMaxSize(),
         containerColor = Color(0xFF121212),
         dragHandle = null,
     ) {
-        AnimatedContent(
-            targetState = screen,
-            label = "JamSheetScreen",
-            modifier = Modifier.fillMaxSize(),
-        ) { activeScreen ->
-            when (activeScreen) {
-                JamSheetScreen.HOME -> JamHomeScreen(
-                    errorMessage = transientError ?: sessionState.lastError,
-                    onDismiss = onDismiss,
-                    onStart = { screen = JamSheetScreen.START },
-                    onJoin = { screen = JamSheetScreen.JOIN },
-                )
+        Box(modifier = Modifier.fillMaxSize()) {
+            AnimatedContent(
+                targetState = screen,
+                label = "JamSheetScreen",
+                modifier = Modifier.fillMaxSize(),
+            ) { activeScreen ->
+                when (activeScreen) {
+                    JamSheetScreen.HOME -> JamHomeScreen(
+                        errorMessage = transientError ?: sessionState.lastError,
+                        onDismiss = onDismiss,
+                        onStart = { screen = JamSheetScreen.START },
+                        onJoin = { screen = JamSheetScreen.JOIN },
+                    )
 
-                JamSheetScreen.START -> JamStartSetupScreen(
+                    JamSheetScreen.START -> JamStartSetupScreen(
                     currentSong = currentSong,
                     hostDisplayName = hostDisplayName,
                     selectedSeedOption = selectedSeedOption,
@@ -226,10 +236,12 @@ fun EchofyJamSheet(
                             JamSeedOption.CURRENT_QUEUE -> {
                                 lifecycleOwner.lifecycleScope.launch {
                                     isWorking = true
+                                    workingMessage = "Creating your room..."
                                     val playbackQueue = playerConnection.service.currentPlaybackQueueForJam()
                                     if (playbackQueue.isEmpty()) {
                                         transientError = "Play a song first, then start the Jam from your current queue."
                                         isWorking = false
+                                        workingMessage = null
                                         return@launch
                                     }
                                     jamSessionManager.createHostedSession(hostDisplayName.ifBlank { "Host" })
@@ -247,6 +259,7 @@ fun EchofyJamSheet(
                                             transientError = error.message ?: "Unable to start this Jam"
                                         }
                                     isWorking = false
+                                    workingMessage = null
                                 }
                             }
 
@@ -259,15 +272,16 @@ fun EchofyJamSheet(
                             }
                         }
                     },
-                )
+                    )
 
-                JamSheetScreen.PLAYLISTS -> PlaylistPickerScreen(
+                    JamSheetScreen.PLAYLISTS -> PlaylistPickerScreen(
                     playlists = playlists,
                     isWorking = isWorking,
                     onBack = { screen = JamSheetScreen.START },
                     onPickPlaylist = { playlist ->
                         lifecycleOwner.lifecycleScope.launch {
                             isWorking = true
+                            workingMessage = "Creating your room..."
                             transientError = null
                             val songs = database.playlistSongs(playlist.playlist.id)
                                 .first()
@@ -275,6 +289,7 @@ fun EchofyJamSheet(
                             if (songs.isEmpty()) {
                                 transientError = "That playlist is empty."
                                 isWorking = false
+                                workingMessage = null
                                 return@launch
                             }
                             jamSessionManager.createHostedSession(hostDisplayName.ifBlank { "Host" })
@@ -293,11 +308,12 @@ fun EchofyJamSheet(
                                     transientError = error.message ?: "Unable to start this Jam"
                                 }
                             isWorking = false
+                            workingMessage = null
                         }
                     },
-                )
+                    )
 
-                JamSheetScreen.JOIN -> JoinJamScreen(
+                    JamSheetScreen.JOIN -> JoinJamScreen(
                     roomCode = joinCode,
                     guestDisplayName = guestDisplayName,
                     isWorking = isWorking,
@@ -309,6 +325,7 @@ fun EchofyJamSheet(
                         lifecycleOwner.lifecycleScope.launch {
                             transientError = null
                             isWorking = true
+                            workingMessage = "Finding room..."
                             jamSessionManager.joinSession(
                                 rawRoomCode = joinCode,
                                 displayName = guestDisplayName.ifBlank { "Listener" },
@@ -316,62 +333,88 @@ fun EchofyJamSheet(
                                 screen = JamSheetScreen.ACTIVE
                                 Toast.makeText(context, "Joined ${it.roomCode.roomCode}", Toast.LENGTH_SHORT).show()
                             }.onFailure { error ->
-                                transientError = error.message ?: "Unable to join this Jam"
+                                transientError = error.message ?: "Room not found"
                             }
                             isWorking = false
+                            workingMessage = null
                         }
                     },
-                )
+                    )
 
-                JamSheetScreen.ACTIVE -> ActiveJamScreen(
-                    jamTitle = jamTitle,
-                    roomCode = roomCode,
-                    isHost = session?.role == JamParticipantRole.HOST,
-                    canControlPlayback = session?.role == JamParticipantRole.HOST || (roomMeta?.allowGuestControls ?: true),
-                    participants = participants,
-                    allowGuestControls = roomMeta?.allowGuestControls ?: true,
-                    currentSong = currentSong,
-                    isPlaying = isPlaying,
-                    canSkipPrevious = canSkipPrevious,
-                    canSkipNext = canSkipNext,
-                    shuffleEnabled = playerConnection.shuffleModeEnabled.collectAsState().value,
-                    repeatMode = playerConnection.repeatMode.collectAsState().value,
-                    onDismiss = onDismiss,
-                    onInviteClick = { showInviteSheet = true },
-                    onLeaveClick = {
-                        jamSessionManager.leaveSession()
-                        transientError = null
-                        screen = JamSheetScreen.HOME
-                    },
-                    onToggleGuestControls = { enabled ->
-                        jamSessionManager.setAllowGuestControls(enabled)
-                    },
-                    onTogglePlayPause = {
-                        if (session?.role == JamParticipantRole.HOST || (roomMeta?.allowGuestControls ?: true)) {
-                            playerConnection.togglePlayPause()
+                    JamSheetScreen.ACTIVE -> {
+                        val isSyncing = session?.role == JamParticipantRole.GUEST &&
+                            remotePlayback != null &&
+                            currentSong?.id != remotePlayback?.mediaId
+
+                        if (isSyncing) {
+                            Box(
+                                modifier = Modifier.fillMaxSize().background(Color(0xFF121212)),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                    CircularProgressIndicator(color = Color(0xFF1DB954))
+                                    Spacer(modifier = Modifier.height(16.dp))
+                                    Text("Syncing with host...", color = Color.White, style = MaterialTheme.typography.titleMedium)
+                                }
+                            }
+                        } else {
+                            ActiveJamScreen(
+                            jamTitle = jamTitle,
+                            roomCode = roomCode,
+                            isHost = session?.role == JamParticipantRole.HOST,
+                            canControlPlayback = session?.role == JamParticipantRole.HOST || (roomMeta?.allowGuestControls ?: true),
+                            participants = participants,
+                            allowGuestControls = roomMeta?.allowGuestControls ?: true,
+                            currentSong = currentSong,
+                            isPlaying = isPlaying,
+                            requireApproval = roomMeta?.requireApproval ?: false,
+                            onRequireApprovalChange = { jamSessionManager.updateRequireApproval(it) },
+                            canSkipPrevious = canSkipPrevious,
+                            canSkipNext = canSkipNext,
+                            shuffleEnabled = playerConnection.shuffleModeEnabled.collectAsState().value,
+                            repeatMode = playerConnection.repeatMode.collectAsState().value,
+                            onDismiss = onDismiss,
+                            onInviteClick = { showInviteSheet = true },
+                            onLeaveClick = {
+                                jamSessionManager.leaveSession()
+                                transientError = null
+                                screen = JamSheetScreen.HOME
+                            },
+                            onToggleGuestControls = { enabled ->
+                                jamSessionManager.setAllowGuestControls(enabled)
+                            },
+                            onTogglePlayPause = {
+                                if (session?.role == JamParticipantRole.HOST || (roomMeta?.allowGuestControls ?: true)) {
+                                    playerConnection.togglePlayPause()
+                                }
+                            },
+                            onSkipPrevious = {
+                                if (session?.role == JamParticipantRole.HOST || (roomMeta?.allowGuestControls ?: true)) {
+                                    playerConnection.seekToPrevious()
+                                }
+                            },
+                            onSkipNext = {
+                                if (session?.role == JamParticipantRole.HOST || (roomMeta?.allowGuestControls ?: true)) {
+                                    playerConnection.seekToNext()
+                                }
+                            },
+                            onToggleShuffle = {
+                                if (session?.role == JamParticipantRole.HOST || (roomMeta?.allowGuestControls ?: true)) {
+                                    playerConnection.toggleShuffle()
+                                }
+                            },
+                            onToggleRepeat = {
+                                if (session?.role == JamParticipantRole.HOST || (roomMeta?.allowGuestControls ?: true)) {
+                                    playerConnection.toggleReplayMode()
+                                }
+                            },
+                            )
                         }
-                    },
-                    onSkipPrevious = {
-                        if (session?.role == JamParticipantRole.HOST || (roomMeta?.allowGuestControls ?: true)) {
-                            playerConnection.seekToPrevious()
-                        }
-                    },
-                    onSkipNext = {
-                        if (session?.role == JamParticipantRole.HOST || (roomMeta?.allowGuestControls ?: true)) {
-                            playerConnection.seekToNext()
-                        }
-                    },
-                    onToggleShuffle = {
-                        if (session?.role == JamParticipantRole.HOST || (roomMeta?.allowGuestControls ?: true)) {
-                            playerConnection.toggleShuffle()
-                        }
-                    },
-                    onToggleRepeat = {
-                        if (session?.role == JamParticipantRole.HOST || (roomMeta?.allowGuestControls ?: true)) {
-                            playerConnection.toggleReplayMode()
-                        }
-                    },
-                )
+                    }
+                }
+            }
+            workingMessage?.let { message ->
+                JamWorkingOverlay(message = message)
             }
         }
     }
@@ -403,6 +446,42 @@ fun EchofyJamSheet(
 }
 
 @Composable
+private fun JamWorkingOverlay(message: String) {
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Color.Black.copy(alpha = 0.72f)),
+        contentAlignment = Alignment.Center,
+    ) {
+        Card(
+            shape = RoundedCornerShape(28.dp),
+            colors = CardDefaults.cardColors(containerColor = Color(0xFF181818)),
+        ) {
+            Column(
+                modifier = Modifier.padding(horizontal = 28.dp, vertical = 24.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(14.dp),
+            ) {
+                CircularProgressIndicator(color = Color(0xFF1DB954))
+                Text(
+                    text = message,
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = Color.White,
+                    textAlign = TextAlign.Center,
+                )
+                Text(
+                    text = "Please keep this screen open.",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = Color.White.copy(alpha = 0.64f),
+                    textAlign = TextAlign.Center,
+                )
+            }
+        }
+    }
+}
+
+@Composable
 private fun JamHomeScreen(
     errorMessage: String?,
     onDismiss: () -> Unit,
@@ -425,7 +504,7 @@ private fun JamHomeScreen(
         ) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.End,
+                horizontalArrangement = Arrangement.Start,
             ) {
                 IconButton(onClick = onDismiss) {
                     Icon(Icons.Default.Close, contentDescription = "Close", tint = Color.White)
@@ -770,6 +849,8 @@ private fun ActiveJamScreen(
     allowGuestControls: Boolean,
     currentSong: MediaMetadata?,
     isPlaying: Boolean,
+    requireApproval: Boolean,
+    onRequireApprovalChange: (Boolean) -> Unit,
     canSkipPrevious: Boolean,
     canSkipNext: Boolean,
     shuffleEnabled: Boolean,
@@ -784,6 +865,18 @@ private fun ActiveJamScreen(
     onToggleShuffle: () -> Unit,
     onToggleRepeat: () -> Unit,
 ) {
+    var showParticipantsDialog by remember { mutableStateOf(false) }
+
+    if (showParticipantsDialog) {
+        ParticipantsDialog(
+            participants = participants,
+            isHost = isHost,
+            requireApproval = requireApproval,
+            onRequireApprovalChange = onRequireApprovalChange,
+            onDismiss = { showParticipantsDialog = false }
+        )
+    }
+
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -848,6 +941,15 @@ private fun ActiveJamScreen(
                     style = MaterialTheme.typography.bodySmall,
                     color = Color.White.copy(alpha = 0.58f),
                 )
+                if (participants.isNotEmpty()) {
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(
+                        text = "${participants.size} ${if (participants.size == 1) "listener" else "listeners"}",
+                        style = MaterialTheme.typography.labelMedium,
+                        fontWeight = FontWeight.SemiBold,
+                        color = Color(0xFF1DB954),
+                    )
+                }
 
                 Spacer(modifier = Modifier.height(14.dp))
 
@@ -856,7 +958,10 @@ private fun ActiveJamScreen(
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    ParticipantRow(participants = participants)
+                    ParticipantRow(
+                        participants = participants,
+                        onClick = { showParticipantsDialog = true }
+                    )
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         OutlinedButton(onClick = onInviteClick, shape = CircleShape) {
                             Text("Invite")
@@ -1351,7 +1456,6 @@ private fun JamPlaybackBar(
         modifier = Modifier
             .fillMaxWidth()
             .background(Color(0xFF0D0D0D))
-            .navigationBarsPadding()
             .padding(horizontal = 24.dp, vertical = 14.dp),
     ) {
         HorizontalDivider(color = Color.White.copy(alpha = 0.1f))
@@ -1731,8 +1835,12 @@ private fun TogetherSearchResultRow(
 }
 
 @Composable
-private fun ParticipantRow(participants: List<JamParticipant>) {
-    Row(horizontalArrangement = Arrangement.spacedBy((-8).dp)) {
+private fun ParticipantRow(participants: List<JamParticipant>, onClick: () -> Unit = {}) {
+    Row(
+        horizontalArrangement = Arrangement.spacedBy((-8).dp),
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier.clickable(onClick = onClick)
+    ) {
         participants.take(4).forEach { participant ->
             Box(
                 modifier = Modifier
@@ -1745,14 +1853,145 @@ private fun ParticipantRow(participants: List<JamParticipant>) {
                 contentAlignment = Alignment.Center,
             ) {
                 Text(
-                    text = participant.displayName.take(1).uppercase(),
+                    text = participant.nameInitial,
                     color = if (participant.role == JamParticipantRole.HOST) Color.Black else Color.White,
                     fontWeight = FontWeight.Bold,
                     style = MaterialTheme.typography.labelLarge,
                 )
             }
         }
+        if (participants.size > 4) {
+            Box(
+                modifier = Modifier
+                    .size(34.dp)
+                    .clip(CircleShape)
+                    .background(Color(0xFF181818)),
+                contentAlignment = Alignment.Center,
+            ) {
+                Text(
+                    text = "+${participants.size - 4}",
+                    color = Color.White.copy(alpha = 0.7f),
+                    fontWeight = FontWeight.Bold,
+                    style = MaterialTheme.typography.labelSmall,
+                )
+            }
+        }
+        // Listener count chip
+        Spacer(modifier = Modifier.width(8.dp))
+        Surface(
+            shape = RoundedCornerShape(12.dp),
+            color = Color.White.copy(alpha = 0.08f),
+        ) {
+            Text(
+                text = "${participants.size}",
+                style = MaterialTheme.typography.labelMedium,
+                color = Color.White.copy(alpha = 0.8f),
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+            )
+        }
     }
+}
+
+@Composable
+private fun ParticipantsDialog(
+    participants: List<JamParticipant>,
+    isHost: Boolean,
+    requireApproval: Boolean,
+    onRequireApprovalChange: (Boolean) -> Unit,
+    onDismiss: () -> Unit
+) {
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        containerColor = Color(0xFF181818),
+        title = {
+            Column {
+                Text(
+                    "Room Participants",
+                    style = MaterialTheme.typography.titleLarge,
+                    color = Color.White
+                )
+                Text(
+                    "${participants.size} ${if (participants.size == 1) "person" else "people"} listening",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = Color(0xFF1DB954)
+                )
+            }
+        },
+        text = {
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                if (isHost) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            "Require Approval to Join",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = Color.White
+                        )
+                        Switch(
+                            checked = requireApproval,
+                            onCheckedChange = onRequireApprovalChange
+                        )
+                    }
+                    HorizontalDivider(color = Color.White.copy(alpha = 0.1f))
+                }
+
+                LazyColumn(
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    items(participants, key = { it.participantId }) { participant ->
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .size(40.dp)
+                                    .clip(CircleShape)
+                                    .background(
+                                        if (participant.role == JamParticipantRole.HOST) Color(0xFF1DB954)
+                                        else Color(0xFF2B2B2B),
+                                    ),
+                                contentAlignment = Alignment.Center,
+                            ) {
+                            Text(
+                                    text = participant.nameInitial,
+                                    color = if (participant.role == JamParticipantRole.HOST) Color.Black else Color.White,
+                                    fontWeight = FontWeight.Bold,
+                                    style = MaterialTheme.typography.titleMedium,
+                                )
+                            }
+                            Spacer(modifier = Modifier.width(12.dp))
+                            Column {
+                                Text(
+                                    text = participant.displayName,
+                                    style = MaterialTheme.typography.bodyLarge,
+                                    color = Color.White
+                                )
+                                Text(
+                                    text = if (participant.role == JamParticipantRole.HOST) "Host" else "Listener",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = if (participant.role == JamParticipantRole.HOST) Color(0xFF1DB954) else Color.White.copy(alpha = 0.5f)
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Close", color = Color(0xFF1DB954))
+            }
+        }
+    )
 }
 
 private fun buildInviteLink(

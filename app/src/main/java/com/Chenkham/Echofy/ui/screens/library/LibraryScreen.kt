@@ -27,12 +27,10 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import com.Chenkham.Echofy.LocalPlayerAwareWindowInsets
 import com.Chenkham.Echofy.R
-import com.Chenkham.Echofy.ads.AdManager
 import com.Chenkham.Echofy.constants.BackpaperScreen
 import com.Chenkham.Echofy.constants.ChipSortTypeKey
 import com.Chenkham.Echofy.constants.LibraryFilter
 import com.Chenkham.Echofy.ui.component.BackpaperBackground
-import com.Chenkham.Echofy.ui.component.BannerAdView
 import com.Chenkham.Echofy.ui.component.ChipsRow
 import com.Chenkham.Echofy.utils.rememberEnumPreference
 import com.Chenkham.Echofy.viewmodels.LibraryAlbumsViewModel
@@ -46,7 +44,6 @@ import kotlinx.coroutines.launch
 @Composable
 fun LibraryScreen(
     navController: NavController,
-    adManager: AdManager? = null,
 ) {
     var filterType by rememberEnumPreference(ChipSortTypeKey, LibraryFilter.LIBRARY)
     val libraryMixViewModel: LibraryMixViewModel = hiltViewModel()
@@ -146,18 +143,7 @@ fun LibraryScreen(
                     }
                 }
 
-                adManager?.let { manager ->
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .background(MaterialTheme.colorScheme.surface),
-                    ) {
-                        BannerAdView(
-                            adManager = manager,
-                            modifier = Modifier.fillMaxWidth(),
-                        )
-                    }
-                }
+
             }
 
             Indicator(

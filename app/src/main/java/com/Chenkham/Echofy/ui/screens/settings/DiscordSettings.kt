@@ -1,4 +1,4 @@
-﻿package com.Chenkham.Echofy.ui.screens.settings
+package com.Chenkham.Echofy.ui.screens.settings
 
 import android.content.Intent
 import androidx.compose.animation.AnimatedVisibility
@@ -758,7 +758,7 @@ fun EnhancedProgressBar(
 ) {
     Column(modifier = Modifier.fillMaxWidth()) {
         when (sliderStyle) {
-            SliderStyle.DEFAULT -> {
+            SliderStyle.DEFAULT, SliderStyle.YOUTUBE_MUSIC -> {
                 Slider(
                     value = position.toFloat(),
                     valueRange = 0f..duration.toFloat().coerceAtLeast(1f),

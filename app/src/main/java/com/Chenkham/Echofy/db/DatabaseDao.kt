@@ -1,4 +1,4 @@
-﻿package com.Chenkham.Echofy.db
+package com.Chenkham.Echofy.db
 
 import androidx.room.Dao
 import androidx.room.Delete
@@ -66,7 +66,18 @@ interface DatabaseDao {
     fun songsByRowIdAsc(): Flow<List<Song>>
 
     @Transaction
-    @Query("SELECT song.* FROM song JOIN recent_search_song ON song.id = recent_search_song.songId ORDER BY recent_search_song.timestamp DESC LIMIT :limit")
+    @Query(
+        """
+        SELECT song.* FROM song
+        JOIN (
+            SELECT songId, MAX(timestamp) AS latestTimestamp
+            FROM recent_search_song
+            GROUP BY songId
+        ) recent ON song.id = recent.songId
+        ORDER BY recent.latestTimestamp DESC
+        LIMIT :limit
+        """
+    )
     fun recentSearchSongs(limit: Int = 10): Flow<List<Song>>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
@@ -101,6 +112,22 @@ interface DatabaseDao {
     @Transaction
     @Query("SELECT * FROM song WHERE liked ORDER BY totalPlayTime")
     fun likedSongsByPlayTimeAsc(): Flow<List<Song>>
+
+    @Transaction
+    @Query("SELECT * FROM song WHERE isUploaded = 1 ORDER BY rowId")
+    fun uploadedSongsByRowIdAsc(): Flow<List<Song>>
+
+    @Transaction
+    @Query("SELECT * FROM song WHERE isUploaded = 1 ORDER BY inLibrary")
+    fun uploadedSongsByCreateDateAsc(): Flow<List<Song>>
+
+    @Transaction
+    @Query("SELECT * FROM song WHERE isUploaded = 1 ORDER BY title COLLATE NOCASE")
+    fun uploadedSongsByNameAsc(): Flow<List<Song>>
+
+    @Transaction
+    @Query("SELECT * FROM song WHERE isUploaded = 1 ORDER BY totalPlayTime")
+    fun uploadedSongsByPlayTimeAsc(): Flow<List<Song>>
 
 
 
@@ -732,7 +759,21 @@ interface DatabaseDao {
 
 
     @Transaction
-    @Query("SELECT * FROM song WHERE title LIKE '%' || :query || '%' AND inLibrary IS NOT NULL LIMIT :previewSize")
+    @Query(
+        """
+        SELECT song.* FROM song
+        WHERE inLibrary IS NOT NULL
+        AND (
+            title LIKE '%' || :query || '%'
+            OR id IN (
+                SELECT songId FROM song_artist_map
+                JOIN artist ON song_artist_map.artistId = artist.id
+                WHERE artist.name LIKE '%' || :query || '%'
+            )
+        )
+        LIMIT :previewSize
+        """,
+    )
     fun searchSongs(
         query: String,
         previewSize: Int = Int.MAX_VALUE,
@@ -950,6 +991,9 @@ interface DatabaseDao {
 
     @Delete
     fun delete(searchHistory: SearchHistory): Int
+
+    @Query("DELETE FROM recent_search_song WHERE songId = :songId")
+    fun deleteRecentSearchSong(songId: String): Int
 
     @Delete
     fun delete(event: Event): Int

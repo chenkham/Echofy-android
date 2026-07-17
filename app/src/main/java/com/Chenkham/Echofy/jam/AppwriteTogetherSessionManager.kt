@@ -199,6 +199,7 @@ class AppwriteTogetherSessionManager(
                         "thumbnailUrl"          to thumbnailUrl,
                         "durationSeconds"       to durationSeconds,
                         "playbackState"         to playbackState.name,
+                        "playbackSpeed"         to playbackSpeed.toDouble(),
                         "positionMs"            to positionMs,
                         "updatedAtEpochMs"      to now,
                         "stateVersion"          to version,
@@ -228,7 +229,8 @@ class AppwriteTogetherSessionManager(
         val session = _sessionState.value.session ?: return
         if (_sessionState.value.phase == JamSessionPhase.CONNECTING) return
         if (session.role != JamParticipantRole.HOST) return
-        _roomMeta.value = _roomMeta.value?.copy(allowGuestControls = enabled)
+        latestRoomMeta = latestRoomMeta?.copy(allowGuestControls = enabled)
+        _roomMeta.value = _roomMeta.value?.copy(allowGuestControls = enabled) ?: latestRoomMeta
         scope.launch(Dispatchers.IO) {
             val docId = currentRoomDocId ?: currentRoomId ?: return@launch
             runCatching {
@@ -239,6 +241,25 @@ class AppwriteTogetherSessionManager(
                     data         = mapOf("allowGuestControls" to enabled),
                 )
             }.onFailure { Timber.tag(TAG).w(it, "Failed to update guestControls") }
+        }
+    }
+
+    fun updateRequireApproval(enabled: Boolean) {
+        val session = _sessionState.value.session ?: return
+        if (_sessionState.value.phase == JamSessionPhase.CONNECTING) return
+        if (session.role != JamParticipantRole.HOST) return
+        latestRoomMeta = latestRoomMeta?.copy(requireApproval = enabled)
+        _roomMeta.value = _roomMeta.value?.copy(requireApproval = enabled) ?: latestRoomMeta
+        scope.launch(Dispatchers.IO) {
+            val docId = currentRoomDocId ?: currentRoomId ?: return@launch
+            runCatching {
+                AppwriteClientProvider.databases(appContext).updateDocument(
+                    databaseId   = AppwriteConfig.DATABASE_ID,
+                    collectionId = AppwriteConfig.COL_ROOMS,
+                    documentId   = docId,
+                    data         = mapOf("requireApproval" to enabled),
+                )
+            }.onFailure { Timber.tag(TAG).w(it, "Failed to update requireApproval") }
         }
     }
 
@@ -315,6 +336,10 @@ class AppwriteTogetherSessionManager(
             Result.failure(e)
         }.also { result ->
             if (result.isFailure) {
+                teardown()
+                _remotePlayback.value = null
+                _queueSnapshot.value = emptyList()
+                _participants.value = emptyList()
                 _sessionState.value = JamSessionState(
                     phase = JamSessionPhase.ERROR,
                     session = null,
@@ -334,8 +359,13 @@ class AppwriteTogetherSessionManager(
             "roomCode"              to session.roomCode.roomCode,
             "roomId"                to roomId,
             "hostParticipantId"     to session.participantId,
+            "shardId"               to session.roomCode.shardId,
+            "hostAuthUid"           to (session.authUid ?: ""),
+            "hostName"              to (session.displayName ?: ""),
+            "requireApproval"       to false,
             "allowGuestControls"    to true,
             "status"                to "active",
+            "schemaVersion"         to 1,
             "createdAtEpochMs"      to now,
             "lastActivityAtEpochMs" to now,
             "mediaId"               to "",
@@ -344,6 +374,7 @@ class AppwriteTogetherSessionManager(
             "thumbnailUrl"          to "",
             "durationSeconds"       to -1,
             "playbackState"         to "PAUSED",
+            "playbackSpeed"         to 1.0,
             "positionMs"            to 0,
             "updatedAtEpochMs"      to now,
             "stateVersion"          to 0,
@@ -380,12 +411,17 @@ class AppwriteTogetherSessionManager(
 
     private suspend fun writePresence(session: JamActiveSession) {
         val docId = "${session.roomCode.roomId}_${session.participantId}"
+        val now = System.currentTimeMillis()
+        val resolvedName = session.displayName ?: session.role.name.lowercase().replaceFirstChar(Char::uppercase)
         val data  = mapOf(
             "roomId"            to session.roomCode.roomId,
             "participantId"     to session.participantId,
-            "displayName"       to (session.displayName ?: session.role.name.lowercase().replaceFirstChar(Char::uppercase)),
+            "displayName"       to resolvedName,
+            "nameInitial"       to (resolvedName.firstOrNull()?.uppercase() ?: "?"),
             "role"              to session.role.name,
-            "lastSeenAtEpochMs" to System.currentTimeMillis(),
+            "authUid"           to (session.authUid ?: ""),
+            "joinedAtEpochMs"   to now,
+            "lastSeenAtEpochMs" to now,
         )
         runCatching {
             AppwriteClientProvider.databases(appContext)

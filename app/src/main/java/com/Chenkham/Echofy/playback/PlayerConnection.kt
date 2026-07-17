@@ -1,4 +1,4 @@
-﻿package com.Chenkham.Echofy.playback
+package com.Chenkham.Echofy.playback
 
 import android.content.Context
 import android.content.Intent
@@ -17,6 +17,14 @@ import androidx.media3.common.Timeline
 import com.Chenkham.Echofy.MusicWidget
 import com.Chenkham.Echofy.MusicWidget.Companion.ACTION_STATE_CHANGED
 import com.Chenkham.Echofy.MusicWidget.Companion.ACTION_UPDATE_PROGRESS
+import androidx.media3.exoplayer.offline.DownloadService
+import com.Chenkham.Echofy.App
+import com.Chenkham.Echofy.LocalDatabase
+import com.Chenkham.Echofy.LocalPlayerConnection
+import com.Chenkham.Echofy.MainActivity
+import com.Chenkham.Echofy.R
+import com.Chenkham.Echofy.models.MediaMetadata
+import com.Chenkham.Echofy.models.toMediaMetadata
 import com.Chenkham.Echofy.db.MusicDatabase
 import com.Chenkham.Echofy.extensions.currentMetadata
 import com.Chenkham.Echofy.extensions.getCurrentQueueIndex
@@ -24,8 +32,11 @@ import com.Chenkham.Echofy.extensions.getQueueWindows
 import com.Chenkham.Echofy.extensions.metadata
 import com.Chenkham.Echofy.jam.JamParticipantRole
 import com.Chenkham.Echofy.playback.MusicService.MusicBinder
+import com.Chenkham.Echofy.playback.queues.EmptyQueue
 import com.Chenkham.Echofy.playback.queues.Queue
+import com.Chenkham.Echofy.utils.dataStore
 import com.Chenkham.Echofy.utils.reportException
+import androidx.datastore.preferences.core.edit
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -401,6 +412,16 @@ class PlayerConnection(
         }
     }
 
+    fun removeFromQueue(mediaItemIndex: Int) {
+        try {
+            Log.d(TAG, "Removing item at index $mediaItemIndex from queue")
+            player.removeMediaItem(mediaItemIndex)
+        } catch (e: Exception) {
+            Log.e(TAG, "Error removing item from queue", e)
+            reportException(e)
+        }
+    }
+
     fun toggleLike() {
         try {
             Timber.tag(TAG).d("Toggling like for current track. Current state: ${_isLiked.value}")
@@ -642,6 +663,21 @@ class PlayerConnection(
         Log.e(TAG, "Player error changed", playbackError)
         if (playbackError != null) {
             reportException(playbackError)
+            
+            // Silently reset visitorData on HTTP 403 errors to prevent interrupt
+            val cause = playbackError.cause
+            if (cause is androidx.media3.datasource.HttpDataSource.HttpDataSourceException) {
+                if (cause is androidx.media3.datasource.HttpDataSource.InvalidResponseCodeException && cause.responseCode == 403) {
+                    kotlinx.coroutines.GlobalScope.launch(kotlinx.coroutines.Dispatchers.IO) {
+                        context.dataStore.edit { prefs ->
+                            prefs.remove(com.Chenkham.Echofy.constants.VisitorDataKey)
+                            prefs.remove(com.Chenkham.Echofy.constants.VisitorDataTimestampKey)
+                        }
+                    }
+                    com.Chenkham.innertube.YouTube.visitorData = null
+                    Log.w(TAG, "Silently reset visitorData due to HTTP 403 error")
+                }
+            }
         }
         _error.value = playbackError
         updateConnectionState(Player.STATE_IDLE)

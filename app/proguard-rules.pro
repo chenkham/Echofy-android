@@ -46,7 +46,7 @@
 }
 
 # @Serializable and @Polymorphic are used at runtime for polymorphic serialization.
--keepattributes RuntimeVisibleAnnotations,AnnotationDefault
+-keepattributes RuntimeVisibleAnnotations,AnnotationDefault,Signature
 
 -dontwarn javax.servlet.ServletContainerInitializer
 -dontwarn org.bouncycastle.jsse.BCSSLParameters
@@ -106,12 +106,25 @@
     static void throwUninitializedPropertyAccessException(...);
 }
 
-# Remove debug info in release
+# Remove verbose/info Timber logs in release, but keep debug for Jam troubleshooting
 -assumenosideeffects class timber.log.Timber {
     public static *** v(...);
-    public static *** d(...);
     public static *** i(...);
 }
+
+# ==============================================================================
+# SOCKET.IO — Required for Together (Listen Together) feature
+# ==============================================================================
+# Socket.IO uses reflection, engine.io transports, and OkHttp WebSocket internally.
+# Without these rules, R8 strips critical transport classes, breaking connections.
+-keep class io.socket.** { *; }
+-keep class io.socket.client.** { *; }
+-keep class io.socket.engineio.** { *; }
+-keep class io.socket.parser.** { *; }
+-dontwarn io.socket.**
+
+# Keep Jam models (used with JSON serialization via JSONObject)
+-keep class com.Chenkham.Echofy.jam.** { *; }
 
 # Coil optimizations
 -dontwarn coil.**
@@ -173,6 +186,10 @@
 # Appwrite optimizations
 -keep class io.appwrite.** { *; }
 -dontwarn io.appwrite.**
+
+# Gson optimizations
+-keep class com.google.gson.** { *; }
+-dontwarn com.google.gson.**
 
 # OkHttp optimizations for network performance
 -dontwarn okhttp3.**

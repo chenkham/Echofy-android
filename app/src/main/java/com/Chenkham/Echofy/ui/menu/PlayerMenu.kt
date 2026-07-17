@@ -484,13 +484,6 @@ fun PlayerMenu(
                         icon = R.drawable.download,
                         title = stringResource(R.string.download)
                     ) {
-                        // PREMIUM CHECK
-                        if (adManager?.isPremium?.value != true) {
-                            android.widget.Toast.makeText(context, R.string.premium_required, android.widget.Toast.LENGTH_SHORT).show()
-                            onDismiss()
-                            return@MenuListItem
-                        }
-
                         database.transaction { insertMediaMetadata(mediaMetadata) }
                         val downloadRequest = DownloadRequest
                             .Builder(mediaMetadata.id, mediaMetadata.id.toUri())
@@ -562,29 +555,6 @@ fun PlayerMenu(
             }
         }
 
-        // Video Quality (only in video mode)
-        if (isVideoMode) {
-            item {
-                MenuListItem(
-                    icon = R.drawable.settings,
-                    title = stringResource(R.string.video_quality)
-                ) {
-                    showVideoQualityDialog = true
-                }
-            }
-        }
-
-        // Audio Quality (only in audio mode)
-        if (!isVideoMode) {
-            item {
-                MenuListItem(
-                    icon = R.drawable.graphic_eq,
-                    title = stringResource(R.string.audio_quality)
-                ) {
-                    showAudioQualityDialog = true
-                }
-            }
-        }
 
         // Advanced (Tempo/Pitch)
         item {

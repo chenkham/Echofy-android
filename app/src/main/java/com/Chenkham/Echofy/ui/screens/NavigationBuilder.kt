@@ -43,8 +43,11 @@ import com.Chenkham.Echofy.ui.screens.settings.StorageSettings
 import com.Chenkham.Echofy.ui.screens.settings.EqualizerScreen
 import com.Chenkham.Echofy.ui.screens.settings.BackpaperSettings
 import com.Chenkham.Echofy.ui.screens.settings.SaverSettings
+import com.Chenkham.Echofy.ui.screens.settings.GeneralSettings
 import com.Chenkham.Echofy.ui.screens.settings.PremiumFeaturesSettings
 import com.Chenkham.Echofy.ui.screens.settings.PremiumVisualsSettings
+import com.Chenkham.Echofy.ui.screens.settings.LastFmSettings
+
 import com.Chenkham.Echofy.ui.utils.TouchBlockingWrapper
 import kotlinx.coroutines.launch
 
@@ -80,7 +83,7 @@ fun NavGraphBuilder.navigationBuilder(
         TouchBlockingWrapper {
             OnboardingScreen(
                 onLoginClick = {
-                    navController.navigate("sign_in?chained=true")
+                    navController.navigate("login?chained=true")
                 },
                 onSkipClick = {
                     onOnboardingComplete()
@@ -93,41 +96,10 @@ fun NavGraphBuilder.navigationBuilder(
     }
     composable(Screens.Home.route) {
         TouchBlockingWrapper {
-            HomeScreen(navController, adManager = adManager)
+            HomeScreen(navController)
         }
     }
-    composable(
-        route = "sign_in?chained={chained}",
-        arguments = listOf(
-            navArgument("chained") {
-                type = NavType.BoolType
-                defaultValue = false
-            }
-        )
-    ) { backStackEntry ->
-        TouchBlockingWrapper {
-            val chained = backStackEntry.arguments?.getBoolean("chained") ?: false
-            val mainViewModel: com.Chenkham.Echofy.MainViewModel = androidx.hilt.navigation.compose.hiltViewModel()
-            val coroutineScope = androidx.compose.runtime.rememberCoroutineScope()
-            com.Chenkham.Echofy.ui.screens.auth.SignInScreen(
-                chained = chained,
-                onSignInSuccess = {
-                    mainViewModel.disableGuestMode()
-                    navController.navigate("login?chained=true") {
-                        popUpTo("sign_in?chained={chained}") { inclusive = true }
-                    }
-                },
-                onContinueAsGuest = {
-                    coroutineScope.launch {
-                        mainViewModel.enableGuestMode()
-                        navController.navigate(Screens.Home.route) {
-                            popUpTo(0) { inclusive = true }
-                        }
-                    }
-                }
-            )
-        }
-    }
+
 
     composable(route = "account_settings") {
         TouchBlockingWrapper {
@@ -142,7 +114,7 @@ fun NavGraphBuilder.navigationBuilder(
         Screens.Library.route,
     ) {
         TouchBlockingWrapper {
-            LibraryScreen(navController, adManager = adManager)
+            LibraryScreen(navController)
         }
     }
 
@@ -150,12 +122,12 @@ fun NavGraphBuilder.navigationBuilder(
         Screens.Premium.route
     ) {
         TouchBlockingWrapper {
-            com.Chenkham.Echofy.ui.screens.premium.PremiumScreen()
+            com.Chenkham.Echofy.ui.screens.premium.SupportScreen()
         }
     }
     composable(Screens.Explore.route) {
         TouchBlockingWrapper {
-            ExploreScreen(navController, scrollBehavior, adManager = adManager)
+            ExploreScreen(navController, scrollBehavior)
         }
     }
 
@@ -442,6 +414,11 @@ fun NavGraphBuilder.navigationBuilder(
             DiscordLoginScreen(navController)
         }
     }
+    composable("settings/lastfm") {
+        TouchBlockingWrapper {
+            LastFmSettings(navController, scrollBehavior)
+        }
+    }
     composable("settings/about") {
         TouchBlockingWrapper {
             AboutScreen(navController, scrollBehavior)
@@ -457,7 +434,12 @@ fun NavGraphBuilder.navigationBuilder(
             SaverSettings(navController, scrollBehavior)
         }
     }
-    composable("settings/together_controls") {
+    composable("settings/general") {
+        TouchBlockingWrapper {
+            GeneralSettings(navController, scrollBehavior)
+        }
+    }
+    composable("settings/premium_features") {
         TouchBlockingWrapper {
             PremiumFeaturesSettings(navController, scrollBehavior)
         }

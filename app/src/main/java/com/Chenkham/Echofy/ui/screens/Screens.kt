@@ -35,8 +35,8 @@ sealed class Screens(
 
     data object Premium : Screens(
         titleId = R.string.premium, // Need to add this string
-        iconIdInactive = R.drawable.diamond_outlined, // Need to add this drawable
-        iconIdActive = R.drawable.diamond_filled, // Need to add this drawable
+        iconIdInactive = R.drawable.donate, // Need to add this drawable
+        iconIdActive = R.drawable.donate, // Need to add this drawable
         route = "premium"
     )
 

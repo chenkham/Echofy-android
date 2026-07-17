@@ -1,4 +1,4 @@
-﻿package com.Chenkham.Echofy.utils
+package com.Chenkham.Echofy.utils
 
 import android.net.ConnectivityManager
 import androidx.media3.common.PlaybackException
@@ -11,11 +11,18 @@ import com.Chenkham.innertube.models.YouTubeClient.Companion.ANDROID_VR_NO_AUTH
 import com.Chenkham.innertube.models.YouTubeClient.Companion.IOS
 import com.Chenkham.innertube.models.YouTubeClient.Companion.MOBILE
 import com.Chenkham.innertube.models.YouTubeClient.Companion.TVHTML5_SIMPLY_EMBEDDED_PLAYER
+import com.Chenkham.innertube.models.YouTubeClient.Companion.TVHTML5
+import com.Chenkham.innertube.models.YouTubeClient.Companion.ANDROID_VR_1_43_32
+import com.Chenkham.innertube.models.YouTubeClient.Companion.ANDROID_VR_1_61_48
+import com.Chenkham.innertube.models.YouTubeClient.Companion.ANDROID_CREATOR
+import com.Chenkham.innertube.models.YouTubeClient.Companion.IPADOS
 import com.Chenkham.innertube.models.YouTubeClient.Companion.WEB
 import com.Chenkham.innertube.models.YouTubeClient.Companion.WEB_CREATOR
 import com.Chenkham.innertube.models.YouTubeClient.Companion.WEB_REMIX
 import com.Chenkham.innertube.models.response.PlayerResponse
 import com.Chenkham.Echofy.constants.AudioQuality
+import com.Chenkham.Echofy.utils.potoken.PoTokenGenerator
+import com.Chenkham.Echofy.utils.potoken.PoTokenResult
 import okhttp3.OkHttpClient
 import kotlinx.coroutines.flow.MutableStateFlow
 import timber.log.Timber
@@ -26,6 +33,8 @@ object YTPlayerUtils {
     private val httpClient = OkHttpClient.Builder()
         .proxy(YouTube.proxy)
         .build()
+
+    private val poTokenGenerator = com.Chenkham.Echofy.utils.potoken.PoTokenGenerator()
 
     // Expose available qualities to UI (PlayerMenu)
     val availableQualities = MutableStateFlow<List<String>>(emptyList())
@@ -47,30 +56,28 @@ object YTPlayerUtils {
      * Clients used for fallback streams in case the streams of the main client
      * do not work.
      *
-     * Order matters: prefer clients that return direct URLs (no cipher/signatureCipher)
-     * first, so NewPipe JS deobfuscation failures don't block playback.
-     * ANDROID_MUSIC, ANDROID_TESTSUITE, ANDROID_VR_NO_AUTH, IOS and MOBILE all return
-     * direct stream URLs without needing NewPipe signature deobfuscation.
+     * Order matches the stable client configuration from Metrolist.
      */
     private val STREAM_FALLBACK_CLIENTS: Array<YouTubeClient> = arrayOf(
-        ANDROID_VR_NO_AUTH,       // no-auth, direct URL — fast & reliable
-        ANDROID_MUSIC,            // direct URL, no cipher
-        ANDROID_TESTSUITE,        // direct URL, no cipher, no auth needed
         TVHTML5_SIMPLY_EMBEDDED_PLAYER,
+        TVHTML5,
+        ANDROID_VR_1_43_32,
+        ANDROID_VR_1_61_48,
+        ANDROID_CREATOR,
+        IPADOS,
+        ANDROID_VR_NO_AUTH,
+        MOBILE,
         IOS,
         WEB,
-        WEB_CREATOR,
-        MOBILE
+        WEB_CREATOR
     )
 
     /**
-     * Clients to try (in order) for fast-start playback. All of these return
-     * direct stream URLs so we don't depend on NewPipe JS parsing.
+     * Clients to try (in order) for fast-start playback.
+     * Exclude restricted/30-second-limited clients like VR_NO_AUTH as the first option.
      */
     private val FAST_START_CLIENTS: Array<YouTubeClient> = arrayOf(
-        ANDROID_VR_NO_AUTH,
         ANDROID_MUSIC,
-        ANDROID_TESTSUITE,
         IOS,
         MOBILE,
     )
@@ -81,6 +88,7 @@ object YTPlayerUtils {
         val format: PlayerResponse.StreamingData.Format,
         val streamUrl: String,
         val streamExpiresInSeconds: Int,
+        val userAgent: String?,
     )
 
     /**
@@ -104,7 +112,7 @@ object YTPlayerUtils {
             val response = YouTube.player(videoId, playlistId, client, null).getOrNull() ?: continue
             if (response.playabilityStatus.status == "OK") {
                 val result = runCatching {
-                    processResponse(response, videoId, audioQuality, videoQuality, connectivityManager, videoMode)
+                    processResponse(response, videoId, audioQuality, videoQuality, connectivityManager, videoMode, client.userAgent)
                 }.getOrNull()
                 if (result != null) {
                     Timber.tag(logTag).d("FAST-START: SUCCESS with client ${client.clientName}")
@@ -129,7 +137,8 @@ object YTPlayerUtils {
         audioQuality: AudioQuality, 
         videoQuality: String,
         connectivityManager: ConnectivityManager,
-        videoMode: Boolean
+        videoMode: Boolean,
+        userAgent: String?
     ): PlaybackData {
         val format = findFormat(response, audioQuality, videoQuality, connectivityManager, videoMode)
             ?: throw Exception("No format found")
@@ -147,7 +156,8 @@ object YTPlayerUtils {
             response.videoDetails,
             format,
             streamUrl,
-            expiresIn
+            expiresIn,
+            userAgent
         )
     }
 
@@ -187,16 +197,22 @@ object YTPlayerUtils {
         Timber.tag(logTag)
             .d("Session authentication status: ${if (isLoggedIn) "Logged in" else "Not logged in"}")
 
+        val poToken = if (MAIN_CLIENT.useWebPoTokens && sessionId != null) {
+            poTokenGenerator.getWebClientPoToken(videoId, sessionId)
+        } else null
+        Timber.tag(logTag).d("PO Token generated for MAIN_CLIENT: ${poToken?.playerRequestPoToken != null}")
+
         Timber.tag(logTag)
             .d("Attempting to get player response using MAIN_CLIENT: ${MAIN_CLIENT.clientName}")
         val mainPlayerResponse =
-            YouTube.player(videoId, playlistId, MAIN_CLIENT, signatureTimestamp).getOrThrow()
+            YouTube.player(videoId, playlistId, MAIN_CLIENT, signatureTimestamp, poToken?.playerRequestPoToken).getOrThrow()
         val audioConfig = mainPlayerResponse.playerConfig?.audioConfig
         val videoDetails = mainPlayerResponse.videoDetails
         var format: PlayerResponse.StreamingData.Format? = null
         var streamUrl: String? = null
         var streamExpiresInSeconds: Int? = null
         var streamPlayerResponse: PlayerResponse? = null
+        var selectedUserAgent: String? = null
 
         for (clientIndex in (-1 until STREAM_FALLBACK_CLIENTS.size)) {
             // reset for each client
@@ -206,10 +222,12 @@ object YTPlayerUtils {
 
             // decide which client to use for streams and load its player response
             val client: YouTubeClient
+            val currentPoToken: PoTokenResult?
             if (clientIndex == -1) {
                 // try with streams from main client first
                 client = MAIN_CLIENT
                 streamPlayerResponse = mainPlayerResponse
+                currentPoToken = poToken
                 Timber.tag(logTag).d("Trying stream from MAIN_CLIENT: ${client.clientName}")
             } else {
                 // after main client use fallback clients
@@ -224,10 +242,14 @@ object YTPlayerUtils {
                     continue
                 }
 
+                currentPoToken = if (client.useWebPoTokens && sessionId != null) {
+                    poTokenGenerator.getWebClientPoToken(videoId, sessionId)
+                } else null
+
                 Timber.tag(logTag)
                     .d("Fetching player response for fallback client: ${client.clientName}")
                 streamPlayerResponse =
-                    YouTube.player(videoId, playlistId, client, signatureTimestamp).getOrNull()
+                    YouTube.player(videoId, playlistId, client, signatureTimestamp, currentPoToken?.playerRequestPoToken).getOrNull()
             }
 
             // process current client response
@@ -258,6 +280,11 @@ object YTPlayerUtils {
                     continue
                 }
 
+                if (client.useWebPoTokens && currentPoToken?.streamingDataPoToken != null) {
+                    streamUrl = "$streamUrl&pot=${android.net.Uri.encode(currentPoToken.streamingDataPoToken)}"
+                    Timber.tag(logTag).d("Appended PO Token to stream URL")
+                }
+
                 streamExpiresInSeconds = streamPlayerResponse.streamingData?.expiresInSeconds
                 if (streamExpiresInSeconds == null) {
                     Timber.tag(logTag).d("Stream expiration time not found")
@@ -279,6 +306,7 @@ object YTPlayerUtils {
                 if (isValid) {
                     Timber.tag(logTag)
                         .d("Stream validated successfully with client: ${client.clientName}")
+                    selectedUserAgent = client.userAgent
                     break
                 } else {
                     Timber.tag(logTag)
@@ -328,6 +356,7 @@ object YTPlayerUtils {
             format,
             streamUrl,
             streamExpiresInSeconds,
+            selectedUserAgent,
         )
     }
 

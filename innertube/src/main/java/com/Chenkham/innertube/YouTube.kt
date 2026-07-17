@@ -11,6 +11,7 @@ import com.Chenkham.innertube.models.MusicShelfRenderer
 import com.Chenkham.innertube.models.PlaylistItem
 import com.Chenkham.innertube.models.SearchSuggestions
 import com.Chenkham.innertube.models.SongItem
+import com.Chenkham.innertube.models.YTItem
 import com.Chenkham.innertube.models.WatchEndpoint
 import com.Chenkham.innertube.models.WatchEndpoint.WatchEndpointMusicSupportedConfigs.WatchEndpointMusicConfig.Companion.MUSIC_VIDEO_TYPE_ATV
 import com.Chenkham.innertube.models.YouTubeClient
@@ -120,47 +121,95 @@ object YouTube {
 
     suspend fun searchSummary(query: String): Result<SearchSummaryPage> = runCatching {
         val response = innerTube.search(WEB_REMIX, query).body<SearchResponse>()
-        SearchSummaryPage(
-            summaries = response.contents?.tabbedSearchResultsRenderer?.tabs?.firstOrNull()?.tabRenderer?.content?.sectionListRenderer?.contents?.mapNotNull { it ->
-                if (it.musicCardShelfRenderer != null)
-                    SearchSummary(
-                        title = it.musicCardShelfRenderer.header?.musicCardShelfHeaderBasicRenderer?.title?.runs?.firstOrNull()?.text ?: "Top result",
-                        items = listOfNotNull(SearchSummaryPage.fromMusicCardShelfRenderer(it.musicCardShelfRenderer))
-                            .plus(
-                                it.musicCardShelfRenderer.contents
-                                    ?.mapNotNull { it.musicResponsiveListItemRenderer }
-                                    ?.mapNotNull(SearchSummaryPage.Companion::fromMusicResponsiveListItemRenderer)
-                                    .orEmpty()
-                            )
-                            .distinctBy { it.id }
-                            .ifEmpty { null } ?: return@mapNotNull null
+        val contents = response.contents?.tabbedSearchResultsRenderer?.tabs?.firstOrNull()
+            ?.tabRenderer?.content?.sectionListRenderer?.contents.orEmpty()
+            
+        val summaries = mutableListOf<SearchSummary>()
+        val flatItems = mutableListOf<YTItem>()
+        
+        for (content in contents) {
+            if (content.musicCardShelfRenderer != null) {
+                val cardItem = SearchSummaryPage.fromMusicCardShelfRenderer(content.musicCardShelfRenderer)
+                if (cardItem != null) {
+                    val title = content.musicCardShelfRenderer.header?.musicCardShelfHeaderBasicRenderer?.title?.runs?.firstOrNull()?.text ?: "Top result"
+                    val additionalItems = content.musicCardShelfRenderer.contents
+                        ?.mapNotNull { it.musicResponsiveListItemRenderer }
+                        ?.mapNotNull(SearchSummaryPage.Companion::fromMusicResponsiveListItemRenderer)
+                        .orEmpty()
+                    summaries.add(
+                        SearchSummary(
+                            title = title,
+                            items = (listOf(cardItem) + additionalItems).distinctBy { it.id }
+                        )
                     )
-                else
-                    SearchSummary(
-                        title = it.musicShelfRenderer?.title?.runs?.firstOrNull()?.text ?: "Other",
-                        items = it.musicShelfRenderer?.contents?.getItems()
-                            ?.mapNotNull {
-                                SearchSummaryPage.fromMusicResponsiveListItemRenderer(it)
-                            }
-                            ?.distinctBy { it.id }
-                            ?.ifEmpty { null } ?: return@mapNotNull null
-                    )
-            }!!
-        )
+                }
+            } else if (content.musicCarouselShelfRenderer != null) {
+                val summary = SearchSummaryPage.fromMusicCarouselShelfRenderer(content.musicCarouselShelfRenderer)
+                if (summary != null) {
+                    summaries.add(summary)
+                }
+            } else if (content.musicShelfRenderer != null) {
+                val title = content.musicShelfRenderer.title?.runs?.firstOrNull()?.text ?: "Other"
+                val items = content.musicShelfRenderer.contents?.getItems()
+                    ?.mapNotNull(SearchSummaryPage.Companion::fromMusicResponsiveListItemRenderer)
+                    ?.distinctBy { it.id }
+                    .orEmpty()
+                if (items.isNotEmpty()) {
+                    summaries.add(SearchSummary(title = title, items = items))
+                }
+            } else if (content.itemSectionRenderer != null) {
+                val items = content.itemSectionRenderer.contents
+                    ?.mapNotNull { it.musicResponsiveListItemRenderer }
+                    ?.mapNotNull(SearchSummaryPage.Companion::fromMusicResponsiveListItemRenderer)
+                    .orEmpty()
+                flatItems.addAll(items)
+            }
+        }
+        
+        if (flatItems.isNotEmpty()) {
+            val songs = flatItems.filterIsInstance<SongItem>().distinctBy { it.id }
+            val artists = flatItems.filterIsInstance<ArtistItem>().distinctBy { it.id }
+            val albums = flatItems.filterIsInstance<AlbumItem>().distinctBy { it.id }
+            val playlists = flatItems.filterIsInstance<PlaylistItem>().distinctBy { it.id }
+            
+            if (songs.isNotEmpty()) summaries.add(SearchSummary(title = "Songs", items = songs))
+            if (artists.isNotEmpty()) summaries.add(SearchSummary(title = "Artists", items = artists))
+            if (albums.isNotEmpty()) summaries.add(SearchSummary(title = "Albums", items = albums))
+            if (playlists.isNotEmpty()) summaries.add(SearchSummary(title = "Playlists", items = playlists))
+        }
+        
+        SearchSummaryPage(summaries)
     }
 
 
     suspend fun search(query: String, filter: SearchFilter): Result<SearchResult> = runCatching {
         val response = innerTube.search(WEB_REMIX, query, filter.value).body<SearchResponse>()
+        val contents = response.contents?.tabbedSearchResultsRenderer?.tabs?.firstOrNull()
+            ?.tabRenderer?.content?.sectionListRenderer?.contents.orEmpty()
+            
+        val items = mutableListOf<YTItem>()
+        var continuation: String? = null
+        
+        for (content in contents) {
+            if (content.musicShelfRenderer != null) {
+                items.addAll(
+                    content.musicShelfRenderer.contents?.getItems()?.mapNotNull { SearchPage.toYTItem(it) }.orEmpty()
+                )
+                if (continuation == null) {
+                    continuation = content.musicShelfRenderer.continuations?.getContinuation()
+                }
+            } else if (content.itemSectionRenderer != null) {
+                items.addAll(
+                    content.itemSectionRenderer.contents
+                        ?.mapNotNull { it.musicResponsiveListItemRenderer }
+                        ?.mapNotNull { SearchPage.toYTItem(it) }.orEmpty()
+                )
+            }
+        }
+        
         SearchResult(
-            items = response.contents?.tabbedSearchResultsRenderer?.tabs?.firstOrNull()
-                ?.tabRenderer?.content?.sectionListRenderer?.contents?.lastOrNull()
-                ?.musicShelfRenderer?.contents?.getItems()?.mapNotNull {
-                    SearchPage.toYTItem(it)
-                }.orEmpty(),
-            continuation = response.contents?.tabbedSearchResultsRenderer?.tabs?.firstOrNull()
-                ?.tabRenderer?.content?.sectionListRenderer?.contents?.lastOrNull()
-                ?.musicShelfRenderer?.contents?.getContinuation()
+            items = items.distinctBy { it.id },
+            continuation = continuation
         )
     }
 
@@ -656,8 +705,8 @@ object YouTube {
         innerTube.deletePlaylist(WEB_REMIX, playlistId)
     }
 
-    suspend fun player(videoId: String, playlistId: String? = null, client: YouTubeClient, signatureTimestamp: Int? = null): Result<PlayerResponse> = runCatching {
-        innerTube.player(client, videoId, playlistId, signatureTimestamp).body<PlayerResponse>()
+    suspend fun player(videoId: String, playlistId: String? = null, client: YouTubeClient, signatureTimestamp: Int? = null, poToken: String? = null): Result<PlayerResponse> = runCatching {
+        innerTube.player(client, videoId, playlistId, signatureTimestamp, poToken).body<PlayerResponse>()
     }
 
     suspend fun registerPlayback(playlistId: String? = null, playbackTracking: String) = runCatching {

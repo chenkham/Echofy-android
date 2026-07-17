@@ -1,7 +1,7 @@
 package com.Chenkham.Echofy.ui.menu
 
 import android.annotation.SuppressLint
-import com.Chenkham.Echofy.ui.component.LocalAdManager
+
 import android.content.Intent
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
@@ -271,7 +271,7 @@ fun AlbumMenu(
 
     HorizontalDivider()
 
-    val adManager = LocalAdManager.current
+
     GridMenu(
         contentPadding =
             PaddingValues(
@@ -304,26 +304,21 @@ fun AlbumMenu(
         DownloadGridMenu(
             state = downloadState,
             onDownload = {
-                val isPremium = adManager?.isPremium?.value == true
-                if (isPremium) {
-                    songs.forEach { song ->
-                        val downloadRequest =
-                            DownloadRequest
-                                .Builder(song.id, song.id.toUri())
-                                .setCustomCacheKey(song.id)
-                                .setData(song.song.title.toByteArray())
-                                .build()
-                        DownloadService.sendAddDownload(
-                            context,
-                            ExoDownloadService::class.java,
-                            downloadRequest,
-                            false,
-                        )
-                    }
-                    Toast.makeText(context, "Download started", Toast.LENGTH_SHORT).show()
-                } else {
-                    Toast.makeText(context, R.string.premium_required, Toast.LENGTH_SHORT).show()
+                songs.forEach { song ->
+                    val downloadRequest =
+                        DownloadRequest
+                            .Builder(song.id, song.id.toUri())
+                            .setCustomCacheKey(song.id)
+                            .setData(song.song.title.toByteArray())
+                            .build()
+                    DownloadService.sendAddDownload(
+                        context,
+                        ExoDownloadService::class.java,
+                        downloadRequest,
+                        false,
+                    )
                 }
+                Toast.makeText(context, "Download started", Toast.LENGTH_SHORT).show()
             },
             onRemoveDownload = {
                 songs.forEach { song ->

@@ -122,13 +122,7 @@ class App : Application(), ImageLoaderFactory {
             subscribeToFcmTopics()
         }
 
-        // PERFORMANCE: Phase 6 - Firebase In-App Messaging (4 seconds delay)
-        GlobalScope.launch(Dispatchers.Main) {
-            kotlinx.coroutines.delay(4000)
-            initializeFirebaseInAppMessaging()
-        }
-
-        // PERFORMANCE: Phase 7 - Welcome notification (6 seconds delay)
+        // PERFORMANCE: Phase 6 - Welcome notification (6 seconds delay)
         GlobalScope.launch(Dispatchers.Main) {
             kotlinx.coroutines.delay(6000)
             showWelcomeNotificationIfFirstLaunch()
@@ -322,83 +316,6 @@ class App : Application(), ImageLoaderFactory {
     }
     
     /**
-     * Initialize Firebase In-App Messaging at application startup.
-     * This is critical for FIAM to work on every app open, not just first install.
-     * 
-     * Key points:
-     * - Must be initialized at Application level (before Activities)
-     * - Must enable automatic data collection
-     * - Must NOT suppress messages
-     * - Firebase Analytics must be enabled for FIAM to work
-     * - Clear FIAM cache for real-time sync (like Spotify/Flipkart)
-     */
-    private fun initializeFirebaseInAppMessaging() {
-        try {
-            // CRITICAL: Clear FIAM cache files to enable real-time campaign sync
-            // This allows new campaigns to show immediately without reinstall
-            clearFiamCacheForRealTimeSync()
-            
-            // Initialize Firebase Analytics first (required for FIAM)
-            val analytics = com.google.firebase.analytics.FirebaseAnalytics.getInstance(this)
-            analytics.setAnalyticsCollectionEnabled(true)
-            
-            // Get Firebase In-App Messaging instance
-            val fiam = com.google.firebase.inappmessaging.FirebaseInAppMessaging.getInstance()
-            
-            // CRITICAL: Enable automatic data collection (required for images and campaigns)
-            fiam.isAutomaticDataCollectionEnabled = true
-            
-            // CRITICAL: Ensure messages are NOT suppressed
-            fiam.setMessagesSuppressed(false)
-            
-            // Add a click listener to log when messages are displayed
-            fiam.addClickListener { inAppMessage, action ->
-                Timber.d("Firebase FIAM: Message clicked - Campaign: ${inAppMessage.campaignMetadata?.campaignName}")
-            }
-            
-            // Log that FIAM is ready
-            Timber.d("Firebase In-App Messaging initialized successfully")
-            Timber.d("FIAM auto data collection: ${fiam.isAutomaticDataCollectionEnabled}")
-            
-        } catch (e: Exception) {
-            Timber.e(e, "Failed to initialize Firebase In-App Messaging")
-        }
-    }
-    
-    /**
-     * Clear Firebase In-App Messaging cache files to enable real-time campaign sync.
-     * 
-     * Firebase FIAM stores these files locally:
-     * - fiam_impressions_store_file: Tracks which messages have been shown
-     * - rate_limit_store_file: Rate limiting info
-     * - fiam_eligible_campaigns_cache_file: Cached campaigns
-     * 
-     * Clearing these allows new campaigns to be fetched and displayed 
-     * on every app open, just like commercial apps (Spotify, Flipkart, Meesho).
-     */
-    private fun clearFiamCacheForRealTimeSync() {
-        try {
-            val cacheFiles = listOf(
-                "fiam_impressions_store_file",
-                "rate_limit_store_file",
-                "fiam_eligible_campaigns_cache_file"
-            )
-            
-            cacheFiles.forEach { fileName ->
-                val file = java.io.File(filesDir, fileName)
-                if (file.exists()) {
-                    val deleted = file.delete()
-                    Timber.d("FIAM cache cleared: $fileName = $deleted")
-                }
-            }
-            
-            Timber.d("FIAM cache cleared for real-time sync")
-        } catch (e: Exception) {
-            Timber.e(e, "Failed to clear FIAM cache")
-        }
-    }
-    
-    /**
      * Subscribe to default FCM topics for receiving notifications.
      */
     private fun subscribeToFcmTopics() {
@@ -488,18 +405,8 @@ class App : Application(), ImageLoaderFactory {
     override fun newImageLoader(): ImageLoader {
         val cacheSize = dataStore[MaxImageCacheSizeKey]
 
-        // PERFORMANCE: Professional-grade image loading like Spotify/YT Music
-        // Key optimizations:
-        // 1. Larger memory cache (30%) for instant scrolling - commercial apps use 25-35%
-        // 2. Hardware bitmaps for GPU rendering (Android P+)
-        // 3. Aggressive caching policies - never re-validate cached images
-        // 4. NO crossfade for cached images - instant display
-        // 5. OkHttp with connection pooling for faster network loads
-        // 6. Weak references disabled - keep images longer in memory
-        // 7. Larger disk cache default (1GB) for offline performance
-
         val okHttpClient = okhttp3.OkHttpClient.Builder()
-            .connectionPool(okhttp3.ConnectionPool(15, 5, java.util.concurrent.TimeUnit.MINUTES))
+            .connectionPool(okhttp3.ConnectionPool(8, 5, java.util.concurrent.TimeUnit.MINUTES))
             .connectTimeout(10, java.util.concurrent.TimeUnit.SECONDS)
             .readTimeout(10, java.util.concurrent.TimeUnit.SECONDS)
             .build()
@@ -522,15 +429,15 @@ class App : Application(), ImageLoaderFactory {
             .okHttpClient(okHttpClient)
             .memoryCache {
                 coil.memory.MemoryCache.Builder(this)
-                    .maxSizePercent(0.30) // 30% of app memory for instant scrolling
-                    .strongReferencesEnabled(true) // Keep frequently used images
-                    .weakReferencesEnabled(false) // Don't use weak refs - keep images longer
+                    .maxSizePercent(0.20)
+                    .strongReferencesEnabled(false)
+                    .weakReferencesEnabled(true)
                     .build()
             }
             .diskCache {
                 DiskCache.Builder()
                     .directory(cacheDir.resolve("coil"))
-                    .maxSizeBytes((cacheSize ?: 1024) * 1024 * 1024L) // 1GB default cache
+                    .maxSizeBytes((cacheSize ?: 512) * 1024 * 1024L)
                     .build()
             }
             .memoryCachePolicy(CachePolicy.ENABLED)

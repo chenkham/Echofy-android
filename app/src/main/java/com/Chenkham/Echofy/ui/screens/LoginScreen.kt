@@ -225,7 +225,13 @@ fun LoginScreen(navController: NavController, chained: Boolean = false) {
         },
         navigationIcon = {
             IconButton(
-                onClick = navController::navigateUp,
+                onClick = {
+                    if (!navController.navigateUp()) {
+                        navController.navigate(Screens.Home.route) {
+                            popUpTo(0) { inclusive = true }
+                        }
+                    }
+                },
                 onLongClick = navController::backToMain,
             ) {
                 Icon(

@@ -145,6 +145,41 @@ class YTMusicApi(
         return CountryInfo(selected = selected, options = options)
     }
 
+    private fun normalizePodcastBrowseId(id: String): String {
+        val trimmedId = id.trim()
+        return when {
+            trimmedId.startsWith("MPSP") ||
+                trimmedId.startsWith("MPPD") ||
+                trimmedId.startsWith("VL") ||
+                trimmedId.startsWith("RDPN") -> trimmedId
+            trimmedId.startsWith("PL") || trimmedId.startsWith("OLAK") -> "VL$trimmedId"
+            else -> "MPSP$trimmedId"
+        }
+    }
+
+    private fun parseEpisodesFromResponse(response: JsonObject): List<Episode> {
+        val directShelf = navObject(
+            response,
+            NavPath.TWO_COLUMN_RENDERER + listOf("secondaryContents") + NavPath.SECTION_LIST_ITEM + NavPath.MUSIC_SHELF,
+            true
+        )
+        val directContents = directShelf?.get("contents") as? JsonArray
+        if (!directContents.isNullOrEmpty()) {
+            return ChartsParser.parseContentList(directContents, PodcastParser::parseEpisode, NavPath.MMRIR)
+        }
+
+        val singleColumnSections = navList(response, NavPath.SINGLE_COLUMN_TAB + NavPath.SECTION_LIST, true)
+            ?: return emptyList()
+
+        return singleColumnSections.flatMap { section ->
+            val sectionObj = section as? JsonObject ?: return@flatMap emptyList()
+            val shelfContents = navList(sectionObj, NavPath.MUSIC_SHELF + listOf("contents"), true)
+            val gridContents = navList(sectionObj, NavPath.GRID_ITEMS, true)
+            val contents = shelfContents ?: gridContents ?: return@flatMap emptyList()
+            ChartsParser.parseContentList(contents, PodcastParser::parseEpisode, NavPath.MMRIR)
+        }
+    }
+
     /**
      * Get podcast metadata and episodes.
      * 
@@ -154,12 +189,15 @@ class YTMusicApi(
      * @return PodcastResult with podcast info and episodes
      */
     suspend fun getPodcast(playlistId: String): Result<PodcastResult> = runCatching {
-        val browseId = if (playlistId.startsWith("MPSP")) playlistId else "MPSP$playlistId"
+        val browseId = normalizePodcastBrowseId(playlistId)
         
         val response = client.browse(browseId = browseId)
         
         val twoColumns = navObject(response, NavPath.TWO_COLUMN_RENDERER, true)
-            ?: return@runCatching PodcastResult(title = "")
+        if (twoColumns == null) {
+            val playlist = PodcastParser.parsePlaylistHeader(response)
+            return@runCatching playlist.copy(episodes = parseEpisodesFromResponse(response))
+        }
         
         // Parse header
         val header = navObject(twoColumns, NavPath.TAB_CONTENT + NavPath.SECTION_LIST_ITEM + NavPath.RESPONSIVE_HEADER, true)
@@ -170,14 +208,7 @@ class YTMusicApi(
         }
 
         // Parse episodes from secondary contents
-        val musicShelf = navObject(twoColumns, listOf("secondaryContents") + NavPath.SECTION_LIST_ITEM + NavPath.MUSIC_SHELF, true)
-        val episodeContents = musicShelf?.get("contents") as? JsonArray
-        
-        val episodes = episodeContents?.mapNotNull { item ->
-            val itemObj = item as? JsonObject ?: return@mapNotNull null
-            val renderer = itemObj[NavPath.MMRIR] as? JsonObject ?: return@mapNotNull null
-            PodcastParser.parseEpisode(renderer)
-        } ?: emptyList()
+        val episodes = parseEpisodesFromResponse(response)
 
         podcast.copy(episodes = episodes)
     }
@@ -334,7 +365,9 @@ class YTMusicApi(
 
     /**
      * Get the main podcasts landing page.
-     * Uses FEmusic_podcasts browse ID.
+     * Uses FEmusic_podcasts browse ID to fetch podcast categories (News, Sports, etc.).
+     * Parses all carousel sections including musicTwoRowItemRenderer, musicResponsiveListItemRenderer,
+     * and musicNavigationButtonRenderer to capture all available content.
      */
     suspend fun getPodcastsLanding(): Result<PodcastLandingResult> = runCatching {
         val response = client.browse(browseId = "FEmusic_podcasts")
@@ -345,34 +378,56 @@ class YTMusicApi(
         val sections = results.mapNotNull { section ->
             val sectionObj = section as? JsonObject ?: return@mapNotNull null
             
-            // Carousel or Grid
-            val carousel = sectionObj[NavPath.CAROUSEL.last()] as? JsonObject
-            val grid = sectionObj[NavPath.GRID.last()] as? JsonObject
+            // Try all section renderers: Carousel, Grid, and Shelf
+            val carousel = sectionObj["musicCarouselShelfRenderer"] as? JsonObject
+            val grid = sectionObj["gridRenderer"] as? JsonObject
+            val shelf = sectionObj["musicShelfRenderer"] as? JsonObject
             
-            val renderer = carousel ?: grid ?: return@mapNotNull null
-            val isCarousel = carousel != null
+            val renderer = carousel ?: grid ?: shelf ?: return@mapNotNull null
             
+            // Parse header for section title
             val header = renderer["header"] as? JsonObject
             val title = if (header != null) {
-                // Try basic header then responsive header
                 navString(header, listOf("musicCarouselShelfBasicHeaderRenderer") + NavPath.TITLE, true)
                     ?: navString(header, listOf("musicResponsiveHeaderRenderer") + NavPath.TITLE_TEXT, true)
+                    ?: navString(header, listOf("gridHeaderRenderer") + NavPath.TITLE, true)
+                    ?: navString(header, listOf("musicShelfBasicHeaderRenderer") + NavPath.TITLE, true)
                     ?: ""
             } else ""
             
-            val itemsArray = if (isCarousel) {
-                renderer["contents"] as? JsonArray
-            } else {
-                renderer["items"] as? JsonArray
-            }
+            // Get items array - "contents" for carousels/shelves, "items" for grids
+            val itemsArray = (renderer["contents"] as? JsonArray)
+                ?: (renderer["items"] as? JsonArray)
             
             val items = itemsArray?.mapNotNull { item ->
                 val itemObj = item as? JsonObject ?: return@mapNotNull null
-                val mtrir = itemObj[NavPath.MTRIR] as? JsonObject
-                val mrlir = itemObj[NavPath.MRLIR] as? JsonObject
                 
-                val itemData = mtrir ?: mrlir ?: return@mapNotNull null
-                PodcastParser.parsePodcast(itemData)
+                // Try musicTwoRowItemRenderer (most common for podcast cards)
+                val mtrir = itemObj[NavPath.MTRIR] as? JsonObject
+                if (mtrir != null) return@mapNotNull PodcastParser.parsePodcast(mtrir)
+                
+                // Try musicResponsiveListItemRenderer (list-style items)
+                val mrlir = itemObj[NavPath.MRLIR] as? JsonObject
+                if (mrlir != null) return@mapNotNull PodcastParser.parsePodcast(mrlir)
+                
+                // Try musicNavigationButtonRenderer (category buttons/chips)
+                val navButton = itemObj["musicNavigationButtonRenderer"] as? JsonObject
+                if (navButton != null) {
+                    val navTitle = navString(navButton, listOf("buttonText") + NavPath.RUN_TEXT, true)
+                        ?: navString(navButton, NavPath.TITLE, true)
+                        ?: return@mapNotNull null
+                    val browseId = navString(navButton, listOf("clickCommand") + NavPath.NAVIGATION_BROWSE_ID, true)
+                        ?: navString(navButton, NavPath.NAVIGATION_BROWSE_ID, true)
+                        ?: return@mapNotNull null
+                    val thumbnails = ChartsParser.parseThumbnails(navButton)
+                    return@mapNotNull PodcastItem(
+                        title = navTitle,
+                        browseId = browseId,
+                        thumbnails = thumbnails
+                    )
+                }
+                
+                null
             } ?: emptyList()
             
             if (items.isNotEmpty()) {

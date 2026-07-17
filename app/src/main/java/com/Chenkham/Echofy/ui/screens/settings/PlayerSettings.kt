@@ -120,25 +120,10 @@ fun PlayerSettings(
                 {SwitchPreference(
                     title = { androidx.compose.foundation.layout.Row(verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
                         Text(stringResource(R.string.audio_normalization))
-                        if (adManager?.isPremium?.value != true) {
-                            androidx.compose.foundation.layout.Spacer(Modifier.padding(4.dp))
-                            Icon(
-                                painter = painterResource(R.drawable.workspace_premium),
-                                contentDescription = "Premium",
-                                tint = androidx.compose.material3.MaterialTheme.colorScheme.primary,
-                                modifier = Modifier.size(16.dp)
-                            )
-                        }
                     }},
                     icon = { Icon(painterResource(R.drawable.volume_up), null) },
                     checked = audioNormalization,
-                    onCheckedChange = { checked ->
-                        if (adManager?.isPremium?.value == true || !checked) {
-                            onAudioNormalizationChange(checked)
-                        } else {
-                            navController.navigate("premium")
-                        }
-                    }
+                    onCheckedChange = onAudioNormalizationChange
                 )},
             )
         )

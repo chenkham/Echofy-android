@@ -1,4 +1,4 @@
-﻿package com.Chenkham.Echofy.ui.screens.library
+package com.Chenkham.Echofy.ui.screens.library
 
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.Box
@@ -87,7 +87,7 @@ fun LibraryAlbumsScreen(
         AlbumSortType.CREATE_DATE
     )
     val (sortDescending, onSortDescendingChange) = rememberPreference(AlbumSortDescendingKey, true)
-    val gridItemSize by rememberEnumPreference(GridItemsSizeKey, GridItemSize.BIG)
+    val gridItemSize by rememberEnumPreference(GridItemsSizeKey, GridItemSize.SMALL)
 
     val (ytmSync) = rememberPreference(YtmSyncKey, true)
 
@@ -254,7 +254,7 @@ fun LibraryAlbumsScreen(
                     state = lazyGridState,
                     columns =
                         GridCells.Adaptive(
-                            minSize = GridThumbnailHeight + if (gridItemSize == GridItemSize.BIG) 24.dp else (-24).dp,
+                            minSize = GridThumbnailHeight + if (gridItemSize == GridItemSize.SMALL) (-24).dp else 24.dp,
                         ),
                     contentPadding = LocalPlayerAwareWindowInsets.current.asPaddingValues(),
                 ) {

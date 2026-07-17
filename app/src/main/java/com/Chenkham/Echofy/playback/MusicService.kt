@@ -489,16 +489,15 @@ class MusicService :
             .setBufferDurationsMs(
                 // Min buffer while playing: 30 seconds
                 30_000,
-                // Max buffer: 5 MINUTES (download ahead at full 2+ MB/s)
-                5 * 60_000,
-                // Buffer to START: 250ms = INSTANT (just enough to prevent stutter)
-                250,
-                // Buffer after rebuffer: 1 second (quick recovery)
-                1_000
+                // Max buffer: 2 MINUTES (reduced to save RAM)
+                2 * 60_000,
+                // Buffer to START: 2000ms (to prevent stutter on slow networks)
+                2_000,
+                // Buffer after rebuffer: 4000ms (quick recovery with enough buffer to keep playing)
+                4_000
             )
-            // NO byte limit = full bandwidth utilization
-            .setTargetBufferBytes(C.LENGTH_UNSET)
-            .setPrioritizeTimeOverSizeThresholds(false)
+            // Use default target buffer bytes (around 32MB) to prevent out of memory issues
+            .setPrioritizeTimeOverSizeThresholds(true)
             .build()
         
         player =
@@ -2144,14 +2143,19 @@ class MusicService :
                 songUrlCache[cacheKey] =
                     streamUrl to System.currentTimeMillis() + (playbackData.streamExpiresInSeconds * 1000L)
                 
-                // Return DataSpec with the custom key if in video mode
-                val finalDataSpec = dataSpec.withUri(streamUrl.toUri())
+                // Return DataSpec with the custom key and headers
+                val finalBuilder = dataSpec.withUri(streamUrl.toUri())
                     .subrange(dataSpec.uriPositionOffset, CHUNK_LENGTH)
+                    .buildUpon()
+                
+                if (playbackData.userAgent != null) {
+                    finalBuilder.setHttpRequestHeaders(mapOf("User-Agent" to playbackData.userAgent))
+                }
                 
                 return@Factory if (videoMode) {
-                    finalDataSpec.buildUpon().setKey(cacheKey).build()
+                    finalBuilder.setKey(cacheKey).build()
                 } else {
-                    finalDataSpec
+                    finalBuilder.build()
                 }
             } catch (e: Exception) {
                 Timber.tag(ytLogTag).e(e, "YouTube playback error, trying JossRed as fallback")

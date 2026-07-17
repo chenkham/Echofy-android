@@ -63,6 +63,7 @@ fun LyricsMenu(
     mediaMetadataProvider: () -> MediaMetadata,
     onDismiss: () -> Unit,
     onLyricsUpdated: () -> Unit = {}, // NUEVO: Callback para notificar actualizaciÃ³n
+    onChooseFetchedLyrics: (() -> Unit)? = null,
     viewModel: LyricsMenuViewModel = hiltViewModel(),
 ) {
     val context = LocalContext.current
@@ -306,7 +307,7 @@ fun LyricsMenu(
     }
 
     GridMenu(
-        modifier = Modifier.height(200.dp), // Fixed height for proper rendering in BottomSheetMenu
+        modifier = Modifier.height(if (onChooseFetchedLyrics != null) 260.dp else 200.dp),
         contentPadding =
             PaddingValues(
                 start = 8.dp,
@@ -329,6 +330,14 @@ fun LyricsMenu(
             // NUEVO: Notificar actualizaciÃ³n cuando se recargan las letras
             onLyricsUpdated()
             onDismiss()
+        }
+        if (onChooseFetchedLyrics != null) {
+            GridMenuItem(
+                icon = R.drawable.sync,
+                title = R.string.other_versions,
+            ) {
+                onChooseFetchedLyrics()
+            }
         }
         GridMenuItem(
             icon = R.drawable.search,

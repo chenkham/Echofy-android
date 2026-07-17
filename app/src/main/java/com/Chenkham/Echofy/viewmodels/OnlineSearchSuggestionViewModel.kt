@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.Chenkham.innertube.YouTube
+import com.Chenkham.innertube.models.SongItem
 import com.Chenkham.innertube.models.YTItem
 import com.Chenkham.innertube.models.filterExplicit
 import com.Chenkham.Echofy.constants.HideExplicitKey
@@ -15,19 +16,20 @@ import com.Chenkham.Echofy.utils.get
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
-import java.time.LocalDateTime
-import java.time.ZoneOffset
 import javax.inject.Inject
 
-@OptIn(ExperimentalCoroutinesApi::class)
+@OptIn(ExperimentalCoroutinesApi::class, FlowPreview::class)
 @HiltViewModel
 class OnlineSearchSuggestionViewModel
 @Inject
@@ -51,13 +53,33 @@ constructor(
     init {
         viewModelScope.launch {
             combine(
-                query.flatMapLatest { queryText ->
+                query
+                    .debounce(220)
+                    .map { it.trim() }
+                    .distinctUntilChanged()
+                    .flatMapLatest { queryText ->
                     if (queryText.isEmpty()) {
                         database.searchHistory().map { history ->
                             Triple(history, emptyList<String>(), emptyList<YTItem>())
                         }
                     } else {
+                        val hideExplicit = context.dataStore.get(HideExplicitKey, false)
                         val result = YouTube.searchSuggestions(queryText).getOrNull()
+                        val matchedSongs = YouTube
+                            .search(queryText, YouTube.SearchFilter.FILTER_SONG)
+                            .getOrNull()
+                            ?.items
+                            ?.filterIsInstance<SongItem>()
+                            .orEmpty()
+                        val recommendedSongs = result
+                            ?.recommendedItems
+                            ?.filterIsInstance<SongItem>()
+                            .orEmpty()
+                        val songSuggestions = (recommendedSongs + matchedSongs)
+                            .distinctBy { it.id }
+                            .filterExplicit(hideExplicit)
+                            .take(3)
+
                         database
                             .searchHistory(queryText)
                             .map { it.take(3) }
@@ -66,10 +88,9 @@ constructor(
                                     history,
                                     result?.queries
                                         ?.filter { q -> history.none { it.query == q } }
+                                        ?.take(6)
                                         .orEmpty(),
-                                    result?.recommendedItems
-                                        ?.filterExplicit(context.dataStore.get(HideExplicitKey, false))
-                                        .orEmpty()
+                                    songSuggestions
                                 )
                             }
                     }

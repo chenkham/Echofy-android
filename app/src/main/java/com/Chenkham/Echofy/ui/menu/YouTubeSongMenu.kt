@@ -589,11 +589,7 @@ fun YouTubeSongMenu(
                                 // Do nothing while downloading
                             }
                             else -> {
-                                if (adManager?.isPremium?.value != true) {
-                                    android.widget.Toast.makeText(context, R.string.premium_required, android.widget.Toast.LENGTH_SHORT).show()
-                                } else {
-                                    performDownload()
-                                }
+                                performDownload()
                             }
                         }
                         onDismiss()

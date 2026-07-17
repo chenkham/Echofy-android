@@ -1,4 +1,4 @@
-﻿package com.Chenkham.Echofy.db.entities
+package com.Chenkham.Echofy.db.entities
 
 import androidx.compose.runtime.Immutable
 import androidx.room.Entity
@@ -35,6 +35,10 @@ data class SongEntity(
     val totalPlayTime: Long = 0, // in milliseconds
     val inLibrary: LocalDateTime? = null,
     val dateDownload: LocalDateTime? = null, // doubles as "isDownloaded"
+    @androidx.room.ColumnInfo(name = "isUploaded", defaultValue = "0")
+    val isUploaded: Boolean = false,
+    @androidx.room.ColumnInfo(name = "uploadEntityId", defaultValue = "NULL")
+    val uploadEntityId: String? = null,
 ) {
     fun localToggleLike() = copy(
         liked = !liked,
@@ -56,5 +60,9 @@ data class SongEntity(
         liked = if (inLibrary == null) liked else false,
         inLibrary = if (inLibrary == null) LocalDateTime.now() else null,
         likedDate = if (inLibrary == null) likedDate else null
+    )
+
+    fun toggleUploaded() = copy(
+        isUploaded = !isUploaded
     )
 }

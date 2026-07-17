@@ -73,7 +73,7 @@ class AdManager @Inject constructor(
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
     
     // Cache the premium status as a public StateFlow for reactive UI checks
-    private val _isPremium = MutableStateFlow(false)
+    private val _isPremium = MutableStateFlow(true)
     val isPremium: StateFlow<Boolean> = _isPremium.asStateFlow()
     private var isPremiumUser: Boolean
         get() = _isPremium.value
@@ -91,33 +91,9 @@ class AdManager @Inject constructor(
      * Initialize the Mobile Ads SDK. Call this in Application.onCreate()
      */
     fun initialize() {
-        MobileAds.initialize(context) { initializationStatus ->
-            Timber.d("AdMob initialized: $initializationStatus")
-            
-            _isInitialized.value = true
-            
-            // Start monitoring subscription status - merges Real User Status OR Test/Mock Status
-            scope.launch {
-                val realPremiumFlow = authRepository.getActiveUser().map { it?.isPremium == true }
-                val testPremiumFlow = context.dataStore.data.map { preferences ->
-                    preferences[MockSubscriptionKey] ?: false
-                }
-                
-                // Combine: Premium if either Real OR Test is true, or if Debug build
-                combine(realPremiumFlow, testPremiumFlow) { real, test ->
-                    real || test || com.Chenkham.Echofy.BuildConfig.DEBUG
-                }.collectLatest { isPremium ->
-                    isPremiumUser = isPremium
-                    Timber.d("AdManager: Premium status updated to $isPremium")
-                }
-            }
-            
-            // Preload rewarded ad for downloads if needed
-            // We check logic inside loadRewardedAd anyway
-            if (shouldShowAds()) {
-                loadRewardedAd()
-            }
-        }
+        isPremiumUser = true
+        rewardedAd = null
+        _isInitialized.value = true
     }
     
     /**
@@ -129,13 +105,7 @@ class AdManager @Inject constructor(
      * - When user subscribes, isPremium becomes true -> no ads
      * - When user cancels subscription, isPremium becomes false -> ads show again
      */
-    fun shouldShowAds(): Boolean {
-        // Disable all ads (including test ads) on debug builds
-        if (com.Chenkham.Echofy.BuildConfig.DEBUG) return false
-        
-        // Return true only if user is NOT premium
-        return !isPremiumUser
-    }
+    fun shouldShowAds(): Boolean = false
     
     /**
      * Check premium status asynchronously via the user flow.
