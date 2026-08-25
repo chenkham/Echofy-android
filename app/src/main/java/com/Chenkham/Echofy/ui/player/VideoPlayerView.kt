@@ -104,7 +104,7 @@ fun VideoPlayerView(
             useController = false
             resizeMode = AspectRatioFrameLayout.RESIZE_MODE_FIT
             keepScreenOn = true
-            setShutterBackgroundColor(android.graphics.Color.BLACK)
+            setShutterBackgroundColor(android.graphics.Color.TRANSPARENT)
         }
     }
 

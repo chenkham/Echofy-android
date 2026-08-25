@@ -172,6 +172,7 @@ import com.Chenkham.Echofy.constants.EqualizerPresetKey
 import com.Chenkham.Echofy.constants.VideoQualityKey
 import com.Chenkham.Echofy.constants.VisitorDataKey
 import com.Chenkham.Echofy.constants.VisitorDataTimestampKey
+import com.Chenkham.Echofy.utils.StreamClientUtils
 import com.Chenkham.Echofy.utils.get
 import com.Chenkham.Echofy.utils.reportException
 
@@ -1225,7 +1226,7 @@ class MusicService :
                 }
             }
 
-        // Observe VideoQuality changes to reload
+        // Observe VideoQuality changes to seamlessly crossfade in the background
         dataStore.data
             .map { it[VideoQualityKey] }
             .distinctUntilChanged()
@@ -1233,23 +1234,38 @@ class MusicService :
             .collect(scope) { newQuality ->
                 if (videoMode) {
                     currentSong.value?.let { song ->
-                        // Apply the new quality before reloading. The collector that mirrors this
-                        // key into currentVideoQuality runs independently, so relying on it here
-                        // would race and re-resolve the stream at the previous quality.
-                        currentVideoQuality = newQuality ?: "Auto"
+                        val targetQuality = newQuality ?: "Auto"
+                        currentVideoQuality = targetQuality
 
-                        // Drop every cached url for this song: video mode resolves under
-                        // "<id>_video" (and "<id>_audio" for the companion track), so removing
-                        // only "<id>" would leave the old-quality url in place.
-                        invalidateCachedUrls(song.id)
+                        // Resolve new quality stream in background while existing video continues playing
+                        scope.launch(Dispatchers.IO) {
+                            val newPlaybackData = YTPlayerUtils.playerResponseForPlayback(
+                                song.id,
+                                audioQuality = currentAudioQuality,
+                                connectivityManager = connectivityManager,
+                                preferredStreamClient = preferredStreamClient,
+                                avoidCodecs = avoidStreamCodecs,
+                                isVideo = true,
+                                videoQuality = targetQuality,
+                            ).getOrNull()
 
-                        // Cached bytes must go too, otherwise the resolver's isCached() check
-                        // short-circuits and the player replays the old quality from disk.
-                        evictPlayerCache(song.id)
+                            if (newPlaybackData != null) {
+                                val expiresAt = System.currentTimeMillis() + (newPlaybackData.streamExpiresInSeconds * 1000L)
+                                val videoCacheKey = "${song.id}_video"
+                                playbackUrlCache[videoCacheKey] = newPlaybackData.streamUrl to expiresAt
+                                songUrlUserAgentCache[videoCacheKey] = StreamClientUtils.resolveUserAgent(newPlaybackData.streamUrl)
 
-                        withContext(Dispatchers.Main) {
-                            // Instantly rebuild queue at exact positionMs with new video quality
-                            rebuildCurrentQueue()
+                                try {
+                                    if (::playerCache.isInitialized) {
+                                        playerCache.removeResource(videoCacheKey)
+                                    }
+                                } catch (_: Exception) {}
+
+                                withContext(Dispatchers.Main) {
+                                    // Atomically transition to new quality at exact timestamp with zero black flicker
+                                    rebuildCurrentQueue()
+                                }
+                            }
                         }
                     }
                 }
