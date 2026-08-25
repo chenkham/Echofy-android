@@ -259,8 +259,12 @@ object YTPlayerUtils {
         val playbackTracking = metadataPlayerResponse.playbackTracking
         val expectedDurationMs = videoDetails?.lengthSeconds?.toLongOrNull()?.takeIf { it > 0 }?.times(1000L)
 
+        val videoPreferredClients = listOf(ANDROID_TESTSUITE, WEB, IOS, TVHTML5, ANDROID_VR_NO_AUTH)
         val streamClients =
             buildList {
+                if (isVideo) {
+                    addAll(videoPreferredClients)
+                }
                 add(preferredYouTubeClient)
                 addAll(orderedFallbackClients)
                 if (preferredYouTubeClient != MAIN_CLIENT) add(MAIN_CLIENT)

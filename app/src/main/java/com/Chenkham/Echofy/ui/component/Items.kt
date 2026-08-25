@@ -347,6 +347,7 @@ fun SongListItem(
             Icon(
                 painter = painterResource(R.drawable.library_add_check),
                 contentDescription = "In library",
+                tint = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier =
                     Modifier
                         .size(18.dp)
@@ -361,6 +362,7 @@ fun SongListItem(
                     Icon(
                         painter = painterResource(R.drawable.offline),
                         contentDescription = "Downloaded",
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier =
                             Modifier
                                 .size(18.dp)
@@ -503,6 +505,7 @@ fun SongGridItem(
             Icon(
                 painter = painterResource(R.drawable.library_add_check),
                 contentDescription = null,
+                tint = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier
                     .size(18.dp)
                     .padding(end = 2.dp)
@@ -515,6 +518,7 @@ fun SongGridItem(
                 STATE_COMPLETED -> Icon(
                     painter = painterResource(R.drawable.offline),
                     contentDescription = null,
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier
                         .size(18.dp)
                         .padding(end = 2.dp)

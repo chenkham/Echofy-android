@@ -1,4 +1,4 @@
-﻿@file:Suppress("DEPRECATION")
+@file:Suppress("DEPRECATION")
 
 package com.Chenkham.Echofy.ui.component
 
@@ -47,6 +47,8 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.appcompat.app.AppCompatDelegate
+import androidx.core.os.LocaleListCompat
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.RadioButton
@@ -83,7 +85,6 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.core.os.ConfigurationCompat
-import androidx.core.os.LocaleListCompat
 import com.Chenkham.Echofy.R
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -419,6 +420,18 @@ class LocaleManager private constructor(private val context: Context) {
             }
 
             val locale = parseLocaleCode(effectiveLanguageCode)
+            
+            try {
+                val appLocales = if (languageCode == SYSTEM_DEFAULT) {
+                    LocaleListCompat.getEmptyLocaleList()
+                } else {
+                    LocaleListCompat.forLanguageTags(effectiveLanguageCode)
+                }
+                AppCompatDelegate.setApplicationLocales(appLocales)
+            } catch (e: Exception) {
+                Timber.tag(TAG).w(e, "AppCompatDelegate setApplicationLocales fallback")
+            }
+
             applyLocaleToApp(locale)
 
             _changeState.value = LanguageChangeState.Success
@@ -490,22 +503,17 @@ class LocaleManager private constructor(private val context: Context) {
 
     fun restartApp(context: Context) {
         try {
-            val intent = context.packageManager.getLaunchIntentForPackage(context.packageName)
-            intent?.let {
-                it.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK or Intent.FLAG_ACTIVITY_NEW_TASK)
-                Handler(Looper.getMainLooper()).postDelayed({
+            if (context is Activity) {
+                context.recreate()
+            } else {
+                val intent = context.packageManager.getLaunchIntentForPackage(context.packageName)
+                intent?.let {
+                    it.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK or Intent.FLAG_ACTIVITY_NEW_TASK)
                     context.startActivity(it)
-                    if (context is Activity) {
-                        context.finish()
-                        context.overridePendingTransition(
-                            android.R.anim.fade_in,
-                            android.R.anim.fade_out
-                        )
-                    }
-                }, RESTART_DELAY)
+                }
             }
         } catch (e: Exception) {
-            Timber.tag(TAG).e(e, "Error reiniciando aplicaciÃ³n")
+            Timber.tag(TAG).e(e, "Error recreating activity for language change")
         }
     }
 
