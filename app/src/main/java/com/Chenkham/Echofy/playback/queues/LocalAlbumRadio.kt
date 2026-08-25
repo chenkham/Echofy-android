@@ -1,8 +1,8 @@
-﻿package com.Chenkham.Echofy.playback.queues
+package com.Chenkham.Echofy.playback.queues
 
 import androidx.media3.common.MediaItem
-import com.Chenkham.innertube.YouTube
-import com.Chenkham.innertube.models.WatchEndpoint
+import com.arturo254.opentune.innertube.YouTube
+import com.arturo254.opentune.innertube.models.WatchEndpoint
 import com.Chenkham.Echofy.db.entities.AlbumWithSongs
 import com.Chenkham.Echofy.extensions.toMediaItem
 import com.Chenkham.Echofy.models.MediaMetadata

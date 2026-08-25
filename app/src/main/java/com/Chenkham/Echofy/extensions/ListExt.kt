@@ -1,4 +1,15 @@
-﻿package com.Chenkham.Echofy.extensions
+﻿/*
+ * Echofy Project Original (2026)
+ * Arturo254 (github.com/Arturo254)
+ * Licensed Under GPL-3.0 | see git history for contributors
+ */
+
+
+
+package com.Chenkham.Echofy.extensions
+
+import com.Chenkham.Echofy.db.entities.Song
+import com.Chenkham.Echofy.db.entities.Album
 
 fun <T> List<T>.reversed(reversed: Boolean) = if (reversed) asReversed() else this
 
@@ -32,3 +43,17 @@ fun <T : Any> List<T>.mergeNearbyElements(
 
     return mergedList
 }
+
+// Extension function to filter explicit content for local Song entities
+fun List<Song>.filterExplicit(enabled: Boolean = true) =
+    if (enabled) {
+        filter { !it.song.explicit }
+    } else {
+        this
+    }
+
+// Extension function to filter explicit content for local Album entities
+fun List<Album>.filterExplicitAlbums(enabled: Boolean = true) = this
+
+// No-op for local songs: local Song entities do not contain video metadata to filter reliably
+fun List<Song>.filterVideo(enabled: Boolean = true) = this

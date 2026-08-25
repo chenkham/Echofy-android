@@ -1,10 +1,10 @@
-﻿package com.Chenkham.Echofy.db.entities
+package com.Chenkham.Echofy.db.entities
 
 import androidx.compose.runtime.Immutable
 import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.PrimaryKey
-import com.Chenkham.innertube.YouTube
+import com.arturo254.opentune.innertube.YouTube
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel

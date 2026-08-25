@@ -1,5 +1,11 @@
 package com.Chenkham.Echofy
 
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.foundation.layout.WindowInsetsSides
+import androidx.compose.foundation.layout.only
+import com.Chenkham.Echofy.constants.UseSystemFontKey
+
 import android.Manifest
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.material3.TextButton
@@ -70,7 +76,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.add
 import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
@@ -78,7 +83,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.offset
-import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.systemBars
@@ -92,6 +96,9 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
+import androidx.compose.material3.NavigationRail
+import androidx.compose.material3.NavigationRailItem
+import androidx.compose.material3.NavigationRailItemDefaults
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
@@ -169,10 +176,12 @@ import androidx.navigation.compose.rememberNavController
 import coil.compose.AsyncImage
 import coil.imageLoader
 import coil.request.ImageRequest
-import com.Chenkham.innertube.YouTube
-import com.Chenkham.innertube.models.SongItem
-import com.Chenkham.innertube.models.WatchEndpoint
+import com.arturo254.opentune.innertube.YouTube
+import com.arturo254.opentune.innertube.models.SongItem
+import com.arturo254.opentune.innertube.models.WatchEndpoint
 import com.Chenkham.Echofy.constants.AppBarHeight
+import com.Chenkham.Echofy.constants.AppFont
+import com.Chenkham.Echofy.constants.CustomFontKey
 import com.Chenkham.Echofy.constants.DarkModeKey
 import com.Chenkham.Echofy.constants.DefaultOpenTabKey
 import com.Chenkham.Echofy.constants.DisableScreenshotKey
@@ -209,6 +218,7 @@ import com.Chenkham.Echofy.ui.component.AvatarSelection
 import com.Chenkham.Echofy.ui.component.BottomSheetMenu
 import com.Chenkham.Echofy.ui.component.IconButton
 import com.Chenkham.Echofy.ui.component.LocalMenuState
+import com.Chenkham.Echofy.ui.component.MenuState
 import com.Chenkham.Echofy.ui.component.LocaleManager
 import com.Chenkham.Echofy.ui.component.Lyrics
 import com.Chenkham.Echofy.ui.component.SwitchPreference
@@ -232,6 +242,7 @@ import com.Chenkham.Echofy.ui.theme.ColorSaver
 import com.Chenkham.Echofy.ui.theme.DefaultThemeColor
 import com.Chenkham.Echofy.ui.theme.EchofyTheme
 import com.Chenkham.Echofy.ui.theme.extractThemeColor
+import com.Chenkham.Echofy.ui.theme.toFontFamily
 import com.Chenkham.Echofy.ui.utils.appBarScrollBehavior
 import com.Chenkham.Echofy.ui.utils.backToMain
 import com.Chenkham.Echofy.ui.utils.resetHeightOffset
@@ -469,7 +480,13 @@ class MainActivity : ComponentActivity() {
 
     override fun onDestroy() {
         super.onDestroy()
-        
+
+        // Cached native ads are owned by AdManager so they survive list scrolling. They are
+        // released here instead, when the screen that showed them is actually going away.
+        if (isFinishing) {
+            adManager.releaseNativeAds()
+        }
+
         try {
             unregisterReceiver(pipBroadcastReceiver)
         } catch (e: Exception) {
@@ -651,6 +668,11 @@ class MainActivity : ComponentActivity() {
 
         intent?.let { handleIntent(it) }
 
+        // Keep the launcher long-press menu in sync with the user's preference.
+        lifecycleScope.launch {
+            runCatching { com.Chenkham.Echofy.utils.DynamicShortcuts.refresh(this@MainActivity, database) }
+        }
+
         // Bind the MusicService so it doesn't die when the app drops to the background unless the user swipes to close it
         bindService(
             Intent(this, MusicService::class.java),
@@ -695,6 +717,11 @@ class MainActivity : ComponentActivity() {
                         try {
                              if (!adManager.shouldShowAds()) {
                                  Timber.d("Timer fired but user is premium, skipping ad")
+                             } else if (playerConnection?.player?.isPlaying == true) {
+                                 // The timed ad is a full-screen rewarded video. Showing it
+                                 // during playback steals audio focus and stops the music,
+                                 // so skip this slot and wait for the next interval.
+                                 Timber.d("Timer fired while playing, skipping ad to protect playback")
                              } else {
                                  Timber.d("30-minute ad timer fired, showing ad")
                                  adManager.showTimedAd(this@MainActivity)
@@ -794,21 +821,23 @@ class MainActivity : ComponentActivity() {
                 }
             }
 
+            val useSystemFont by rememberPreference(UseSystemFontKey, defaultValue = false)
+            val appFont by rememberEnumPreference(CustomFontKey, defaultValue = com.Chenkham.Echofy.constants.AppFont.SYSTEM)
+
             EchofyTheme(
                 darkTheme = useDarkTheme,
                 pureBlack = pureBlack,
                 themeColor = themeColor,
+                useSystemFont = useSystemFont,
+                appFont = appFont,
             ) {
-                // Show PiP player when in Picture-in-Picture mode
                 if (isInPipMode) {
                     com.Chenkham.Echofy.ui.player.PipPlayerView(
                         playerConnection = playerConnection,
                         modifier = Modifier.fillMaxSize()
                     )
-                    return@EchofyTheme
-                }
-
-                BoxWithConstraints(
+                } else {
+                    BoxWithConstraints(
                     modifier =
                         Modifier
                             .fillMaxSize()
@@ -976,8 +1005,7 @@ class MainActivity : ComponentActivity() {
                     val topAppBarScrollBehavior =
                         appBarScrollBehavior(
                             canScroll = {
-                                navBackStackEntry?.destination?.route?.startsWith("search/") == false &&
-                                        (playerBottomSheetState.isCollapsed || playerBottomSheetState.isDismissed)
+                                false
                             },
                         )
 
@@ -1162,201 +1190,100 @@ class MainActivity : ComponentActivity() {
                     val baseBg = if (pureBlack) Color.Black else MaterialTheme.colorScheme.surfaceContainer
                     val insetBg = if (playerBottomSheetState.progress > 0f) Color.Transparent else baseBg
 
+                    // ── App-wide "Hey Jarvis" activation ─────────────────
+                    // Owned here rather than by the AI screen so the wake word stays
+                    // armed on every tab for as long as the app is running.
+                    val wakeWordAiManager = remember {
+                        com.Chenkham.Echofy.ai.EchofyAiManager.getInstance(this@MainActivity)
+                    }
+                    val aiSettingsStore = remember {
+                        com.Chenkham.Echofy.ai.AiSettingsDataStore(this@MainActivity)
+                    }
+                    val wakeWordEnabled by aiSettingsStore.isWakeWordEnabled.collectAsState(initial = false)
+                    val drivingModeEnabled by aiSettingsStore.isDrivingModeEnabled.collectAsState(initial = false)
+
+                    // Driving mode implies continuous listening, so it turns the
+                    // detector on even when the plain wake word toggle is off.
+                    val listeningEnabled = wakeWordEnabled || drivingModeEnabled
+
+                    LaunchedEffect(listeningEnabled, drivingModeEnabled, playerConnection) {
+                        wakeWordAiManager.attachPlayerConnection(playerConnection)
+                        if (listeningEnabled) {
+                            wakeWordAiManager.setDrivingMode(drivingModeEnabled)
+                            // Re-calling start() refreshes the notification text so it
+                            // flips between "Driving Mode On" and the idle wording.
+                            com.Chenkham.Echofy.ai.WakeWordService.start(this@MainActivity, drivingModeEnabled)
+                            wakeWordAiManager.startHeyCommandListener(playerConnection)
+                        } else {
+                            wakeWordAiManager.setDrivingMode(false)
+                            com.Chenkham.Echofy.ai.WakeWordService.stop(this@MainActivity)
+                            wakeWordAiManager.stopHeyCommandListener()
+                        }
+                    }
+
+                    val menuState = remember { MenuState() }
+
                     CompositionLocalProvider(
                         LocalPlayerConnection provides playerConnection,
                         LocalDownloadUtil provides downloadUtil,
                         LocalDatabase provides database,
                         LocalSyncUtils provides syncUtils,
                         LocalAdManager provides adManager,
-                        LocalPlayerAwareWindowInsets provides playerAwareWindowInsets
+                        LocalPlayerAwareWindowInsets provides playerAwareWindowInsets,
+                        LocalMenuState provides menuState,
                     ) {
                         Scaffold(
+                            containerColor = Color.Transparent,
                             topBar = {
-                                val playerBackground by rememberEnumPreference(
-                                    key = PlayerBackgroundStyleKey,
-                                    defaultValue = PlayerBackgroundStyle.DEFAULT
-                                )
-
                                 if (shouldShowTopBar) {
-                                    Box(modifier = Modifier.fillMaxWidth()) {
-                                        // Capa base con color de fondo siempre visible
-                                        Box(
-                                            modifier = Modifier
-                                                .matchParentSize()
-                                                .background(MaterialTheme.colorScheme.surface)
-                                        )
-
-                                        // Top Gradient Overlay (YouTube-like style)
-                                        Box(
-                                            modifier = Modifier
-                                                .matchParentSize()
-                                                .background(
-                                                    brush = Brush.verticalGradient(
-                                                        colors = listOf(
-                                                            Color.Black.copy(alpha = 0.7f),
-                                                            Color.Transparent
-                                                        ),
-                                                        startY = 0f,
-                                                        endY = 300f
-                                                    )
+                                    TopAppBar(
+                                        title = {
+                                            Row(
+                                                verticalAlignment = Alignment.CenterVertically,
+                                                modifier = Modifier.fillMaxWidth()
+                                            ) {
+                                                Image(
+                                                    painter = painterResource(R.drawable.echofy),
+                                                    contentDescription = null,
+                                                    modifier = Modifier.size(27.dp)
                                                 )
-                                        )
-
-                                        // ValidaciÃ³n mÃ¡s segura para el background
-                                        val safeSelectedValue = when {
-                                            playerBackground == PlayerBackgroundStyle.BLUR &&
-                                                    Build.VERSION.SDK_INT < Build.VERSION_CODES.S -> {
-                                                PlayerBackgroundStyle.DEFAULT // Sin blur en versiones < Android 12 (S)
+                                                Spacer(modifier = Modifier.width(8.dp))
+                                                Text(
+                                                    text = stringResource(R.string.app_name),
+                                                    style = MaterialTheme.typography.titleLarge,
+                                                    fontWeight = FontWeight.Bold,
+                                                    maxLines = 1,
+                                                    overflow = TextOverflow.Ellipsis
+                                                )
                                             }
+                                        },
+                                        actions = {
+                                            Row(
+                                                horizontalArrangement = Arrangement.spacedBy(4.dp),
+                                                verticalAlignment = Alignment.CenterVertically
+                                            ) {
+                                                val context = LocalContext.current
 
-                                            else -> playerBackground
-                                        }
-
-                                        // Solo mostrar blur si safeSelectedValue es BLUR
-                                        if (safeSelectedValue == PlayerBackgroundStyle.BLUR) {
-                                            val playerConnection = LocalPlayerConnection.current
-
-                                            // VerificaciÃ³n mÃ¡s segura del playerConnection
-                                            playerConnection?.let { connection ->
-                                                val mediaMetadata by connection.mediaMetadata.collectAsState()
-
-                                                mediaMetadata?.thumbnailUrl?.let { imageUrl ->
-                                                    AsyncImage(
-                                                        model = imageUrl,
-                                                        contentDescription = null,
-                                                        contentScale = ContentScale.FillBounds,
-                                                        modifier = Modifier
-                                                            .matchParentSize()
-                                                            .graphicsLayer {
-                                                                if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S) {
-                                                                    renderEffect = android.graphics.RenderEffect.createBlurEffect(
-                                                                        40f, 40f, android.graphics.Shader.TileMode.MIRROR
-                                                                    ).asComposeRenderEffect()
-                                                                }
-                                                            }
-                                                            .alpha(0.6f)
-                                                            .drawWithContent {
-                                                                drawContent()
-                                                                drawRect(
-                                                                    brush = Brush.verticalGradient(
-                                                                        colors = listOf(
-                                                                            Color.Black.copy(alpha = 0.5f),
-                                                                            Color.Transparent
-                                                                        ),
-                                                                        startY = 0f,
-                                                                        endY = size.height * 0.6f
-                                                                    ),
-                                                                    blendMode = BlendMode.DstIn
-                                                                )
-                                                            },
-                                                        onError = { error ->
-                                                            // Log del error sin crashear la app
-                                                            Log.w(
-                                                                "PlayerBackground",
-                                                                "Error loading background image: ${error.result.throwable.message}"
-                                                            )
-                                                        }
-                                                    )
+                                                // Check for unread notifications
+                                                val hasUnreadNotifications = remember {
+                                                    mutableStateOf(false)
                                                 }
-                                            }
-                                        }
-
-                                        TopAppBar(
-                                            title = {
-                                                Row(
-                                                    verticalAlignment = Alignment.CenterVertically,
-                                                    modifier = Modifier.fillMaxWidth()
-                                                ) {
-                                                    Image(
-                                                        painter = painterResource(R.drawable.echofy),
-                                                        contentDescription = null,
-                                                        modifier = Modifier.size(27.dp)
-                                                    )
-                                                    Spacer(modifier = Modifier.width(8.dp))
-                                                    Text(
-                                                        text = stringResource(R.string.app_name),
-                                                        style = MaterialTheme.typography.titleLarge,
-                                                        fontWeight = FontWeight.Bold,
-                                                        maxLines = 1,
-                                                        overflow = TextOverflow.Ellipsis
-                                                    )
+                                                LaunchedEffect(Unit) {
+                                                    val prefs = context.getSharedPreferences("echofy_notifications", Context.MODE_PRIVATE)
+                                                    val notifications = prefs.getStringSet("notifications", emptySet()) ?: emptySet()
+                                                    hasUnreadNotifications.value = notifications.any { 
+                                                        it.contains("|false")
+                                                    }
                                                 }
-                                            },
 
-                                            actions = {
-                                                Row(
-                                                    horizontalArrangement = Arrangement.spacedBy(4.dp),
-                                                    verticalAlignment = Alignment.CenterVertically
+                                                // Notifications icon with badge
+                                                Box(
+                                                    modifier = Modifier.size(48.dp)
                                                 ) {
-                                                    val context = LocalContext.current
-                                                    
-                                                    // Check for unread notifications
-                                                    val hasUnreadNotifications = remember {
-                                                        mutableStateOf(false)
-                                                    }
-                                                    LaunchedEffect(Unit) {
-                                                        val prefs = context.getSharedPreferences("echofy_notifications", Context.MODE_PRIVATE)
-                                                        val notifications = prefs.getStringSet("notifications", emptySet()) ?: emptySet()
-                                                        hasUnreadNotifications.value = notifications.any { 
-                                                            it.contains("|false") // Check for unread (isRead = false)
-                                                        }
-                                                    }
-                                                    
-                                                    // Notifications icon with badge
-                                                    Box(
-                                                        modifier = Modifier.size(48.dp)
-                                                    ) {
-                                                        IconButton(
-                                                            onClick = {
-                                                                try {
-                                                                    navController.navigate("notifications")
-                                                                } catch (e: Exception) {
-                                                                    e.printStackTrace()
-                                                                    Toast.makeText(
-                                                                        context,
-                                                                        R.string.navigation_error,
-                                                                        Toast.LENGTH_SHORT
-                                                                    ).show()
-                                                                }
-                                                            }
-                                                        ) {
-                                                            Icon(
-                                                                painter = painterResource(R.drawable.notification_on),
-                                                                contentDescription = stringResource(R.string.notification),
-                                                                tint = MaterialTheme.colorScheme.onSurfaceVariant
-                                                            )
-                                                        }
-                                                        
-                                                        // Red dot badge for unread notifications
-                                                        if (hasUnreadNotifications.value) {
-                                                            Box(
-                                                                modifier = Modifier
-                                                                    .size(10.dp)
-                                                                    .align(Alignment.TopEnd)
-                                                                    .offset(x = (-8).dp, y = 8.dp)
-                                                                    .background(
-                                                                        color = Color.Red,
-                                                                        shape = CircleShape
-                                                                    )
-                                                            )
-                                                        }
-                                                    }
-
                                                     IconButton(
-                                                        onClick = { onActiveChange(true) }
-                                                    ) {
-                                                        Icon(
-                                                            painter = painterResource(R.drawable.search),
-                                                            contentDescription = stringResource(R.string.search),
-                                                            tint = MaterialTheme.colorScheme.onSurfaceVariant
-                                                        )
-                                                    }
-
-                                                    ProfileIconWithUpdateBadge(
-                                                        currentVersion = BuildConfig.VERSION_NAME,
-                                                        onProfileClick = {
+                                                        onClick = {
                                                             try {
-                                                                navController.navigate("settings")
+                                                                navController.navigate("notifications")
                                                             } catch (e: Exception) {
                                                                 e.printStackTrace()
                                                                 Toast.makeText(
@@ -1366,18 +1293,65 @@ class MainActivity : ComponentActivity() {
                                                                 ).show()
                                                             }
                                                         }
+                                                    ) {
+                                                        Icon(
+                                                            painter = painterResource(R.drawable.notification_on),
+                                                            contentDescription = stringResource(R.string.notification),
+                                                            tint = MaterialTheme.colorScheme.onSurfaceVariant
+                                                        )
+                                                    }
+
+                                                    // Red dot badge for unread notifications
+                                                    if (hasUnreadNotifications.value) {
+                                                        Box(
+                                                            modifier = Modifier
+                                                                .size(10.dp)
+                                                                .align(Alignment.TopEnd)
+                                                                .offset(x = (-8).dp, y = 8.dp)
+                                                                .background(
+                                                                    color = Color.Red,
+                                                                    shape = CircleShape
+                                                                )
+                                                        )
+                                                    }
+                                                }
+
+                                                IconButton(
+                                                    onClick = { onActiveChange(true) }
+                                                ) {
+                                                    Icon(
+                                                        painter = painterResource(R.drawable.search),
+                                                        contentDescription = stringResource(R.string.search),
+                                                        tint = MaterialTheme.colorScheme.onSurfaceVariant
                                                     )
                                                 }
-                                            },
-                                            scrollBehavior = searchBarScrollBehavior,
-                                            colors = TopAppBarDefaults.topAppBarColors(
-                                                containerColor = Color.Transparent
-                                            )
+
+                                                ProfileIconWithUpdateBadge(
+                                                    currentVersion = BuildConfig.VERSION_NAME,
+                                                    onProfileClick = {
+                                                        try {
+                                                            navController.navigate("settings")
+                                                        } catch (e: Exception) {
+                                                            e.printStackTrace()
+                                                            Toast.makeText(
+                                                                context,
+                                                                R.string.navigation_error,
+                                                                Toast.LENGTH_SHORT
+                                                            ).show()
+                                                        }
+                                                    }
+                                                )
+                                            }
+                                        },
+                                        scrollBehavior = searchBarScrollBehavior,
+                                        colors = TopAppBarDefaults.topAppBarColors(
+                                            containerColor = Color.Transparent,
+                                            scrolledContainerColor = Color.Transparent
                                         )
-                                    }
+                                    )
                                 }
 
-                                // VerificaciÃ³n mÃ¡s segura para la ruta
+                                // Verificación más segura para la ruta
                                 val isSearchRoute =
                                     navBackStackEntry?.destination?.route?.startsWith("search/") == true
 
@@ -1572,6 +1546,7 @@ class MainActivity : ComponentActivity() {
                                                         }
                                                     },
                                                     onDismiss = { onActiveChange(false) },
+                                                    pureBlack = pureBlack,
                                                 )
                                             }
                                         }
@@ -1620,13 +1595,104 @@ class MainActivity : ComponentActivity() {
                                         )
                                     }
 
-                                    // Detectar automÃ¡ticamente si es tablet y landscape
                                     val configuration = LocalConfiguration.current
-                                    val isTabletLandscape = configuration.screenWidthDp >= 600 &&
-                                            configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
+                                    val isLandscape = configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
+                                    val shouldShowBottomNav = !isLandscape && shouldShowNavigationBar
+                                    val shouldShowNavigationRail = isLandscape && shouldShowNavigationBar
 
-                                    // Mostrar NavigationBar solo en phones o tablets en portrait
-                                    val shouldShowBottomNav = true
+                                    
+                                    if (shouldShowNavigationRail) {
+                                        NavigationRail(
+                                            modifier = Modifier
+                                                .align(Alignment.CenterStart)
+                                                .fillMaxHeight()
+                                                .width(84.dp)
+                                                .windowInsetsPadding(WindowInsets.systemBars.only(WindowInsetsSides.Vertical + WindowInsetsSides.Start))
+                                                .background(
+                                                    androidx.compose.ui.graphics.Brush.horizontalGradient(
+                                                        colors = listOf(
+                                                            if (pureBlack) Color.Black else MaterialTheme.colorScheme.surface.copy(alpha = 0.7f),
+                                                            Color.Transparent
+                                                        )
+                                                    )
+                                                ),
+                                            containerColor = Color.Transparent,
+                                            contentColor = if (pureBlack) Color.White else MaterialTheme.colorScheme.onSurfaceVariant,
+                                            header = {
+                                                Spacer(Modifier.height(8.dp))
+                                                Image(
+                                                    painter = painterResource(R.drawable.echofy),
+                                                    contentDescription = "Echofy",
+                                                    modifier = Modifier
+                                                        .size(36.dp)
+                                                        .clip(CircleShape)
+                                                )
+                                                Spacer(Modifier.height(12.dp))
+                                            }
+                                        ) {
+                                            navigationItems.fastForEach { screen ->
+                                                val isSelected =
+                                                    navBackStackEntry?.destination?.hierarchy?.any {
+                                                        it.route == screen.route
+                                                    } == true
+
+                                                NavigationRailItem(
+                                                    selected = isSelected,
+                                                    icon = {
+                                                        Icon(
+                                                            painter = painterResource(
+                                                                id = if (isSelected) {
+                                                                    screen.iconIdActive
+                                                                } else {
+                                                                    screen.iconIdInactive
+                                                                }
+                                                            ),
+                                                            contentDescription = stringResource(screen.titleId),
+                                                            modifier = Modifier.size(24.dp)
+                                                        )
+                                                    },
+                                                    label = {
+                                                        if (!slimNav) {
+                                                            Text(
+                                                                text = stringResource(screen.titleId),
+                                                                maxLines = 1,
+                                                                overflow = TextOverflow.Ellipsis,
+                                                                style = MaterialTheme.typography.labelSmall
+                                                            )
+                                                        }
+                                                    },
+                                                    colors = NavigationRailItemDefaults.colors(
+                                                        selectedIconColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                                                        selectedTextColor = MaterialTheme.colorScheme.onSurface,
+                                                        unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                                                        unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                                                        indicatorColor = MaterialTheme.colorScheme.primaryContainer,
+                                                    ),
+                                                    onClick = {
+                                                        if (isSelected) {
+                                                            navController.currentBackStackEntry?.savedStateHandle?.set(
+                                                                "scrollToTop",
+                                                                true
+                                                            )
+                                                        } else {
+                                                            try {
+                                                                navigateToScreen(
+                                                                    navController,
+                                                                    screen
+                                                                )
+                                                            } catch (e: Exception) {
+                                                                Log.e(
+                                                                    "Navigation",
+                                                                    "Error navigating to screen",
+                                                                    e
+                                                                )
+                                                            }
+                                                        }
+                                                    }
+                                                )
+                                            }
+                                        }
+                                    }
 
                                     if (shouldShowBottomNav) {
                                         NavigationBar(
@@ -1790,12 +1856,53 @@ class MainActivity : ComponentActivity() {
                                                 .height(bottomInsetDp)
                                         )
                                     }
+
+                                    // Global Google Assistant style voice visual overlay
+                                    val globalIsAiActiveVisual by wakeWordAiManager.isAiActiveVisual.collectAsState()
+                                    val globalCallState by wakeWordAiManager.callState.collectAsState()
+                                    val globalAwaitingCommand by wakeWordAiManager.isAwaitingCommand.collectAsState()
+                                    val globalTranscript by wakeWordAiManager.liveTranscript.collectAsState()
+
+                                    com.Chenkham.Echofy.ui.screens.ai.GoogleAssistantVisualOverlay(
+                                        visible = globalIsAiActiveVisual || globalAwaitingCommand,
+                                        modifier = Modifier
+                                            .align(Alignment.BottomCenter)
+                                            .padding(bottom = bottomInset + (if (shouldShowBottomNav) NavigationBarHeight else 0.dp) + (if (!playerBottomSheetState.isDismissed) 80.dp else 0.dp) + 8.dp),
+                                        statusText = when {
+                                            globalAwaitingCommand -> "Speak now..."
+                                            globalCallState == com.Chenkham.Echofy.ai.AiCallState.SPEAKING -> "Echofy AI Speaking..."
+                                            globalCallState == com.Chenkham.Echofy.ai.AiCallState.THINKING -> "Processing command..."
+                                            else -> "Listening for command..."
+                                        },
+                                        transcript = globalTranscript
+                                    )
+
+                                    // Persistent in-app "Driving Mode On" indicator,
+                                    // mirroring the system notification.
+                                    val globalDrivingMode by wakeWordAiManager.isDrivingMode.collectAsState()
+                                    com.Chenkham.Echofy.ui.screens.ai.DrivingModeBanner(
+                                        visible = globalDrivingMode,
+                                        modifier = Modifier
+                                            .align(Alignment.TopCenter)
+                                            .padding(top = 8.dp)
+                                    )
                                 }
                             },
                             modifier = Modifier
                                 .fillMaxSize()
                                 .nestedScroll(searchBarScrollBehavior.nestedScrollConnection)
-                                .background(MaterialTheme.colorScheme.surface)
+                                .background(
+                                    brush = Brush.verticalGradient(
+                                        colors = listOf(
+                                            MaterialTheme.colorScheme.primary.copy(alpha = 0.22f),
+                                            MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.12f),
+                                            MaterialTheme.colorScheme.surface,
+                                            MaterialTheme.colorScheme.background,
+                                        ),
+                                        startY = 0f,
+                                        endY = 1200f
+                                    )
+                                )
                         ) {
                             var transitionDirection =
                                 AnimatedContentTransitionScope.SlideDirection.Left
@@ -1908,7 +2015,7 @@ class MainActivity : ComponentActivity() {
                         }
 
                         BottomSheetMenu(
-                            state = LocalMenuState.current,
+                            state = menuState,
                         )
 
                         sharedSong?.let { song ->
@@ -1960,6 +2067,7 @@ class MainActivity : ComponentActivity() {
             }
         }
     }
+}
 
     private fun navigateToScreen(
         navController: NavHostController,
@@ -1989,13 +2097,26 @@ class MainActivity : ComponentActivity() {
             return
         }
 
+        // Launcher long-press shortcut: play a smart playlist straight away.
+        if (intent.action == com.Chenkham.Echofy.utils.DynamicShortcuts.ACTION_PLAY_PLAYLIST) {
+            intent.getStringExtra(com.Chenkham.Echofy.utils.DynamicShortcuts.EXTRA_PLAYLIST_ID)
+                ?.let { playSmartPlaylist(it) }
+            return
+        }
+
         // Handle Google Assistant "Play [query]" intent
         if (intent.action == android.provider.MediaStore.INTENT_ACTION_MEDIA_PLAY_FROM_SEARCH) {
             lifecycleScope.launch {
                 val isEnabled = dataStore.data.first()[com.Chenkham.Echofy.constants.VoiceControlEnabledKey] ?: false
 
                 if (!isEnabled) {
-                   Toast.makeText(this@MainActivity, "Voice Control not enabled", Toast.LENGTH_SHORT).show()
+                   // The intent filter stays registered, so Assistant can still route
+                   // here; explain why nothing happened instead of failing silently.
+                   Toast.makeText(
+                       this@MainActivity,
+                       "Enable Google Assistant Integration in AI settings to use voice playback",
+                       Toast.LENGTH_LONG
+                   ).show()
                    return@launch 
                 }
 
@@ -2155,11 +2276,15 @@ class MainActivity : ComponentActivity() {
                         ).first()
                     }
                     com.Chenkham.Echofy.db.entities.PlaylistEntity.DOWNLOADED_PLAYLIST_ID -> {
-                         // We would need access to DownloadUtil here, but it's injected in Service or Activity
-                         // For simplicity, we can just query all songs and filter by if we have a download index
-                         // However, accessing database directly is safer
-                         // Ideally we ask the MediaController to play a mediaID.
-                        emptyList() // Placeholder: Best practice is to use mediaController.playFromMediaId
+                        // Mirrors MediaLibrarySessionCallback: all songs whose download
+                        // completed, most recently downloaded last.
+                        val downloads = downloadUtil.downloads.value
+                        database.allSongs().first()
+                            .filter {
+                                downloads[it.id]?.state ==
+                                    androidx.media3.exoplayer.offline.Download.STATE_COMPLETED
+                            }
+                            .sortedBy { downloads[it.id]?.updateTimeMs ?: 0L }
                     }
                     else -> emptyList()
                 }
@@ -2180,8 +2305,7 @@ class MainActivity : ComponentActivity() {
                     )
                 )
             } else {
-                 // Fallback: Try to use the service's browse logic if we can't query here easily
-                 // Or just toast "No songs found"
+                Toast.makeText(this@MainActivity, "No songs found", Toast.LENGTH_SHORT).show()
             }
         }
     }
@@ -2190,12 +2314,12 @@ class MainActivity : ComponentActivity() {
         lifecycleScope.launch {
             Toast.makeText(this@MainActivity, "Searching for $query...", Toast.LENGTH_SHORT).show()
             
-            val result: Result<com.Chenkham.innertube.pages.SearchResult> = withContext(Dispatchers.IO) {
-                YouTube.search(query, com.Chenkham.innertube.YouTube.SearchFilter.FILTER_SONG)
+            val result: Result<com.arturo254.opentune.innertube.pages.SearchResult> = withContext(Dispatchers.IO) {
+                YouTube.search(query, com.arturo254.opentune.innertube.YouTube.SearchFilter.FILTER_SONG)
             }
             
             result.onSuccess { searchResult ->
-                val firstSong = searchResult.items.firstNotNullOfOrNull { it as? com.Chenkham.innertube.models.SongItem }
+                val firstSong = searchResult.items.firstNotNullOfOrNull { it as? com.arturo254.opentune.innertube.models.SongItem }
                 
                 if (firstSong != null) {
                     // Create a queue starting with this song

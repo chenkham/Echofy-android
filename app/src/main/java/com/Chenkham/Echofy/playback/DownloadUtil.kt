@@ -12,7 +12,7 @@ import androidx.media3.datasource.okhttp.OkHttpDataSource
 import androidx.media3.exoplayer.offline.Download
 import androidx.media3.exoplayer.offline.DownloadManager
 import androidx.media3.exoplayer.offline.DownloadNotificationHelper
-import com.Chenkham.innertube.YouTube
+import com.arturo254.opentune.innertube.YouTube
 import com.Chenkham.Echofy.constants.AudioQuality
 import com.Chenkham.Echofy.constants.AudioQualityKey
 import com.Chenkham.Echofy.db.MusicDatabase
@@ -106,14 +106,7 @@ constructor(
             songUrlCache[mediaId] =
                 streamUrl to System.currentTimeMillis() + (playbackData.streamExpiresInSeconds * 1000L)
                 
-            val finalBuilder = dataSpec.withUri(streamUrl.toUri())
-                .buildUpon()
-                
-            if (playbackData.userAgent != null) {
-                finalBuilder.setHttpRequestHeaders(mapOf("User-Agent" to playbackData.userAgent))
-            }
-            
-            finalBuilder.build()
+            dataSpec.withUri(streamUrl.toUri())
         }
     val downloadNotificationHelper =
         DownloadNotificationHelper(context, ExoDownloadService.CHANNEL_ID)

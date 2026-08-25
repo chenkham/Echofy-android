@@ -373,9 +373,19 @@ class YTMusicApi(
         val response = client.browse(browseId = "FEmusic_podcasts")
         
         val results = navList(response, NavPath.SINGLE_COLUMN_TAB + NavPath.SECTION_LIST, true)
-            ?: return@runCatching PodcastLandingResult()
+        if (results == null) {
+            // Returning an empty result here looked like success to the caller, so the podcast
+            // tab rendered a blank grid with no error and no way to retry. Fail loudly instead
+            // so the UI can show its error state.
+            error("Podcasts unavailable: unexpected browse response structure")
+        }
+        
+        var totalSections = 0
+        var emptySections = 0
+        var droppedItems = 0
             
         val sections = results.mapNotNull { section ->
+            totalSections++
             val sectionObj = section as? JsonObject ?: return@mapNotNull null
             
             // Try all section renderers: Carousel, Grid, and Shelf
@@ -383,7 +393,11 @@ class YTMusicApi(
             val grid = sectionObj["gridRenderer"] as? JsonObject
             val shelf = sectionObj["musicShelfRenderer"] as? JsonObject
             
-            val renderer = carousel ?: grid ?: shelf ?: return@mapNotNull null
+            val renderer = carousel ?: grid ?: shelf
+            if (renderer == null) {
+                println("YTMusicApi/Podcasts: Unknown section renderer type in section $totalSections")
+                return@mapNotNull null
+            }
             
             // Parse header for section title
             val header = renderer["header"] as? JsonObject
@@ -399,16 +413,35 @@ class YTMusicApi(
             val itemsArray = (renderer["contents"] as? JsonArray)
                 ?: (renderer["items"] as? JsonArray)
             
-            val items = itemsArray?.mapNotNull { item ->
+            if (itemsArray == null) {
+                println("YTMusicApi/Podcasts: Section \"$title\" has no items array")
+                return@mapNotNull null
+            }
+            
+            val items = itemsArray.mapNotNull { item ->
                 val itemObj = item as? JsonObject ?: return@mapNotNull null
                 
                 // Try musicTwoRowItemRenderer (most common for podcast cards)
                 val mtrir = itemObj[NavPath.MTRIR] as? JsonObject
-                if (mtrir != null) return@mapNotNull PodcastParser.parsePodcast(mtrir)
+                if (mtrir != null) {
+                    val parsed = PodcastParser.parsePodcast(mtrir)
+                    if (parsed == null) {
+                        droppedItems++
+                        println("YTMusicApi/Podcasts: Failed to parse musicTwoRowItemRenderer in \"$title\"")
+                    }
+                    return@mapNotNull parsed
+                }
                 
                 // Try musicResponsiveListItemRenderer (list-style items)
                 val mrlir = itemObj[NavPath.MRLIR] as? JsonObject
-                if (mrlir != null) return@mapNotNull PodcastParser.parsePodcast(mrlir)
+                if (mrlir != null) {
+                    val parsed = PodcastParser.parsePodcast(mrlir)
+                    if (parsed == null) {
+                        droppedItems++
+                        println("YTMusicApi/Podcasts: Failed to parse musicResponsiveListItemRenderer in \"$title\"")
+                    }
+                    return@mapNotNull parsed
+                }
                 
                 // Try musicNavigationButtonRenderer (category buttons/chips)
                 val navButton = itemObj["musicNavigationButtonRenderer"] as? JsonObject
@@ -427,14 +460,28 @@ class YTMusicApi(
                     )
                 }
                 
+                droppedItems++
+                println("YTMusicApi/Podcasts: Unknown item renderer type in \"$title\"")
                 null
-            } ?: emptyList()
+            }
             
-            if (items.isNotEmpty()) {
+            if (items.isEmpty()) {
+                emptySections++
+                println("YTMusicApi/Podcasts: Section \"$title\" has zero valid items (${itemsArray.size} raw items)")
+                null
+            } else {
                 PodcastLandingSection(title = title, items = items)
-            } else null
+            }
         }
         
+        println("YTMusicApi/Podcasts: $totalSections total sections, ${sections.size} non-empty, $emptySections empty, $droppedItems items dropped")
+
+        // If every section was dropped the screen would otherwise open completely blank with no
+        // explanation. Treat that as a failure so the caller shows its error state and retry.
+        if (sections.isEmpty()) {
+            error("Podcasts unavailable: no sections could be parsed from $totalSections returned")
+        }
+
         PodcastLandingResult(sections = sections)
     }
 

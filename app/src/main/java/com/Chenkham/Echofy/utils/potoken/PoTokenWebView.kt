@@ -7,7 +7,7 @@ import android.webkit.WebChromeClient
 import android.webkit.WebView
 import androidx.annotation.MainThread
 import androidx.collection.ArrayMap
-import com.Chenkham.innertube.YouTube
+import com.arturo254.opentune.innertube.YouTube
 import com.Chenkham.Echofy.BuildConfig
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.Dispatchers

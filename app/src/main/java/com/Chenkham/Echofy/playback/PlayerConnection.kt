@@ -181,6 +181,18 @@ class PlayerConnection(
     private var lastMediaItemIndex: Int = player.currentMediaItemIndex
     private var lastPosition: Long = 0L
 
+    // Listener adicional para actualizaciones del widget (referencia nombrada para poder removerlo)
+    private val widgetListener = object : Player.Listener {
+        override fun onEvents(player: Player, events: Player.Events) {
+            handlePlayerEvents(player, events)
+        }
+
+        override fun onPlaybackStateChanged(playbackState: Int) {
+            Log.d(TAG, "Playback state changed to: $playbackState")
+            updateConnectionState(playbackState)
+        }
+    }
+
     init {
         Log.d(TAG, "Initializing PlayerConnection")
 
@@ -190,17 +202,7 @@ class PlayerConnection(
 
         instance = this
 
-        // Listener adicional para actualizaciones del widget
-        player.addListener(object : Player.Listener {
-            override fun onEvents(player: Player, events: Player.Events) {
-                handlePlayerEvents(player, events)
-            }
-
-            override fun onPlaybackStateChanged(playbackState: Int) {
-                Log.d(TAG, "Playback state changed to: $playbackState")
-                updateConnectionState(playbackState)
-            }
-        })
+        player.addListener(widgetListener)
 
         // Setup Listen Together sync handler
         // setupJamSessionSync() - Removed feature
@@ -485,9 +487,10 @@ class PlayerConnection(
                     Log.d(TAG, "Player in state $state, calling prepare() before resuming")
                     player.prepare()
                 }
+                service.playWithFade()
+            } else {
+                service.pauseWithFade()
             }
-
-            player.playWhenReady = newPlayWhenReady
         } catch (e: Exception) {
             Log.e(TAG, "Error toggling play/pause", e)
             reportException(e)
@@ -582,8 +585,6 @@ class PlayerConnection(
         if (lastPlayWhenReady != newPlayWhenReady) {
             lastPlayWhenReady = newPlayWhenReady
             scheduleWidgetUpdate()
-            scheduleWidgetUpdate()
-            // syncPlaybackToSession() - Removed feature
         }
     }
 
@@ -674,7 +675,7 @@ class PlayerConnection(
                             prefs.remove(com.Chenkham.Echofy.constants.VisitorDataTimestampKey)
                         }
                     }
-                    com.Chenkham.innertube.YouTube.visitorData = null
+                    com.arturo254.opentune.innertube.YouTube.visitorData = null
                     Log.w(TAG, "Silently reset visitorData due to HTTP 403 error")
                 }
             }
@@ -755,8 +756,9 @@ class PlayerConnection(
 
         try {
             player.removeListener(this)
+            player.removeListener(widgetListener)
         } catch (e: Exception) {
-            Log.e(TAG, "Error removing player listener", e)
+            Log.e(TAG, "Error removing player listeners", e)
         }
 
         instance = null

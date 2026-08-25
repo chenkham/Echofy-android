@@ -1,59 +1,85 @@
-﻿package com.Chenkham.Echofy.utils
+﻿/*
+ * Echofy Project Original (2026)
+ * Arturo254 (github.com/Arturo254)
+ * Licensed Under GPL-3.0 | see git history for contributors
+ */
+
+
+
+package com.Chenkham.Echofy.utils
 
 import android.content.Context
 import android.net.ConnectivityManager
 import android.net.Network
 import android.net.NetworkCapabilities
 import android.net.NetworkRequest
-import kotlinx.coroutines.channels.awaitClose
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.callbackFlow
-import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.flow.receiveAsFlow
 
+/**
+ * Simple NetworkConnectivityObserver based on OuterTune's implementation
+ * Provides network connectivity monitoring for auto-play functionality
+ */
 class NetworkConnectivityObserver(context: Context) {
-    private val connectivityManager = context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
+    private val connectivityManager =
+        context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
 
-    val networkStatus: Flow<Boolean> = callbackFlow {
-        val callback = object : ConnectivityManager.NetworkCallback() {
-            override fun onAvailable(network: Network) {
-                trySend(true)
-            }
+    private val _networkStatus = Channel<Boolean>(Channel.CONFLATED)
+    val networkStatus = _networkStatus.receiveAsFlow()
 
-            override fun onLost(network: Network) {
-                trySend(false)
-            }
-
-            override fun onCapabilitiesChanged(
-                network: Network,
-                networkCapabilities: NetworkCapabilities
-            ) {
-                val hasInternet = networkCapabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET) &&
-                        networkCapabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_VALIDATED)
-                trySend(hasInternet)
-            }
+    private val networkCallback = object : ConnectivityManager.NetworkCallback() {
+        override fun onAvailable(network: Network) {
+            _networkStatus.trySend(true)
         }
 
+        override fun onLost(network: Network) {
+            _networkStatus.trySend(isCurrentlyConnected())
+        }
+    }
+
+    init {
         val request = NetworkRequest.Builder()
             .addCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
+            .addCapability(NetworkCapabilities.NET_CAPABILITY_NOT_RESTRICTED)
             .build()
-
-        connectivityManager.registerNetworkCallback(request, callback)
-
-        // Send initial state
-        val isConnected = connectivityManager.activeNetwork?.let { network ->
-            connectivityManager.getNetworkCapabilities(network)?.let { capabilities ->
-                capabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET) &&
-                        capabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_VALIDATED)
-            }
-        } ?: false
-        trySend(isConnected)
-
-        awaitClose {
-            connectivityManager.unregisterNetworkCallback(callback)
+        
+        try {
+            connectivityManager.registerNetworkCallback(request, networkCallback)
+        } catch (e: Exception) {
+            // Fallback: assume connected if registration fails
+            _networkStatus.trySend(true)
         }
-    }.distinctUntilChanged()
+        
+        // Send initial state
+        val isInitiallyConnected = isCurrentlyConnected()
+        _networkStatus.trySend(isInitiallyConnected)
+    }
 
     fun unregister() {
-        // Cleanup is handled by callbackFlow's awaitClose
+        connectivityManager.unregisterNetworkCallback(networkCallback)
+    }
+    
+    /**
+     * Check current connectivity state synchronously
+     */
+    fun isCurrentlyConnected(): Boolean {
+        return try {
+            val activeNetwork = connectivityManager.activeNetwork
+            val networkCapabilities = connectivityManager.getNetworkCapabilities(activeNetwork)
+            
+            // Check if we have internet capability
+            val hasInternet = networkCapabilities?.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET) == true
+            
+            // For API 23+, also check if connection is validated
+            val isValidated = if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.M) {
+                networkCapabilities?.hasCapability(NetworkCapabilities.NET_CAPABILITY_VALIDATED) == true
+            } else {
+                true // For older versions, assume validated if we have internet capability
+            }
+            
+            hasInternet && isValidated
+        } catch (e: Exception) {
+            false
+        }
     }
 }

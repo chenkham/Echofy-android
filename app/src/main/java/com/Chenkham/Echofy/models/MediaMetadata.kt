@@ -1,11 +1,20 @@
-﻿package com.Chenkham.Echofy.models
+﻿/*
+ * Echofy Project Original (2026)
+ * Arturo254 (github.com/Arturo254)
+ * Licensed Under GPL-3.0 | see git history for contributors
+ */
+
+
+
+package com.Chenkham.Echofy.models
 
 import androidx.compose.runtime.Immutable
-import com.Chenkham.innertube.models.SongItem
+import com.arturo254.opentune.innertube.models.SongItem
 import com.Chenkham.Echofy.db.entities.Song
 import com.Chenkham.Echofy.db.entities.SongEntity
 import com.Chenkham.Echofy.ui.utils.resize
 import java.io.Serializable
+import java.time.LocalDateTime
 
 @Immutable
 data class MediaMetadata(
@@ -18,16 +27,34 @@ data class MediaMetadata(
     val setVideoId: String? = null,
     val explicit: Boolean = false,
     val liked: Boolean = false,
+    val likedDate: LocalDateTime? = null,
+    val inLibrary: LocalDateTime? = null,
+    val spotifyTrackId: String? = null,
 ) : Serializable {
+    companion object {
+        private const val serialVersionUID = 1L
+
+        const val UNKNOWN_DURATION = -1
+    }
+
     data class Artist(
         val id: String?,
         val name: String,
-    ) : Serializable
+        val thumbnailUrl: String? = null,
+    ) : Serializable {
+        companion object {
+            private const val serialVersionUID = 1L
+        }
+    }
 
     data class Album(
         val id: String,
         val title: String,
-    ) : Serializable
+    ) : Serializable {
+        companion object {
+            private const val serialVersionUID = 1L
+        }
+    }
 
     fun toSongEntity() =
         SongEntity(
@@ -37,34 +64,50 @@ data class MediaMetadata(
             thumbnailUrl = thumbnailUrl,
             albumId = album?.id,
             albumName = album?.title,
+            explicit = explicit,
+            liked = liked,
+            likedDate = likedDate,
+            inLibrary = inLibrary,
         )
 }
+
+private fun resolveAlbum(
+    album: com.Chenkham.Echofy.db.entities.Album?,
+    albumId: String?,
+    albumName: String?
+): MediaMetadata.Album? =
+    album?.let {
+        MediaMetadata.Album(id = it.id, title = it.title)
+    } ?: albumId?.let {
+        MediaMetadata.Album(id = it, title = albumName.orEmpty())
+    }
+
 
 fun Song.toMediaMetadata() =
     MediaMetadata(
         id = song.id,
         title = song.title,
-        artists =
-            artists.map {
-                MediaMetadata.Artist(
-                    id = it.id,
-                    name = it.name,
-                )
-            },
+        artists = artists.map {
+            MediaMetadata.Artist(
+                id = it.id,
+                name = it.name,
+                thumbnailUrl = it.thumbnailUrl,
+            )
+        },
         duration = song.duration,
         thumbnailUrl = song.thumbnailUrl,
         album =
-            album?.let {
-                MediaMetadata.Album(
-                    id = it.id,
-                    title = it.title,
-                )
-            } ?: song.albumId?.let { albumId ->
-                MediaMetadata.Album(
-                    id = albumId,
-                    title = song.albumName.orEmpty(),
-                )
-            },
+        album?.let {
+            MediaMetadata.Album(
+                id = it.id,
+                title = it.title,
+            )
+        } ?: song.albumId?.let { albumId ->
+            MediaMetadata.Album(
+                id = albumId,
+                title = song.albumName.orEmpty(),
+            )
+        },
     )
 
 fun SongItem.toMediaMetadata() =
@@ -72,21 +115,22 @@ fun SongItem.toMediaMetadata() =
         id = id,
         title = title,
         artists =
-            artists.map {
-                MediaMetadata.Artist(
-                    id = it.id,
-                    name = it.name,
-                )
-            },
-        duration = duration ?: -1,
-        thumbnailUrl = thumbnail.resize(544, 544),
+        artists.map {
+            MediaMetadata.Artist(
+                id = it.id,
+                name = it.name,
+                thumbnailUrl = null,
+            )
+        },
+        duration = duration ?: MediaMetadata.UNKNOWN_DURATION,
+        thumbnailUrl = thumbnail.resize(544, 544,),
         album =
-            album?.let {
-                MediaMetadata.Album(
-                    id = it.id,
-                    title = it.name,
-                )
-            },
+        album?.let {
+            MediaMetadata.Album(
+                id = it.id,
+                title = it.name,
+            )
+        },
+        setVideoId = setVideoId,
         explicit = explicit,
-        setVideoId = setVideoId
     )

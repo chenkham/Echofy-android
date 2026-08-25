@@ -1,5 +1,6 @@
-﻿package com.Chenkham.Echofy.ui.screens.settings
+package com.Chenkham.Echofy.ui.screens.settings
 
+import androidx.compose.ui.graphics.Color
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
@@ -20,6 +21,9 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.WindowInsetsSides
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
@@ -94,74 +98,75 @@ fun AboutScreen(
     val uriHandler = LocalUriHandler.current
     val shimmerBrush = shimmerEffect()
 
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .windowInsetsPadding(LocalPlayerAwareWindowInsets.current)
-            .verticalScroll(rememberScrollState()),
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        Spacer(Modifier.height(20.dp))
-
-        // Image with shimmer effect
-        Box(
+    Box(modifier = Modifier.fillMaxSize()) {
+        Column(
             modifier = Modifier
-                .size(90.dp)
-                .clip(CircleShape)
-                .background(MaterialTheme.colorScheme.surfaceColorAtElevation(NavigationBarDefaults.Elevation))
+                .fillMaxSize()
+                .windowInsetsPadding(
+                    LocalPlayerAwareWindowInsets.current.only(
+                        WindowInsetsSides.Horizontal + WindowInsetsSides.Bottom
+                    )
+                )
+                .verticalScroll(rememberScrollState()),
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Image(
-                painter = painterResource(R.drawable.echofy_monochrome),
-                contentDescription = null,
-                colorFilter = ColorFilter.tint(
-                    MaterialTheme.colorScheme.onBackground,
-                    BlendMode.SrcIn
-                ),
-                modifier = Modifier
-                    .matchParentSize()
-                    .clickable { }
+            Spacer(
+                Modifier.windowInsetsPadding(
+                    LocalPlayerAwareWindowInsets.current.only(
+                        WindowInsetsSides.Top
+                    )
+                )
             )
+            Spacer(Modifier.height(64.dp))
 
-            // Shimmer effect overlay only for the image
+            // Image with shimmer effect
             Box(
                 modifier = Modifier
-                    .matchParentSize()
-                    .background(shimmerBrush)
-            )
-        }
+                    .size(90.dp)
+                    .clip(CircleShape)
+                    .background(MaterialTheme.colorScheme.surfaceColorAtElevation(NavigationBarDefaults.Elevation))
+            ) {
+                Image(
+                    painter = painterResource(R.drawable.echofy_monochrome),
+                    contentDescription = null,
+                    colorFilter = ColorFilter.tint(
+                        MaterialTheme.colorScheme.onBackground,
+                        BlendMode.SrcIn
+                    ),
+                    modifier = Modifier
+                        .matchParentSize()
+                        .clickable { }
+                )
 
+                // Shimmer effect overlay only for the image
+                Box(
+                    modifier = Modifier
+                        .matchParentSize()
+                        .background(shimmerBrush)
+                )
+            }
 
-        Row(
-            verticalAlignment = Alignment.Top,
-        ) {
-            Text(
-                text = "Echofy",
-                style = MaterialTheme.typography.headlineSmall,
-                fontWeight = FontWeight.Bold,
-                modifier = Modifier.padding(top = 8.dp, bottom = 4.dp)
-            )
-        }
+            Spacer(Modifier.height(16.dp))
 
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Spacer(Modifier.width(10.dp))
 
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Spacer(Modifier.width(10.dp))
-
-            Text(
-                text = BuildConfig.VERSION_NAME.uppercase(),
-                style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.secondary,
-                modifier = Modifier
-                    .border(
-                        width = 1.dp,
-                        color = MaterialTheme.colorScheme.secondary,
-                        shape = CircleShape
-                    )
-                    .padding(
-                        horizontal = 6.dp,
-                        vertical = 2.dp
-                    )
-            )
-        }
+                Text(
+                    text = BuildConfig.VERSION_NAME.uppercase(),
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.secondary,
+                    modifier = Modifier
+                        .border(
+                            width = 1.dp,
+                            color = MaterialTheme.colorScheme.secondary,
+                            shape = CircleShape
+                        )
+                        .padding(
+                            horizontal = 6.dp,
+                            vertical = 2.dp
+                        )
+                )
+            }
 
         Spacer(Modifier.height(10.dp))
 
@@ -194,7 +199,7 @@ fun AboutScreen(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 IconButton(
-                    onClick = { uriHandler.openUri("https://t.me/+wvOclqGgyqE0YzA1") }
+                    onClick = { uriHandler.openUri("https://t.me/+jAbu2Fl8X69lZmNl") }
                 ) {
                     Icon(
                         modifier = Modifier.size(24.dp),
@@ -241,10 +246,8 @@ fun AboutScreen(
             }
         },
         scrollBehavior = scrollBehavior,
-        colors = TopAppBarDefaults.topAppBarColors(
-            containerColor = MaterialTheme.colorScheme.surface,
-            titleContentColor = MaterialTheme.colorScheme.onSurface,
-        )
+        colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent, scrolledContainerColor = Color.Transparent)
     )
+    }
 }
 

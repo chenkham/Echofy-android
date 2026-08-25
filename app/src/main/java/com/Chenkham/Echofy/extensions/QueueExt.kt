@@ -1,15 +1,19 @@
-﻿package com.Chenkham.Echofy.extensions
+﻿/*
+ * Echofy Project Original (2026)
+ * Arturo254 (github.com/Arturo254)
+ * Licensed Under GPL-3.0 | see git history for contributors
+ */
 
-import com.Chenkham.Echofy.models.MediaMetadata
+
+
+package com.Chenkham.Echofy.extensions
+
 import com.Chenkham.Echofy.models.PersistQueue
 import com.Chenkham.Echofy.models.QueueData
 import com.Chenkham.Echofy.models.QueueType
-import com.Chenkham.Echofy.playback.queues.ListQueue
-import com.Chenkham.Echofy.playback.queues.LocalAlbumRadio
-import com.Chenkham.Echofy.playback.queues.Queue
-import com.Chenkham.Echofy.playback.queues.YouTubeAlbumRadio
-import com.Chenkham.Echofy.playback.queues.YouTubeQueue
-
+import com.Chenkham.Echofy.models.MediaMetadata
+import com.Chenkham.Echofy.playback.queues.*
+import com.Chenkham.Echofy.db.entities.AlbumEntity
 
 fun Queue.toPersistQueue(
     title: String?,

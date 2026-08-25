@@ -1,9 +1,9 @@
-﻿package com.Chenkham.Echofy.viewmodels
+package com.Chenkham.Echofy.viewmodels
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.Chenkham.innertube.YouTube
-import com.Chenkham.innertube.pages.MoodAndGenres
+import com.arturo254.opentune.innertube.YouTube
+import com.arturo254.opentune.innertube.pages.MoodAndGenres
 import com.Chenkham.Echofy.utils.reportException
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow

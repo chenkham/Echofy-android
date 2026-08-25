@@ -378,7 +378,7 @@
     <string name="restore_failed">Gagal mengembalikan cadangan</string>
 
     <string name="discord_integration">Integrasi Perselisihan</string>
-    <string name="discord_information">Echofy menggunakan pustaka Kizzyrpc untuk mengatur status akun perselisihan Anda. Ini melibatkan penggunaan koneksi gateway Discord, yang dapat dianggap sebagai pelanggaran tos perselisihan. Namun, tidak ada kasus akun pengguna yang diketahui yang ditangguhkan karena alasan ini. Gunakan dengan risiko Anda sendiri.  OpenTunne hanya akan mengekstrak token Anda, dan yang lainnya disimpan secara lokal.</string>
+    <string name="discord_information">Echofy menggunakan pustaka Kizzyrpc untuk mengatur status akun perselisihan Anda. Ini melibatkan penggunaan koneksi gateway Discord, yang dapat dianggap sebagai pelanggaran tos perselisihan. Namun, tidak ada kasus akun pengguna yang diketahui yang ditangguhkan karena alasan ini. Gunakan dengan risiko Anda sendiri.  Echofy hanya akan mengekstrak token Anda, dan yang lainnya disimpan secara lokal.</string>
     <string name="dismiss">Membubarkan</string>
     <string name="options">Opsi</string>
     <string name="preview">Pratinjau</string>

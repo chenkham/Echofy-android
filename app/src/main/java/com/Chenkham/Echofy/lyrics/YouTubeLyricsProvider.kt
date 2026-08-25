@@ -1,8 +1,8 @@
-﻿package com.Chenkham.Echofy.lyrics
+package com.Chenkham.Echofy.lyrics
 
 import android.content.Context
-import com.Chenkham.innertube.YouTube
-import com.Chenkham.innertube.models.WatchEndpoint
+import com.arturo254.opentune.innertube.YouTube
+import com.arturo254.opentune.innertube.models.WatchEndpoint
 
 object YouTubeLyricsProvider : LyricsProvider {
     override val name = "YouTube Music"

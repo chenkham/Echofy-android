@@ -1,18 +1,23 @@
-﻿package com.Chenkham.Echofy.viewmodels
+package com.Chenkham.Echofy.viewmodels
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.Chenkham.innertube.YouTube
+import com.arturo254.opentune.innertube.YouTube
 import com.Chenkham.Echofy.constants.statToPeriod
+import com.Chenkham.Echofy.constants.ListeningStreakBestKey
 import com.Chenkham.Echofy.db.MusicDatabase
 import com.Chenkham.Echofy.db.update
 import com.Chenkham.Echofy.ui.screens.OptionStats
+import com.Chenkham.Echofy.utils.ListeningStreak
+import com.Chenkham.Echofy.utils.dataStore
 import com.Chenkham.Echofy.utils.reportException
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
@@ -27,10 +32,24 @@ import javax.inject.Inject
 class StatsViewModel
 @Inject
 constructor(
+    @ApplicationContext private val context: android.content.Context,
     val database: MusicDatabase,
 ) : ViewModel() {
     val selectedOption = MutableStateFlow(OptionStats.CONTINUOUS)
     val indexChips = MutableStateFlow(0)
+
+    /** Current consecutive-day listening streak, or 0 when the feature is off. */
+    val listeningStreak = MutableStateFlow(0)
+
+    /** Longest streak ever reached. */
+    val bestStreak = MutableStateFlow(0)
+
+    init {
+        viewModelScope.launch {
+            listeningStreak.value = ListeningStreak.refresh(context, database)
+            bestStreak.value = context.dataStore.data.first()[ListeningStreakBestKey] ?: 0
+        }
+    }
 
     val mostPlayedSongsStats =
         combine(

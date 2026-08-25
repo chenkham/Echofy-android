@@ -175,7 +175,7 @@ fun LibraryAlbumsScreen(
             Text(
                 text = pluralStringResource(R.plurals.n_album, albums.size, albums.size),
                 style = MaterialTheme.typography.titleSmall,
-                color = MaterialTheme.colorScheme.secondary,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
 
             IconButton(
@@ -192,6 +192,7 @@ fun LibraryAlbumsScreen(
                                 LibraryViewType.GRID -> R.drawable.grid_view
                             },
                         ),
+                    tint = MaterialTheme.colorScheme.onSurface,
                     contentDescription = null,
                 )
             }

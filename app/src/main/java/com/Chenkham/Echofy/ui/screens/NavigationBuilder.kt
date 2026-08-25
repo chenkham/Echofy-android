@@ -1,5 +1,12 @@
 package com.Chenkham.Echofy.ui.screens
 
+import com.Chenkham.Echofy.ui.screens.settings.AODSettings
+import com.Chenkham.Echofy.ui.screens.settings.PoTokenScreen
+import com.Chenkham.Echofy.ui.screens.settings.ThemeCreatorScreen
+import com.Chenkham.Echofy.ui.screens.settings.PalettePickerScreen
+import com.Chenkham.Echofy.ui.screens.settings.AndroidAutoSettings
+import com.Chenkham.Echofy.ui.screens.settings.UpdateScreen
+
 import android.annotation.SuppressLint
 import android.os.Build
 import androidx.annotation.RequiresApi
@@ -38,6 +45,8 @@ import com.Chenkham.Echofy.ui.screens.settings.DiscordLoginScreen
 import com.Chenkham.Echofy.ui.screens.settings.DiscordSettings
 import com.Chenkham.Echofy.ui.screens.settings.PlayerSettings
 import com.Chenkham.Echofy.ui.screens.settings.PrivacySettings
+import com.Chenkham.Echofy.ui.screens.settings.RadioSettings
+import com.Chenkham.Echofy.ui.screens.settings.IntegrationSettings
 import com.Chenkham.Echofy.ui.screens.settings.SettingsScreen
 import com.Chenkham.Echofy.ui.screens.settings.StorageSettings
 import com.Chenkham.Echofy.ui.screens.settings.EqualizerScreen
@@ -47,6 +56,7 @@ import com.Chenkham.Echofy.ui.screens.settings.GeneralSettings
 import com.Chenkham.Echofy.ui.screens.settings.PremiumFeaturesSettings
 import com.Chenkham.Echofy.ui.screens.settings.PremiumVisualsSettings
 import com.Chenkham.Echofy.ui.screens.settings.LastFmSettings
+import com.Chenkham.Echofy.ui.screens.settings.AiSettings
 
 import com.Chenkham.Echofy.ui.utils.TouchBlockingWrapper
 import kotlinx.coroutines.launch
@@ -96,7 +106,8 @@ fun NavGraphBuilder.navigationBuilder(
     }
     composable(Screens.Home.route) {
         TouchBlockingWrapper {
-            HomeScreen(navController)
+            // adManager was never passed here, so none of the home ad slots ever rendered.
+            HomeScreen(navController, adManager = adManager)
         }
     }
 
@@ -114,7 +125,7 @@ fun NavGraphBuilder.navigationBuilder(
         Screens.Library.route,
     ) {
         TouchBlockingWrapper {
-            LibraryScreen(navController)
+            LibraryScreen(navController, adManager = adManager)
         }
     }
 
@@ -122,12 +133,17 @@ fun NavGraphBuilder.navigationBuilder(
         Screens.Premium.route
     ) {
         TouchBlockingWrapper {
-            com.Chenkham.Echofy.ui.screens.premium.SupportScreen()
+            com.Chenkham.Echofy.ui.screens.premium.SupportScreen(adManager = adManager)
         }
     }
     composable(Screens.Explore.route) {
         TouchBlockingWrapper {
-            ExploreScreen(navController, scrollBehavior)
+            ExploreScreen(navController, scrollBehavior, adManager = adManager)
+        }
+    }
+    composable(Screens.AiAssistant.route) {
+        TouchBlockingWrapper {
+            com.Chenkham.Echofy.ui.screens.ai.AiAssistantScreen()
         }
     }
 
@@ -384,6 +400,16 @@ fun NavGraphBuilder.navigationBuilder(
             ContentSettings(navController, scrollBehavior)
         }
     }
+    composable("settings/radio") {
+        TouchBlockingWrapper {
+            RadioSettings(navController, scrollBehavior)
+        }
+    }
+    composable("settings/integrations") {
+        TouchBlockingWrapper {
+            IntegrationSettings(navController, scrollBehavior)
+        }
+    }
     composable("settings/player") {
         TouchBlockingWrapper {
             PlayerSettings(navController, scrollBehavior)
@@ -439,6 +465,11 @@ fun NavGraphBuilder.navigationBuilder(
             GeneralSettings(navController, scrollBehavior)
         }
     }
+    composable("settings/ai") {
+        TouchBlockingWrapper {
+            AiSettings(navController, scrollBehavior)
+        }
+    }
     composable("settings/premium_features") {
         TouchBlockingWrapper {
             PremiumFeaturesSettings(navController, scrollBehavior)
@@ -461,6 +492,65 @@ fun NavGraphBuilder.navigationBuilder(
         TouchBlockingWrapper {
             val chained = backStackEntry.arguments?.getBoolean("chained") ?: false
             LoginScreen(navController, chained)
+        }
+    }
+
+    composable("settings/aod") {
+        AODSettings(
+            navController = navController,
+            scrollBehavior = scrollBehavior,
+        )
+    }
+
+    composable("settings/potoken") {
+        PoTokenScreen(
+            navController = navController,
+            scrollBehavior = scrollBehavior,
+        )
+    }
+
+    composable("settings/theme_creator") {
+        ThemeCreatorScreen(
+            navController = navController,
+        )
+    }
+
+    composable("settings/palette_picker") {
+        PalettePickerScreen(
+            navController = navController,
+        )
+    }
+
+    composable("settings/android_auto") {
+        AndroidAutoSettings(
+            navController = navController,
+            scrollBehavior = scrollBehavior,
+        )
+    }
+
+    composable("settings/update") {
+        UpdateScreen(
+            navController = navController,
+            scrollBehavior = scrollBehavior,
+        )
+    }
+
+    composable("settings/widget") {
+        com.Chenkham.Echofy.ui.component.WidgetSettings(
+            navController = navController,
+            scrollBehavior = scrollBehavior,
+        )
+    }
+
+    composable("always_on_display") {
+        androidx.compose.ui.window.Dialog(
+            onDismissRequest = { navController.navigateUp() },
+            properties = androidx.compose.ui.window.DialogProperties(
+                usePlatformDefaultWidth = false,
+                decorFitsSystemWindows = false,
+            )
+        ) {
+            com.Chenkham.Echofy.ui.screens.AlwaysOnDisplayScreen(navController)
         }
     }
 }

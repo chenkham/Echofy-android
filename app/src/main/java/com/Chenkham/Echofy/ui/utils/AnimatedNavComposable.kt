@@ -5,7 +5,9 @@ import androidx.compose.animation.EnterExitState
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.pointer.pointerInput
 
@@ -18,11 +20,14 @@ import androidx.compose.ui.input.pointer.pointerInput
 fun AnimatedVisibilityScope.TouchBlockingWrapper(
     content: @Composable () -> Unit
 ) {
-    val isExiting by transition.currentState.let {
-        // We consider the screen "exiting" when the transition target is PostExit
-        // OR when the transition is running and heading toward PostExit.
-        androidx.compose.runtime.derivedStateOf {
-            transition.targetState == EnterExitState.PostExit
+    // Only block touches while this screen is actually animating out. The previous version
+    // read transition.currentState outside the derivedStateOf and compared targetState, so
+    // the blocker could stay mounted after the animation settled and swallow the first tap
+    // on the new screen - the "have to tap twice" symptom.
+    val isExiting by remember(transition) {
+        derivedStateOf {
+            transition.currentState != transition.targetState &&
+                transition.targetState == EnterExitState.PostExit
         }
     }
 

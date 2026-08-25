@@ -1,14 +1,26 @@
+/*
+ * Echofy Project Original (2026)
+ * Arturo254 (github.com/Arturo254)
+ * Licensed Under GPL-3.0 | see git history for contributors
+ */
+
+
+
 package com.Chenkham.Echofy.ui.screens.settings
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -19,9 +31,14 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Slider
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.TopAppBar
+import androidx.compose.ui.graphics.Color
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.TopAppBarScrollBehavior
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -29,33 +46,34 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalUriHandler
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
-import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
-import com.Chenkham.Echofy.R
-import com.Chenkham.Echofy.constants.EnableLastFMScrobblingKey
-import com.Chenkham.Echofy.constants.LastFMUseNowPlaying
-import com.Chenkham.Echofy.constants.LastFmSessionKeyKey
-import com.Chenkham.Echofy.constants.LastFmUsernameKey
-import com.Chenkham.Echofy.constants.ScrobbleDelayPercentKey
-import com.Chenkham.Echofy.constants.ScrobbleDelaySecondsKey
-import com.Chenkham.Echofy.constants.ScrobbleMinSongDurationKey
-import com.Chenkham.Echofy.lastfm.LastFmException
-import com.Chenkham.Echofy.lastfm.LastFmGateway
-import com.Chenkham.Echofy.ui.component.PreferenceEntry
-import com.Chenkham.Echofy.ui.component.SettingsGeneralCategory
-import com.Chenkham.Echofy.ui.component.SettingsPage
-import com.Chenkham.Echofy.ui.component.SwitchPreference
-import com.Chenkham.Echofy.ui.component.TextFieldDialog
-import com.Chenkham.Echofy.utils.rememberPreference
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import com.Chenkham.Echofy.LocalPlayerAwareWindowInsets
+import com.Chenkham.Echofy.R
+import com.Chenkham.Echofy.constants.EnableLastFMScrobblingKey
+import com.Chenkham.Echofy.constants.LastFMSessionKey
+import com.Chenkham.Echofy.constants.LastFMUsernameKey
+import com.Chenkham.Echofy.constants.LastFMUseNowPlaying
+import com.Chenkham.Echofy.constants.ScrobbleDelayPercentKey
+import com.Chenkham.Echofy.constants.ScrobbleMinSongDurationKey
+import com.Chenkham.Echofy.constants.ScrobbleDelaySecondsKey
+import com.Chenkham.Echofy.ui.component.IconButton
+import com.Chenkham.Echofy.ui.component.PreferenceEntry
+import com.Chenkham.Echofy.ui.component.PreferenceGroupTitle
+import com.Chenkham.Echofy.ui.component.SwitchPreference
+import com.Chenkham.Echofy.ui.utils.backToMain
+import com.Chenkham.Echofy.utils.rememberPreference
+import com.Chenkham.Echofy.utils.reportException
+import com.arturo254.opentune.lastfm.LastFM
+import timber.log.Timber
 import kotlin.math.roundToInt
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -63,62 +81,91 @@ import kotlin.math.roundToInt
 fun LastFmSettings(
     navController: NavController,
     scrollBehavior: TopAppBarScrollBehavior,
+) = LastFMSettings(navController, scrollBehavior)
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun LastFMSettings(
+    navController: NavController,
+    scrollBehavior: TopAppBarScrollBehavior,
 ) {
-    var sessionKey by rememberPreference(LastFmSessionKeyKey, "")
-    var username by rememberPreference(LastFmUsernameKey, "")
-    var scrobbleEnabled by rememberPreference(EnableLastFMScrobblingKey, false)
-    val (nowPlayingEnabled, onNowPlayingEnabledChange) = rememberPreference(LastFMUseNowPlaying, true)
-    var delayPercent by rememberPreference(ScrobbleDelayPercentKey, 50f)
-    var minSongDuration by rememberPreference(ScrobbleMinSongDurationKey, 30)
-    var delaySeconds by rememberPreference(ScrobbleDelaySecondsKey, 240)
-
-    val uriHandler = LocalUriHandler.current
     val coroutineScope = rememberCoroutineScope()
-    var showMinDurationDialog by remember { mutableStateOf(false) }
-    var showDelaySecondsDialog by remember { mutableStateOf(false) }
-    var showLoginDialog by remember { mutableStateOf(false) }
-    var isLoggingIn by remember { mutableStateOf(false) }
-    var loginError by remember { mutableStateOf<String?>(null) }
 
-    val isLoggedIn = sessionKey.isNotBlank()
+    var lastfmUsername by rememberPreference(LastFMUsernameKey, "")
+    var lastfmSession by rememberPreference(LastFMSessionKey, "")
+
+    val isLoggedIn = remember(lastfmSession) {
+        lastfmSession.isNotEmpty()
+    }
+
+    val (useNowPlaying, onUseNowPlayingChange) = rememberPreference(
+        key = LastFMUseNowPlaying,
+        defaultValue = false
+    )
+
+    val (lastfmScrobbling, onlastfmScrobblingChange) = rememberPreference(
+        key = EnableLastFMScrobblingKey,
+        defaultValue = false
+    )
+
+    val (scrobbleDelayPercent, onScrobbleDelayPercentChange) = rememberPreference(
+        ScrobbleDelayPercentKey,
+        defaultValue = LastFM.DEFAULT_SCROBBLE_DELAY_PERCENT
+    )
+
+    val (minTrackDuration, onMinTrackDurationChange) = rememberPreference(
+        ScrobbleMinSongDurationKey,
+        defaultValue = LastFM.DEFAULT_SCROBBLE_MIN_SONG_DURATION
+    )
+
+    val (scrobbleDelaySeconds, onScrobbleDelaySecondsChange) = rememberPreference(
+        ScrobbleDelaySecondsKey,
+        defaultValue = LastFM.DEFAULT_SCROBBLE_DELAY_SECONDS
+    )
+
+    var showLoginDialog by rememberSaveable { mutableStateOf(false) }
+    var isLoggingIn by rememberSaveable { mutableStateOf(false) }
+    var loginError by rememberSaveable { mutableStateOf<String?>(null) }
 
     if (showLoginDialog) {
         var tempUsername by rememberSaveable { mutableStateOf("") }
         var tempPassword by rememberSaveable { mutableStateOf("") }
 
         AlertDialog(
-            onDismissRequest = {
+            onDismissRequest = { 
                 if (!isLoggingIn) {
                     showLoginDialog = false
                     loginError = null
                 }
             },
-            title = { Text("Login to Last.fm") },
+            title = { Text(stringResource(R.string.login)) },
             text = {
                 Column(
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     OutlinedTextField(
                         value = tempUsername,
-                        onValueChange = {
+                        onValueChange = { 
                             tempUsername = it
                             loginError = null
                         },
-                        label = { Text("Username") },
+                        label = { Text(stringResource(R.string.username)) },
                         singleLine = true,
                         enabled = !isLoggingIn,
+                        modifier = Modifier.fillMaxWidth()
                     )
                     OutlinedTextField(
                         value = tempPassword,
-                        onValueChange = {
+                        onValueChange = { 
                             tempPassword = it
                             loginError = null
                         },
-                        label = { Text("Password") },
+                        label = { Text(stringResource(R.string.password)) },
                         singleLine = true,
                         visualTransformation = PasswordVisualTransformation(),
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
                         enabled = !isLoggingIn,
+                        modifier = Modifier.fillMaxWidth()
                     )
 
                     loginError?.let { error ->
@@ -126,23 +173,26 @@ fun LastFmSettings(
                             text = error,
                             color = MaterialTheme.colorScheme.error,
                             style = MaterialTheme.typography.bodySmall,
-                            modifier = Modifier.padding(top = 8.dp)
+                            modifier = Modifier.padding(top = 4.dp)
                         )
                     }
 
                     if (isLoggingIn) {
                         Row(
-                            modifier = Modifier.fillMaxWidth(),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(top = 8.dp),
                             horizontalArrangement = Arrangement.Center,
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             CircularProgressIndicator(
-                                modifier = Modifier.size(16.dp)
+                                modifier = Modifier.size(24.dp),
+                                strokeWidth = 2.dp
                             )
-                            Spacer(modifier = Modifier.size(8.dp))
                             Text(
-                                text = "Logging in...",
-                                style = MaterialTheme.typography.bodySmall
+                                text = stringResource(R.string.logging_in),
+                                style = MaterialTheme.typography.bodyMedium,
+                                modifier = Modifier.padding(start = 8.dp)
                             )
                         }
                     }
@@ -152,191 +202,342 @@ fun LastFmSettings(
                 TextButton(
                     onClick = {
                         if (tempUsername.isBlank() || tempPassword.isBlank()) {
-                            loginError = "Please enter both username and password"
+                            loginError = "Please enter username and password"
                             return@TextButton
                         }
-
+                        
+                        if (!LastFM.isInitialized()) {
+                            loginError = "Last.fm API key not configured"
+                            Timber.e("Last.fm API key not configured")
+                            return@TextButton
+                        }
+                        
                         isLoggingIn = true
                         loginError = null
-
+                        
                         coroutineScope.launch(Dispatchers.IO) {
-                            try {
-                                val session = LastFmGateway.getMobileSession(tempUsername, tempPassword)
-                                username = session.username
-                                sessionKey = session.sessionKey
-                                scrobbleEnabled = true
-
-                                withContext(Dispatchers.Main) {
-                                    isLoggingIn = false
-                                    showLoginDialog = false
-                                    loginError = null
-                                }
-                            } catch (e: Exception) {
-                                withContext(Dispatchers.Main) {
-                                    isLoggingIn = false
-                                    loginError = when (e) {
-                                        is LastFmException -> {
-                                            when (e.code) {
-                                                4 -> "Invalid username or password"
-                                                else -> "Login failed: ${e.message}"
-                                            }
-                                        }
-                                        else -> "Network error. Please check your connection."
+                            LastFM.getMobileSession(tempUsername, tempPassword)
+                                .onSuccess { auth ->
+                                    withContext(Dispatchers.Main) {
+                                        lastfmUsername = auth.session.name
+                                        lastfmSession = auth.session.key
+                                        LastFM.sessionKey = auth.session.key
+                                        isLoggingIn = false
+                                        showLoginDialog = false
+                                        loginError = null
+                                        Timber.d("Last.fm login successful for user: ${auth.session.name}")
                                     }
                                 }
-                            }
+                                .onFailure { exception ->
+                                    withContext(Dispatchers.Main) {
+                                        isLoggingIn = false
+                                        val errorMessage = when (exception) {
+                                            is LastFM.LastFmException -> {
+                                                // Last.fm API error codes:
+                                                // 4 = Invalid authentication token
+                                                // 10 = Invalid API key
+                                                // 13 = Invalid method signature
+                                                // 26 = API key suspended
+                                                when (exception.code) {
+                                                    4 -> "Invalid username or password"
+                                                    10 -> "Invalid API key. Please contact the developer."
+                                                    13 -> "Authentication error. Please try again."
+                                                    26 -> "API key suspended. Please contact the developer."
+                                                    else -> exception.message
+                                                }
+                                            }
+                                            else -> when {
+                                                exception.message?.contains("network", ignoreCase = true) == true ||
+                                                exception.message?.contains("connect", ignoreCase = true) == true ->
+                                                    "Network error. Check your connection."
+                                                else -> exception.message ?: "Login failed. Please try again."
+                                            }
+                                        }
+                                        loginError = errorMessage
+                                        Timber.e(exception, "Last.fm login failed")
+                                        reportException(exception)
+                                    }
+                                }
                         }
                     },
-                    enabled = !isLoggingIn
+                    enabled = !isLoggingIn && tempUsername.isNotBlank() && tempPassword.isNotBlank()
                 ) {
-                    Text("Login")
+                    Text(stringResource(R.string.login))
                 }
             },
             dismissButton = {
                 TextButton(
                     onClick = {
-                        if (!isLoggingIn) {
-                            showLoginDialog = false
-                            loginError = null
-                        }
+                        showLoginDialog = false
+                        loginError = null
                     },
                     enabled = !isLoggingIn
                 ) {
-                    Text("Cancel")
+                    Text(stringResource(R.string.cancel))
                 }
             }
         )
     }
 
-    if (showMinDurationDialog) {
-        TextFieldDialog(
-            title = { Text(stringResource(R.string.lastfm_min_song_duration)) },
-            initialTextFieldValue = TextFieldValue(minSongDuration.toString()),
-            onDone = { minSongDuration = it.toIntOrNull()?.coerceAtLeast(0) ?: minSongDuration },
-            onDismiss = { showMinDurationDialog = false },
-            isInputValid = { it.toIntOrNull() != null },
-        )
-    }
-
-    if (showDelaySecondsDialog) {
-        TextFieldDialog(
-            title = { Text(stringResource(R.string.lastfm_scrobble_delay_seconds)) },
-            initialTextFieldValue = TextFieldValue(delaySeconds.toString()),
-            onDone = { delaySeconds = it.toIntOrNull()?.coerceAtLeast(0) ?: delaySeconds },
-            onDismiss = { showDelaySecondsDialog = false },
-            isInputValid = { it.toIntOrNull() != null },
-        )
-    }
-
-    SettingsPage(
-        title = stringResource(R.string.lastfm_integration),
-        navController = navController,
-        scrollBehavior = scrollBehavior
+    Column(
+        Modifier
+            .windowInsetsPadding(LocalPlayerAwareWindowInsets.current.only(WindowInsetsSides.Horizontal + WindowInsetsSides.Bottom))
+            .verticalScroll(rememberScrollState())
     ) {
-        SettingsGeneralCategory(
+        Spacer(
+            Modifier.windowInsetsPadding(
+                LocalPlayerAwareWindowInsets.current.only(
+                    WindowInsetsSides.Top
+                )
+            )
+        )
+
+        PreferenceGroupTitle(
             title = stringResource(R.string.account),
-            items = listOf(
-                {
-                    PreferenceEntry(
-                        title = {
-                            Text(
-                                if (isLoggedIn) {
-                                    username.ifBlank { stringResource(R.string.connected) }
-                                } else {
-                                    stringResource(R.string.not_logged_in)
-                                }
-                            )
-                        },
-                        description = if (isLoggedIn) {
-                            stringResource(R.string.lastfm_ready_description)
-                        } else {
-                            "Connect your Last.fm account to scrobble tracks and publish now-playing updates."
-                        },
-                        icon = { Icon(painterResource(R.drawable.favorite), null) },
-                        trailingContent = {
-                            if (isLoggedIn) {
-                                OutlinedButton(onClick = {
-                                    sessionKey = ""
-                                    username = ""
-                                    scrobbleEnabled = false
-                                }) {
-                                    Text(stringResource(R.string.logout))
-                                }
-                            } else {
-                                OutlinedButton(onClick = {
-                                    showLoginDialog = true
-                                }) {
-                                    Text("Login")
-                                }
-                            }
+        )
+
+        PreferenceEntry(
+            title = {
+                Text(
+                    text = if (isLoggedIn) lastfmUsername else stringResource(R.string.not_logged_in),
+                    modifier = Modifier.alpha(if (isLoggedIn) 1f else 0.5f),
+                )
+            },
+            description = null,
+            icon = { Icon(painterResource(R.drawable.token), null) },
+            trailingContent = {
+                if (isLoggedIn) {
+                    OutlinedButton(onClick = {
+                        lastfmSession = ""
+                        lastfmUsername = ""
+                        LastFM.sessionKey = null
+                        Timber.d("Last.fm session cleared")
+                    }) {
+                        Text(stringResource(R.string.action_logout))
+                    }
+                } else {
+                    OutlinedButton(onClick = {
+                        showLoginDialog = true
+                    }) {
+                        Text(stringResource(R.string.action_login))
+                    }
+                }
+            },
+        )
+
+        PreferenceGroupTitle(
+            title = stringResource(R.string.options),
+        )
+
+        SwitchPreference(
+            title = { Text(stringResource(R.string.enable_scrobbling)) },
+            checked = lastfmScrobbling,
+            onCheckedChange = onlastfmScrobblingChange,
+            isEnabled = isLoggedIn,
+        )
+
+        SwitchPreference(
+            title = { Text(stringResource(R.string.lastfm_now_playing)) },
+            checked = useNowPlaying,
+            onCheckedChange = onUseNowPlayingChange,
+            isEnabled = isLoggedIn && lastfmScrobbling,
+        )
+
+        PreferenceGroupTitle(
+            title = stringResource(R.string.scrobbling_configuration)
+        )
+
+        var showMinTrackDurationDialog by rememberSaveable { mutableStateOf(false) }
+
+        if (showMinTrackDurationDialog) {
+            var tempMinTrackDuration by remember { mutableIntStateOf(minTrackDuration) }
+
+            AlertDialog(
+                onDismissRequest = {
+                    tempMinTrackDuration = minTrackDuration
+                    showMinTrackDurationDialog = false
+                },
+                title = { Text(stringResource(R.string.scrobble_min_track_duration)) },
+                text = {
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        modifier = Modifier.padding(16.dp)
+                    ) {
+                        Text(
+                            text = "${tempMinTrackDuration}s",
+                            style = MaterialTheme.typography.bodyLarge,
+                            modifier = Modifier.padding(bottom = 16.dp)
+                        )
+
+                        Slider(
+                            value = tempMinTrackDuration.toFloat(),
+                            onValueChange = { tempMinTrackDuration = it.toInt() },
+                            valueRange = 10f..60f,
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                    }
+                },
+                confirmButton = {
+                    TextButton(
+                        onClick = {
+                            onMinTrackDurationChange(tempMinTrackDuration)
+                            showMinTrackDurationDialog = false
                         }
-                    )
+                    ) {
+                        Text(stringResource(android.R.string.ok))
+                    }
+                },
+                dismissButton = {
+                    TextButton(
+                        onClick = {
+                            tempMinTrackDuration = minTrackDuration
+                            showMinTrackDurationDialog = false
+                        }
+                    ) {
+                        Text(stringResource(android.R.string.cancel))
+                    }
                 }
             )
+        }
+
+        PreferenceEntry(
+            title = { Text(stringResource(R.string.scrobble_min_track_duration)) },
+            description = "${minTrackDuration}s",
+            onClick = { showMinTrackDurationDialog = true }
         )
 
-        SettingsGeneralCategory(
-            title = stringResource(R.string.options),
-            items = listOf(
-                {
-                    SwitchPreference(
-                        title = { Text(stringResource(R.string.lastfm_enable_scrobbling)) },
-                        description = stringResource(R.string.lastfm_enable_scrobbling_description),
-                        icon = { Icon(painterResource(R.drawable.cached), null) },
-                        checked = scrobbleEnabled,
-                        onCheckedChange = { scrobbleEnabled = it },
-                        isEnabled = isLoggedIn
-                    )
+        var showScrobbleDelayPercentDialog by rememberSaveable { mutableStateOf(false) }
+
+        if (showScrobbleDelayPercentDialog) {
+            var tempScrobbleDelayPercent by remember { mutableFloatStateOf(scrobbleDelayPercent) }
+
+            AlertDialog(
+                onDismissRequest = {
+                    tempScrobbleDelayPercent = scrobbleDelayPercent
+                    showScrobbleDelayPercentDialog = false
                 },
-                {
-                    SwitchPreference(
-                        title = { Text(stringResource(R.string.lastfm_now_playing)) },
-                        description = stringResource(R.string.lastfm_now_playing_description),
-                        icon = { Icon(painterResource(R.drawable.play), null) },
-                        checked = nowPlayingEnabled,
-                        onCheckedChange = onNowPlayingEnabledChange,
-                        isEnabled = isLoggedIn && scrobbleEnabled
-                    )
+                title = { Text(stringResource(R.string.scrobble_delay_percent)) },
+                text = {
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        modifier = Modifier.padding(16.dp)
+                    ) {
+                        Text(
+                            text = "${(tempScrobbleDelayPercent * 100).roundToInt()}%",
+                            style = MaterialTheme.typography.bodyLarge,
+                            modifier = Modifier.padding(bottom = 16.dp)
+                        )
+
+                        Slider(
+                            value = tempScrobbleDelayPercent,
+                            onValueChange = { tempScrobbleDelayPercent = it },
+                            valueRange = 0.3f..0.95f,
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                    }
                 },
-                {
-                    PreferenceEntry(
-                        title = { Text(stringResource(R.string.lastfm_scrobble_delay_percent)) },
-                        description = "${delayPercent.roundToInt()}%",
-                        icon = { Icon(painterResource(R.drawable.schedule), null) },
-                        content = {
-                            Column {
-                                Spacer(Modifier.height(6.dp))
-                                Slider(
-                                    value = delayPercent.coerceIn(10f, 90f),
-                                    onValueChange = { delayPercent = it },
-                                    valueRange = 10f..90f,
-                                    steps = 15,
-                                    enabled = isLoggedIn
-                                )
-                            }
-                        },
-                        isEnabled = isLoggedIn
-                    )
+                confirmButton = {
+                    TextButton(
+                        onClick = {
+                            onScrobbleDelayPercentChange(tempScrobbleDelayPercent)
+                            showScrobbleDelayPercentDialog = false
+                        }
+                    ) {
+                        Text(stringResource(android.R.string.ok))
+                    }
                 },
-                {
-                    PreferenceEntry(
-                        title = { Text(stringResource(R.string.lastfm_scrobble_delay_seconds)) },
-                        description = "$delaySeconds s",
-                        icon = { Icon(painterResource(R.drawable.schedule), null) },
-                        onClick = { showDelaySecondsDialog = true },
-                        isEnabled = isLoggedIn
-                    )
-                },
-                {
-                    PreferenceEntry(
-                        title = { Text(stringResource(R.string.lastfm_min_song_duration)) },
-                        description = "$minSongDuration s",
-                        icon = { Icon(painterResource(R.drawable.music_note), null) },
-                        onClick = { showMinDurationDialog = true },
-                        isEnabled = isLoggedIn
-                    )
-                },
+                dismissButton = {
+                    TextButton(
+                        onClick = {
+                            tempScrobbleDelayPercent = scrobbleDelayPercent
+                            showScrobbleDelayPercentDialog = false
+                        }
+                    ) {
+                        Text(stringResource(android.R.string.cancel))
+                    }
+                }
             )
+        }
+
+        PreferenceEntry(
+            title = { Text(stringResource(R.string.scrobble_delay_percent)) },
+            description = "${(scrobbleDelayPercent * 100).roundToInt()}%",
+            onClick = { showScrobbleDelayPercentDialog = true }
+        )
+
+        var showScrobbleDelaySecondsDialog by rememberSaveable { mutableStateOf(false) }
+
+        if (showScrobbleDelaySecondsDialog) {
+            var tempScrobbleDelaySeconds by remember { mutableIntStateOf(scrobbleDelaySeconds) }
+
+            AlertDialog(
+                onDismissRequest = {
+                    tempScrobbleDelaySeconds = scrobbleDelaySeconds
+                    showScrobbleDelaySecondsDialog = false
+                },
+                title = { Text(stringResource(R.string.scrobble_delay_minutes)) },
+                text = {
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        modifier = Modifier.padding(16.dp)
+                    ) {
+                        Text(
+                            text = "${tempScrobbleDelaySeconds}s",
+                            style = MaterialTheme.typography.bodyLarge,
+                            modifier = Modifier.padding(bottom = 16.dp)
+                        )
+
+                        Slider(
+                            value = tempScrobbleDelaySeconds.toFloat(),
+                            onValueChange = { tempScrobbleDelaySeconds = it.toInt() },
+                            valueRange = 30f..360f,
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                    }
+                },
+                confirmButton = {
+                    TextButton(
+                        onClick = {
+                            onScrobbleDelaySecondsChange(tempScrobbleDelaySeconds)
+                            showScrobbleDelaySecondsDialog = false
+                        }
+                    ) {
+                        Text(stringResource(android.R.string.ok))
+                    }
+                },
+                dismissButton = {
+                    TextButton(
+                        onClick = {
+                            tempScrobbleDelaySeconds = scrobbleDelaySeconds
+                            showScrobbleDelaySecondsDialog = false
+                        }
+                    ) {
+                        Text(stringResource(android.R.string.cancel))
+                    }
+                }
+            )
+        }
+
+        PreferenceEntry(
+            title = { Text(stringResource(R.string.scrobble_delay_minutes)) },
+            description = "${scrobbleDelaySeconds}s",
+            onClick = { showScrobbleDelaySecondsDialog = true }
         )
     }
+
+    TopAppBar(
+            colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent, scrolledContainerColor = Color.Transparent),
+        title = { Text(stringResource(R.string.lastfm_integration)) },
+        navigationIcon = {
+            IconButton(
+                onClick = navController::navigateUp,
+                onLongClick = navController::backToMain,
+            ) {
+                Icon(
+                    painterResource(R.drawable.arrow_back),
+                    contentDescription = null,
+                )
+            }
+        }
+    )
 }

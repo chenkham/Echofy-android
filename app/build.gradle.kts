@@ -19,14 +19,14 @@ fun String.toBuildConfigString(): String =
 android {
     namespace = "com.Chenkham.Echofy"
     //noinspection GradleDependency
-    compileSdk = 35
+    compileSdk = 36
 
     defaultConfig {
         applicationId = "com.Chenkham.Echofy"
-        minSdk = 24
-        targetSdk = 35
-        versionCode = 23
-        versionName = "4.0.5"
+        minSdk = 26
+        targetSdk = 36
+        versionCode = 25
+        versionName = "4.8.36"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         multiDexEnabled = true
 
@@ -87,11 +87,8 @@ android {
     buildTypes {
         release {
             isMinifyEnabled = true
-            isShrinkResources = true
+            isShrinkResources = false
             isCrunchPngs = false
-            ndk {
-                debugSymbolLevel = "FULL"
-            }
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
@@ -145,10 +142,15 @@ android {
             excludes += "/META-INF/*.kotlin_module"
             excludes += "/META-INF/*.version"
             excludes += "/META-INF/proguard/*"
+            excludes += "/META-INF/INDEX.LIST"
+            excludes += "/META-INF/io.netty.versions.properties"
+            excludes += "META-INF/versions/9/OSGI-INF/MANIFEST.MF"
+            excludes += "META-INF/versions/**"
             excludes += "DebugProbesKt.bin"
             excludes += "kotlin/**"
             excludes += "**/*.proto"
             excludes += "**/*.properties"
+            pickFirsts += "META-INF/versions/9/OSGI-INF/MANIFEST.MF"
         }
         jniLibs {
             useLegacyPackaging = false
@@ -239,6 +241,7 @@ dependencies {
     implementation(libs.hilt.navigation)
     implementation(libs.datastore)
     implementation("androidx.core:core-splashscreen:1.0.1")
+    implementation("androidx.lifecycle:lifecycle-process:2.8.7")
 
     implementation(libs.compose.runtime)
     implementation(libs.compose.foundation)
@@ -247,6 +250,9 @@ dependencies {
     implementation(libs.compose.ui.tooling)
     implementation(libs.compose.animation)
     implementation(libs.compose.reorderable)
+    implementation(libs.compose.cloudy)
+    implementation(libs.compose.markdown)
+    implementation(libs.multiplatform.markdown)
 
     implementation(libs.viewmodel)
     implementation(libs.viewmodel.compose)
@@ -254,6 +260,7 @@ dependencies {
     implementation(libs.material3)
     implementation(libs.palette)
     implementation(projects.materialColorUtilities)
+    implementation("com.github.Kyant0:m3color:2025.4")
 
     implementation(libs.coil)
     implementation(libs.shimmer)
@@ -270,11 +277,11 @@ dependencies {
     implementation(libs.blurry)
     implementation(libs.material.ripple)
 
-    // Removed material-icons-extended - it adds ~20MB. Use drawable resources instead.
     implementation(libs.glance.appwidget)
     implementation(libs.glance.material3)
     implementation(libs.graphics.shapes)
     implementation(libs.work.runtime.ktx)
+    implementation(libs.profileinstaller)
     implementation(libs.constraintlayout)
     ksp(libs.room.compiler)
     implementation(libs.room.ktx)
@@ -290,12 +297,26 @@ dependencies {
     implementation(projects.kugou)
     implementation(projects.lrclib)
     implementation(projects.kizzy)
+    implementation(projects.musicbrainz)
+    implementation(projects.radiobrowser)
+    implementation(projects.songlink)
+    implementation(projects.bandsintown)
+    implementation(projects.genius)
+    implementation(projects.freesound)
+    implementation(projects.tastedive)
+    implementation(projects.discogs)
+    implementation(projects.theaudiodb)
+    implementation(projects.mixcloud)
     implementation(project(":jossredconnect"))
+    implementation(project(":canvas"))
+    implementation(project(":betterlyrics"))
+    implementation(project(":shazamkit"))
+    implementation(project(":simpmusic"))
+    implementation(project(":spotify"))
+    implementation(project(":lastfm"))
 
     implementation(libs.ktor.client.core)
-
     coreLibraryDesugaring(libs.desugaring)
-
     implementation(libs.timber)
     
     // Appwrite SDK for Listen Together feature
@@ -310,9 +331,6 @@ dependencies {
 
     // Google AdMob SDK for ads monetization
     implementation("com.google.android.gms:play-services-ads:23.0.0")
-    
-    // Google Play Billing for subscriptions
-    implementation("com.android.billingclient:billing-ktx:7.0.0")
 
     // Google Play In-App Updates
     implementation("com.google.android.play:app-update:2.1.0")
@@ -326,7 +344,20 @@ dependencies {
     implementation("androidx.credentials:credentials:1.2.0")
     implementation("androidx.credentials:credentials-play-services-auth:1.2.0")
     implementation("com.google.android.libraries.identity.googleid:googleid:1.1.0")
+
+    // ONNX Runtime for openWakeWord ("Hey Jarvis") engine
+    // 1.18.0 shipped .so files with 4 KB ELF LOAD alignment, which Play now rejects because
+    // apps must support 16 KB memory page sizes. 1.23.0 is the first release built with
+    // -Wl,-z,max-page-size=16384.
 }
 
-
-
+configurations.all {
+    resolutionStrategy {
+        force("androidx.core:core:1.15.0")
+        force("androidx.core:core-ktx:1.15.0")
+        force("org.jetbrains.kotlin:kotlin-stdlib:2.1.0")
+        force("org.jetbrains.kotlin:kotlin-stdlib-jdk8:2.1.0")
+        force("org.jetbrains.kotlin:kotlin-stdlib-jdk7:2.1.0")
+        force("org.jetbrains.kotlin:kotlin-stdlib-common:2.1.0")
+    }
+}

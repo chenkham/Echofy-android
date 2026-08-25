@@ -1,26 +1,41 @@
-﻿package com.Chenkham.Echofy.viewmodels
+﻿/*
+ * Echofy Project Original (2026)
+ * Arturo254 (github.com/Arturo254)
+ * Licensed Under GPL-3.0 | see git history for contributors
+ */
+
+
+
+package com.Chenkham.Echofy.viewmodels
+import kotlinx.coroutines.flow.combine
 
 import android.content.Context
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.media3.exoplayer.offline.Download
-import com.Chenkham.Echofy.constants.SongSortDescendingKey
+import com.Chenkham.Echofy.constants.AutoPlaylistSongSortDescendingKey
+import com.Chenkham.Echofy.constants.AutoPlaylistSongSortType
+import com.Chenkham.Echofy.constants.AutoPlaylistSongSortTypeKey
+import com.Chenkham.Echofy.constants.HideExplicitKey
+import com.Chenkham.Echofy.constants.HideVideoKey
 import com.Chenkham.Echofy.constants.SongSortType
-import com.Chenkham.Echofy.constants.SongSortTypeKey
 import com.Chenkham.Echofy.db.MusicDatabase
-import com.Chenkham.Echofy.db.likedSongs
+import com.Chenkham.Echofy.extensions.filterExplicit
 import com.Chenkham.Echofy.extensions.reversed
 import com.Chenkham.Echofy.extensions.toEnum
 import com.Chenkham.Echofy.playback.DownloadUtil
 import com.Chenkham.Echofy.utils.SyncUtils
 import com.Chenkham.Echofy.utils.dataStore
+import com.Chenkham.Echofy.utils.get
+import com.Chenkham.Echofy.utils.reportException
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOn
@@ -42,46 +57,75 @@ constructor(
 ) : ViewModel() {
     val playlist = savedStateHandle.get<String>("playlist")!!
 
+    private val _isRefreshing = MutableStateFlow(false)
+    val isRefreshing = _isRefreshing.asStateFlow()
+
+    private fun AutoPlaylistSongSortType.toSongSortType(): SongSortType =
+        when (this) {
+            AutoPlaylistSongSortType.CREATE_DATE -> SongSortType.CREATE_DATE
+            AutoPlaylistSongSortType.NAME -> SongSortType.NAME
+            AutoPlaylistSongSortType.ARTIST -> SongSortType.ARTIST
+            AutoPlaylistSongSortType.PLAY_TIME -> SongSortType.PLAY_TIME
+        }
+
     @OptIn(ExperimentalCoroutinesApi::class)
     val likedSongs =
         context.dataStore.data
             .map {
-                it[SongSortTypeKey].toEnum(SongSortType.CREATE_DATE) to (it[SongSortDescendingKey]
-                    ?: true)
+                Triple(
+                    it[AutoPlaylistSongSortTypeKey].toEnum(AutoPlaylistSongSortType.CREATE_DATE) to (it[AutoPlaylistSongSortDescendingKey]
+                        ?: true),
+                    it[HideExplicitKey] ?: false,
+                    it[HideVideoKey] ?: false,
+                )
             }
             .distinctUntilChanged()
-            .flatMapLatest { (sortType, descending) ->
+            .flatMapLatest { (sortDesc, hideExplicit, hideVideo) ->
+                val (sortType, descending) = sortDesc
+                val songSortType = sortType.toSongSortType()
                 when (playlist) {
-                    "liked" -> database.likedSongs(sortType, descending)
-                    "downloaded" -> downloadUtil.downloads.flatMapLatest { downloads ->
-                        database.allSongs()
-                            .flowOn(Dispatchers.IO)
-                            .map { songs ->
-                                songs.filter {
-                                    downloads[it.id]?.state == Download.STATE_COMPLETED
+                    "liked" -> database.likedSongs(songSortType, descending, hideVideo).map { it.filterExplicit(hideExplicit) }
+                    "downloaded" -> combine(
+                        database.allSongs().flowOn(Dispatchers.IO),
+                        downloadUtil.downloads
+                    ) { songs, downloads ->
+                        songs.filter {
+                            downloads[it.id]?.state == Download.STATE_COMPLETED
+                        }.let { filteredSongs ->
+                            when (songSortType) {
+                                SongSortType.CREATE_DATE -> filteredSongs.sortedBy {
+                                    downloads[it.id]?.updateTimeMs ?: 0L
                                 }
-                            }
-                            .map { songs ->
-                                when (sortType) {
-                                    SongSortType.CREATE_DATE -> songs.sortedBy {
-                                        downloads[it.id]?.updateTimeMs ?: 0L
-                                    }
-
-                                    SongSortType.NAME -> songs.sortedBy { it.song.title }
-                                    SongSortType.ARTIST -> songs.sortedBy { song ->
-                                        song.artists.joinToString(separator = "") { it.name }
-                                    }
-
-                                    SongSortType.PLAY_TIME -> songs.sortedBy { it.song.totalPlayTime }
-                                }.reversed(descending)
-                            }
+                                SongSortType.NAME -> filteredSongs.sortedBy { it.song.title }
+                                SongSortType.ARTIST -> filteredSongs.sortedBy { song ->
+                                    song.artists.joinToString(separator = "") { it.name }
+                                }
+                                SongSortType.PLAY_TIME -> filteredSongs.sortedBy { it.song.totalPlayTime }
+                            }.reversed(descending).filterExplicit(hideExplicit)
+                        }
                     }
-
                     else -> MutableStateFlow(emptyList())
                 }
             }.stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
 
+    fun refresh() {
+        if (_isRefreshing.value) return
+        viewModelScope.launch(Dispatchers.IO) {
+            _isRefreshing.value = true
+            try {
+                when (playlist) {
+                    "liked" -> syncUtils.syncLikedSongs()
+                    else -> Unit
+                }
+            } catch (e: Exception) {
+                reportException(e)
+            } finally {
+                _isRefreshing.value = false
+            }
+        }
+    }
+
     fun syncLikedSongs() {
-        viewModelScope.launch(Dispatchers.IO) { syncUtils.syncLikedSongs() }
+        refresh()
     }
 }

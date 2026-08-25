@@ -37,6 +37,8 @@ import com.Chenkham.Echofy.viewmodels.LibraryAlbumsViewModel
 import com.Chenkham.Echofy.viewmodels.LibraryArtistsViewModel
 import com.Chenkham.Echofy.viewmodels.LibraryMixViewModel
 import com.Chenkham.Echofy.viewmodels.LibraryPlaylistsViewModel
+import com.Chenkham.Echofy.ads.AdManager
+import com.Chenkham.Echofy.ui.component.BannerAdView
 import com.Chenkham.Echofy.viewmodels.LibrarySongsViewModel
 import kotlinx.coroutines.launch
 
@@ -44,6 +46,7 @@ import kotlinx.coroutines.launch
 @Composable
 fun LibraryScreen(
     navController: NavController,
+    adManager: AdManager? = null,
 ) {
     var filterType by rememberEnumPreference(ChipSortTypeKey, LibraryFilter.LIBRARY)
     val libraryMixViewModel: LibraryMixViewModel = hiltViewModel()
@@ -64,7 +67,20 @@ fun LibraryScreen(
                         LibraryFilter.SONGS to stringResource(R.string.filter_songs),
                         LibraryFilter.ALBUMS to stringResource(R.string.filter_albums),
                         LibraryFilter.ARTISTS to stringResource(R.string.filter_artists),
+                        LibraryFilter.DEVICE to "Device",
+                        LibraryFilter.SPOTIFY to "Spotify",
                     ),
+                iconProvider = { f ->
+                    when (f) {
+                        LibraryFilter.PLAYLISTS -> R.drawable.queue_music
+                        LibraryFilter.SONGS -> R.drawable.music_note
+                        LibraryFilter.ALBUMS -> R.drawable.album
+                        LibraryFilter.ARTISTS -> R.drawable.person
+                        LibraryFilter.DEVICE -> R.drawable.folder
+                        LibraryFilter.SPOTIFY -> R.drawable.spotify_icon
+                        else -> null
+                    }
+                },
                 currentValue = filterType,
                 onValueUpdate = {
                     filterType =
@@ -79,28 +95,12 @@ fun LibraryScreen(
         }
     }
 
-    val onRefresh: () -> Unit = remember(
-        filterType,
-        libraryMixViewModel,
-        libraryPlaylistsViewModel,
-        librarySongsViewModel,
-        libraryAlbumsViewModel,
-        libraryArtistsViewModel,
-    ) {
+    val onRefresh: () -> Unit = remember(filterType) {
         {
             coroutineScope.launch {
                 isRefreshing = true
-                try {
-                    when (filterType) {
-                        LibraryFilter.LIBRARY -> libraryMixViewModel.refresh().join()
-                        LibraryFilter.PLAYLISTS -> libraryPlaylistsViewModel.refresh().join()
-                        LibraryFilter.SONGS -> librarySongsViewModel.refresh().join()
-                        LibraryFilter.ALBUMS -> libraryAlbumsViewModel.refresh().join()
-                        LibraryFilter.ARTISTS -> libraryArtistsViewModel.refresh().join()
-                    }
-                } finally {
-                    isRefreshing = false
-                }
+                kotlinx.coroutines.delay(500)
+                isRefreshing = false
             }
             Unit
         }
@@ -140,10 +140,30 @@ fun LibraryScreen(
                             navController,
                             { filterType = LibraryFilter.LIBRARY },
                         )
+
+                        LibraryFilter.DEVICE -> LocalSongsScreen(
+                            navController = navController,
+                            onDeselect = { filterType = LibraryFilter.LIBRARY },
+                        )
+                        LibraryFilter.SPOTIFY -> LibrarySpotifyPlaylistsScreen(
+                            navController,
+                            filterContent,
+                        )
                     }
                 }
 
-
+                // Sits inside the Column above the player-aware bottom inset, so it can
+                // never be drawn under the bottom navigation bar or the mini player.
+                adManager?.let { manager ->
+                    BannerAdView(
+                        adManager = manager,
+                        modifier = Modifier.padding(
+                            bottom = LocalPlayerAwareWindowInsets.current
+                                .asPaddingValues()
+                                .calculateBottomPadding()
+                        )
+                    )
+                }
             }
 
             Indicator(

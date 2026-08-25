@@ -1,14 +1,16 @@
-﻿package com.Chenkham.Echofy.di
+package com.Chenkham.Echofy.di
 
 import android.content.Context
 import androidx.media3.database.DatabaseProvider
 import androidx.media3.database.StandaloneDatabaseProvider
+import androidx.media3.datasource.cache.Cache
 import androidx.media3.datasource.cache.LeastRecentlyUsedCacheEvictor
 import androidx.media3.datasource.cache.NoOpCacheEvictor
 import androidx.media3.datasource.cache.SimpleCache
 import com.Chenkham.Echofy.constants.MaxSongCacheSizeKey
 import com.Chenkham.Echofy.db.InternalDatabase
 import com.Chenkham.Echofy.db.MusicDatabase
+import com.Chenkham.Echofy.utils.NetworkConnectivityObserver
 import com.Chenkham.Echofy.utils.dataStore
 import com.Chenkham.Echofy.utils.get
 import dagger.Module
@@ -44,8 +46,14 @@ object AppModule {
 
     @Singleton
     @Provides
+    fun provideNetworkConnectivityObserver(
+        @ApplicationContext context: Context,
+    ): NetworkConnectivityObserver = NetworkConnectivityObserver(context)
+
+    @Singleton
+    @Provides
     @PlayerCache
-    fun providePlayerCache(
+    fun providePlayerSimpleCache(
         @ApplicationContext context: Context,
         databaseProvider: DatabaseProvider,
     ): SimpleCache {
@@ -65,8 +73,15 @@ object AppModule {
 
     @Singleton
     @Provides
+    @PlayerCache
+    fun providePlayerCache(
+        @PlayerCache playerSimpleCache: SimpleCache,
+    ): Cache = playerSimpleCache
+
+    @Singleton
+    @Provides
     @DownloadCache
-    fun provideDownloadCache(
+    fun provideDownloadSimpleCache(
         @ApplicationContext context: Context,
         databaseProvider: DatabaseProvider,
     ): SimpleCache {
@@ -76,6 +91,14 @@ object AppModule {
         constructor().release()
         return constructor()
     }
+
+    @Singleton
+    @Provides
+    @DownloadCache
+    fun provideDownloadCache(
+        @DownloadCache downloadSimpleCache: SimpleCache,
+    ): Cache = downloadSimpleCache
+
     @Singleton
     @Provides
     fun provideDataStore(@ApplicationContext context: Context): androidx.datastore.core.DataStore<androidx.datastore.preferences.core.Preferences> {

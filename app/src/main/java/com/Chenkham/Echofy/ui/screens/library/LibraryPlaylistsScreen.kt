@@ -42,7 +42,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import androidx.navigation.compose.currentBackStackEntryAsState
-import com.Chenkham.innertube.utils.parseCookieString
+import com.arturo254.opentune.innertube.utils.parseCookieString
 import com.Chenkham.Echofy.LocalPlayerAwareWindowInsets
 import com.Chenkham.Echofy.R
 import com.Chenkham.Echofy.constants.CONTENT_TYPE_HEADER
@@ -205,6 +205,7 @@ fun LibraryPlaylistsScreen(
                         PlaylistSortType.NAME -> R.string.sort_by_name
                         PlaylistSortType.SONG_COUNT -> R.string.sort_by_song_count
                         PlaylistSortType.LAST_UPDATED -> R.string.sort_by_last_updated
+                        PlaylistSortType.CUSTOM -> R.string.sort_by_custom
                     }
                 },
             )
@@ -218,7 +219,7 @@ fun LibraryPlaylistsScreen(
                     playlists.size
                 ),
                 style = MaterialTheme.typography.titleSmall,
-                color = MaterialTheme.colorScheme.secondary,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
 
             IconButton(
@@ -235,6 +236,7 @@ fun LibraryPlaylistsScreen(
                                 LibraryViewType.GRID -> R.drawable.grid_view
                             },
                         ),
+                    tint = MaterialTheme.colorScheme.onSurface,
                     contentDescription = null,
                 )
             }
@@ -286,6 +288,45 @@ fun LibraryPlaylistsScreen(
                             icon = painterResource(R.drawable.download),
                             gradientColors = listOf(Color(0xFF11998e), Color(0xFF38ef7d)),
                             onClick = { navController.navigate("auto_playlist/downloaded") },
+                            modifier = Modifier.animateItem()
+                        )
+                    }
+
+                    item(
+                        key = "neverPlayedPlaylist",
+                        contentType = { CONTENT_TYPE_PLAYLIST },
+                    ) {
+                        SmartPlaylistListItem(
+                            title = stringResource(R.string.never_played),
+                            icon = painterResource(R.drawable.trending_up),
+                            gradientColors = listOf(Color(0xFF396afc), Color(0xFF2948ff)),
+                            onClick = { navController.navigate("auto_playlist/never_played") },
+                            modifier = Modifier.animateItem()
+                        )
+                    }
+
+                    item(
+                        key = "recentlyAddedPlaylist",
+                        contentType = { CONTENT_TYPE_PLAYLIST },
+                    ) {
+                        SmartPlaylistListItem(
+                            title = stringResource(R.string.recently_added),
+                            icon = painterResource(R.drawable.history),
+                            gradientColors = listOf(Color(0xFF11998e), Color(0xFF38ef7d)),
+                            onClick = { navController.navigate("auto_playlist/recently_added") },
+                            modifier = Modifier.animateItem()
+                        )
+                    }
+
+                    item(
+                        key = "duplicatesPlaylist",
+                        contentType = { CONTENT_TYPE_PLAYLIST },
+                    ) {
+                        SmartPlaylistListItem(
+                            title = stringResource(R.string.duplicate_songs),
+                            icon = painterResource(R.drawable.queue_music),
+                            gradientColors = listOf(Color(0xFF8E2DE2), Color(0xFF4A00E0)),
+                            onClick = { navController.navigate("auto_playlist/duplicates") },
                             modifier = Modifier.animateItem()
                         )
                     }
@@ -395,6 +436,48 @@ fun LibraryPlaylistsScreen(
                             icon = painterResource(R.drawable.download),
                             gradientColors = listOf(Color(0xFF11998e), Color(0xFF38ef7d)),
                             onClick = { navController.navigate("auto_playlist/downloaded") },
+                            fillMaxWidth = true,
+                            modifier = Modifier.animateItem()
+                        )
+                    }
+
+                    item(
+                        key = "neverPlayedPlaylist",
+                        contentType = { CONTENT_TYPE_PLAYLIST },
+                    ) {
+                        SmartPlaylistGridItem(
+                            title = stringResource(R.string.never_played),
+                            icon = painterResource(R.drawable.trending_up),
+                            gradientColors = listOf(Color(0xFF396afc), Color(0xFF2948ff)),
+                            onClick = { navController.navigate("auto_playlist/never_played") },
+                            fillMaxWidth = true,
+                            modifier = Modifier.animateItem()
+                        )
+                    }
+
+                    item(
+                        key = "recentlyAddedPlaylist",
+                        contentType = { CONTENT_TYPE_PLAYLIST },
+                    ) {
+                        SmartPlaylistGridItem(
+                            title = stringResource(R.string.recently_added),
+                            icon = painterResource(R.drawable.history),
+                            gradientColors = listOf(Color(0xFF11998e), Color(0xFF38ef7d)),
+                            onClick = { navController.navigate("auto_playlist/recently_added") },
+                            fillMaxWidth = true,
+                            modifier = Modifier.animateItem()
+                        )
+                    }
+
+                    item(
+                        key = "duplicatesPlaylist",
+                        contentType = { CONTENT_TYPE_PLAYLIST },
+                    ) {
+                        SmartPlaylistGridItem(
+                            title = stringResource(R.string.duplicate_songs),
+                            icon = painterResource(R.drawable.queue_music),
+                            gradientColors = listOf(Color(0xFF8E2DE2), Color(0xFF4A00E0)),
+                            onClick = { navController.navigate("auto_playlist/duplicates") },
                             fillMaxWidth = true,
                             modifier = Modifier.animateItem()
                         )

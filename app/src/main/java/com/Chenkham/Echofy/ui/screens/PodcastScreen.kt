@@ -21,6 +21,8 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.ui.graphics.Color
 import androidx.compose.material3.TopAppBarScrollBehavior
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -50,7 +52,7 @@ import com.Chenkham.ytmusicapi.models.Episode
 import com.Chenkham.Echofy.LocalPlayerConnection
 import com.Chenkham.Echofy.models.MediaMetadata
 import com.Chenkham.Echofy.playback.queues.YouTubeQueue
-import com.Chenkham.innertube.models.WatchEndpoint
+import com.arturo254.opentune.innertube.models.WatchEndpoint
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -68,6 +70,7 @@ fun PodcastScreen(
     Scaffold(
         topBar = {
             TopAppBar(
+            colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent, scrolledContainerColor = Color.Transparent),
                 title = { Text(podcast?.title ?: "Podcast") },
                 navigationIcon = {
                     IconButton(

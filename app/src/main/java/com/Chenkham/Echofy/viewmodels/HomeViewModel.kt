@@ -3,20 +3,28 @@ package com.Chenkham.Echofy.viewmodels
 import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.Chenkham.innertube.YouTube
-import com.Chenkham.innertube.models.PlaylistItem
-import com.Chenkham.innertube.models.WatchEndpoint
-import com.Chenkham.innertube.models.YTItem
-import com.Chenkham.innertube.pages.ExplorePage
-import com.Chenkham.innertube.pages.HomePage
-import com.Chenkham.innertube.utils.completedLibraryPage
+import com.arturo254.opentune.innertube.YouTube
+import com.arturo254.opentune.innertube.models.PlaylistItem
+import com.arturo254.opentune.innertube.models.WatchEndpoint
+import com.arturo254.opentune.innertube.models.YTItem
+import com.arturo254.opentune.innertube.pages.ExplorePage
+import com.arturo254.opentune.innertube.pages.HomePage
+import com.arturo254.opentune.innertube.utils.completed
+import com.Chenkham.Echofy.constants.HiddenGemsEnabledKey
+import com.Chenkham.Echofy.constants.BecauseYouListenedEnabledKey
+import com.Chenkham.Echofy.constants.TimeMachineEnabledKey
 import com.Chenkham.Echofy.db.MusicDatabase
+import com.Chenkham.Echofy.utils.currentUtcOffsetSeconds
+import com.Chenkham.Echofy.constants.MoodPlaylist
+import com.Chenkham.Echofy.constants.MoodPlaylistsEnabledKey
+import java.time.LocalTime
 import com.Chenkham.Echofy.db.entities.Album
 import com.Chenkham.Echofy.db.entities.Artist
 import com.Chenkham.Echofy.db.entities.LocalItem
 import com.Chenkham.Echofy.db.entities.Playlist
 import com.Chenkham.Echofy.db.entities.Song
 import com.Chenkham.Echofy.models.SimilarRecommendation
+import com.Chenkham.Echofy.utils.dataStore
 import com.Chenkham.Echofy.utils.reportException
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -32,16 +40,18 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import timber.log.Timber
+import java.time.LocalDate
 import java.util.concurrent.atomic.AtomicBoolean
 import javax.inject.Inject
 
 @HiltViewModel
 class HomeViewModel @Inject constructor(
-    @ApplicationContext context: Context,
+    @ApplicationContext private val appContext: Context,
     val database: MusicDatabase,
 ) : ViewModel() {
     val isRefreshing = MutableStateFlow(false)
     val isLoading = MutableStateFlow(false)
+    val isLoadingMore = MutableStateFlow(false)
 
     // PERFORMANCE: Prevent duplicate concurrent loads
     private val loadMutex = Mutex()
@@ -51,10 +61,33 @@ class HomeViewModel @Inject constructor(
 
     val quickPicks = MutableStateFlow<List<Song>?>(null)
     val forgottenFavorites = MutableStateFlow<List<Song>?>(null)
+
+    /** Rarely played library songs, only populated when the user enables hidden gems. */
+    val hiddenGems = MutableStateFlow<List<Song>?>(null)
+
+    /** Songs played in the same week of a previous year, gated behind the time machine toggle. */
+    val timeMachine = MutableStateFlow<List<Song>?>(null)
+
+    /** "Because you listened to [Artist]" — recommendations based on recent listening. */
+    val becauseYouListenedArtist = MutableStateFlow<String?>(null)
+    val becauseYouListenedSongs = MutableStateFlow<List<Song>?>(null)
+
+    /** The year the [timeMachine] row is showing, used for its title. */
+    val timeMachineYear = MutableStateFlow(0)
+
+    /**
+     * The mood mix matching the current hour, gated behind the mood playlists toggle.
+     * Only one bucket is surfaced at a time so Home does not fill with five near-identical
+     * rows; [moodPlaylist] carries which one is showing so the UI can title it.
+     */
+    val moodPlaylist = MutableStateFlow<MoodPlaylist?>(null)
+    val moodSongs = MutableStateFlow<List<Song>?>(null)
+
     val keepListening = MutableStateFlow<List<LocalItem>?>(null)
     val similarRecommendations = MutableStateFlow<List<SimilarRecommendation>?>(null)
     val accountPlaylists = MutableStateFlow<List<PlaylistItem>?>(null)
     val homePage = MutableStateFlow<HomePage?>(null)
+    val selectedChip = MutableStateFlow<HomePage.Chip?>(null)
     val explorePage = MutableStateFlow<ExplorePage?>(null)
     val recentActivity = MutableStateFlow<List<YTItem>?>(null)
     val recentPlaylistsDb = MutableStateFlow<List<Playlist>?>(null)
@@ -76,6 +109,29 @@ class HomeViewModel @Inject constructor(
     val bookmarkedAlbumIds = database.getBookmarkedAlbumIds()
         .map { it.toSet() }
         .stateIn(viewModelScope, SharingStarted.Eagerly, emptySet())
+
+
+    fun loadMoreSections() {
+        val cont = homePage.value?.continuation ?: return
+        if (isLoadingMore.value) return
+        isLoadingMore.value = true
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                YouTube.home(continuation = cont).onSuccess { nextHome ->
+                    val current = homePage.value ?: return@onSuccess
+                    val updatedSections = current.sections + nextHome.sections
+                    homePage.value = current.copy(
+                        sections = updatedSections,
+                        continuation = nextHome.continuation
+                    )
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+            } finally {
+                isLoadingMore.value = false
+            }
+        }
+    }
 
     private suspend fun load() {
         // PERFORMANCE: Prevent duplicate concurrent loads
@@ -108,7 +164,15 @@ class HomeViewModel @Inject constructor(
             // PERFORMANCE FIX: Parallelize local database operations using coroutineScope + async
             coroutineScope {
                 val quickPicksDeferred = async(Dispatchers.IO) {
-                    database.quickPicks().first().shuffled().take(20)
+                    val pref = appContext.dataStore.data.map { it[com.Chenkham.Echofy.constants.QuickPicksKey] ?: com.Chenkham.Echofy.constants.QuickPicks.QUICK_PICKS.name }.first()
+                    if (pref == com.Chenkham.Echofy.constants.QuickPicks.LAST_LISTEN.name) {
+                        database.quickPicks().first().filterNot { it.song.isLocal }.shuffled().take(20)
+                            .ifEmpty { database.allSongs().first().filterNot { it.song.isLocal }.shuffled().take(20) }
+                    } else {
+                        // Quick Picks default: API recommendations
+                        val ytQuickPicks = database.quickPicks().first().filterNot { it.song.isLocal }.shuffled().take(20)
+                        ytQuickPicks.ifEmpty { database.allSongs().first().filterNot { it.song.isLocal }.shuffled().take(20) }
+                    }
                 }
 
                 val forgottenFavoritesDeferred = async(Dispatchers.IO) {
@@ -126,10 +190,89 @@ class HomeViewModel @Inject constructor(
                     (keepListeningSongs + keepListeningAlbums + keepListeningArtists).shuffled()
                 }
 
+                // Discovery rows are opt-in, so skip their queries entirely when off.
+                val prefs = appContext.dataStore.data.first()
+
+                val hiddenGemsDeferred = if (prefs[HiddenGemsEnabledKey] == true) {
+                    async(Dispatchers.IO) { database.hiddenGems().first() }
+                } else null
+
+                val timeMachineDeferred = if (prefs[TimeMachineEnabledKey] == true) {
+                    async(Dispatchers.IO) {
+                        val lastYear = LocalDate.now().minusYears(1)
+                        val songs = database.songsPlayedBetween(
+                            fromDate = lastYear.minusDays(3).toString(),
+                            toDate = lastYear.plusDays(3).toString(),
+                            offsetSeconds = currentUtcOffsetSeconds(),
+                        ).first()
+                        lastYear.year to songs
+                    }
+                } else null
+
+                val becauseYouListenedDeferred = if (prefs[BecauseYouListenedEnabledKey] == true) {
+                    async(Dispatchers.IO) {
+                        database.topRecentArtistName(fromTimeStamp)?.let { artist ->
+                            artist to database.songsByArtistName(artist).first()
+                        }
+                    }
+                } else null
+
+                val moodDeferred = if (prefs[MoodPlaylistsEnabledKey] == true) {
+                    async(Dispatchers.IO) {
+                        val offset = currentUtcOffsetSeconds()
+                        val hour = LocalTime.now().hour
+                        // Pick the bucket covering the current hour, so the row reflects
+                        // what the user tends to play right now. Focus has no window and is
+                        // the fallback when no clock bucket matches.
+                        val bucket = MoodPlaylist.entries
+                            .filter { it != MoodPlaylist.FOCUS }
+                            .find { mood ->
+                                if (mood.wrapsMidnight) {
+                                    hour >= mood.startHour || hour <= mood.endHour
+                                } else {
+                                    hour in mood.startHour..mood.endHour
+                                }
+                            } ?: MoodPlaylist.FOCUS
+
+                        val songs = when {
+                            bucket == MoodPlaylist.FOCUS ->
+                                database.longestPlayedSongs().first()
+
+                            bucket.wrapsMidnight ->
+                                database.songsPlayedBetweenHoursWrapping(
+                                    startHour = bucket.startHour,
+                                    endHour = bucket.endHour,
+                                    offsetSeconds = offset,
+                                ).first()
+
+                            else ->
+                                database.songsPlayedBetweenHours(
+                                    startHour = bucket.startHour,
+                                    endHour = bucket.endHour,
+                                    offsetSeconds = offset,
+                                ).first()
+                        }
+                        bucket to songs
+                    }
+                } else null
+
                 // Await all database operations
                 quickPicks.value = quickPicksDeferred.await()
                 forgottenFavorites.value = forgottenFavoritesDeferred.await()
                 keepListening.value = keepListeningDeferred.await()
+                hiddenGems.value = hiddenGemsDeferred?.await()
+                timeMachineDeferred?.await()?.let { (year, songs) ->
+                    timeMachineYear.value = year
+                    timeMachine.value = songs
+                }
+                becauseYouListenedDeferred?.await()?.let { (artist, songs) ->
+                    becauseYouListenedArtist.value = artist
+                    becauseYouListenedSongs.value = songs
+                }
+                moodDeferred?.await()?.let { (bucket, songs) ->
+                    moodPlaylist.value = bucket
+                    moodSongs.value = songs
+                }
             }
 
         allLocalItems.value =
@@ -137,11 +280,10 @@ class HomeViewModel @Inject constructor(
                 .filter { it is Song || it is Album }
 
         // PERFORMANCE FIX: Parallelize ALL network operations for instant home screen loading
-        coroutineScope {
-            // 1. Account playlists (if logged in)
-            val accountPlaylistsDeferred = if (YouTube.cookie != null) {
+        coroutineScope {            // 1. Account playlists (if logged in)
+            val accountPlaylistsDeferred: kotlinx.coroutines.Deferred<List<PlaylistItem>?>? = if (YouTube.cookie != null) {
                 async(Dispatchers.IO) {
-                    YouTube.library("FEmusic_liked_playlists").completedLibraryPage().getOrNull()
+                    YouTube.library("FEmusic_liked_playlists").completed().getOrNull()
                         ?.items?.filterIsInstance<PlaylistItem>()
                         ?.filterNot { it.id == "SE" }
                 }
@@ -177,7 +319,10 @@ class HomeViewModel @Inject constructor(
             }
 
             // Await primary data first for faster initial render
-            accountPlaylists.value = accountPlaylistsDeferred?.await()
+            val resolvedPlaylists = accountPlaylistsDeferred?.await()
+            if (resolvedPlaylists != null) {
+                accountPlaylists.value = resolvedPlaylists
+            }
             homePage.value = homePageDeferred.await()
             
             // Process explore page
@@ -242,15 +387,40 @@ class HomeViewModel @Inject constructor(
             similarRecommendations.value = (artistRecommendations + songRecommendations).shuffled()
         }
 
-        allYtItems.value = similarRecommendations.value?.flatMap { it.items }.orEmpty() +
+        allYtItems.value = (similarRecommendations.value?.flatMap { it.items }.orEmpty() +
                 homePage.value?.sections?.flatMap { it.items }.orEmpty() +
-                explorePage.value?.newReleaseAlbums.orEmpty() +
-                explorePage.value?.trendingSongs.orEmpty()
+                explorePage.value?.newReleaseAlbums.orEmpty()).distinctBy { it.id }
 
             isLoading.value = false
             hasInitialLoadCompleted.set(true)
         } finally {
             loadMutex.unlock()
+        }
+    }
+
+        fun toggleChip(chip: HomePage.Chip) {
+        viewModelScope.launch(Dispatchers.IO) {
+            val current = selectedChip.value
+            if (current?.title == chip.title) {
+                selectedChip.value = null
+                isLoading.value = true
+                val page = YouTube.home().getOrNull()
+                if (page != null) {
+                    homePage.value = page
+                }
+                isLoading.value = false
+            } else {
+                selectedChip.value = chip
+                val params = chip.endpoint?.params
+                if (params != null) {
+                    isLoading.value = true
+                    val page = YouTube.home(params = params).getOrNull()
+                    if (page != null) {
+                        homePage.value = page.copy(chips = homePage.value?.chips ?: page.chips)
+                    }
+                    isLoading.value = false
+                }
+            }
         }
     }
 

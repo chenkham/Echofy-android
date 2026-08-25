@@ -4,7 +4,6 @@ import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.Chenkham.Echofy.auth.AuthRepository
-import com.Chenkham.Echofy.ads.SubscriptionManager
 import com.Chenkham.Echofy.db.entities.UserEntity
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -21,8 +20,7 @@ sealed class SignInState {
 
 @HiltViewModel
 class SignInViewModel @Inject constructor(
-    private val authRepository: AuthRepository,
-    private val subscriptionManager: SubscriptionManager
+    private val authRepository: AuthRepository
 ) : ViewModel() {
     
     private val _signInState = MutableStateFlow<SignInState>(SignInState.Idle)
@@ -40,9 +38,6 @@ class SignInViewModel @Inject constructor(
                 
                 _signInState.value = result.fold(
                     onSuccess = { user -> 
-                        // Restore purchases after successful login
-                        // This checks Google Play for existing subscriptions
-                        subscriptionManager.restorePurchases()
                         SignInState.Success(user) 
                     },
                     onFailure = { error -> 

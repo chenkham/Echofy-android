@@ -1,7 +1,6 @@
 plugins {
-    kotlin("jvm")
-    @Suppress("DSL_SCOPE_VIOLATION")
     alias(libs.plugins.kotlin.serialization)
+    alias(libs.plugins.kotlin.jvm)
 }
 
 kotlin {
@@ -16,5 +15,8 @@ dependencies {
     implementation(libs.ktor.client.encoding)
     implementation(libs.brotli)
     implementation(libs.newpipe.extractor)
+    implementation(libs.re2j)
+    implementation(libs.rhino)
+    implementation(libs.okhttp.dnsoverhttps)
     testImplementation(libs.junit)
 }

@@ -1,3 +1,9 @@
+/*
+ * Echofy Project Original (2026)
+ * Arturo254 (github.com/Arturo254)
+ * Licensed Under GPL-3.0 | see git history for contributors
+ */
+
 package com.Chenkham.Echofy.ui.screens.library
 
 import androidx.compose.foundation.ExperimentalFoundationApi
@@ -14,11 +20,15 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.pulltorefresh.PullToRefreshDefaults
+import androidx.compose.material3.pulltorefresh.pullToRefresh
+import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -26,7 +36,6 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.toMutableStateList
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -45,6 +54,7 @@ import com.Chenkham.Echofy.LocalPlayerConnection
 import com.Chenkham.Echofy.R
 import com.Chenkham.Echofy.constants.CONTENT_TYPE_HEADER
 import com.Chenkham.Echofy.constants.CONTENT_TYPE_SONG
+import com.Chenkham.Echofy.constants.HideExplicitKey
 import com.Chenkham.Echofy.constants.SongFilter
 import com.Chenkham.Echofy.constants.SongFilterKey
 import com.Chenkham.Echofy.constants.SongSortDescendingKey
@@ -60,7 +70,6 @@ import com.Chenkham.Echofy.ui.component.LocalMenuState
 import com.Chenkham.Echofy.ui.component.PrefetchOnVisible
 import com.Chenkham.Echofy.ui.component.SongListItem
 import com.Chenkham.Echofy.ui.component.SortHeader
-import com.Chenkham.Echofy.ui.component.VerticalFastScroller
 import com.Chenkham.Echofy.ui.menu.SelectionSongMenu
 import com.Chenkham.Echofy.ui.menu.SongMenu
 import com.Chenkham.Echofy.ui.utils.ItemWrapper
@@ -68,7 +77,7 @@ import com.Chenkham.Echofy.utils.rememberEnumPreference
 import com.Chenkham.Echofy.utils.rememberPreference
 import com.Chenkham.Echofy.viewmodels.LibrarySongsViewModel
 
-@OptIn(ExperimentalFoundationApi::class)
+@OptIn(ExperimentalFoundationApi::class, ExperimentalMaterial3Api::class)
 @Composable
 fun LibrarySongsScreen(
     navController: NavController,
@@ -89,8 +98,10 @@ fun LibrarySongsScreen(
     val (sortDescending, onSortDescendingChange) = rememberPreference(SongSortDescendingKey, true)
 
     val (ytmSync) = rememberPreference(YtmSyncKey, true)
+    val hideExplicit by rememberPreference(key = HideExplicitKey, defaultValue = false)
 
     val songs by viewModel.allSongs.collectAsState()
+    val isRefreshing by viewModel.isRefreshing.collectAsState()
 
     var filter by rememberEnumPreference(SongFilterKey, SongFilter.LIKED)
 
@@ -99,20 +110,18 @@ fun LibrarySongsScreen(
             when (filter) {
                 SongFilter.LIKED -> viewModel.syncLikedSongs()
                 SongFilter.LIBRARY -> viewModel.syncLibrarySongs()
-                SongFilter.UPLOADED -> viewModel.syncUploadedSongs()
                 else -> return@LaunchedEffect
             }
         }
     }
 
-    val wrappedSongs = remember(songs) {
-        songs.map { item -> ItemWrapper(item) }.toMutableStateList()
-    }
+    val wrappedSongs = songs.map { item -> ItemWrapper(item) }.toMutableList()
     var selection by remember {
         mutableStateOf(false)
     }
 
     val lazyListState = rememberLazyListState()
+    val pullRefreshState = rememberPullToRefreshState()
 
     val backStackEntry by navController.currentBackStackEntryAsState()
     val scrollToTop =
@@ -126,17 +135,18 @@ fun LibrarySongsScreen(
     }
 
     Box(
-        modifier = Modifier.fillMaxSize(),
+        modifier =
+            Modifier.fillMaxSize()
+                .pullToRefresh(
+                    state = pullRefreshState,
+                    isRefreshing = isRefreshing,
+                    onRefresh = { if (ytmSync) viewModel.refresh(filter) }
+                ),
     ) {
-        VerticalFastScroller(
-            listState = lazyListState,
-            topContentPadding = 16.dp,
-            endContentPadding = 0.dp
+        LazyColumn(
+            state = lazyListState,
+            contentPadding = LocalPlayerAwareWindowInsets.current.asPaddingValues(),
         ) {
-            LazyColumn(
-                state = lazyListState,
-                contentPadding = LocalPlayerAwareWindowInsets.current.asPaddingValues(),
-            ) {
             item(
                 key = "filter",
                 contentType = CONTENT_TYPE_HEADER,
@@ -158,12 +168,11 @@ fun LibrarySongsScreen(
                     )
                     ChipsRow(
                         chips =
-                            listOf(
-                                SongFilter.LIKED to stringResource(R.string.filter_liked),
-                                SongFilter.LIBRARY to stringResource(R.string.filter_library),
-                                SongFilter.DOWNLOADED to stringResource(R.string.filter_downloaded),
-                                SongFilter.UPLOADED to stringResource(R.string.filter_uploaded),
-                            ),
+                        listOf(
+                            SongFilter.LIKED to stringResource(R.string.filter_liked),
+                            SongFilter.LIBRARY to stringResource(R.string.filter_library),
+                            SongFilter.DOWNLOADED to stringResource(R.string.filter_downloaded),
+                        ),
                         currentValue = filter,
                         onValueUpdate = {
                             filter = it
@@ -255,21 +264,25 @@ fun LibrarySongsScreen(
                                     songs.size
                                 ),
                                 style = MaterialTheme.typography.titleSmall,
-                                color = MaterialTheme.colorScheme.secondary,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
                             )
                         }
                     }
                 }
             }
 
+            val filteredSongs = if (hideExplicit) {
+                wrappedSongs.filter { !it.item.song.explicit }
+            } else {
+                wrappedSongs
+            }
             itemsIndexed(
-                items = wrappedSongs,
+                items = filteredSongs,
                 key = { _, item -> item.item.song.id },
                 contentType = { _, _ -> CONTENT_TYPE_SONG },
             ) { index, songWrapper ->
-                // INSTANT PLAYBACK: Prefetch URL when song becomes visible
                 PrefetchOnVisible(mediaId = songWrapper.item.song.id)
-                
+
                 SongListItem(
                     song = songWrapper.item,
                     showInLibraryIcon = true,
@@ -296,42 +309,41 @@ fun LibrarySongsScreen(
                     },
                     isSelected = songWrapper.isSelected && selection,
                     modifier =
-                        Modifier
-                            .fillMaxWidth()
-                            .combinedClickable(
-                                onClick = {
-                                    if (!selection) {
-                                        if (songWrapper.item.id == mediaMetadata?.id) {
-                                            playerConnection.togglePlayPause()
-                                        } else {
-                                            playerConnection.playQueue(
-                                                ListQueue(
-                                                    title = context.getString(R.string.queue_all_songs),
-                                                    items = songs.map { it.toMediaItem() },
-                                                    startIndex = index,
-                                                ),
-                                            )
-                                        }
+                    Modifier
+                        .fillMaxWidth()
+                        .combinedClickable(
+                            onClick = {
+                                if (!selection) {
+                                    if (songWrapper.item.id == mediaMetadata?.id) {
+                                        playerConnection.player.togglePlayPause()
                                     } else {
-                                        songWrapper.isSelected = !songWrapper.isSelected
+                                        playerConnection.playQueue(
+                                            ListQueue(
+                                                title = context.getString(R.string.queue_all_songs),
+                                                items = songs.map { it.toMediaItem() },
+                                                startIndex = index,
+                                            ),
+                                        )
                                     }
-                                },
-                                onLongClick = {
-                                    haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                                    if (!selection) {
-                                        selection = true
-                                    }
-                                    wrappedSongs.forEach {
-                                        it.isSelected = false
-                                    } // Clear previous selections
-                                    songWrapper.isSelected = true // Select current item
-                                },
-                            )
-                            .animateItem(),
+                                } else {
+                                    songWrapper.isSelected = !songWrapper.isSelected
+                                }
+                            },
+                            onLongClick = {
+                                haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                if (!selection) {
+                                    selection = true
+                                }
+                                wrappedSongs.forEach {
+                                    it.isSelected = false
+                                } // Clear previous selections
+                                songWrapper.isSelected = true // Select current item
+                            },
+                        )
+                        .animateItem(),
                 )
             }
         }
-    }
 
         HideOnScrollFAB(
             visible = songs.isNotEmpty() == true,
@@ -345,6 +357,14 @@ fun LibrarySongsScreen(
                     ),
                 )
             },
+        )
+
+        PullToRefreshDefaults.Indicator(
+            isRefreshing = isRefreshing,
+            state = pullRefreshState,
+            modifier = Modifier
+                .align(Alignment.TopCenter)
+                .padding(LocalPlayerAwareWindowInsets.current.asPaddingValues()),
         )
     }
 }

@@ -448,7 +448,7 @@
 
     <string name="discord_integration">Discord integration</string>
     <string name="discord_gateway_description">Show the current song through Discord Gateway Rich Presence</string>
-    <string name="discord_information">Echofy uses the KizzyRPC library to set your Discord account\'s status. This involves using the Discord Gateway connection, which may be considered a violation of Discord\'s TOS. However, there are no known cases of user accounts being suspended for this reason. Use at your own risk.  OpenTunne will only extract your token, and everything else is stored locally.</string>
+    <string name="discord_information">Echofy uses the KizzyRPC library to set your Discord account\'s status. This involves using the Discord Gateway connection, which may be considered a violation of Discord\'s TOS. However, there are no known cases of user accounts being suspended for this reason. Use at your own risk.  Echofy will only extract your token, and everything else is stored locally.</string>
     <string name="lastfm_integration">Last.fm integration gateway</string>
     <string name="lastfm_login_description">Connect a Last.fm API account to scrobble tracks and publish now-playing updates.</string>
     <string name="lastfm_ready_description">Ready to send now-playing updates and scrobbles.</string>
@@ -765,4 +765,164 @@
     <string name="jam_registry_url"></string>
     <string name="jam_invite_base_url"></string>
     <string name="jam_room_allocate_url"></string>
+    <string name="release_radar">Release Radar</string>
+    <plurals name="release_radar_new_releases">
+        <item quantity="one">%d new release</item>
+        <item quantity="other">%d new releases</item>
+    </plurals>
+
+    <!-- Player Advanced Settings -->
+    <string name="smart_resume_minutes">Smart resume threshold</string>
+    <string name="skip_silent_outro">Skip silent outro</string>
+    <string name="skip_silent_outro_desc">Automatically skip to the next track when trailing silence is detected</string>
+    <string name="silent_outro_length">Silent outro length</string>
+    <string name="sleep_timer_fade_out">Fade out music</string>
+    <string name="sleep_timer_fade_out_desc">Gradually decrease volume before stopping playback</string>
+    <string name="sleep_timer_fade_duration">Fade duration</string>
+    <string name="quick_settings_tile">Quick Settings Tile</string>
+    <string name="quick_settings_tile_desc">Add a quick playback tile to your notification panel</string>
+    <string name="dynamic_shortcuts">Dynamic Shortcuts</string>
+    <string name="dynamic_shortcuts_desc">Show recently played playlists and artists on app icon long-press</string>
+
+    <string name="playback_fade_desc">Crossfade and smooth volume adjustments between songs</string>
+    <string name="accessibility_audio">Audio Accessibility</string>
+    <string name="mono_audio">Mono audio</string>
+    <string name="mono_audio_desc">Combine left and right audio channels</string>
+    <string name="audio_balance">Audio balance</string>
+    <string name="audio_balance_desc">Adjust left/right channel volume distribution</string>
+    <string name="karaoke_mode">Vocal suppression / Karaoke</string>
+    <string name="karaoke_mode_desc">Attenuate center-panned vocals</string>
+    <string name="volume_limit">Volume limit</string>
+    <string name="volume_limit_desc">Prevent output exceeding a maximum threshold</string>
+    <string name="per_track_audio_settings">Per-track volume memory</string>
+    <string name="per_track_audio_settings_desc">Remember custom volume adjustment per song</string>
+    <string name="ab_loop_enabled">A-B repeat loop</string>
+    <string name="ab_loop_enabled_desc">Enable looping a section of the current song</string>
+    <string name="smart_resume">Smart resume</string>
+    <string name="smart_resume_desc">Rewind slightly when resuming after being paused for a while</string>
+    <string name="smart_resume_length">Smart resume rewind length</string>
+    <string name="resume_on_headphones">Resume on headphone connect</string>
+    <string name="resume_on_headphones_desc">Automatically continue playback when headphones connect</string>
+    <string name="speed_per_content_type">Speed per content type</string>
+    <string name="speed_per_content_type_desc">Apply different playback speed to long-form audio</string>
+    <string name="long_form_speed">Long-form playback speed</string>
+    <string name="long_form_length">Long-form track threshold</string>
+
+    <string name="audio_quality_highest">Highest</string>
+    <string name="playback_fade">Crossfade &amp; Fade</string>
+
+    <!-- Integrations -->
+    <string name="integrations_music">Music Data &amp; Lyrics</string>
+    <string name="integrations_explore">Explore &amp; Atmosphere</string>
+    <string name="integration_theaudiodb_key">TheAudioDB API Key</string>
+    <string name="integration_concerts">Live Concerts &amp; Tour Dates</string>
+    <string name="integration_concerts_desc">Show upcoming concert events for artists</string>
+    <string name="integration_bandsintown_id">Bandsintown App ID</string>
+    <string name="integration_similar_artists">Similar Artists (TasteDive)</string>
+    <string name="integration_similar_artists_desc">Discover related artists and taste recommendations</string>
+    <string name="integration_tastedive_key">TasteDive API Key</string>
+    <string name="integration_genius">Genius Lyrics &amp; Annotations</string>
+    <string name="integration_genius_desc">Fetch rich annotated lyrics from Genius</string>
+    <string name="integration_genius_token">Genius Client Access Token</string>
+    <string name="integration_discogs">Discogs Metadata &amp; Releases</string>
+    <string name="integration_discogs_desc">Enrich artist discographies and album release dates</string>
+    <string name="integration_discogs_token">Discogs User Token</string>
+    <string name="integration_songlink">Songlink / Odesli Cross-Platform Links</string>
+    <string name="integration_songlink_desc">Share universal song links across Spotify, Apple Music, and YouTube</string>
+    <string name="integration_mixcloud">Mixcloud DJ Sets &amp; Mixes</string>
+    <string name="integration_mixcloud_desc">Stream live DJ sessions and community radio</string>
+    <string name="integration_ambient">Freesound Ambient Sounds</string>
+    <string name="integration_ambient_desc">Play background noise and ambient soundscapes with music</string>
+    <string name="integration_freesound_key">Freesound API Key</string>
+
+    <!-- Content Settings -->
+    <string name="because_you_listened">Because You Listened</string>
+    <string name="because_you_listened_desc">Show recommendations based on recently played artists</string>
+    <string name="mood_playlists">Mood &amp; Activity Playlists</string>
+    <string name="mood_playlists_desc">Show curated playlists matching current time of day and mood</string>
+    <string name="release_radar_desc">Show new tracks and releases from artists in your library</string>
+    <string name="home_row_order">Home Section Order</string>
+    <string name="home_row_order_desc">Customize and reorder sections displayed on the home page</string>
+
+    <!-- Integration Artist Strings -->
+    <string name="integrations_artist">Artist Details &amp; Metadata</string>
+    <string name="integration_artist_details">Fetch Extended Artist Details</string>
+    <string name="integration_artist_details_desc">Retrieve additional artist discography and stats</string>
+    <string name="integration_artist_genres">Artist Genres &amp; Tags</string>
+    <string name="integration_artist_links">Social &amp; Streaming Links</string>
+    <string name="integration_artist_links_desc">Display artist official links and streaming profiles</string>
+    <string name="integration_artist_bio">Artist Biography</string>
+    <string name="integration_artist_bio_desc">Load comprehensive artist bio and summary</string>
+
+    <!-- Appearance & Accessibility Strings -->
+    <string name="font_serif">Serif</string>
+    <string name="font_monospace">Monospace</string>
+    <string name="font_cursive">Cursive</string>
+    <string name="app_icon">App Icon</string>
+    <string name="app_icon_default">Default Neon</string>
+    <string name="app_icon_classic">Classic</string>
+    <string name="app_icon_monochrome">Monochrome</string>
+    <string name="reduce_motion">Reduce Motion</string>
+    <string name="reduce_motion_desc">Minimize animations and transitions across the app</string>
+    <string name="high_contrast_lyrics">High Contrast Lyrics</string>
+    <string name="high_contrast_lyrics_desc">Improve lyrics readability with maximum text contrast</string>
+    <string name="listening_reminder">Listening Reminder</string>
+    <string name="listening_reminder_desc">Notify to take a break after prolonged listening</string>
+    <string name="listening_reminder_after">Remind after</string>
+
+    <!-- Content Strings -->
+    <string name="cache_translations">Cache Lyrics Translations</string>
+    <string name="cache_translations_desc">Store downloaded lyrics translations locally for offline use</string>
+    <string name="listening_streak">Listening Streaks</string>
+    <string name="listening_streak_desc">Track daily listening habits and continuous day streaks</string>
+    <string name="time_machine">Time Machine</string>
+    <string name="time_machine_desc">Rediscover songs and albums you listened to in past months</string>
+    <string name="hidden_gems">Hidden Gems</string>
+    <string name="hidden_gems_desc">Discover lesser-known tracks from your favorite artists</string>
+
+    <string name="double_tap_seek">Double-tap to Seek</string>
+    <string name="double_tap_seek_desc">Double-tap player edges to skip backward or forward</string>
+    <string name="double_tap_seek_amount">Seek duration</string>
+    <string name="app_font">App Typography / Font</string>
+    <string name="font_system">System Default</string>
+    <string name="font_sans_serif">Sans-Serif</string>
+    <string name="time_machine_title">Time Machine</string>
+    <string name="because_you_listened_to">Because you listened to %1$s</string>
+    <string name="ai_assistant">AI Assistant</string>
+    <string name="listening_streak_days">%1$d Days</string>
+    <string name="listening_streak_best">Best Streak: %1$d Days</string>
+    <string name="never_played">Never Played</string>
+    <string name="recently_added">Recently Added</string>
+    <string name="duplicate_songs">Duplicate Songs</string>
+    <string name="export_history">Export History</string>
+    <string name="export_history_success">Listening history exported successfully</string>
+    <string name="export_history_failed">Failed to export listening history</string>
+    <string name="dj_mixes">DJ Mixes &amp; Sets</string>
+    <string name="ambient_sounds">Ambient Sounds</string>
+    <string name="radio_popular">Popular Stations</string>
+    <string name="ambient_sounds_needs_key">Ambient sounds require API configuration</string>
+    <string name="lyrics_sync">Sync Lyrics</string>
+    <string name="ab_loop">A-B Loop</string>
+    <string name="ab_loop_clear">Clear Loop</string>
+    <string name="ab_loop_active">Loop Active</string>
+    <string name="ab_loop_waiting_b">Waiting for Point B</string>
+    <string name="ab_loop_desc">Loop a specific section of the audio track</string>
+    <string name="ab_loop_set_a">Set A</string>
+    <string name="ab_loop_set_b">Set B</string>
+    <string name="remember_for_this_song">Remember for this song</string>
+    <string name="songlink_long_press_hint">Long press to copy link</string>
+    <string name="lyrics_sync_title">Adjust Lyrics Timing</string>
+    <string name="lyrics_sync_earlier">Earlier</string>
+    <string name="lyrics_sync_later">Later</string>
+    <string name="lyrics_sync_none">None</string>
+    <string name="lyrics_sync_decrease">Sync earlier</string>
+    <string name="lyrics_sync_increase">Sync later</string>
+    <string name="listening_reminder_message">Time for a break! You\'ve been listening for a while.</string>
+    <string name="mood_morning">Morning</string>
+    <string name="mood_afternoon">Afternoon</string>
+    <string name="mood_evening">Evening</string>
+    <string name="mood_late_night">Late Night</string>
+    <string name="mood_focus">Focus</string>
+    <string name="song_details">Song Details</string>
+    <string name="bass_boost">Bass Boost</string>
 </resources>

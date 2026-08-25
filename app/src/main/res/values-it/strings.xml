@@ -345,7 +345,7 @@
     <string name="backup_create_failed">Non posso creare un backup</string>
     <string name="restore_failed">Ripristino backup fallito</string>
     <string name="discord_integration">Integrazione con Discord</string>
-    <string name="discord_information">Echofy utilizza la libreria KizzyRPC per impostare lo stato del tuo account Discord. CiÃ² comporta l\'utilizzo della connessione Discord Gateway, che puÃ² essere considerata una violazione del TOS di Discord. Tuttavia, non ci sono casi noti di account utente sospesi per questo motivo. Usa a tuo rischio. OpenTunne estrarrÃ  solo il tuo token e tutto il resto verrÃ  memorizzato localmente.</string>
+    <string name="discord_information">Echofy utilizza la libreria KizzyRPC per impostare lo stato del tuo account Discord. CiÃ² comporta l\'utilizzo della connessione Discord Gateway, che puÃ² essere considerata una violazione del TOS di Discord. Tuttavia, non ci sono casi noti di account utente sospesi per questo motivo. Usa a tuo rischio. Echofy estrarrÃ  solo il tuo token e tutto il resto verrÃ  memorizzato localmente.</string>
     <string name="dismiss">Scartare</string>
     <string name="options">Opzioni</string>
     <string name="preview">Anteprima</string>

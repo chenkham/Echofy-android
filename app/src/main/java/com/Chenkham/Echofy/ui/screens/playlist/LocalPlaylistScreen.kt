@@ -49,6 +49,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.TopAppBarScrollBehavior
 import androidx.compose.material3.rememberSwipeToDismissBoxState
 import androidx.compose.runtime.Composable
@@ -97,7 +98,7 @@ import androidx.media3.exoplayer.offline.DownloadRequest
 import androidx.media3.exoplayer.offline.DownloadService
 import androidx.navigation.NavController
 import coil.compose.AsyncImage
-import com.Chenkham.innertube.YouTube
+import com.arturo254.opentune.innertube.YouTube
 import com.Chenkham.Echofy.LocalDatabase
 import com.Chenkham.Echofy.LocalDownloadUtil
 import com.Chenkham.Echofy.LocalPlayerAwareWindowInsets
@@ -779,6 +780,7 @@ fun LocalPlaylistScreen(
         }
 
         TopAppBar(
+            colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent, scrolledContainerColor = Color.Transparent),
             title = {
                 if (selection) {
                     val count = wrappedSongs.count { it.isSelected }
@@ -1113,11 +1115,13 @@ fun LocalPlaylistHeader(
                         playlist.songCount
                     ),
                     style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
 
                 Text(
                     text = makeTimeString(playlistLength * 1000L),
                     style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
 
                 Row {
@@ -1147,7 +1151,7 @@ fun LocalPlaylistHeader(
                                     if (liked) R.drawable.heart_fill else R.drawable.heart
                                 ),
                                 contentDescription = null,
-                                tint = if (liked) MaterialTheme.colorScheme.error else LocalContentColor.current
+                                tint = if (liked) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurface
                             )
                         }
                     }

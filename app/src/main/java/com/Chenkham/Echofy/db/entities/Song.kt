@@ -1,4 +1,4 @@
-﻿package com.Chenkham.Echofy.db.entities
+package com.Chenkham.Echofy.db.entities
 
 import androidx.compose.runtime.Immutable
 import androidx.room.Embedded
@@ -10,30 +10,38 @@ data class Song
 @JvmOverloads
 constructor(
     @Embedded val song: SongEntity,
+
     @Relation(
         entity = ArtistEntity::class,
         entityColumn = "id",
         parentColumn = "id",
         associateBy =
-            Junction(
-                value = SortedSongArtistMap::class,
-                parentColumn = "songId",
-                entityColumn = "artistId",
-            ),
+        Junction(
+            value = SortedSongArtistMap::class,
+            parentColumn = "songId",
+            entityColumn = "artistId",
+        ),
     )
     val artists: List<ArtistEntity>,
+
     @Relation(
         entity = AlbumEntity::class,
         entityColumn = "id",
         parentColumn = "id",
         associateBy =
-            Junction(
-                value = SongAlbumMap::class,
-                parentColumn = "songId",
-                entityColumn = "albumId",
-            ),
+        Junction(
+            value = SongAlbumMap::class,
+            parentColumn = "songId",
+            entityColumn = "albumId",
+        ),
     )
     val album: AlbumEntity? = null,
+
+    @Relation(
+        parentColumn = "id",
+        entityColumn = "id"
+    )
+    val format: FormatEntity? = null,
 ) : LocalItem() {
     override val id: String
         get() = song.id

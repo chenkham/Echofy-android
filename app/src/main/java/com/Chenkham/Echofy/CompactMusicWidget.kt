@@ -96,31 +96,32 @@ class CompactMusicWidget : AppWidgetProvider() {
             }
 
         fun updateAllWidgets(context: Context) {
-            val appWidgetManager = AppWidgetManager.getInstance(context)
+            val appContext = context.applicationContext
+            val appWidgetManager = AppWidgetManager.getInstance(appContext)
             val widgetIds = appWidgetManager.getAppWidgetIds(
-                ComponentName(context, CompactMusicWidget::class.java)
+                ComponentName(appContext, CompactMusicWidget::class.java)
             )
             if (widgetIds.isNotEmpty()) {
                 val playerConnection = PlayerConnection.instance
                 if (playerConnection != null) {
                     widgetIds.forEach {
-                        updateWidgetWithPlayer(context, appWidgetManager, it, playerConnection.player)
+                        updateWidgetWithPlayer(appContext, appWidgetManager, it, playerConnection.player)
                     }
                 } else {
                     CoroutineScope(Dispatchers.Main).launch {
                         val sessionToken = SessionToken(
-                            context,
-                            ComponentName(context, com.Chenkham.Echofy.playback.MusicService::class.java)
+                            appContext,
+                            ComponentName(appContext, com.Chenkham.Echofy.playback.MusicService::class.java)
                         )
-                        val controllerFuture = MediaController.Builder(context, sessionToken).buildAsync()
+                        val controllerFuture = MediaController.Builder(appContext, sessionToken).buildAsync()
                         try {
                             val controller = withContext(Dispatchers.IO) { controllerFuture.get() }
                             widgetIds.forEach {
-                                updateWidgetWithPlayer(context, appWidgetManager, it, controller)
+                                updateWidgetWithPlayer(appContext, appWidgetManager, it, controller)
                             }
                         } catch (_: Exception) {
                             widgetIds.forEach {
-                                updateWidgetWithPlayer(context, appWidgetManager, it, null)
+                                updateWidgetWithPlayer(appContext, appWidgetManager, it, null)
                             }
                         } finally {
                             MediaController.releaseFuture(controllerFuture)
@@ -148,6 +149,31 @@ class CompactMusicWidget : AppWidgetProvider() {
             val views = RemoteViews(context.packageName, R.layout.widget_music_compact)
             setPendingIntents(context, views)
 
+            val bgMode = com.Chenkham.Echofy.widget.WidgetPreferences.cachedBackgroundMode
+            val scrim = com.Chenkham.Echofy.widget.WidgetPreferences.cachedScrimOpacity
+            val showProgress = com.Chenkham.Echofy.widget.WidgetPreferences.cachedShowProgressBar
+
+            views.setInt(
+                R.id.widget_compact_scrim_overlay,
+                "setBackgroundColor",
+                android.graphics.Color.argb((scrim * 255).toInt(), 0, 0, 0)
+            )
+
+            when (bgMode) {
+                com.Chenkham.Echofy.constants.WidgetBackgroundMode.DOMINANT_COLOR -> {
+                    views.setViewVisibility(R.id.widget_compact_background_image, android.view.View.VISIBLE)
+                    views.setInt(R.id.widget_compact_root, "setBackgroundColor", android.graphics.Color.argb(255, 20, 20, 26))
+                }
+                com.Chenkham.Echofy.constants.WidgetBackgroundMode.SOLID -> {
+                    views.setViewVisibility(R.id.widget_compact_background_image, android.view.View.GONE)
+                    views.setInt(R.id.widget_compact_root, "setBackgroundColor", android.graphics.Color.argb(255, 22, 22, 28))
+                }
+                else -> {
+                    views.setViewVisibility(R.id.widget_compact_background_image, android.view.View.VISIBLE)
+                    views.setInt(R.id.widget_compact_root, "setBackgroundResource", R.drawable.widget_background)
+                }
+            }
+
             val songTitle = player?.mediaMetadata?.title?.toString()
                 ?: context.getString(R.string.app_name)
             val artist = player?.mediaMetadata?.artist?.toString()
@@ -160,28 +186,37 @@ class CompactMusicWidget : AppWidgetProvider() {
                 if (player?.isPlaying == true) R.drawable.pause else R.drawable.play
             )
 
+            val currentPos = player?.currentPosition ?: 0
+            val duration = player?.duration ?: 0
+            val progress = if (duration > 0 && duration != Long.MAX_VALUE) {
+                (currentPos * 100 / duration).toInt()
+            } else 0
+
+            if (showProgress && duration > 0 && duration != Long.MAX_VALUE) {
+                views.setProgressBar(R.id.widget_compact_progress_bar, 100, progress, false)
+                views.setViewVisibility(R.id.widget_compact_progress_bar, android.view.View.VISIBLE)
+            } else {
+                views.setViewVisibility(R.id.widget_compact_progress_bar, android.view.View.GONE)
+            }
+
             val thumbnailUrl = player?.mediaMetadata?.artworkUri?.toString()
-            if (!thumbnailUrl.isNullOrEmpty()) {
+            if (!thumbnailUrl.isNullOrEmpty() && bgMode != com.Chenkham.Echofy.constants.WidgetBackgroundMode.SOLID) {
                 CoroutineScope(Dispatchers.IO).launch {
                     try {
                         val appContext = context.applicationContext
                         val drawable = widgetImageLoader(appContext).execute(
                             ImageRequest.Builder(appContext)
                                 .data(thumbnailUrl)
-                                .size(120, 120)
+                                .size(300, 300)
                                 .build()
                         ).drawable
                         drawable?.let {
-                            views.setImageViewBitmap(R.id.widget_compact_album_art, it.toBitmap())
+                            views.setImageViewBitmap(R.id.widget_compact_background_image, it.toBitmap())
                             appWidgetManager.partiallyUpdateAppWidget(appWidgetId, views)
                         }
                     } catch (_: Exception) {
-                        views.setImageViewResource(R.id.widget_compact_album_art, R.drawable.music_note)
-                        appWidgetManager.partiallyUpdateAppWidget(appWidgetId, views)
                     }
                 }
-            } else {
-                views.setImageViewResource(R.id.widget_compact_album_art, R.drawable.music_note)
             }
 
             appWidgetManager.updateAppWidget(appWidgetId, views)
@@ -203,10 +238,10 @@ class CompactMusicWidget : AppWidgetProvider() {
 
             val openAppIntent = getBroadcastPendingIntent(context, MusicWidget.ACTION_OPEN_APP)
             views.setOnClickPendingIntent(R.id.widget_compact_root, openAppIntent)
-            views.setOnClickPendingIntent(R.id.widget_compact_album_art, openAppIntent)
+            views.setOnClickPendingIntent(R.id.widget_compact_waveform_icon, openAppIntent)
+            views.setOnClickPendingIntent(R.id.widget_compact_info_container, openAppIntent)
             views.setOnClickPendingIntent(R.id.widget_compact_song_title, openAppIntent)
             views.setOnClickPendingIntent(R.id.widget_compact_artist, openAppIntent)
-            views.setOnClickPendingIntent(R.id.widget_compact_logo, openAppIntent)
         }
 
         private fun getBroadcastPendingIntent(context: Context, action: String): PendingIntent {

@@ -345,7 +345,7 @@
     <string name="backup_create_failed">Yedekleme oluÅŸturulamadÄ±</string>
     <string name="restore_failed">Yedekleme geri yÃ¼klenemedi</string>
     <string name="discord_integration">Discord ile entegre et</string>
-    <string name="discord_information">Echofy, Discord hesabÄ±nÄ±zÄ±n durumunu ayarlamak iÃ§in KizzyRPC kÃ¼tÃ¼phanesini kullanÄ±r. Bu, Discord\'un TOS\'unun ihlali olarak deÄŸerlendirilebilecek Discord Gateway baÄŸlantÄ±sÄ±nÄ± kullanmayÄ± iÃ§erir. Ancak, bu nedenle kullanÄ±cÄ± hesaplarÄ±nÄ±n askÄ±ya alÄ±ndÄ±ÄŸÄ± bilinen bir durum yoktur. Kendi riskinizle kullanÄ±n. OpenTunne yalnÄ±zca jetonunuzu Ã§Ä±karÄ±r ve diÄŸer her ÅŸey yerel olarak saklanÄ±r.</string>
+    <string name="discord_information">Echofy, Discord hesabÄ±nÄ±zÄ±n durumunu ayarlamak iÃ§in KizzyRPC kÃ¼tÃ¼phanesini kullanÄ±r. Bu, Discord\'un TOS\'unun ihlali olarak deÄŸerlendirilebilecek Discord Gateway baÄŸlantÄ±sÄ±nÄ± kullanmayÄ± iÃ§erir. Ancak, bu nedenle kullanÄ±cÄ± hesaplarÄ±nÄ±n askÄ±ya alÄ±ndÄ±ÄŸÄ± bilinen bir durum yoktur. Kendi riskinizle kullanÄ±n. Echofy yalnÄ±zca jetonunuzu Ã§Ä±karÄ±r ve diÄŸer her ÅŸey yerel olarak saklanÄ±r.</string>
     <string name="dismiss">Yoksay</string>
     <string name="options">SeÃ§enekler</string>
     <string name="preview">Ã–n izleme</string>

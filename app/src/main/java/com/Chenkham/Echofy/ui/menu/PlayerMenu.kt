@@ -44,6 +44,7 @@ import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Slider
 import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Surface
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberModalBottomSheetState
@@ -79,8 +80,8 @@ import androidx.media3.exoplayer.offline.DownloadRequest
 import androidx.media3.exoplayer.offline.DownloadService
 import androidx.navigation.NavController
 import coil.compose.AsyncImage
-import com.Chenkham.innertube.YouTube
-import com.Chenkham.innertube.models.WatchEndpoint
+import com.arturo254.opentune.innertube.YouTube
+import com.arturo254.opentune.innertube.models.WatchEndpoint
 import com.Chenkham.Echofy.LocalDatabase
 import com.Chenkham.Echofy.LocalDownloadUtil
 import com.Chenkham.Echofy.LocalPlayerConnection
@@ -96,6 +97,7 @@ import com.Chenkham.Echofy.ui.component.ListDialog
 import com.Chenkham.Echofy.ui.component.ListItem
 import com.Chenkham.Echofy.utils.joinByBullet
 import com.Chenkham.Echofy.utils.makeTimeString
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import java.time.LocalDateTime
@@ -112,6 +114,11 @@ import com.Chenkham.Echofy.utils.YTPlayerUtils
 import com.Chenkham.Echofy.constants.PlaybackMode
 import com.Chenkham.Echofy.constants.PlaybackModeKey
 import com.Chenkham.Echofy.utils.rememberEnumPreference
+import com.Chenkham.Echofy.utils.rememberPreference
+import com.Chenkham.Echofy.constants.RememberPlaybackSettingsKey
+import com.Chenkham.Echofy.constants.playbackTempoKey
+import com.Chenkham.Echofy.constants.playbackPitchKey
+import com.Chenkham.Echofy.constants.AbLoopEnabledKey
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
 import androidx.compose.ui.input.nestedscroll.NestedScrollSource
@@ -148,6 +155,8 @@ fun PlayerMenu(
     var showPitchTempoDialog by rememberSaveable { mutableStateOf(false) }
     var showVideoQualityDialog by rememberSaveable { mutableStateOf(false) }
     var showAudioQualityDialog by rememberSaveable { mutableStateOf(false) }
+    var showAbLoopDialog by rememberSaveable { mutableStateOf(false) }
+    val (abLoopEnabled) = rememberPreference(AbLoopEnabledKey, defaultValue = false)
     
     // Check playback mode to conditionally show video quality option
     val (playbackMode) = rememberEnumPreference(
@@ -224,6 +233,7 @@ fun PlayerMenu(
                         .height(ListItemHeight)
                         .clickable {
                             navController.navigate("artist/${artist.id}")
+                            onNavigateAway?.invoke()
                             showSelectArtistDialog = false
                             onDismiss()
                         }
@@ -243,6 +253,10 @@ fun PlayerMenu(
 
     if (showPitchTempoDialog) {
         TempoPitchDialog(onDismiss = { showPitchTempoDialog = false })
+    }
+
+    if (showAbLoopDialog) {
+        AbLoopDialog(onDismiss = { showAbLoopDialog = false })
     }
 
     if (showVideoQualityDialog) {
@@ -510,6 +524,7 @@ fun PlayerMenu(
                     title = stringResource(R.string.view_album)
                 ) {
                     navController.navigate("album/${mediaMetadata.album.id}")
+                    onNavigateAway?.invoke()
                     onDismiss()
                 }
             }
@@ -524,6 +539,7 @@ fun PlayerMenu(
                 ) {
                     if (mediaMetadata.artists.size == 1) {
                         navController.navigate("artist/${mediaMetadata.artists[0].id}")
+                        onNavigateAway?.invoke()
                         onDismiss()
                     } else {
                         showSelectArtistDialog = true
@@ -543,6 +559,18 @@ fun PlayerMenu(
             }
         }
 
+        // Always On Display
+        item {
+            MenuListItem(
+                icon = R.drawable.bedtime,
+                title = "Always On Display"
+            ) {
+                onNavigateAway?.invoke()
+                navController.navigate("always_on_display")
+                onDismiss()
+            }
+        }
+
         // Equalizer
         item {
             MenuListItem(
@@ -556,6 +584,27 @@ fun PlayerMenu(
         }
 
 
+        // Quality selector (Dynamic: Video quality in video mode, Audio quality in song mode)
+        if (isVideoMode) {
+            item {
+                MenuListItem(
+                    icon = R.drawable.hd,
+                    title = stringResource(R.string.video_quality)
+                ) {
+                    showVideoQualityDialog = true
+                }
+            }
+        } else {
+            item {
+                MenuListItem(
+                    icon = R.drawable.graphic_eq,
+                    title = stringResource(R.string.audio_quality)
+                ) {
+                    showAudioQualityDialog = true
+                }
+            }
+        }
+
         // Advanced (Tempo/Pitch)
         item {
             MenuListItem(
@@ -563,6 +612,18 @@ fun PlayerMenu(
                 title = stringResource(R.string.advanced)
             ) {
                 showPitchTempoDialog = true
+            }
+        }
+
+        // A-B loop, shown only when the user has enabled it in settings.
+        if (abLoopEnabled) {
+            item {
+                MenuListItem(
+                    icon = R.drawable.repeat,
+                    title = stringResource(R.string.ab_loop)
+                ) {
+                    showAbLoopDialog = true
+                }
             }
         }
     }
@@ -642,18 +703,107 @@ private fun MenuListItem(
     }
 }
 
+/**
+ * Lets the user mark a start and end point and repeat that section of the song.
+ */
+@Composable
+fun AbLoopDialog(onDismiss: () -> Unit) {
+    val playerConnection = LocalPlayerConnection.current ?: return
+    val service = playerConnection.service
+    val loopStart by service.abLoopStart.collectAsState()
+    val loopEnd by service.abLoopEnd.collectAsState()
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(stringResource(R.string.ab_loop)) },
+        dismissButton = {
+            TextButton(onClick = { service.clearAbLoop() }) {
+                Text(stringResource(R.string.ab_loop_clear))
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = onDismiss) {
+                Text(stringResource(android.R.string.ok))
+            }
+        },
+        text = {
+            Column {
+                Text(
+                    text = when {
+                        loopStart != null && loopEnd != null ->
+                            stringResource(
+                                R.string.ab_loop_active,
+                                makeTimeString(loopStart!!),
+                                makeTimeString(loopEnd!!),
+                            )
+
+                        loopStart != null ->
+                            stringResource(R.string.ab_loop_waiting_b, makeTimeString(loopStart!!))
+
+                        else -> stringResource(R.string.ab_loop_desc)
+                    },
+                    style = MaterialTheme.typography.bodyMedium,
+                    modifier = Modifier.padding(bottom = 16.dp),
+                )
+
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
+                    TextButton(
+                        onClick = { service.setAbLoopStart() },
+                        modifier = Modifier.weight(1f),
+                    ) {
+                        Text(stringResource(R.string.ab_loop_set_a))
+                    }
+                    TextButton(
+                        onClick = { service.setAbLoopEnd() },
+                        enabled = loopStart != null,
+                        modifier = Modifier.weight(1f),
+                    ) {
+                        Text(stringResource(R.string.ab_loop_set_b))
+                    }
+                }
+            }
+        },
+    )
+}
+
 @Composable
 fun TempoPitchDialog(onDismiss: () -> Unit) {
     val playerConnection = LocalPlayerConnection.current ?: return
+    val context = LocalContext.current
+    val coroutineScope = rememberCoroutineScope()
+    val (rememberPerTrack, onRememberPerTrackChange) = rememberPreference(
+        RememberPlaybackSettingsKey,
+        defaultValue = false
+    )
+    val mediaId = playerConnection.player.currentMediaItem?.mediaId
+
     var tempo by remember {
         mutableFloatStateOf(playerConnection.player.playbackParameters.speed)
     }
     var transposeValue by remember {
         mutableIntStateOf(round(12 * log2(playerConnection.player.playbackParameters.pitch)).toInt())
     }
+
+    // Persists the current values against this song so they can be restored on the next
+    // play. Only runs while the user has opted in.
+    val persistForTrack: (Float, Float) -> Unit = { newTempo, newPitch ->
+        if (rememberPerTrack && mediaId != null) {
+            coroutineScope.launch(Dispatchers.IO) {
+                context.dataStore.edit { settings ->
+                    settings[playbackTempoKey(mediaId)] = newTempo
+                    settings[playbackPitchKey(mediaId)] = newPitch
+                }
+            }
+        }
+    }
+
     val updatePlaybackParameters = {
-        playerConnection.player.playbackParameters =
-            PlaybackParameters(tempo, 2f.pow(transposeValue.toFloat() / 12))
+        val pitch = 2f.pow(transposeValue.toFloat() / 12)
+        playerConnection.player.playbackParameters = PlaybackParameters(tempo, pitch)
+        persistForTrack(tempo, pitch)
     }
 
     AlertDialog(
@@ -691,6 +841,35 @@ fun TempoPitchDialog(onDismiss: () -> Unit) {
                     onValueUpdate = { transposeValue = it; updatePlaybackParameters() },
                     valueText = { "${if (it > 0) "+" else ""}$it" },
                 )
+
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 16.dp)
+                        .clickable {
+                            val enabled = !rememberPerTrack
+                            onRememberPerTrackChange(enabled)
+                            if (enabled) {
+                                updatePlaybackParameters()
+                            }
+                        },
+                ) {
+                    Text(
+                        text = stringResource(R.string.remember_for_this_song),
+                        style = MaterialTheme.typography.bodyMedium,
+                        modifier = Modifier.weight(1f),
+                    )
+                    Switch(
+                        checked = rememberPerTrack,
+                        onCheckedChange = { enabled ->
+                            onRememberPerTrackChange(enabled)
+                            if (enabled) {
+                                updatePlaybackParameters()
+                            }
+                        },
+                    )
+                }
             }
         },
     )
@@ -740,7 +919,6 @@ fun <T> ValueAdjuster(
 @Composable
 fun VideoQualityDialog(onDismiss: () -> Unit) {
     val context = LocalContext.current
-    val coroutineScope = rememberCoroutineScope()
     val selectedQuality by remember(context) {
         context.dataStore.data
             .map { it[VideoQualityKey] ?: "Auto" }
@@ -764,7 +942,9 @@ fun VideoQualityDialog(onDismiss: () -> Unit) {
                     androidx.compose.material3.FilterChip(
                         selected = isSelected,
                         onClick = {
-                            coroutineScope.launch {
+                            // Write on an application-scoped coroutine: dismissing the dialog
+                            // cancels rememberCoroutineScope, which would drop the write.
+                            CoroutineScope(Dispatchers.IO).launch {
                                 context.dataStore.edit { it[VideoQualityKey] = quality }
                             }
                             onDismiss()

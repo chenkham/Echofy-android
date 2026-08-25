@@ -26,9 +26,6 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
@@ -96,8 +93,8 @@ import com.Chenkham.Echofy.jam.JamSessionPhase
 import com.Chenkham.Echofy.jam.JamSessionState
 import com.Chenkham.Echofy.models.MediaMetadata
 import com.Chenkham.Echofy.models.toMediaMetadata
-import com.Chenkham.innertube.YouTube
-import com.Chenkham.innertube.models.SongItem
+import com.arturo254.opentune.innertube.YouTube
+import com.arturo254.opentune.innertube.models.SongItem
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
@@ -507,7 +504,7 @@ private fun JamHomeScreen(
                 horizontalArrangement = Arrangement.Start,
             ) {
                 IconButton(onClick = onDismiss) {
-                    Icon(Icons.Default.Close, contentDescription = "Close", tint = Color.White)
+                    Icon(painter = painterResource(R.drawable.close), contentDescription = "Close", tint = Color.White)
                 }
             }
 
@@ -916,7 +913,7 @@ private fun ActiveJamScreen(
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     IconButton(onClick = onDismiss) {
-                        Icon(Icons.Default.Close, contentDescription = "Close", tint = Color.White)
+                        Icon(painter = painterResource(R.drawable.close), contentDescription = "Close", tint = Color.White)
                     }
                     Spacer(modifier = Modifier.width(4.dp))
                     Text(
@@ -1100,7 +1097,7 @@ private fun SheetHeader(
         verticalAlignment = Alignment.CenterVertically,
     ) {
         IconButton(onClick = onBack) {
-            Icon(Icons.Default.ArrowBack, contentDescription = "Back", tint = Color.White)
+            Icon(painter = painterResource(R.drawable.arrow_back), contentDescription = "Back", tint = Color.White)
         }
         Spacer(modifier = Modifier.width(4.dp))
         Text(
@@ -1649,7 +1646,7 @@ private fun TogetherAddSongsScreen(
             verticalAlignment = Alignment.CenterVertically,
         ) {
             IconButton(onClick = onBack) {
-                Icon(Icons.Default.ArrowBack, contentDescription = "Back", tint = Color.White)
+                Icon(painter = painterResource(R.drawable.arrow_back), contentDescription = "Back", tint = Color.White)
             }
             TextField(
                 value = query,
@@ -1691,7 +1688,7 @@ private fun TogetherAddSongsScreen(
             )
             if (query.isNotEmpty()) {
                 IconButton(onClick = { query = ""; results = emptyList() }) {
-                    Icon(Icons.Default.Close, contentDescription = "Clear", tint = Color.White.copy(alpha = 0.7f))
+                    Icon(painter = painterResource(R.drawable.close), contentDescription = "Clear", tint = Color.White.copy(alpha = 0.7f))
                 }
             }
         }

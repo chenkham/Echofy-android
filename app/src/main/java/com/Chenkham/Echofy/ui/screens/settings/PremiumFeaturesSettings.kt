@@ -37,8 +37,6 @@ fun PremiumFeaturesSettings(
     navController: NavController,
     scrollBehavior: TopAppBarScrollBehavior,
 ) {
-    val isPremium = true
-
     val (enableListenTogether, onEnableListenTogetherChange) = rememberPreference(
         com.Chenkham.Echofy.constants.EnableListenTogetherKey,
         defaultValue = false,
@@ -57,32 +55,6 @@ fun PremiumFeaturesSettings(
         navController = navController,
         scrollBehavior = scrollBehavior,
     ) {
-        if (!isPremium) {
-            androidx.compose.material3.Card(
-                modifier = Modifier.padding(16.dp),
-                colors = androidx.compose.material3.CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.primaryContainer,
-                ),
-            ) {
-                Column(
-                    modifier = Modifier.padding(20.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.spacedBy(12.dp),
-                ) {
-                    Icon(
-                        painter = painterResource(R.drawable.workspace_premium),
-                        contentDescription = "Pro",
-                        modifier = Modifier.size(32.dp),
-                        tint = MaterialTheme.colorScheme.primary,
-                    )
-                    androidx.compose.material3.Button(onClick = { navController.navigate("premium") }) {
-                        Text("Unlock Pro")
-                    }
-                }
-            }
-            return@SettingsPage
-        }
-
         SettingsGeneralCategory(
             title = "Together",
             items = listOf(

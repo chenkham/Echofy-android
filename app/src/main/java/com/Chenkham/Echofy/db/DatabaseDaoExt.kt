@@ -25,10 +25,10 @@ import com.Chenkham.Echofy.extensions.toSQLiteQuery
 import com.Chenkham.Echofy.models.MediaMetadata
 import com.Chenkham.Echofy.models.toMediaMetadata
 import com.Chenkham.Echofy.ui.utils.resize
-import com.Chenkham.innertube.models.PlaylistItem
-import com.Chenkham.innertube.models.SongItem
-import com.Chenkham.innertube.pages.AlbumPage
-import com.Chenkham.innertube.pages.ArtistPage
+import com.arturo254.opentune.innertube.models.PlaylistItem
+import com.arturo254.opentune.innertube.models.SongItem
+import com.arturo254.opentune.innertube.pages.AlbumPage
+import com.arturo254.opentune.innertube.pages.ArtistPage
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.runBlocking
@@ -114,38 +114,7 @@ fun DatabaseDao.likedSongs(
 fun DatabaseDao.uploadedSongs(
     sortType: SongSortType,
     descending: Boolean,
-) = when (sortType) {
-    SongSortType.CREATE_DATE -> uploadedSongsByCreateDateAsc()
-    SongSortType.NAME ->
-        uploadedSongsByNameAsc().map { songs ->
-            val collator = Collator.getInstance(Locale.getDefault())
-            collator.strength = Collator.PRIMARY
-            songs.sortedWith(compareBy(collator) { it.song.title })
-        }
-
-    SongSortType.ARTIST ->
-        uploadedSongsByRowIdAsc().map { songs ->
-            val collator = Collator.getInstance(Locale.getDefault())
-            collator.strength = Collator.PRIMARY
-            songs
-                .sortedWith(
-                    compareBy(collator) { song ->
-                        song.artists.joinToString(
-                            "",
-                        ) { it.name }
-                    },
-                ).groupBy { it.album?.title }
-                .flatMap { (_, songsByAlbum) ->
-                    songsByAlbum.sortedBy { album ->
-                        album.artists.joinToString(
-                            "",
-                        ) { it.name }
-                    }
-                }
-        }
-
-    SongSortType.PLAY_TIME -> uploadedSongsByPlayTimeAsc()
-}.map { it.reversed(descending) }
+) = songs(sortType, descending)
 
 fun DatabaseDao.artistSongs(
     artistId: String,
@@ -267,6 +236,7 @@ fun DatabaseDao.playlists(
 
     PlaylistSortType.SONG_COUNT -> playlistsBySongCountAsc()
     PlaylistSortType.LAST_UPDATED -> playlistsByUpdatedDateAsc()
+    PlaylistSortType.CUSTOM -> playlistsByCreateDateAsc()
 }.map { it.reversed(descending) }
 
 suspend fun DatabaseDao.getLyrics(id: String?): LyricsEntity? {
@@ -274,7 +244,7 @@ suspend fun DatabaseDao.getLyrics(id: String?): LyricsEntity? {
 }
 
 /** Increment by one the play count with today's year and month. */
-fun DatabaseDao.incrementPlayCount(songId: String) {
+suspend fun DatabaseDao.incrementPlayCount(songId: String) {
     val time = LocalDateTime.now().atOffset(ZoneOffset.UTC)
     var oldCount: Int
     runBlocking {
@@ -288,7 +258,7 @@ fun DatabaseDao.incrementPlayCount(songId: String) {
     incrementPlayCount(songId, time.year, time.monthValue)
 }
 
-fun DatabaseDao.addSongToPlaylist(playlist: Playlist, songIds: List<String>) {
+suspend fun DatabaseDao.addSongToPlaylist(playlist: Playlist, songIds: List<String>) {
     var position = playlist.songCount
     songIds.forEach { id ->
         val songExists = getSongById(id) != null
@@ -330,7 +300,7 @@ fun DatabaseDao.insert(
     }
 }
 
-fun DatabaseDao.insert(albumPage: AlbumPage) {
+suspend fun DatabaseDao.insert(albumPage: AlbumPage) {
     if (insert(
             AlbumEntity(
                 id = albumPage.album.browseId,
@@ -417,13 +387,13 @@ fun DatabaseDao.update(
     update(
         artist.copy(
             name = artistPage.artist.title,
-            thumbnailUrl = artistPage.artist.thumbnail.resize(544, 544),
+            thumbnailUrl = artistPage.artist.thumbnail?.resize(544, 544),
             lastUpdateTime = LocalDateTime.now(),
         ),
     )
 }
 
-fun DatabaseDao.update(
+suspend fun DatabaseDao.update(
     album: AlbumEntity,
     albumPage: AlbumPage,
     artists: List<ArtistEntity>? = emptyList(),
@@ -494,8 +464,9 @@ fun DatabaseDao.update(playlistEntity: PlaylistEntity, playlistItem: PlaylistIte
 }
 
 suspend fun DatabaseDao.updateArtistSongsCount(artistId: String) {
-    val count = getSongCountForArtist(artistId)
-    updateArtistSongCount(artistId, count)
+    val artistEntity = artist(artistId).first()?.artist ?: return
+    val count = artistSongsByCreateDateAsc(artistId).first().size
+    update(artistEntity.copy(songCount = count))
 }
 
 fun DatabaseDao.checkpoint() {

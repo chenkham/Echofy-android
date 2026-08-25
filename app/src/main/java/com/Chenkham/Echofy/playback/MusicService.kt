@@ -4,8 +4,11 @@ package com.Chenkham.Echofy.playback
 
 import android.app.PendingIntent
 import android.content.ComponentName
+import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
+import android.content.IntentFilter
+import androidx.core.content.ContextCompat
 import android.database.SQLException
 import android.media.AudioFocusRequest
 import android.media.AudioManager
@@ -19,12 +22,14 @@ import android.util.Log
 import androidx.annotation.RequiresApi
 import androidx.core.content.getSystemService
 import androidx.core.net.toUri
+import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.media3.common.AudioAttributes
 import androidx.media3.common.C
 import java.util.concurrent.ConcurrentHashMap
 import androidx.media3.common.MediaItem
+import androidx.media3.common.PlaybackParameters
 import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
 import androidx.media3.common.Player.EVENT_POSITION_DISCONTINUITY
@@ -36,6 +41,7 @@ import androidx.media3.common.Player.STATE_IDLE
 import androidx.media3.common.Timeline
 import androidx.media3.common.audio.SonicAudioProcessor
 import androidx.media3.datasource.DataSource
+import androidx.media3.datasource.DataSpec
 import androidx.media3.datasource.DefaultDataSource
 import androidx.media3.datasource.ResolvingDataSource
 import androidx.media3.datasource.cache.CacheDataSource
@@ -51,6 +57,8 @@ import androidx.media3.exoplayer.analytics.PlaybackStatsListener
 import androidx.media3.exoplayer.audio.DefaultAudioSink
 import androidx.media3.exoplayer.audio.SilenceSkippingAudioProcessor
 import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
+import androidx.media3.exoplayer.source.MediaSource
+import androidx.media3.exoplayer.source.MergingMediaSource
 import androidx.media3.exoplayer.source.ShuffleOrder.DefaultShuffleOrder
 import androidx.media3.extractor.ExtractorsFactory
 import androidx.media3.extractor.mkv.MatroskaExtractor
@@ -63,14 +71,17 @@ import androidx.media3.session.MediaSession
 import androidx.media3.session.SessionToken
 import com.Chenkham.Echofy.constants.PlaybackMode
 import com.Chenkham.Echofy.constants.PlaybackModeKey
-import com.Chenkham.innertube.YouTube
-import com.Chenkham.innertube.models.SongItem
-import com.Chenkham.innertube.models.WatchEndpoint
+import com.arturo254.opentune.innertube.YouTube
+import com.arturo254.opentune.innertube.models.SongItem
+import com.arturo254.opentune.innertube.models.WatchEndpoint
 import com.Chenkham.jossredconnect.JossRedClient
 import com.Chenkham.Echofy.MainActivity
 import com.Chenkham.Echofy.R
 import com.Chenkham.Echofy.constants.AudioNormalizationKey
+import com.Chenkham.Echofy.constants.AudioQuality
 import com.Chenkham.Echofy.constants.AudioQualityKey
+import com.Chenkham.Echofy.constants.PlayerStreamClient
+import com.Chenkham.Echofy.constants.PlayerStreamClientKey
 import com.Chenkham.Echofy.constants.AutoLoadMoreKey
 import com.Chenkham.Echofy.constants.AutoSkipNextOnErrorKey
 import com.Chenkham.Echofy.constants.DisableLoadMoreWhenRepeatAllKey
@@ -89,6 +100,28 @@ import com.Chenkham.Echofy.constants.RepeatModeKey
 import com.Chenkham.Echofy.constants.ShowLyricsKey
 import com.Chenkham.Echofy.constants.SimilarContent
 import com.Chenkham.Echofy.constants.SkipSilenceKey
+import com.Chenkham.Echofy.constants.SleepTimerFadeDurationKey
+import com.Chenkham.Echofy.constants.SleepTimerFadeOutKey
+import com.Chenkham.Echofy.constants.VolumeFadeOnPauseKey
+import com.Chenkham.Echofy.constants.ListeningReminderEnabledKey
+import com.Chenkham.Echofy.constants.ListeningReminderMinutesKey
+import com.Chenkham.Echofy.constants.LongFormMinMinutesKey
+import com.Chenkham.Echofy.constants.LongFormPlaybackSpeedKey
+import com.Chenkham.Echofy.constants.RememberPlaybackSettingsKey
+import com.Chenkham.Echofy.constants.SilentOutroSecondsKey
+import com.Chenkham.Echofy.constants.SkipSilentOutroKey
+import com.Chenkham.Echofy.constants.SpeedPerContentTypeKey
+import com.Chenkham.Echofy.constants.playbackTempoKey
+import com.Chenkham.Echofy.constants.playbackPitchKey
+import com.Chenkham.Echofy.constants.VolumeLimitEnabledKey
+import com.Chenkham.Echofy.constants.MonoAudioKey
+import com.Chenkham.Echofy.constants.VocalSuppressionKey
+import com.Chenkham.Echofy.constants.AudioBalanceKey
+import com.Chenkham.Echofy.constants.SmartResumeEnabledKey
+import com.Chenkham.Echofy.constants.SmartResumeMinMinutesKey
+import com.Chenkham.Echofy.constants.ResumeOnHeadphonesKey
+import com.Chenkham.Echofy.constants.resumePositionKey
+import com.Chenkham.Echofy.constants.VolumeLimitPercentKey
 import com.Chenkham.Echofy.constants.VideoPlaybackEnabledKey
 import com.Chenkham.Echofy.constants.VideoCacheEnabledKey
 import com.Chenkham.Echofy.db.*
@@ -131,28 +164,16 @@ import com.Chenkham.Echofy.utils.NetworkConnectivityObserver
 import com.Chenkham.Echofy.utils.YTPlayerUtils
 import com.Chenkham.Echofy.utils.dataStore
 import com.Chenkham.Echofy.utils.enumPreference
-import com.Chenkham.Echofy.constants.AudioQualityKey
-import com.Chenkham.Echofy.constants.AutoLoadMoreKey
-import com.Chenkham.Echofy.constants.AutoSkipNextOnErrorKey
 import com.Chenkham.Echofy.constants.BassBoostEnabledKey
 import com.Chenkham.Echofy.constants.BassBoostStrengthKey
-import com.Chenkham.Echofy.constants.DisableLoadMoreWhenRepeatAllKey
-import com.Chenkham.Echofy.constants.DiscordUseDetailsKey
 import com.Chenkham.Echofy.constants.EqualizerBandLevelsKey
 import com.Chenkham.Echofy.constants.EqualizerEnabledKey
 import com.Chenkham.Echofy.constants.EqualizerPresetKey
-import com.Chenkham.Echofy.constants.HideExplicitKey
-import com.Chenkham.Echofy.constants.PauseListenHistoryKey
-import com.Chenkham.Echofy.constants.PersistentQueueKey
-import com.Chenkham.Echofy.constants.PlayerVolumeKey
-import com.Chenkham.Echofy.constants.RepeatModeKey
-import com.Chenkham.Echofy.constants.VideoCacheEnabledKey
 import com.Chenkham.Echofy.constants.VideoQualityKey
 import com.Chenkham.Echofy.constants.VisitorDataKey
 import com.Chenkham.Echofy.constants.VisitorDataTimestampKey
 import com.Chenkham.Echofy.utils.get
 import com.Chenkham.Echofy.utils.reportException
-import androidx.datastore.preferences.core.booleanPreferencesKey
 
 import com.google.common.util.concurrent.MoreExecutors
 import dagger.hilt.android.AndroidEntryPoint
@@ -227,6 +248,49 @@ class MusicService :
     val waitingForNetworkConnection = MutableStateFlow(false)
     private val isNetworkConnected = MutableStateFlow(false)
 
+    private val audioQuality by enumPreference(
+        this,
+        AudioQualityKey,
+        AudioQuality.AUTO
+    )
+    private val preferredStreamClient by enumPreference(
+        this,
+        PlayerStreamClientKey,
+        PlayerStreamClient.ANDROID_VR
+    )
+    private val avoidStreamCodecs: Set<String> by lazy {
+        if (deviceSupportsMimeType("audio/opus")) emptySet() else setOf("opus")
+    }
+    private var lastLoginRecoveryPrompt: Pair<String, Long>? = null
+
+    private fun promptLoginRecovery(mediaId: String, targetUrl: String) {
+        val now = System.currentTimeMillis()
+        val lastPrompt = lastLoginRecoveryPrompt
+        if (lastPrompt?.first == mediaId && now - lastPrompt.second < 10000L) return
+        lastLoginRecoveryPrompt = mediaId to now
+
+        val deepLink = android.net.Uri.parse("echofy://login?url=${android.net.Uri.encode(targetUrl)}")
+        val intent = android.content.Intent(android.content.Intent.ACTION_VIEW, deepLink, this, com.Chenkham.Echofy.MainActivity::class.java).apply {
+            addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK)
+            addFlags(android.content.Intent.FLAG_ACTIVITY_SINGLE_TOP)
+            addFlags(android.content.Intent.FLAG_ACTIVITY_CLEAR_TOP)
+        }
+
+        runCatching {
+            startActivity(intent)
+        }
+    }
+
+    private fun deviceSupportsMimeType(mimeType: String): Boolean {
+        return runCatching {
+            val codecList = android.media.MediaCodecList(android.media.MediaCodecList.ALL_CODECS)
+            codecList.codecInfos.any { info ->
+                !info.isEncoder && info.supportedTypes.any { it.equals(mimeType, ignoreCase = true) }
+            }
+        }.getOrDefault(false)
+    }
+
+
     lateinit var wifiJamManager: WifiJamManager
     lateinit var jamSessionManager: AppwriteTogetherSessionManager
 
@@ -246,6 +310,161 @@ class MusicService :
 
     val playerVolume = MutableStateFlow(1f)
 
+    /** Loop start point in ms, or null when no start has been marked. */
+    val abLoopStart = MutableStateFlow<Long?>(null)
+
+    /** Loop end point in ms. The loop is only active once both points are set. */
+    val abLoopEnd = MutableStateFlow<Long?>(null)
+
+    private var abLoopJob: Job? = null
+
+    /** Handles mono downmixing and left/right balance for accessibility. */
+    private val monoBalanceProcessor = MonoBalanceAudioProcessor()
+
+    /**
+     * The volume the player should settle on once any transient fade finishes. Kept in sync by
+     * the volume collector so fades always ramp back to the user's chosen level.
+     */
+    @Volatile
+    private var targetVolume = 1f
+
+    private var fadeJob: Job? = null
+
+    /** Mirrors [VolumeFadeOnPauseKey] so pause/resume can ramp instead of cutting. */
+    @Volatile
+    private var fadeOnPauseEnabled = false
+
+    /**
+     * Pauses with a short volume ramp when the user has enabled fading, otherwise pauses
+     * immediately. The volume is always restored so the next resume starts at full level.
+     */
+    fun pauseWithFade() {
+        if (!fadeOnPauseEnabled || !player.isPlaying) {
+            player.pause()
+            return
+        }
+        fadeJob?.cancel()
+        fadeJob = scope.launch {
+            try {
+                rampVolume(from = targetVolume, to = 0f)
+                player.pause()
+            } finally {
+                player.volume = targetVolume
+            }
+        }
+    }
+
+    /**
+     * Resumes playback, ramping the volume up from silence when fading is enabled so the
+     * track eases in rather than starting at full level.
+     */
+    fun playWithFade() {
+        if (!fadeOnPauseEnabled) {
+            player.play()
+            return
+        }
+        fadeJob?.cancel()
+        fadeJob = scope.launch {
+            try {
+                player.volume = 0f
+                player.play()
+                rampVolume(from = 0f, to = targetVolume)
+            } finally {
+                player.volume = targetVolume
+            }
+        }
+    }
+
+    /** Linearly moves the player volume between two levels over [FADE_DURATION_MS]. */
+    private suspend fun rampVolume(from: Float, to: Float) {
+        val steps = 12
+        val stepDelay = FADE_DURATION_MS / steps
+        for (step in 1..steps) {
+            player.volume = from + (to - from) * (step.toFloat() / steps)
+            delay(stepDelay)
+        }
+    }
+
+    private var listeningReminderJob: Job? = null
+    private var silentOutroJob: Job? = null
+
+    /**
+     * Starts the safe-listening nudge. The timer counts uninterrupted playback only — it is
+     * cancelled whenever the user pauses, so a break resets the clock.
+     */
+    private fun startListeningReminder() {
+        listeningReminderJob?.cancel()
+        listeningReminderJob = scope.launch {
+            val prefs = dataStore.data.first()
+            if (prefs[ListeningReminderEnabledKey] != true) return@launch
+            val minutes = (prefs[ListeningReminderMinutesKey] ?: 60).coerceAtLeast(5)
+
+            while (isActive) {
+                delay(minutes * 60_000L)
+                if (!player.isPlaying) break
+                withContext(Dispatchers.Main) {
+                    android.widget.Toast.makeText(
+                        this@MusicService,
+                        getString(R.string.listening_reminder_message, minutes),
+                        android.widget.Toast.LENGTH_LONG,
+                    ).show()
+                }
+            }
+        }
+    }
+
+    /**
+     * Advances to the next track once the trailing outro of the current one is reached.
+     *
+     * ExoPlayer exposes no silence detector for future audio, so rather than analysing
+     * samples this treats the configured number of seconds at the very end of a track as
+     * the outro. That covers the common case of long fades and dead air after the last
+     * note without touching the decode path.
+     */
+    private fun startSilentOutroSkip() {
+        silentOutroJob?.cancel()
+        silentOutroJob = scope.launch {
+            if (dataStore.data.first()[SkipSilentOutroKey] != true) return@launch
+
+            while (isActive) {
+                delay(1000)
+                if (!player.isPlaying) continue
+
+                val duration = player.duration
+                if (duration == C.TIME_UNSET || duration <= 0L) continue
+                // Very short tracks would be cut in half by a fixed-size outro window.
+                if (duration < 60_000L) continue
+
+                val outroMs = ((dataStore.data.first()[SilentOutroSecondsKey] ?: 5)
+                    .coerceIn(1, 30)) * 1000L
+
+                if (player.currentPosition >= duration - outroMs && player.hasNextMediaItem()) {
+                    player.seekToNext()
+                }
+            }
+        }
+    }
+
+    /**
+     * Resumes playback when headphones are reconnected, mirroring the automatic pause that
+     * [ExoPlayer.Builder.setHandleAudioBecomingNoisy] performs on disconnect. Only acts when
+     * the user has opted in and something was already queued.
+     */
+    private val headphoneConnectReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context?, intent: Intent?) {
+            if (intent?.action != AudioManager.ACTION_HEADSET_PLUG) return
+            // state 1 means plugged in; 0 is a disconnect, already handled by ExoPlayer.
+            if (intent.getIntExtra("state", 0) != 1) return
+
+            scope.launch {
+                val enabled = dataStore.data.first()[ResumeOnHeadphonesKey] ?: false
+                if (enabled && player.mediaItemCount > 0 && !player.isPlaying) {
+                    player.play()
+                }
+            }
+        }
+    }
+
     lateinit var sleepTimer: SleepTimer
 
     @Inject
@@ -263,6 +482,9 @@ class MusicService :
     private var currentVideoQuality = "Auto"
     @Volatile
     private var currentAudioQuality = com.Chenkham.Echofy.constants.AudioQuality.AUTO
+
+    private var sameItemRetryId: String? = null
+    private var sameItemRetryCount: Int = 0
 
     @Volatile private var isQueuePersistent = true
     @Volatile private var hideExplicit = false
@@ -297,7 +519,11 @@ class MusicService :
     private var jamPlaybackHeartbeatJob: Job? = null
 
     val automixItems = MutableStateFlow<List<MediaItem>>(emptyList())
-    private val songUrlCache = ConcurrentHashMap<String, Pair<String, Long>>()
+    private val playbackUrlCache = ConcurrentHashMap<String, Pair<String, Long>>()
+    private val songUrlCache = playbackUrlCache
+    private val songUrlUserAgentCache = ConcurrentHashMap<String, String>()
+    // Media IDs that got HTTP 403 from fast-start URLs — skip fast-start and use full validated path on retry
+    private val skipFastStartIds = ConcurrentHashMap.newKeySet<String>()
     
     // Add prefetch cache for upcoming songs
     private val prefetchJobs = ConcurrentHashMap<String, Job>()
@@ -306,11 +532,77 @@ class MusicService :
     private var lastAppliedJamRoomId: String? = null
     private var jamAddMode = false
 
+    /**
+     * Drops every cached stream URL for a song — plain, video and audio-companion keys —
+     * along with their User-Agents, so the next play resolves fresh URLs.
+     */
+    private fun invalidateCachedUrls(mediaId: String) {
+        listOf(mediaId, "${mediaId}_video", "$mediaId$AUDIO_COMPANION_SUFFIX").forEach { key ->
+            songUrlCache.remove(key)
+            songUrlUserAgentCache.remove(key)
+        }
+    }
+
+    /**
+     * Forces ExoPlayer to rebuild its MediaSources for the current queue.
+     *
+     * ExoPlayer builds a MediaSource once per media item, when the item is set, and reuses it
+     * across [Player.prepare] calls. Video mode needs the source rebuilt, because only
+     * createMediaSource() attaches the companion audio track via MergingMediaSource. Calling
+     * stop() + prepare() would replay the previously built source, which in video mode carries
+     * a video-only stream and therefore plays without sound. Re-setting the media items is what
+     * makes the factory run again.
+     */
+    private fun rebuildCurrentQueue() {
+        if (player.mediaItemCount == 0) return
+        val items = player.mediaItems
+        val index = player.currentMediaItemIndex.coerceIn(0, player.mediaItemCount - 1)
+        val positionMs = player.currentPosition.coerceAtLeast(0L)
+        val wasPlaying = player.playWhenReady
+
+        player.setMediaItems(items, index, positionMs)
+        player.prepare()
+        player.playWhenReady = wasPlaying
+    }
+
+    /**
+     * Removes the buffered bytes of a song from the player cache, for every key the resolver
+     * may have written it under. Downloaded songs live in [downloadCache] and are left alone.
+     */
+    private fun evictPlayerCache(mediaId: String) {
+        listOf(mediaId, "${mediaId}_video", "$mediaId$AUDIO_COMPANION_SUFFIX").forEach { key ->
+            try {
+                playerCache.removeResource(key)
+            } catch (e: Exception) {
+                Log.e(TAG, "Failed to evict player cache for $key", e)
+            }
+        }
+    }
+
+    /**
+     * Builds the resolved DataSpec for a cached stream url. The User-Agent recorded when the
+     * url was minted must be replayed on every request: YouTube binds the PO token in the url
+     * to that exact client, so serving a cached url with a different User-Agent returns 403.
+     */
+    private fun resolvedDataSpec(
+        dataSpec: DataSpec,
+        streamUrl: String,
+        cacheKey: String,
+    ): DataSpec {
+        val builder = dataSpec.withUri(streamUrl.toUri()).buildUpon()
+        songUrlUserAgentCache[cacheKey]?.let {
+            builder.setHttpRequestHeaders(mapOf("User-Agent" to it))
+        }
+        if (videoMode) builder.setKey(cacheKey)
+        return builder.build()
+    }
+
     fun prefetchPlaybackData(mediaId: String, preloadToCache: Boolean = false) {
-        if (songUrlCache.containsKey(mediaId)) {
-            // URL already cached, but maybe preload bytes if requested
+        if (mediaId.startsWith(RADIO_MEDIA_ID_PREFIX) || mediaId.startsWith(AMBIENT_MEDIA_ID_PREFIX)) return
+
+        if (playbackUrlCache.containsKey(mediaId)) {
             if (preloadToCache) {
-                val cached = songUrlCache[mediaId]
+                val cached = playbackUrlCache[mediaId]
                 if (cached != null && cached.second > System.currentTimeMillis()) {
                     scope.launch(Dispatchers.IO) {
                         preloadBytesToCache(mediaId, cached.first)
@@ -320,26 +612,26 @@ class MusicService :
             return
         }
         if (prefetchJobs.containsKey(mediaId)) return
-        
+
         prefetchJobs[mediaId] = scope.launch(Dispatchers.IO) {
             try {
-                // Use FAST path for prefetch - completes in 200-500ms instead of 1-3s
-                val playbackData = YTPlayerUtils.fastStartPlayerResponse(
+                val playbackData = YTPlayerUtils.playerResponseForPlayback(
                     mediaId,
                     audioQuality = currentAudioQuality,
-                    videoQuality = currentVideoQuality,
                     connectivityManager = connectivityManager,
-                    videoMode = videoMode
+                    preferredStreamClient = preferredStreamClient,
+                    avoidCodecs = avoidStreamCodecs,
+                    isVideo = videoMode,
+                    videoQuality = currentVideoQuality,
                 ).getOrNull()
-                
+
                 if (playbackData != null) {
-                    val cacheKey = if (videoMode) "${mediaId}_video" else mediaId
-                    songUrlCache[cacheKey] = playbackData.streamUrl to 
-                        System.currentTimeMillis() + (playbackData.streamExpiresInSeconds * 1000L)
-                    
-                    // Preload first 128KB to disk cache for instant playback
+                    val expiresAt = System.currentTimeMillis() + (playbackData.streamExpiresInSeconds * 1000L)
+                    val targetKey = if (videoMode) "${mediaId}_video" else mediaId
+                    playbackUrlCache[targetKey] = playbackData.streamUrl to expiresAt
+
                     if (preloadToCache) {
-                        preloadBytesToCache(mediaId, playbackData.streamUrl)
+                        preloadBytesToCache(targetKey, playbackData.streamUrl)
                     }
                 }
             } finally {
@@ -347,7 +639,7 @@ class MusicService :
             }
         }
     }
-    
+
     /**
      * Preload first 128KB of a song to disk cache for truly instant playback.
      * This is what enables YouTube Music-style "zero-latency" starts.
@@ -371,10 +663,15 @@ class MusicService :
         }
         
         try {
-            val request = Request.Builder()
+            val requestBuilder = Request.Builder()
                 .url(url)
                 .header("Range", "bytes=0-131071") // First 128KB
-                .build()
+            
+            songUrlUserAgentCache[mediaId]?.let {
+                requestBuilder.header("User-Agent", it)
+            }
+            
+            val request = requestBuilder.build()
             
             okHttpClient.newCall(request).execute().use { response ->
                 if (response.isSuccessful) {
@@ -393,6 +690,7 @@ class MusicService :
                                         .setPosition(0)
                                         .setLength(bytes.size.toLong())
                                         .setKey(mediaId)
+                                        .setFlags(androidx.media3.datasource.DataSpec.FLAG_DONT_CACHE_IF_LENGTH_UNKNOWN)
                                         .build()
                                     dataSink.open(spec)
                                     dataSink.write(bytes, 0, bytes.size)
@@ -525,6 +823,14 @@ class MusicService :
                     addAnalyticsListener(PlaybackStatsListener(false, this@MusicService))
                 }
 
+        // Resume playback when headphones are reconnected, if the user opted in.
+        ContextCompat.registerReceiver(
+            this,
+            headphoneConnectReceiver,
+            IntentFilter(AudioManager.ACTION_HEADSET_PLUG),
+            ContextCompat.RECEIVER_NOT_EXPORTED,
+        )
+
         // Initialize WakeLock
         val powerManager = getSystemService(Context.POWER_SERVICE) as PowerManager
         wakeLock = powerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "Echofy:MusicServiceWakeLock").apply {
@@ -642,9 +948,26 @@ class MusicService :
             }
         }
 
-        playerVolume.collectLatest(scope) {
-            player.volume = it
+        // Applies the user volume, clamped by the safe-listening ceiling when enabled.
+        combine(
+            playerVolume,
+            dataStore.data
+                .map { (it[VolumeLimitEnabledKey] ?: false) to (it[VolumeLimitPercentKey] ?: 85) }
+                .distinctUntilChanged(),
+        ) { volume, (limitEnabled, limitPercent) ->
+            if (limitEnabled) volume.coerceAtMost(limitPercent / 100f) else volume
+        }.collectLatest(scope) {
+            targetVolume = it
+            // Never stomp on an in-flight fade; it restores targetVolume when it finishes.
+            if (fadeJob?.isActive != true) {
+                player.volume = it
+            }
         }
+
+        dataStore.data
+            .map { it[VolumeFadeOnPauseKey] ?: false }
+            .distinctUntilChanged()
+            .collectLatest(scope) { fadeOnPauseEnabled = it }
 
         playerVolume.debounce(1000).collect(scope) { volume ->
             dataStore.edit { settings ->
@@ -752,8 +1075,7 @@ class MusicService :
         currentSong.debounce(1000).collect(scope) { song ->
             updateNotification()
             if (song != null && player.playWhenReady && player.playbackState == Player.STATE_READY) {
-                // Use the globally cached discordUseDetails variable instead of reading runBlocking from DataStore.
-                discordRpc?.updateSong(song, player.currentPosition, player.playbackParameters.speed, discordUseDetails)
+                discordRpc?.updateSong(song, player.currentPosition, player.playbackParameters.speed, isPaused = false)
             } else {
                 discordRpc?.closeRPC()
             }
@@ -787,6 +1109,34 @@ class MusicService :
                 player.skipSilenceEnabled = it
             }
 
+        // Sleep timer fade-out preferences
+        dataStore.data
+            .map { (it[SleepTimerFadeOutKey] ?: true) to (it[SleepTimerFadeDurationKey] ?: 30) }
+            .distinctUntilChanged()
+            .collectLatest(scope) { (fadeEnabled, fadeSeconds) ->
+                sleepTimer.fadeOutEnabled = fadeEnabled
+                sleepTimer.fadeDurationSeconds = fadeSeconds
+            }
+
+        // Mono downmix and channel balance for accessibility, plus karaoke vocal
+        // suppression, which shares the same processor.
+        dataStore.data
+            .map {
+                Triple(
+                    it[MonoAudioKey] ?: false,
+                    it[AudioBalanceKey] ?: 0f,
+                    it[VocalSuppressionKey] ?: 0f,
+                )
+            }
+            .distinctUntilChanged()
+            .collectLatest(scope) { (mono, balance, vocalSuppression) ->
+                monoBalanceProcessor.monoEnabled = mono
+                monoBalanceProcessor.balance = balance
+                monoBalanceProcessor.vocalSuppression = vocalSuppression
+            }
+
+        // Safe-listening volume cap is applied together with the user volume above.
+
         combine(
             currentFormat,
             dataStore.data
@@ -811,7 +1161,7 @@ class MusicService :
                     discordRpc = DiscordRPC(this, key)
                     if (player.playbackState == Player.STATE_READY && player.playWhenReady) {
                         currentSong.value?.let {
-                            discordRpc?.updateSong(it, player.currentPosition, player.playbackParameters.speed, discordUseDetails)
+                            discordRpc?.updateSong(it, player.currentPosition, player.playbackParameters.speed, isPaused = false)
                         }
                     }
                 }
@@ -828,7 +1178,7 @@ class MusicService :
                         discordUpdateJob?.cancel()
                         discordUpdateJob = scope.launch {
                             delay(1000)
-                            discordRpc?.updateSong(song, player.currentPosition, player.playbackParameters.speed, useDetails)
+                            discordRpc?.updateSong(song, player.currentPosition, player.playbackParameters.speed, isPaused = false)
                         }
                     }
                 }
@@ -864,7 +1214,7 @@ class MusicService :
                 
                 // Limpiar caché y recargar canción actual para obtener el formato correcto (video/audio)
                 currentSong.value?.let { song ->
-                    songUrlCache.remove(song.id)
+                    invalidateCachedUrls(song.id)
                     withContext(Dispatchers.Main) {
                         val currentPos = player.currentPosition
                         val wasPlaying = player.isPlaying
@@ -886,8 +1236,9 @@ class MusicService :
                         // Another small delay for codec cleanup
                         delay(50)
                         
-                        // Prepare new media
-                        player.prepare()
+                        // Re-set the queue rather than only preparing: the media source has to be
+                        // rebuilt so video mode gets its companion audio track merged in.
+                        rebuildCurrentQueue()
                         
                         // Seek after preparation is ready
                         player.addListener(object : Player.Listener {
@@ -910,21 +1261,32 @@ class MusicService :
             .map { it[VideoQualityKey] }
             .distinctUntilChanged()
             .drop(1)
-            .collect(scope) {
+            .collect(scope) { newQuality ->
                 if (videoMode) {
                     currentSong.value?.let { song ->
-                        songUrlCache.remove(song.id)
+                        // Apply the new quality before reloading. The collector that mirrors this
+                        // key into currentVideoQuality runs independently, so relying on it here
+                        // would race and re-resolve the stream at the previous quality.
+                        currentVideoQuality = newQuality ?: "Auto"
+
+                        // Drop every cached url for this song: video mode resolves under
+                        // "<id>_video" (and "<id>_audio" for the companion track), so removing
+                        // only "<id>" would leave the old-quality url in place.
+                        invalidateCachedUrls(song.id)
+
+                        // Cached bytes must go too, otherwise the resolver's isCached() check
+                        // short-circuits and the player replays the old quality from disk.
+                        evictPlayerCache(song.id)
+
                         withContext(Dispatchers.Main) {
                             val currentPos = player.currentPosition
                             val wasPlaying = player.isPlaying
                             
-                            // Safely stop before reloading
-                            player.pause()
-                            delay(100)
                             player.stop()
-                            delay(50)
                             
-                            player.prepare()
+                            // Re-set the queue rather than only preparing, so the new-quality
+                            // video source is rebuilt together with its companion audio track.
+                            rebuildCurrentQueue()
                             
                             // Seek after preparation is ready
                             player.addListener(object : Player.Listener {
@@ -1397,6 +1759,156 @@ class MusicService :
         }
     }
 
+    /**
+     * Marks the loop start at the current playback position.
+     */
+    fun setAbLoopStart() {
+        abLoopStart.value = player.currentPosition
+        // A start after the existing end would make the loop invalid.
+        abLoopEnd.value?.let { end ->
+            if (end <= player.currentPosition) abLoopEnd.value = null
+        }
+        restartAbLoopWatcher()
+    }
+
+    /**
+     * Marks the loop end at the current playback position and starts looping.
+     */
+    fun setAbLoopEnd() {
+        val start = abLoopStart.value ?: return
+        val position = player.currentPosition
+        if (position <= start) return
+        abLoopEnd.value = position
+        restartAbLoopWatcher()
+    }
+
+    fun clearAbLoop() {
+        abLoopStart.value = null
+        abLoopEnd.value = null
+        abLoopJob?.cancel()
+        abLoopJob = null
+    }
+
+    /**
+     * Polls playback position and seeks back to the start point whenever the end point is
+     * passed. Polling is only active while both points are set.
+     */
+    private fun restartAbLoopWatcher() {
+        abLoopJob?.cancel()
+
+        val start = abLoopStart.value
+        val end = abLoopEnd.value
+        if (start == null || end == null) return
+
+        abLoopJob = scope.launch {
+            while (isActive) {
+                val currentStart = abLoopStart.value
+                val currentEnd = abLoopEnd.value
+                if (currentStart == null || currentEnd == null) break
+
+                if (player.isPlaying && player.currentPosition >= currentEnd) {
+                    player.seekTo(currentStart)
+                }
+                delay(100)
+            }
+        }
+    }
+
+    /**
+     * Saves the position of long-form content (DJ mixes, live sets, podcasts) so it can be
+     * picked up where the user left off instead of restarting from zero. Short songs are
+     * ignored because restarting them is the expected behaviour.
+     */
+    private fun saveResumePositionForCurrentSong() {
+        val mediaId = player.currentMediaItem?.mediaId ?: return
+        val duration = player.duration
+        val position = player.currentPosition
+        if (duration <= 0L) return
+
+        scope.launch {
+            val prefs = dataStore.data.first()
+            if (prefs[SmartResumeEnabledKey] != true) return@launch
+
+            val minMinutes = prefs[SmartResumeMinMinutesKey] ?: 15
+            if (duration < minMinutes * 60_000L) return@launch
+
+            dataStore.edit { settings ->
+                // Near the start or the end there is nothing useful to resume.
+                if (position < 60_000L || position > duration - 60_000L) {
+                    settings.remove(resumePositionKey(mediaId))
+                } else {
+                    settings[resumePositionKey(mediaId)] = position
+                }
+            }
+        }
+    }
+
+    /**
+     * Restores a previously saved position for long-form content.
+     */
+    private fun restoreResumePosition(mediaItem: MediaItem?) {
+        val mediaId = mediaItem?.mediaId ?: return
+
+        scope.launch {
+            val prefs = dataStore.data.first()
+            if (prefs[SmartResumeEnabledKey] != true) return@launch
+
+            val saved = prefs[resumePositionKey(mediaId)] ?: return@launch
+            if (saved > 0L) {
+                player.seekTo(saved)
+            }
+        }
+    }
+
+    /**
+     * Restores the tempo and pitch the user last chose for this specific song, when
+     * "remember playback settings" is enabled. Songs without a saved value fall back to
+     * normal speed and pitch so settings never leak between tracks.
+     */
+    private fun restorePlaybackSettingsForCurrentSong(mediaItem: MediaItem?) {
+        val mediaId = mediaItem?.mediaId ?: return
+
+        scope.launch {
+            val prefs = dataStore.data.first()
+            val perTrack = prefs[RememberPlaybackSettingsKey] == true
+            val perContentType = prefs[SpeedPerContentTypeKey] == true
+            if (!perTrack && !perContentType) return@launch
+
+            val savedTempo = if (perTrack) prefs[playbackTempoKey(mediaId)] else null
+            val contentTypeSpeed = if (perContentType) longFormSpeedFor(prefs) else null
+
+            // A tempo saved for this exact song always wins over the content-type default.
+            val tempo = savedTempo ?: contentTypeSpeed ?: 1f
+            val pitch = (if (perTrack) prefs[playbackPitchKey(mediaId)] else null) ?: 1f
+
+            if (player.playbackParameters.speed != tempo ||
+                player.playbackParameters.pitch != pitch
+            ) {
+                player.playbackParameters = PlaybackParameters(tempo, pitch)
+            }
+        }
+    }
+
+    /**
+     * Speed to use for the current track when "speed per content type" is on. Long-form
+     * items such as podcasts and DJ sets get the user's long-form speed; regular songs
+     * stay at normal speed. Returns null while the duration is still unknown so the
+     * current speed is left untouched.
+     */
+    private fun longFormSpeedFor(prefs: Preferences): Float? {
+        val durationMs = player.duration
+        if (durationMs == C.TIME_UNSET || durationMs <= 0L) return null
+
+        val minMinutes = prefs[LongFormMinMinutesKey] ?: 20
+        val isLongForm = durationMs >= minMinutes * 60_000L
+
+        return if (isLongForm) {
+            (prefs[LongFormPlaybackSpeedKey] ?: 1.5f).coerceIn(0.25f, 3f)
+        } else {
+            1f
+        }
+    }
+
     private fun setupLoudnessEnhancer() {
         val audioSessionId = player.audioSessionId
 
@@ -1605,11 +2117,43 @@ class MusicService :
         )
     }
 
+    
+    private fun notifyWidgetsPlaybackChanged() {
+        runCatching {
+            val intent = Intent("com.Chenkham.Echofy.ACTION_STATE_CHANGED").apply {
+                setPackage(packageName)
+            }
+            sendBroadcast(intent)
+
+            val lyricsIntent = Intent(this, com.Chenkham.Echofy.ui.widgets.LyricsWidget::class.java).apply {
+                action = "com.Chenkham.Echofy.ACTION_STATE_CHANGED"
+            }
+            sendBroadcast(lyricsIntent)
+
+            val musicWidgetIntent = Intent(this, com.Chenkham.Echofy.MusicWidget::class.java).apply {
+                action = "com.Chenkham.Echofy.ACTION_STATE_CHANGED"
+            }
+            sendBroadcast(musicWidgetIntent)
+
+            val compactWidgetIntent = Intent(this, com.Chenkham.Echofy.CompactMusicWidget::class.java).apply {
+                action = "com.Chenkham.Echofy.ACTION_STATE_CHANGED"
+            }
+            sendBroadcast(compactWidgetIntent)
+        }
+    }
+
     override fun onMediaItemTransition(
         mediaItem: MediaItem?,
         reason: Int,
     ) {
         lastPlaybackSpeed = -1.0f // forzar actualización de canción
+        notifyWidgetsPlaybackChanged()
+
+        restorePlaybackSettingsForCurrentSong(mediaItem)
+        restoreResumePosition(mediaItem)
+
+        // Loop points belong to a single song, so drop them when the track changes.
+        clearAbLoop()
 
         // WiFi Jam Broadcast
         if (this::wifiJamManager.isInitialized && wifiJamManager.isHost.value && mediaItem != null) {
@@ -1637,6 +2181,8 @@ class MusicService :
 
         // Resetear errores consecutivos cuando hay transición exitosa
         consecutivePlaybackErr = 0
+        sameItemRetryCount = 0
+        sameItemRetryId = null
         
         // Clear cache for skipped songs when video cache is disabled
         // This prevents storing buffered data from songs that were skipped
@@ -1702,6 +2248,7 @@ class MusicService :
     override fun onPlaybackStateChanged(
         @Player.State playbackState: Int,
     ) {
+        notifyWidgetsPlaybackChanged()
         // Save state when playback state changes
         if (dataStore.get(PersistentQueueKey, true) && playbackState != Player.STATE_BUFFERING) {
             scope.launch {
@@ -1742,6 +2289,8 @@ class MusicService :
     override fun onPlayWhenReadyChanged(playWhenReady: Boolean, reason: Int) {
         if (playWhenReady) {
             setupLoudnessEnhancer()
+            startListeningReminder()
+            startSilentOutroSkip()
 
             // Fix: When another media app (e.g. Spotify) steals audio focus and releases it,
             // ExoPlayer may end up in STATE_IDLE. Pressing play sets playWhenReady=true
@@ -1749,6 +2298,9 @@ class MusicService :
             if (player.playbackState == Player.STATE_IDLE && player.currentMediaItem != null) {
                 player.prepare()
             }
+        } else {
+            listeningReminderJob?.cancel()
+            silentOutroJob?.cancel()
         }
 
         // WiFi Jam Broadcast
@@ -1829,7 +2381,7 @@ class MusicService :
             if (player.isPlaying) {
                 currentSong.value?.let { song ->
                     scope.launch {
-                        discordRpc?.updateSong(song, player.currentPosition, player.playbackParameters.speed, discordUseDetails)
+                        discordRpc?.updateSong(song, player.currentPosition, player.playbackParameters.speed, isPaused = false)
                     }
                 }
             }
@@ -1893,8 +2445,12 @@ class MusicService :
             return
         }
 
-        // Retry on parsing/source errors and expired sockets
+        // Retry on parsing/source errors and expired sockets.
+        // UNSUPPORTED (3003) is included because a truncated or expired stream URL makes the
+        // extractor read a bogus atom length ("Skipping atom with length > 2147483647"), which
+        // surfaces as unsupported rather than malformed. Refreshing the URL recovers it.
         if (error.errorCode == PlaybackException.ERROR_CODE_PARSING_CONTAINER_MALFORMED ||
+            error.errorCode == PlaybackException.ERROR_CODE_PARSING_CONTAINER_UNSUPPORTED ||
             error.errorCode == PlaybackException.ERROR_CODE_IO_UNSPECIFIED ||
             error.errorCode == PlaybackException.ERROR_CODE_IO_BAD_HTTP_STATUS ||
             error.errorCode == PlaybackException.ERROR_CODE_IO_NETWORK_CONNECTION_FAILED ||
@@ -1902,21 +2458,62 @@ class MusicService :
         ) {
             val mediaId = player.currentMediaItem?.mediaId
             if (mediaId != null) {
-                Log.w(TAG, "Attempting retry for $mediaId after IO error: ${error.errorCodeName}")
-                songUrlCache.remove(mediaId)
-                scope.launch(Dispatchers.IO) {
-                    try {
-                        playerCache.removeResource(mediaId)
-                    } catch (e: Exception) {
-                        Log.e(TAG, "Failed to clear cache", e)
-                    }
+                if (sameItemRetryId == mediaId) {
+                    sameItemRetryCount++
+                } else {
+                    sameItemRetryId = mediaId
+                    sameItemRetryCount = 1
                 }
-                scope.launch(Dispatchers.Main) {
-                    val currentPos = player.currentPosition
-                    player.stop()
-                    player.prepare()
-                    player.seekTo(currentPos)
-                    player.play()
+
+                if (sameItemRetryCount > 3) {
+                    Log.e(TAG, "Max retry limit reached ($sameItemRetryCount) for $mediaId after ${error.errorCodeName}. Auto-skipping or stopping.")
+                    sameItemRetryCount = 0
+                    sameItemRetryId = null
+                    scope.launch(Dispatchers.Main) {
+                        if (autoSkipNextOnError && player.hasNextMediaItem()) {
+                            player.seekToNextMediaItem()
+                        } else {
+                            player.stop()
+                        }
+                    }
+                    return
+                }
+
+                Log.w(TAG, "Attempting retry ($sameItemRetryCount/3) for $mediaId after IO error: ${error.errorCodeName}")
+                invalidateCachedUrls(mediaId)
+                // Mark this media ID to skip fast-start on retry — the fast-start URL was rejected
+                skipFastStartIds.add(mediaId)
+                scope.launch(Dispatchers.IO) {
+                    evictPlayerCache(mediaId)
+
+                    // On HTTP 403, visitorData was already nulled by PlayerConnection.
+                    // Fetch fresh visitorData BEFORE re-preparing so the new stream URL
+                    // is minted with a valid session context.
+                    if (error.errorCode == PlaybackException.ERROR_CODE_IO_BAD_HTTP_STATUS) {
+                        try {
+                            val result = YouTube.visitorData()
+                            result.onSuccess { newData ->
+                                Log.d(TAG, "VisitorData refreshed after IO 403: ${newData.take(20)}...")
+                                YouTube.visitorData = newData
+                                dataStore.edit { prefs ->
+                                    prefs[VisitorDataKey] = newData
+                                    prefs[VisitorDataTimestampKey] = System.currentTimeMillis()
+                                }
+                            }.onFailure { fetchError ->
+                                Log.e(TAG, "Failed to refresh visitorData on IO retry", fetchError)
+                            }
+                        } catch (e: Exception) {
+                            Log.e(TAG, "Exception refreshing visitorData on IO retry", e)
+                        }
+                    }
+
+                    withContext(Dispatchers.Main) {
+                        val currentPos = player.currentPosition
+                        player.stop()
+                        player.prepare()
+                        player.seekTo(currentPos)
+                        player.play()
+                    }
                 }
                 return
             }
@@ -1981,9 +2578,8 @@ class MusicService :
                     .setUpstreamDataSourceFactory(
                         DefaultDataSource.Factory(
                             this,
-                            OkHttpDataSource.Factory(
-                                okHttpClient
-                            ).setUserAgent("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"),
+                            OkHttpDataSource.Factory(okHttpClient)
+                                .setDefaultRequestProperties(mapOf("User-Agent" to DEFAULT_STREAM_USER_AGENT)),
                         ),
                     ),
             ).setCacheWriteDataSinkFactory(null)
@@ -2002,9 +2598,8 @@ class MusicService :
                     .setUpstreamDataSourceFactory(
                         DefaultDataSource.Factory(
                             this,
-                            OkHttpDataSource.Factory(
-                                okHttpClient
-                            ).setUserAgent("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"),
+                            OkHttpDataSource.Factory(okHttpClient)
+                                .setDefaultRequestProperties(mapOf("User-Agent" to DEFAULT_STREAM_USER_AGENT)),
                         ),
                     ),
             ).setCacheWriteDataSinkFactory(null)
@@ -2018,8 +2613,24 @@ class MusicService :
             createCacheDataSource()
         }
         return ResolvingDataSource.Factory(cacheFactory) { dataSpec ->
-            val mediaId = dataSpec.key ?: error("No media id")
-            val cacheKey = if (videoMode) "${mediaId}_video" else mediaId
+            val rawKey = dataSpec.key ?: error("No media id")
+
+            // Internet radio and ambient items already carry a real, playable stream URL in
+            // their DataSpec because MediaItemExt sets it via setUri(). Sending them through
+            // the YouTube resolution path below made ExoPlayer ask YouTube for a video whose
+            // id is "radio:<uuid>", which always fails with "This video is unavailable" and
+            // then retries until playback gives up. Return the spec untouched instead.
+            if (rawKey.startsWith(RADIO_MEDIA_ID_PREFIX) || rawKey.startsWith(AMBIENT_MEDIA_ID_PREFIX)) {
+                return@Factory dataSpec
+            }
+
+            val wantsAudioCompanion = rawKey.endsWith(AUDIO_COMPANION_SUFFIX)
+            val mediaId = if (wantsAudioCompanion) rawKey.removeSuffix(AUDIO_COMPANION_SUFFIX) else rawKey
+            val cacheKey = when {
+                wantsAudioCompanion -> rawKey
+                videoMode -> "${mediaId}_video"
+                else -> mediaId
+            }
             
             // Check if already cached using the correct key
             if (downloadCache.isCached(
@@ -2040,11 +2651,7 @@ class MusicService :
 
             songUrlCache[cacheKey]?.takeIf { it.second > System.currentTimeMillis() }?.let {
                 scope.launch(Dispatchers.IO + NonCancellable) { recoverSong(mediaId) }
-                return@Factory if (videoMode) {
-                    dataSpec.withUri(it.first.toUri()).buildUpon().setKey(cacheKey).build()
-                } else {
-                    dataSpec.withUri(it.first.toUri())
-                }
+                return@Factory resolvedDataSpec(dataSpec, it.first, cacheKey)
             }
 
             // Wait for prefetch if in progress, but with a timeout
@@ -2057,11 +2664,7 @@ class MusicService :
                 // Re-check cache after prefetch completion
                 songUrlCache[cacheKey]?.takeIf { it.second > System.currentTimeMillis() }?.let {
                     scope.launch(Dispatchers.IO + NonCancellable) { recoverSong(mediaId) }
-                    return@Factory if (videoMode) {
-                        dataSpec.withUri(it.first.toUri()).buildUpon().setKey(cacheKey).build()
-                    } else {
-                        dataSpec.withUri(it.first.toUri())
-                    }
+                    return@Factory resolvedDataSpec(dataSpec, it.first, cacheKey)
                 }
             }
 
@@ -2069,29 +2672,27 @@ class MusicService :
             val ytLogTag = "YouTube"
 
             try {
-                // FAST-START: Use fast path that skips validation and fallback clients
-                // This returns in ~200-500ms instead of 1-3s
                 val playbackData = runBlocking(Dispatchers.IO) {
-                    YTPlayerUtils.fastStartPlayerResponse(
+                    YTPlayerUtils.playerResponseForPlayback(
                         mediaId,
                         audioQuality = currentAudioQuality,
-                        videoQuality = currentVideoQuality,
                         connectivityManager = connectivityManager,
-                        videoMode = videoMode
+                        preferredStreamClient = preferredStreamClient,
+                        avoidCodecs = avoidStreamCodecs,
+                        isVideo = videoMode && !wantsAudioCompanion,
+                        videoQuality = currentVideoQuality,
                     )
-                }.getOrElse { fastError ->
-                    Timber.tag(ytLogTag).d("Fast-start failed, trying full path: ${fastError.message}")
-                    // Fall back to full path only if fast-start fails
-                    runBlocking(Dispatchers.IO) {
-                        YTPlayerUtils.playerResponseForPlayback(
-                            mediaId,
-                            audioQuality = currentAudioQuality,
-                            videoQuality = currentVideoQuality,
-                            connectivityManager = connectivityManager,
-                            videoMode = videoMode
-                        )
-                    }.getOrElse { throwable ->
+                }.getOrElse { throwable ->
                     when (throwable) {
+                        is YTPlayerUtils.LoginRequiredForPlaybackException -> {
+                            promptLoginRecovery(mediaId, throwable.targetUrl)
+                            throw PlaybackException(
+                                getString(R.string.playback_requires_youtube_music_confirmation),
+                                throwable,
+                                PlaybackException.ERROR_CODE_REMOTE_ERROR
+                            )
+                        }
+
                         is PlaybackException -> throw throwable
 
                         is ConnectException, is UnknownHostException -> {
@@ -2116,10 +2717,11 @@ class MusicService :
                             PlaybackException.ERROR_CODE_REMOTE_ERROR
                         )
                     }
-                    }
                 }
 
                 val format = playbackData.format
+                val loudnessDb = playbackData.audioConfig?.loudnessDb
+                val perceptualLoudnessDb = playbackData.audioConfig?.perceptualLoudnessDb
 
                 database.query {
                     upsert(
@@ -2131,32 +2733,20 @@ class MusicService :
                             bitrate = format.bitrate,
                             sampleRate = format.audioSampleRate ?: 0,
                             contentLength = format.contentLength ?: 0L,
-                            loudnessDb = playbackData.audioConfig?.loudnessDb,
+                            loudnessDb = loudnessDb,
                             playbackUrl = playbackData.streamUrl
                         )
                     )
                 }
                 scope.launch(Dispatchers.IO) { recoverSong(mediaId, playbackData) }
 
+                val expiresAt = System.currentTimeMillis() + (playbackData.streamExpiresInSeconds * 1000L)
                 val streamUrl = playbackData.streamUrl
 
-                songUrlCache[cacheKey] =
-                    streamUrl to System.currentTimeMillis() + (playbackData.streamExpiresInSeconds * 1000L)
-                
-                // Return DataSpec with the custom key and headers
-                val finalBuilder = dataSpec.withUri(streamUrl.toUri())
-                    .subrange(dataSpec.uriPositionOffset, CHUNK_LENGTH)
-                    .buildUpon()
-                
-                if (playbackData.userAgent != null) {
-                    finalBuilder.setHttpRequestHeaders(mapOf("User-Agent" to playbackData.userAgent))
-                }
-                
-                return@Factory if (videoMode) {
-                    finalBuilder.setKey(cacheKey).build()
-                } else {
-                    finalBuilder.build()
-                }
+                playbackUrlCache[cacheKey] = streamUrl to expiresAt
+
+                val length = if (dataSpec.length >= 0) minOf(dataSpec.length, CHUNK_LENGTH) else CHUNK_LENGTH
+                return@Factory resolvedDataSpec(dataSpec, streamUrl, cacheKey).subrange(dataSpec.uriPositionOffset, length)
             } catch (e: Exception) {
                 Timber.tag(ytLogTag).e(e, "YouTube playback error, trying JossRed as fallback")
 
@@ -2240,13 +2830,70 @@ class MusicService :
         }
     }
 
-    private fun createMediaSourceFactory() =
-        DefaultMediaSourceFactory(
+    private fun createMediaSourceFactory(): MediaSource.Factory {
+        val extractorsFactory = androidx.media3.extractor.DefaultExtractorsFactory()
+            .setMp4ExtractorFlags(
+                Mp4Extractor.FLAG_WORKAROUND_IGNORE_EDIT_LISTS
+            )
+            .setFragmentedMp4ExtractorFlags(
+                FragmentedMp4Extractor.FLAG_ENABLE_EMSG_TRACK or
+                FragmentedMp4Extractor.FLAG_WORKAROUND_IGNORE_EDIT_LISTS or
+                FragmentedMp4Extractor.FLAG_WORKAROUND_EVERY_VIDEO_FRAME_IS_SYNC_FRAME
+            )
+
+        val baseFactory = DefaultMediaSourceFactory(
             createDataSourceFactory(),
-            ExtractorsFactory {
-                arrayOf(MatroskaExtractor(), FragmentedMp4Extractor(), Mp4Extractor())
-            },
+            extractorsFactory,
         )
+
+        // In video mode, adaptive formats are video-only (no audio). We merge a
+        // companion audio source so the player has both video and audio tracks.
+        return object : MediaSource.Factory {
+            override fun setDrmSessionManagerProvider(
+                drmSessionManagerProvider: androidx.media3.exoplayer.drm.DrmSessionManagerProvider
+            ): MediaSource.Factory {
+                baseFactory.setDrmSessionManagerProvider(drmSessionManagerProvider)
+                return this
+            }
+
+            override fun setLoadErrorHandlingPolicy(
+                loadErrorHandlingPolicy: androidx.media3.exoplayer.upstream.LoadErrorHandlingPolicy
+            ): MediaSource.Factory {
+                baseFactory.setLoadErrorHandlingPolicy(loadErrorHandlingPolicy)
+                return this
+            }
+
+            override fun getSupportedTypes(): IntArray = baseFactory.supportedTypes
+
+            override fun createMediaSource(mediaItem: MediaItem): MediaSource {
+                if (videoMode) {
+                    // Video source: resolver maps mediaId → "${mediaId}_video" cache key
+                    val videoSource = baseFactory.createMediaSource(mediaItem)
+
+                    // Companion audio source: key suffix tells the resolver to
+                    // return the audio stream URL instead of the video one.
+                    val audioItem = mediaItem.buildUpon()
+                        .setCustomCacheKey("${mediaItem.mediaId}$AUDIO_COMPANION_SUFFIX")
+                        .build()
+                    val audioSource = baseFactory.createMediaSource(audioItem)
+
+                    Log.d(TAG, "Video mode: merging video + companion audio for ${mediaItem.mediaId}")
+
+                    // adjustPeriodTimeOffsets and clipDurations must both be true. The two
+                    // streams are fetched separately and rarely share an identical duration or
+                    // start timestamp, and with the defaults (both false) the audio period is
+                    // left unaligned with the video period, so playback renders video silently.
+                    return MergingMediaSource(
+                        /* adjustPeriodTimeOffsets = */ true,
+                        /* clipDurations = */ true,
+                        videoSource,
+                        audioSource,
+                    )
+                }
+                return baseFactory.createMediaSource(mediaItem)
+            }
+        }
+    }
 
     private fun createRenderersFactory() =
         object : DefaultRenderersFactory(this) {
@@ -2260,12 +2907,37 @@ class MusicService :
                 .setEnableAudioTrackPlaybackParams(enableAudioTrackPlaybackParams)
                 .setAudioProcessorChain(
                     DefaultAudioSink.DefaultAudioProcessorChain(
-                        emptyArray(),
+                        arrayOf(monoBalanceProcessor),
                         SilenceSkippingAudioProcessor(2_000_000, 20_000, 256),
                         SonicAudioProcessor(),
                     ),
                 ).build()
         }
+
+    override fun onTracksChanged(tracks: androidx.media3.common.Tracks) {
+        if (!videoMode) return
+        if (tracks.groups.isEmpty()) {
+            Log.w(TAG, "Tracks: no track groups (merge produced nothing)")
+            return
+        }
+        tracks.groups.forEach { group ->
+            val type = when (group.type) {
+                C.TRACK_TYPE_AUDIO -> "AUDIO"
+                C.TRACK_TYPE_VIDEO -> "VIDEO"
+                else -> "OTHER(${group.type})"
+            }
+            for (i in 0 until group.length) {
+                Log.d(
+                    TAG,
+                    "Tracks: $type format=${group.getTrackFormat(i).sampleMimeType} " +
+                        "supported=${group.isTrackSupported(i)} selected=${group.isTrackSelected(i)}",
+                )
+            }
+        }
+        if (tracks.groups.none { it.type == C.TRACK_TYPE_AUDIO }) {
+            Log.e(TAG, "Tracks: NO AUDIO TRACK GROUP - companion audio source was not merged")
+        }
+    }
 
     override fun onPlaybackStatsReady(
         eventTime: AnalyticsListener.EventTime,
@@ -2697,6 +3369,8 @@ class MusicService :
             return
         }
 
+        saveResumePositionForCurrentSong()
+
         try {
             val persistQueue =
                 PersistQueue(
@@ -2763,17 +3437,11 @@ class MusicService :
     }
 
     private fun handleWakeLock() {
-        if (player.playWhenReady && (player.playbackState == Player.STATE_READY || player.playbackState == Player.STATE_BUFFERING)) {
-            if (wakeLock?.isHeld == false) {
-                wakeLock?.acquire(12 * 60 * 60 * 1000L) // 12 hours timeout to be safe
-                Log.d(TAG, "WakeLock acquired")
-            }
-        } else {
-            if (wakeLock?.isHeld == true) {
-                wakeLock?.release()
-                Log.d(TAG, "WakeLock released")
-            }
-        }
+        // ExoPlayer already manages a wake lock via setWakeMode(C.WAKE_MODE_NETWORK) and
+        // releases it as soon as playback stops. Holding a second PARTIAL_WAKE_LOCK here was
+        // redundant, and because it was acquired with a 12 hour timeout any missed release
+        // path kept the CPU awake for half a day. Kept as a no-op so the existing call site
+        // in onEvents stays valid.
     }
 
     @RequiresApi(Build.VERSION_CODES.O)
@@ -2791,6 +3459,7 @@ class MusicService :
         }
         discordRpc = null
         releaseLoudnessEnhancer()
+        runCatching { unregisterReceiver(headphoneConnectReceiver) }
         shakeDetector?.let { com.Chenkham.Echofy.utils.ShakeDetector.unregister(this, it) }
         shakeDetector = null
         mediaSession.release()
@@ -2843,6 +3512,23 @@ class MusicService :
         const val ARTIST = "artist"
         const val ALBUM = "album"
         const val PLAYLIST = "playlist"
+
+        /** How long the pause/resume volume ramp lasts, in milliseconds. */
+        private const val FADE_DURATION_MS = 360L
+
+        const val RADIO_MEDIA_ID_PREFIX = "radio:"
+        const val AMBIENT_MEDIA_ID_PREFIX = "ambient:"
+        const val AUDIO_COMPANION_SUFFIX = "_audio"
+
+        /**
+         * Fallback User-Agent for stream requests. Only used when the resolver could not
+         * record the User-Agent of the client that minted the URL. It must be applied via
+         * setDefaultRequestProperties (not setUserAgent), because setUserAgent appends a
+         * second User-Agent header instead of replacing the per-request one, which makes
+         * YouTube reject the PO token bound to the original client with HTTP 403.
+         */
+        const val DEFAULT_STREAM_USER_AGENT =
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:140.0) Gecko/20100101 Firefox/140.0"
 
         const val CHANNEL_ID = "music_channel_01"
         const val NOTIFICATION_ID = 888

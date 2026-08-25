@@ -91,6 +91,8 @@ import com.Chenkham.Echofy.ui.component.SettingsPage
 import com.Chenkham.Echofy.ui.component.SwitchPreference
 import com.Chenkham.Echofy.ui.component.ThumbnailCornerRadiusSelectorButton
 import com.Chenkham.Echofy.ui.component.UnifiedShapeSelectorButton
+import com.Chenkham.Echofy.ui.component.displayName
+import com.Chenkham.Echofy.ui.component.prefersArtworkColors
 import com.Chenkham.Echofy.utils.rememberEnumPreference
 import com.Chenkham.Echofy.utils.rememberPreference
 import me.saket.squiggles.SquigglySlider
@@ -106,8 +108,6 @@ fun AppearanceSettings(
     navController: NavController,
     scrollBehavior: TopAppBarScrollBehavior,
 ) {
-    val adManager = LocalAdManager.current
-    val isPremium = adManager?.isPremium?.collectAsState()?.value == true
     val context = androidx.compose.ui.platform.LocalContext.current
     val (dynamicTheme, onDynamicThemeChange) = rememberPreference(
         DynamicThemeKey,
@@ -140,6 +140,41 @@ fun AppearanceSettings(
             defaultValue = PlayerBackgroundStyle.DEFAULT,
         )
     val (pureBlack, onPureBlackChange) = rememberPreference(PureBlackKey, defaultValue = false)
+    val (liveFluidBackground, onLiveFluidBackgroundChange) = rememberPreference(
+        com.Chenkham.Echofy.constants.LiveFluidBackgroundKey,
+        defaultValue = false,
+    )
+    val (reduceMotion, onReduceMotionChange) = rememberPreference(
+        com.Chenkham.Echofy.constants.ReduceMotionKey,
+        defaultValue = false,
+    )
+    val (appFont, onAppFontChange) = rememberEnumPreference(
+        com.Chenkham.Echofy.constants.CustomFontKey,
+        defaultValue = com.Chenkham.Echofy.constants.AppFont.SYSTEM,
+    )
+    var appIcon by remember {
+        mutableStateOf(com.Chenkham.Echofy.utils.AppIconManager.currentIcon(context))
+    }
+    val (highContrastLyrics, onHighContrastLyricsChange) = rememberPreference(
+        com.Chenkham.Echofy.constants.HighContrastLyricsKey,
+        defaultValue = false
+    )
+    val (listeningReminderEnabled, onListeningReminderEnabledChange) = rememberPreference(
+        com.Chenkham.Echofy.constants.ListeningReminderEnabledKey,
+        defaultValue = false
+    )
+    val (listeningReminderMinutes, onListeningReminderMinutesChange) = rememberPreference(
+        com.Chenkham.Echofy.constants.ListeningReminderMinutesKey,
+        defaultValue = 60
+    )
+    val (liveFluidPalette, onLiveFluidPaletteChange) = rememberEnumPreference(
+        com.Chenkham.Echofy.constants.LiveFluidColorPaletteKey,
+        defaultValue = com.Chenkham.Echofy.constants.LiveFluidColorPalette.ALBUM,
+    )
+    val (realTimeVisualizer, onRealTimeVisualizerChange) = rememberPreference(
+        com.Chenkham.Echofy.constants.RealTimeVisualizerKey,
+        defaultValue = false,
+    )
     val (defaultOpenTab, onDefaultOpenTabChange) = rememberEnumPreference(
         DefaultOpenTabKey,
         defaultValue = NavigationTab.HOME
@@ -156,6 +191,14 @@ fun AppearanceSettings(
     val (swipeThumbnail, onSwipeThumbnailChange) = rememberPreference(
         SwipeThumbnailKey,
         defaultValue = true
+    )
+    val (doubleTapSeek, onDoubleTapSeekChange) = rememberPreference(
+        com.Chenkham.Echofy.constants.DoubleTapSeekKey,
+        defaultValue = false
+    )
+    val (doubleTapSeekSeconds, onDoubleTapSeekSecondsChange) = rememberPreference(
+        com.Chenkham.Echofy.constants.DoubleTapSeekSecondsKey,
+        defaultValue = 10
     )
     val (gridItemSize, onGridItemSizeChange) = rememberEnumPreference(
         GridItemsSizeKey,
@@ -453,30 +496,13 @@ fun AppearanceSettings(
                         title = { 
                             Row(verticalAlignment = Alignment.CenterVertically) {
                                 Text(stringResource(R.string.pure_black))
-                                if (!isPremium) {
-                                    Spacer(Modifier.width(8.dp))
-                                    Icon(
-                                        painter = painterResource(R.drawable.diamond_filled),
-                                        contentDescription = "Premium Feature",
-                                        modifier = Modifier.size(16.dp),
-                                        tint = MaterialTheme.colorScheme.tertiary
-                                    )
-                                }
                             }
                         },
                         icon = { Icon(painterResource(R.drawable.contrast), null) },
                         checked = pureBlack && useDarkTheme,
                         onCheckedChange = { newValue ->
                             if (useDarkTheme) {
-                                if (isPremium) {
-                                    onPureBlackChange(newValue)
-                                } else {
-                                    try {
-                                        navController.navigate("premium")
-                                    } catch (e: Exception) {
-                                        android.widget.Toast.makeText(context, "This is a Premium feature!", android.widget.Toast.LENGTH_SHORT).show()
-                                    }
-                                }
+                                onPureBlackChange(newValue)
                             }
                         },
                         isEnabled = useDarkTheme
@@ -522,20 +548,27 @@ fun AppearanceSettings(
         SettingsGeneralCategory(
             title = stringResource(R.string.player),
             items = listOf(
-                {EnumListPreference(
-                    title = { Text(stringResource(R.string.player_background_style)) },
-                    icon = { Icon(painterResource(R.drawable.gradient), null) },
-                    selectedValue = safeSelectedValue,
-                    onValueSelected = onPlayerBackgroundChange,
-                    valueText = {
-                        when (it) {
-                            PlayerBackgroundStyle.DEFAULT -> stringResource(R.string.follow_theme)
-                            PlayerBackgroundStyle.GRADIENT -> stringResource(R.string.gradient)
-                            PlayerBackgroundStyle.BLUR -> stringResource(R.string.player_background_blur)
-                        }
-                    },
-                    values = availableBackgroundStyles
-                )},
+                {
+                    ListPreference(
+                        title = { Text(stringResource(R.string.player_background_style)) },
+                        icon = { Icon(painterResource(R.drawable.gradient), null) },
+                        selectedValue = safeSelectedValue,
+                        values = availableBackgroundStyles,
+                        valueText = {
+                            when (it) {
+                                PlayerBackgroundStyle.DEFAULT -> stringResource(R.string.follow_theme)
+                                PlayerBackgroundStyle.GRADIENT -> stringResource(R.string.gradient)
+                                PlayerBackgroundStyle.BLUR -> stringResource(R.string.player_background_blur)
+                                PlayerBackgroundStyle.COLORING -> "Coloring"
+                                PlayerBackgroundStyle.BLUR_GRADIENT -> "Blur & Gradient"
+                                PlayerBackgroundStyle.GLOW -> "Aura Glow"
+                                PlayerBackgroundStyle.GLOW_ANIMATED -> "Animated Glow"
+                                PlayerBackgroundStyle.CUSTOM -> "Custom Artwork" 
+                            }
+                        },
+                        onValueSelected = onPlayerBackgroundChange,
+                    )
+                },
 
                 {ThumbnailCornerRadiusSelectorButton(
                     onRadiusSelected = { selectedRadius ->
@@ -609,6 +642,33 @@ fun AppearanceSettings(
                     checked = swipeThumbnail,
                     onCheckedChange = onSwipeThumbnailChange,
                 )},
+
+                {SwitchPreference(
+                    title = { Text(stringResource(R.string.double_tap_seek)) },
+                    description = stringResource(R.string.double_tap_seek_desc),
+                    icon = { Icon(painterResource(R.drawable.swipe), null) },
+                    checked = doubleTapSeek,
+                    onCheckedChange = onDoubleTapSeekChange,
+                )},
+
+                {
+                    AnimatedVisibility(visible = doubleTapSeek) {
+                        Column {
+                            Text(
+                                text = "${stringResource(R.string.double_tap_seek_amount)}: ${doubleTapSeekSeconds}s",
+                                style = MaterialTheme.typography.bodyMedium,
+                                modifier = Modifier.padding(horizontal = 16.dp),
+                            )
+                            Slider(
+                                value = doubleTapSeekSeconds.toFloat(),
+                                onValueChange = { onDoubleTapSeekSecondsChange(it.toInt()) },
+                                valueRange = 5f..30f,
+                                steps = 4,
+                                modifier = Modifier.padding(horizontal = 16.dp),
+                            )
+                        }
+                    }
+                },
 
                 {EnumListPreference(
                     title = { Text(stringResource(R.string.playback_mode)) },
@@ -719,6 +779,8 @@ fun AppearanceSettings(
                             LibraryFilter.ARTISTS -> stringResource(R.string.artists)
                             LibraryFilter.ALBUMS -> stringResource(R.string.albums)
                             LibraryFilter.PLAYLISTS -> stringResource(R.string.playlists)
+                            LibraryFilter.DEVICE -> "Device"
+                            LibraryFilter.SPOTIFY -> "Spotify"
                             LibraryFilter.LIBRARY -> stringResource(R.string.filter_library)
                         }
                     },
@@ -744,7 +806,133 @@ fun AppearanceSettings(
                         }
                     },
                 )},
+
+                {EnumListPreference(
+                    title = { Text(stringResource(R.string.app_font)) },
+                    icon = { Icon(painterResource(R.drawable.palette), null) },
+                    selectedValue = appFont,
+                    onValueSelected = onAppFontChange,
+                    valueText = {
+                        when (it) {
+                            com.Chenkham.Echofy.constants.AppFont.SYSTEM -> stringResource(R.string.font_system)
+                            com.Chenkham.Echofy.constants.AppFont.LINOTTE -> "Linotte"
+                            com.Chenkham.Echofy.constants.AppFont.POPPINS -> "Poppins"
+                            com.Chenkham.Echofy.constants.AppFont.SF_PRO -> "SF Pro Display"
+                            com.Chenkham.Echofy.constants.AppFont.ANYBODY -> "Anybody"
+                            com.Chenkham.Echofy.constants.AppFont.SANS_SERIF -> stringResource(R.string.font_sans_serif)
+                            com.Chenkham.Echofy.constants.AppFont.SERIF -> stringResource(R.string.font_serif)
+                            com.Chenkham.Echofy.constants.AppFont.MONOSPACE -> stringResource(R.string.font_monospace)
+                            com.Chenkham.Echofy.constants.AppFont.CURSIVE -> stringResource(R.string.font_cursive)
+                        }
+                    },
+                )},
+
+                {ListPreference(
+                    title = { Text(stringResource(R.string.app_icon)) },
+                    icon = { Icon(painterResource(R.drawable.image), null) },
+                    selectedValue = appIcon,
+                    values = com.Chenkham.Echofy.constants.AppIcon.entries,
+                    valueText = {
+                        when (it) {
+                            com.Chenkham.Echofy.constants.AppIcon.DEFAULT -> stringResource(R.string.app_icon_default)
+                            com.Chenkham.Echofy.constants.AppIcon.CLASSIC -> stringResource(R.string.app_icon_classic)
+                            com.Chenkham.Echofy.constants.AppIcon.MONOCHROME -> stringResource(R.string.app_icon_monochrome)
+                        }
+                    },
+                    onValueSelected = {
+                        appIcon = it
+                        com.Chenkham.Echofy.utils.AppIconManager.applyIcon(context, it)
+                    },
+                )},
             )
+        )
+
+        Spacer(Modifier.padding(8.dp))
+
+        SettingsGeneralCategory(
+            title = stringResource(R.string.accessibility_audio),
+            items = listOf(
+                {SwitchPreference(
+                    title = { Text(stringResource(R.string.reduce_motion)) },
+                    description = stringResource(R.string.reduce_motion_desc),
+                    icon = { Icon(painterResource(R.drawable.palette), null) },
+                    checked = reduceMotion,
+                    onCheckedChange = onReduceMotionChange,
+                )},
+                {SwitchPreference(
+                    title = { Text(stringResource(R.string.high_contrast_lyrics)) },
+                    description = stringResource(R.string.high_contrast_lyrics_desc),
+                    icon = { Icon(painterResource(R.drawable.lyrics), null) },
+                    checked = highContrastLyrics,
+                    onCheckedChange = onHighContrastLyricsChange,
+                )},
+                {SwitchPreference(
+                    title = { Text(stringResource(R.string.listening_reminder)) },
+                    description = stringResource(R.string.listening_reminder_desc),
+                    icon = { Icon(painterResource(R.drawable.volume_up), null) },
+                    checked = listeningReminderEnabled,
+                    onCheckedChange = onListeningReminderEnabledChange,
+                )},
+                {
+                    AnimatedVisibility(visible = listeningReminderEnabled) {
+                        Column {
+                            Text(
+                                text = "${stringResource(R.string.listening_reminder_after)}: $listeningReminderMinutes min",
+                                style = MaterialTheme.typography.bodyMedium,
+                                modifier = Modifier.padding(start = 16.dp, end = 16.dp),
+                            )
+                            Slider(
+                                value = listeningReminderMinutes.toFloat(),
+                                onValueChange = { onListeningReminderMinutesChange(it.toInt()) },
+                                valueRange = 15f..180f,
+                                steps = 10,
+                                modifier = Modifier.padding(horizontal = 16.dp),
+                            )
+                        }
+                    }
+                },
+            )
+        )
+
+        SettingsGeneralCategory(
+            title = "Player Visuals",
+            items = buildList {
+                add {
+                    SwitchPreference(
+                        title = { Text("Live Fluid Background") },
+                        description = "Animated flowing color meshes on player",
+                        icon = { Icon(painterResource(R.drawable.palette), null) },
+                        checked = liveFluidBackground,
+                        onCheckedChange = onLiveFluidBackgroundChange,
+                    )
+                }
+                if (liveFluidBackground) {
+                    add {
+                        EnumListPreference(
+                            title = { Text("Fluid Color Palette") },
+                            icon = { Icon(painterResource(R.drawable.palette), null) },
+                            selectedValue = liveFluidPalette,
+                            valueText = { palette ->
+                                if (palette.prefersArtworkColors()) {
+                                    "${palette.displayName()} (matches current artwork)"
+                                } else {
+                                    palette.displayName()
+                                }
+                            },
+                            onValueSelected = onLiveFluidPaletteChange,
+                        )
+                    }
+                }
+                add {
+                    SwitchPreference(
+                        title = { Text("Real-Time Visualizer") },
+                        description = "Audio spectrum bars on now playing",
+                        icon = { Icon(painterResource(R.drawable.equalizer), null) },
+                        checked = realTimeVisualizer,
+                        onCheckedChange = onRealTimeVisualizerChange,
+                    )
+                }
+            },
         )
 
         // New avatar selector

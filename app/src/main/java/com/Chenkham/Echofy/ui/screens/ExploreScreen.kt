@@ -16,31 +16,49 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.grid.itemsIndexed
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilterChip
+import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarScrollBehavior
+import androidx.compose.material3.pulltorefresh.PullToRefreshDefaults.Indicator
+import androidx.compose.material3.pulltorefresh.pullToRefresh
+import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
+import kotlinx.coroutines.delay
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -52,18 +70,26 @@ import androidx.navigation.NavController
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.Chenkham.Echofy.LocalPlayerAwareWindowInsets
+import com.Chenkham.Echofy.LocalPlayerConnection
 import com.Chenkham.Echofy.R
+import com.Chenkham.Echofy.ads.AdManager
+import com.Chenkham.Echofy.ui.component.BannerAdView
+import com.Chenkham.Echofy.constants.AmbientSoundsEnabledKey
 import com.Chenkham.Echofy.constants.BackpaperScreen
+import com.Chenkham.Echofy.constants.MixcloudEnabledKey
+import com.Chenkham.Echofy.constants.RadioEnabledKey
+import com.Chenkham.Echofy.extensions.toMediaItem
+import com.Chenkham.Echofy.playback.queues.ListQueue
 import com.Chenkham.Echofy.ui.component.BackpaperBackground
-import com.Chenkham.Echofy.ui.component.NavigationTitle
-import com.Chenkham.Echofy.viewmodels.MoodAndGenresViewModel
 import com.Chenkham.Echofy.ui.component.ErrorScreen
-
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
+import com.Chenkham.Echofy.ui.component.NavigationTitle
+import com.Chenkham.Echofy.utils.rememberPreference
+import com.Chenkham.Echofy.viewmodels.AmbientSoundsViewModel
 import com.Chenkham.Echofy.viewmodels.ChartsViewModel
+import com.Chenkham.Echofy.viewmodels.MixcloudViewModel
+import com.Chenkham.Echofy.viewmodels.MoodAndGenresViewModel
 import com.Chenkham.Echofy.viewmodels.PodcastsViewModel
+import com.Chenkham.Echofy.viewmodels.RadioViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -71,17 +97,32 @@ fun ExploreScreen(
     navController: NavController,
     scrollBehavior: TopAppBarScrollBehavior,
     initialTab: String? = null,
+    adManager: AdManager? = null,
     viewModel: MoodAndGenresViewModel = hiltViewModel()
 ) {
     val chartsViewModel: ChartsViewModel = hiltViewModel()
     val podcastsViewModel: PodcastsViewModel = hiltViewModel()
+    val radioViewModel: RadioViewModel = hiltViewModel()
 
-    val tabs = remember {
-        listOf(
-            ExploreTabItem("genres", R.string.genres, R.drawable.explore),
-            ExploreTabItem("charts", R.string.charts, R.drawable.trending_up),
-            ExploreTabItem("podcasts", R.string.podcasts, R.drawable.podcast)
-        )
+    val (radioEnabled) = rememberPreference(RadioEnabledKey, defaultValue = true)
+    val (mixesEnabled) = rememberPreference(MixcloudEnabledKey, defaultValue = false)
+    val (ambientEnabled) = rememberPreference(AmbientSoundsEnabledKey, defaultValue = false)
+
+    val tabs = remember(radioEnabled, mixesEnabled, ambientEnabled) {
+        buildList {
+            add(ExploreTabItem("genres", R.string.genres, R.drawable.explore))
+            add(ExploreTabItem("charts", R.string.charts, R.drawable.trending_up))
+            add(ExploreTabItem("podcasts", R.string.podcasts, R.drawable.podcast))
+            if (radioEnabled) {
+                add(ExploreTabItem("radio", R.string.radio, R.drawable.radio))
+            }
+            if (mixesEnabled) {
+                add(ExploreTabItem("mixes", R.string.dj_mixes, R.drawable.graphic_eq))
+            }
+            if (ambientEnabled) {
+                add(ExploreTabItem("ambient", R.string.ambient_sounds, R.drawable.music_note))
+            }
+        }
     }
     var selectedTab by rememberSaveable {
         mutableStateOf(
@@ -89,35 +130,88 @@ fun ExploreScreen(
         )
     }
 
+    val mixesViewModel: MixcloudViewModel = hiltViewModel()
+    val ambientViewModel: AmbientSoundsViewModel = hiltViewModel()
+    val coroutineScope = rememberCoroutineScope()
+
+    var isRefreshing by remember { mutableStateOf(false) }
+    val pullRefreshState = rememberPullToRefreshState()
+
+    val onRefresh: () -> Unit = {
+        coroutineScope.launch {
+            isRefreshing = true
+            when (tabs.getOrNull(selectedTab)?.key) {
+                "genres" -> viewModel.retry()
+                "charts" -> chartsViewModel.loadCharts()
+                "podcasts" -> podcastsViewModel.loadPodcasts()
+                "radio" -> radioViewModel.loadTopStations()
+                "mixes" -> mixesViewModel.loadMixes()
+                "ambient" -> ambientViewModel.loadSounds()
+            }
+            delay(500)
+            isRefreshing = false
+        }
+    }
+
     BackpaperBackground(screen = BackpaperScreen.EXPLORE) {
-        Column(
+        Box(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(
                     top = LocalPlayerAwareWindowInsets.current
                         .asPaddingValues()
-                        .calculateTopPadding() + with(androidx.compose.ui.platform.LocalDensity.current) { scrollBehavior.state.heightOffset.toDp() }
+                        .calculateTopPadding()
+                )
+                .pullToRefresh(
+                    state = pullRefreshState,
+                    isRefreshing = isRefreshing,
+                    onRefresh = onRefresh
                 )
         ) {
-            ExploreTabSelector(
-                tabs = tabs,
-                selectedTab = selectedTab,
-                onTabSelected = { selectedTab = it },
-                modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp)
-            )
-            
-            // Tab content
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .weight(1f)
-            ) {
-                when (selectedTab) {
-                    0 -> GenresTab(navController, viewModel)
-                    1 -> ChartsTab(navController, chartsViewModel)
-                    2 -> PodcastsTab(navController, podcastsViewModel)
+            Column(modifier = Modifier.fillMaxSize()) {
+                ExploreTabSelector(
+                    tabs = tabs,
+                    selectedTab = selectedTab,
+                    onTabSelected = { selectedTab = it },
+                    modifier = Modifier.padding(vertical = 4.dp)
+                )
+
+                // Tab content
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .weight(1f)
+                ) {
+                    val tabKey = tabs.getOrNull(selectedTab)?.key
+                    when (tabKey) {
+                        "genres" -> GenresTab(navController, viewModel)
+                        "charts" -> ChartsTab(navController, chartsViewModel)
+                        "podcasts" -> PodcastsTab(navController, podcastsViewModel)
+                        "radio" -> RadioTab(navController, radioViewModel)
+                        "mixes" -> MixesTab(mixesViewModel)
+                        "ambient" -> AmbientTab(ambientViewModel)
+                    }
+                }
+
+                // Outside the weighted tab content and above the player-aware bottom
+                // inset, so it never covers the bottom navigation bar.
+                adManager?.let { manager ->
+                    BannerAdView(
+                        adManager = manager,
+                        modifier = Modifier.padding(
+                            bottom = LocalPlayerAwareWindowInsets.current
+                                .asPaddingValues()
+                                .calculateBottomPadding()
+                        )
+                    )
                 }
             }
+
+            Indicator(
+                modifier = Modifier.align(Alignment.TopCenter),
+                isRefreshing = isRefreshing,
+                state = pullRefreshState
+            )
         }
     }
 }
@@ -135,53 +229,41 @@ private fun ExploreTabSelector(
     onTabSelected: (Int) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    Row(
+    LazyRow(
         modifier = modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(10.dp),
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
     ) {
-        tabs.forEachIndexed { index, tab ->
+        itemsIndexed(tabs) { index, tab ->
             val selected = selectedTab == index
-            Card(
-                modifier = Modifier
-                    .weight(1f)
-                    .height(54.dp)
-                    .clickable { onTabSelected(index) },
-                shape = RoundedCornerShape(18.dp),
-                colors = CardDefaults.cardColors(
-                    containerColor = if (selected) {
-                        MaterialTheme.colorScheme.primaryContainer
-                    } else {
-                        MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.54f)
-                    },
-                    contentColor = if (selected) {
-                        MaterialTheme.colorScheme.onPrimaryContainer
-                    } else {
-                        MaterialTheme.colorScheme.onSurfaceVariant
-                    },
-                ),
-            ) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(horizontal = 12.dp),
-                    horizontalArrangement = Arrangement.Center,
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    Icon(
-                        painter = painterResource(tab.icon),
-                        contentDescription = null,
-                        modifier = Modifier.size(20.dp),
-                    )
-                    Spacer(Modifier.size(8.dp))
+            FilterChip(
+                selected = selected,
+                onClick = { onTabSelected(index) },
+                label = {
                     Text(
                         text = stringResource(tab.titleRes),
                         style = MaterialTheme.typography.labelLarge,
-                        fontWeight = if (selected) FontWeight.Bold else FontWeight.SemiBold,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
+                        fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium,
                     )
-                }
-            }
+                },
+                leadingIcon = {
+                    Icon(
+                        painter = painterResource(tab.icon),
+                        contentDescription = null,
+                        modifier = Modifier.size(18.dp),
+                    )
+                },
+                shape = RoundedCornerShape(50),
+                colors = FilterChipDefaults.filterChipColors(
+                    selectedContainerColor = MaterialTheme.colorScheme.primaryContainer,
+                    selectedLabelColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                    selectedLeadingIconColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                    containerColor = MaterialTheme.colorScheme.surfaceContainer,
+                    labelColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                    iconColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                ),
+                border = null,
+            )
         }
     }
 }
@@ -239,8 +321,11 @@ private fun GenresTab(
                 }
             }
             else -> {
-                moodAndGenresList?.forEach { moodAndGenres ->
-                    item(span = { GridItemSpan(maxLineSpan) }) {
+                moodAndGenresList?.forEachIndexed { sectionIdx, moodAndGenres ->
+                    item(
+                        key = "title_${sectionIdx}_${moodAndGenres.title}",
+                        span = { GridItemSpan(maxLineSpan) }
+                    ) {
                         NavigationTitle(
                             title = moodAndGenres.title,
                             modifier = Modifier.padding(bottom = 8.dp, top = 8.dp)
@@ -249,7 +334,7 @@ private fun GenresTab(
 
                     itemsIndexed(
                         items = moodAndGenres.items,
-                        key = { index, item -> "${item.endpoint.params ?: item.title}_$index" }
+                        key = { index, item -> "${moodAndGenres.title}_${sectionIdx}_${item.endpoint.params ?: item.title}_$index" }
                     ) { index, item ->
                         GenreCard(
                             title = item.title,
@@ -263,7 +348,6 @@ private fun GenresTab(
             }
         }
     }
-
 }
 
 @Composable
@@ -275,8 +359,8 @@ private fun ChartsTab(
     val isLoading by viewModel.isLoading.collectAsState()
     val error by viewModel.error.collectAsState()
     val selectedCountry by viewModel.selectedCountry.collectAsState()
-
     val countryList by viewModel.countryList.collectAsState()
+
     var showCountryMenu by remember { mutableStateOf(false) }
 
     Box(modifier = Modifier.fillMaxSize()) {
@@ -301,11 +385,10 @@ private fun ChartsTab(
                  // Country Selector
                 item(span = { GridItemSpan(maxLineSpan) }) {
                      Box(modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp)) {
-                         androidx.compose.material3.FilterChip(
+                         FilterChip(
                              selected = true,
                              onClick = { showCountryMenu = true },
                              label = { 
-                                 // Display "Global" for ZZ, otherwise show country name
                                  val displayName = if (selectedCountry == "ZZ") "Global" else (countryList[selectedCountry] ?: selectedCountry)
                                  Text(displayName)
                              },
@@ -333,23 +416,15 @@ private fun ChartsTab(
                      }
                 }
 
-                // Charts Sections from YouTube Music API
-                // Detect content type from items to ensure correct title assignment
                 charts?.sections?.forEachIndexed { index, section ->
-                    // Only show sections with items
                     if (section.items.isNotEmpty()) {
-                        // Detect content type based on first item's characteristics
                         val firstItem = section.items.first()
                         val isArtistSection = firstItem.browseId.startsWith("UC") && firstItem.playlistId == null
                         val hasSubscribers = firstItem.subscribers != null
                         
-                        // Determine correct title based on content type
                         val sectionTitle = when {
-                            // If items are artists (UC browseId, no playlistId, has subscribers)
                             isArtistSection || hasSubscribers -> "Top artists"
-                            // If API title contains useful info, use it
                             section.title.isNotBlank() && !section.title.contains("Top artists", ignoreCase = true) -> section.title
-                            // Fallback based on index - first section with playlists is usually Trending
                             section.items.all { it.playlistId != null } -> {
                                 when {
                                     section.title.contains("video", ignoreCase = true) -> "Top music videos"
@@ -384,8 +459,6 @@ private fun ChartsTab(
                                     } else if (item.browseId.startsWith("UC")) {
                                          navController.navigate("artist/${item.browseId}")
                                     } else {
-                                         // Fallback: mostly likely a playlist if it has browseId but not UC
-                                         // But could be a specific browse page. Try online_playlist if it starts with VL or PL
                                          if (item.browseId.startsWith("VL") || item.browseId.startsWith("PL")) {
                                              navController.navigate("online_playlist/${item.browseId}")
                                          } else {
@@ -401,7 +474,6 @@ private fun ChartsTab(
         }
     }
 }
-
 
 @Composable
 private fun PodcastsTab(
@@ -425,7 +497,7 @@ private fun PodcastsTab(
         } else {
             LazyVerticalGrid(
                 columns = GridCells.Adaptive(150.dp),
-                 contentPadding = LocalPlayerAwareWindowInsets.current.asPaddingValues().calculateBottomPadding().let { bottom ->
+                contentPadding = LocalPlayerAwareWindowInsets.current.asPaddingValues().calculateBottomPadding().let { bottom ->
                     PaddingValues(start = 16.dp, end = 16.dp, top = 16.dp, bottom = bottom + 80.dp)
                 },
                 horizontalArrangement = Arrangement.spacedBy(16.dp),
@@ -460,8 +532,252 @@ private fun PodcastsTab(
             }
         }
     }
+}
 
+@Composable
+private fun RadioTab(
+    navController: NavController,
+    viewModel: RadioViewModel
+) {
+    val stations by viewModel.stations.collectAsState()
+    val isLoading by viewModel.isLoading.collectAsState()
+    val error by viewModel.error.collectAsState()
+    val tags by viewModel.tags.collectAsState()
+    val selectedTag by viewModel.selectedTag.collectAsState()
 
+    val playerConnection = LocalPlayerConnection.current ?: return
+
+    Box(modifier = Modifier.fillMaxSize()) {
+        if (isLoading) {
+            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                androidx.compose.material3.CircularProgressIndicator()
+            }
+        } else if (error != null) {
+            ErrorScreen(
+                message = error ?: "Unavailable",
+                onRetry = { viewModel.loadTopStations() }
+            )
+        } else {
+            LazyVerticalGrid(
+                columns = GridCells.Adaptive(150.dp),
+                contentPadding = LocalPlayerAwareWindowInsets.current.asPaddingValues().calculateBottomPadding().let { bottom ->
+                    PaddingValues(start = 16.dp, end = 16.dp, top = 16.dp, bottom = bottom + 80.dp)
+                },
+                horizontalArrangement = Arrangement.spacedBy(16.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                item(span = { GridItemSpan(maxLineSpan) }) {
+                    LazyRow(
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        contentPadding = PaddingValues(vertical = 8.dp)
+                    ) {
+                        item {
+                            FilterChip(
+                                selected = selectedTag == null,
+                                onClick = { viewModel.loadTopStations() },
+                                label = { Text(stringResource(R.string.radio_popular)) }
+                            )
+                        }
+                        items(tags) { tag ->
+                            FilterChip(
+                                selected = selectedTag == tag,
+                                onClick = { viewModel.selectTag(tag) },
+                                label = { Text(tag.replaceFirstChar { it.uppercase() }) }
+                            )
+                        }
+                    }
+                }
+
+                items(
+                    items = stations,
+                    key = { it.stationuuid }
+                ) { station ->
+                    GenreCard(
+                        title = station.name,
+                        imageUrl = station.favicon?.takeIf { it.isNotBlank() },
+                        color = 0L,
+                        onClick = {
+                            playerConnection.playQueue(
+                                ListQueue(
+                                    title = station.name,
+                                    items = listOf(station.toMediaItem())
+                                )
+                            )
+                        }
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun MixesTab(
+    viewModel: MixcloudViewModel = hiltViewModel()
+) {
+    val mixes by viewModel.mixes.collectAsState()
+    val isLoading by viewModel.isLoading.collectAsState()
+    val error by viewModel.error.collectAsState()
+    val selectedTag by viewModel.selectedTag.collectAsState()
+
+    val uriHandler = LocalUriHandler.current
+    val coroutineScope = rememberCoroutineScope()
+    val playerConnection = LocalPlayerConnection.current
+
+    Box(modifier = Modifier.fillMaxSize()) {
+        if (isLoading) {
+            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                androidx.compose.material3.CircularProgressIndicator()
+            }
+        } else if (error != null) {
+            ErrorScreen(
+                message = error ?: "Unavailable",
+                onRetry = { viewModel.loadMixes() }
+            )
+        } else {
+            LazyVerticalGrid(
+                columns = GridCells.Adaptive(150.dp),
+                contentPadding = LocalPlayerAwareWindowInsets.current.asPaddingValues().calculateBottomPadding().let { bottom ->
+                    PaddingValues(start = 16.dp, end = 16.dp, top = 16.dp, bottom = bottom + 80.dp)
+                },
+                horizontalArrangement = Arrangement.spacedBy(16.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                item(span = { GridItemSpan(maxLineSpan) }) {
+                    LazyRow(
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        contentPadding = PaddingValues(vertical = 8.dp)
+                    ) {
+                        item {
+                            FilterChip(
+                                selected = selectedTag == null,
+                                onClick = { viewModel.selectTag(null) },
+                                label = { Text(stringResource(R.string.radio_popular)) }
+                            )
+                        }
+                        items(items = viewModel.availableTags.keys.toList()) { tag ->
+                            FilterChip(
+                                selected = selectedTag == tag,
+                                onClick = { viewModel.selectTag(tag) },
+                                label = { Text(viewModel.availableTags[tag] ?: tag) }
+                            )
+                        }
+                    }
+                }
+
+                items(
+                    items = mixes,
+                    key = { it.key }
+                ) { mix ->
+                    GenreCard(
+                        title = mix.title,
+                        imageUrl = mix.thumbnailUrl,
+                        color = 0L,
+                        onClick = {
+                            if (playerConnection != null) {
+                                coroutineScope.launch(Dispatchers.IO) {
+                                    val query = if (mix.artistName.isNotBlank()) "${mix.title} ${mix.artistName}" else mix.title
+                                    val songItem = com.arturo254.opentune.innertube.YouTube.search(query, com.arturo254.opentune.innertube.YouTube.SearchFilter.FILTER_SONG).getOrNull()
+                                        ?.items?.filterIsInstance<com.arturo254.opentune.innertube.models.SongItem>()?.firstOrNull()
+                                        ?: com.arturo254.opentune.innertube.YouTube.search(query, com.arturo254.opentune.innertube.YouTube.SearchFilter.FILTER_VIDEO).getOrNull()
+                                            ?.items?.filterIsInstance<com.arturo254.opentune.innertube.models.SongItem>()?.firstOrNull()
+
+                                    withContext(Dispatchers.Main) {
+                                        if (songItem != null) {
+                                            playerConnection.playQueue(
+                                                ListQueue(
+                                                    title = mix.title,
+                                                    items = listOf(songItem.toMediaItem())
+                                                )
+                                            )
+                                        } else {
+                                            uriHandler.openUri(mix.webUrl)
+                                        }
+                                    }
+                                }
+                            } else {
+                                uriHandler.openUri(mix.webUrl)
+                            }
+                        }
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun AmbientTab(
+    viewModel: AmbientSoundsViewModel = hiltViewModel()
+) {
+    val sounds by viewModel.sounds.collectAsState()
+    val isLoading by viewModel.isLoading.collectAsState()
+    val error by viewModel.error.collectAsState()
+    val needsApiKey by viewModel.needsApiKey.collectAsState()
+    val selectedCategory by viewModel.selectedCategory.collectAsState()
+
+    val playerConnection = LocalPlayerConnection.current ?: return
+
+    Box(modifier = Modifier.fillMaxSize()) {
+        if (needsApiKey) {
+            EmptyStateContent(
+                icon = R.drawable.music_note,
+                message = stringResource(R.string.ambient_sounds_needs_key)
+            )
+        } else if (isLoading) {
+            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                androidx.compose.material3.CircularProgressIndicator()
+            }
+        } else if (error != null) {
+            ErrorScreen(
+                message = error ?: "Unavailable",
+                onRetry = { viewModel.loadSounds() }
+            )
+        } else {
+            LazyVerticalGrid(
+                columns = GridCells.Adaptive(150.dp),
+                contentPadding = LocalPlayerAwareWindowInsets.current.asPaddingValues().calculateBottomPadding().let { bottom ->
+                    PaddingValues(start = 16.dp, end = 16.dp, top = 16.dp, bottom = bottom + 80.dp)
+                },
+                horizontalArrangement = Arrangement.spacedBy(16.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                item(span = { GridItemSpan(maxLineSpan) }) {
+                    LazyRow(
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        contentPadding = PaddingValues(vertical = 8.dp)
+                    ) {
+                        items(items = viewModel.categories.keys.toList()) { category ->
+                            FilterChip(
+                                selected = selectedCategory == category,
+                                onClick = { viewModel.selectCategory(category) },
+                                label = { Text(category.replaceFirstChar { it.uppercase() }) }
+                            )
+                        }
+                    }
+                }
+
+                items(
+                    items = sounds,
+                    key = { it.id }
+                ) { sound ->
+                    GenreCard(
+                        title = sound.name,
+                        imageUrl = null,
+                        color = 0L,
+                        onClick = {
+                            playerConnection.playQueue(
+                                ListQueue(
+                                    title = sound.name,
+                                    items = listOf(sound.toMediaItem())
+                                )
+                            )
+                        }
+                    )
+                }
+            }
+        }
+    }
 }
 
 @Composable
@@ -503,101 +819,98 @@ private fun EmptyStateContent(
 fun GenreCard(
     title: String,
     imageUrl: String? = null,
-    color: Long,
+    color: Long = 0L,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val cardColor = remember(color, title) {
+        if (color != 0L) {
+            Color(color)
+        } else {
+            val hue = (title.hashCode().toLong() and 0x7FFFFFFF) % 360f
+            Color.hsl(hue = hue.toFloat(), saturation = 0.65f, lightness = 0.40f)
+        }
+    }
+
+    val gradientBrush = remember(cardColor) {
+        Brush.linearGradient(
+            colors = listOf(
+                cardColor,
+                cardColor.copy(alpha = 0.75f),
+                Color.Black.copy(alpha = 0.50f),
+            )
+        )
+    }
+
     Box(
         modifier = modifier
             .height(100.dp)
-            .clip(RoundedCornerShape(12.dp))
+            .clip(RoundedCornerShape(16.dp))
+            .background(gradientBrush)
             .clickable(onClick = onClick)
     ) {
-        // Background image or icon (fills the card)
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-        ) {
-            if (imageUrl != null) {
-                AsyncImage(
-                    model = ImageRequest.Builder(LocalContext.current)
-                        .data(imageUrl)
-                        .crossfade(true)
-                        .build(),
-                    contentDescription = null,
-                    contentScale = androidx.compose.ui.layout.ContentScale.Crop,
-                    modifier = Modifier.fillMaxSize()
-                )
-            } else {
-                val drawableRes = remember(title) { getGenreDrawable(title) }
-                if (drawableRes != null) {
-                    AsyncImage(
-                        model = ImageRequest.Builder(LocalContext.current)
-                            .data(drawableRes)
-                            .crossfade(true)
-                            .build(),
-                        contentDescription = null,
-                        contentScale = androidx.compose.ui.layout.ContentScale.Crop,
-                        modifier = Modifier.fillMaxSize()
+        if (imageUrl != null) {
+            AsyncImage(
+                model = ImageRequest.Builder(LocalContext.current)
+                    .data(imageUrl)
+                    .crossfade(true)
+                    .build(),
+                contentDescription = title,
+                contentScale = androidx.compose.ui.layout.ContentScale.Crop,
+                modifier = Modifier
+                    .fillMaxSize()
+                    .alpha(0.85f)
+            )
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(
+                        Brush.verticalGradient(
+                            listOf(
+                                Color.Transparent,
+                                Color.Black.copy(alpha = 0.70f)
+                            )
+                        )
                     )
-                }
-            }
+            )
         }
 
-        // Title text at bottom left
         Text(
             text = title,
-            style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
+            style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.ExtraBold),
             color = Color.White,
             maxLines = 2,
             overflow = TextOverflow.Ellipsis,
             modifier = Modifier
                 .align(Alignment.BottomStart)
-                .padding(12.dp)
+                .padding(14.dp)
                 .fillMaxWidth()
         )
     }
 }
 
-private fun getGenreDrawable(title: String): Int? {
-    val t = title.lowercase()
-    return when {
-        "pop" in t -> R.drawable.genre_pop
-        "rock" in t || "punk" in t -> R.drawable.genre_rock
-        "metal" in t || "heavy" in t -> R.drawable.genre_metal
-        "hip hop" in t || "hip-hop" in t || "rap" in t -> R.drawable.genre_hiphop
-        "electronic" in t || "edm" in t || "dance" in t || "house" in t || "techno" in t -> R.drawable.genre_electronic
-        "jazz" in t || "swing" in t || "bebop" in t -> R.drawable.genre_jazz
-        "classical" in t || "orchestra" in t || "symphony" in t -> R.drawable.genre_classical
-        "country" in t || "bluegrass" in t -> R.drawable.genre_country
-        "folk" in t || "acoustic" in t -> R.drawable.genre_folk
-        "r&b" in t || "r\\&b" in t || "soul" in t -> R.drawable.genre_rnb
-        "indie" in t || "alternative" in t -> R.drawable.genre_indie
-        "latin" in t || "salsa" in t || "reggaeton" in t || "bachata" in t -> R.drawable.genre_latin
-        "k-pop" in t || "kpop" in t || "korean" in t -> R.drawable.genre_kpop
-        "blues" in t -> R.drawable.genre_blues
-        "reggae" in t || "ska" in t -> R.drawable.genre_reggae
-        "gospel" in t || "christian" in t -> R.drawable.genre_gospel
-        "chill" in t || "relax" in t || "ambient" in t || "lo-fi" in t || "lofi" in t -> R.drawable.genre_chill
-        "workout" in t || "fitness" in t || "gym" in t || "energy" in t || "motivation" in t -> R.drawable.genre_workout
-        "sleep" in t || "night" in t || "calm" in t -> R.drawable.genre_sleep
-        "feel good" in t || "happy" in t || "positive" in t || "mood" in t -> R.drawable.genre_feel_good
-        "sad" in t || "melancholy" in t || "breakup" in t || "rain" in t -> R.drawable.genre_sad
-        "party" in t || "club" in t -> R.drawable.genre_party
-        "focus" in t || "study" in t || "concentration" in t || "work" in t -> R.drawable.genre_focus
-        "romance" in t || "love" in t || "romantic" in t -> R.drawable.genre_romance
-        "retro" in t || "80s" in t || "90s" in t || "oldies" in t || "nostalgia" in t -> R.drawable.genre_retro
-        "soundtrack" in t || "cinema" in t || "movie" in t || "film" in t || "ost" in t -> R.drawable.genre_soundtrack
-        "world" in t || "global" in t || "international" in t || "africa" in t || "india" in t -> R.drawable.genre_world
-        "kids" in t || "family" in t || "children" in t || "disney" in t -> R.drawable.genre_kids
-        else -> {
-            val hash = kotlin.math.abs(title.hashCode()) % 4
-            when (hash) {
-                0 -> R.drawable.genre_fallback_1
-                1 -> R.drawable.genre_fallback_2
-                2 -> R.drawable.genre_fallback_3
-                else -> R.drawable.genre_fallback_4
-            }
-        }
-    }
-}
+private fun com.Chenkham.radiobrowser.models.RadioStation.toMediaItem(): androidx.media3.common.MediaItem =
+    androidx.media3.common.MediaItem.Builder()
+        .setMediaId(stationuuid)
+        .setUri(urlResolved ?: url)
+        .setMediaMetadata(
+            androidx.media3.common.MediaMetadata.Builder()
+                .setTitle(name)
+                .setArtist(country)
+                .setArtworkUri(favicon?.let { android.net.Uri.parse(it) })
+                .build()
+        )
+        .build()
+
+private fun com.Chenkham.freesound.models.AmbientSound.toMediaItem(): androidx.media3.common.MediaItem =
+    androidx.media3.common.MediaItem.Builder()
+        .setMediaId(id.toString())
+        .setUri(streamUrl)
+        .setMediaMetadata(
+            androidx.media3.common.MediaMetadata.Builder()
+                .setTitle(name)
+                .setArtist(author)
+                .build()
+        )
+        .build()
+

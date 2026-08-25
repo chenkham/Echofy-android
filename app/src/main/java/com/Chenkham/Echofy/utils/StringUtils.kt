@@ -28,4 +28,4 @@ fun joinByBullet(vararg str: String?) =
     str
         .filterNot {
             it.isNullOrEmpty()
-        }.joinToString(separator = " â€¢ ")
+        }.joinToString(separator = " • ")

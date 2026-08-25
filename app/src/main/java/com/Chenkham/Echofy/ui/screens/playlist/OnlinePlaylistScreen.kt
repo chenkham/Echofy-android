@@ -40,6 +40,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.TopAppBarScrollBehavior
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -78,8 +79,8 @@ import androidx.compose.ui.util.fastAny
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import coil.compose.AsyncImage
-import com.Chenkham.innertube.models.SongItem
-import com.Chenkham.innertube.models.WatchEndpoint
+import com.arturo254.opentune.innertube.models.SongItem
+import com.arturo254.opentune.innertube.models.WatchEndpoint
 import com.Chenkham.Echofy.LocalDatabase
 import com.Chenkham.Echofy.LocalPlayerAwareWindowInsets
 import com.Chenkham.Echofy.LocalPlayerConnection
@@ -265,7 +266,7 @@ fun OnlinePlaylistScreen(
                                                                 MaterialTheme.typography.titleMedium
                                                                     .copy(
                                                                         fontWeight = FontWeight.Normal,
-                                                                        color = MaterialTheme.colorScheme.onBackground,
+                                                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                                                                     ).toSpanStyle(),
                                                         ) {
                                                             if (artist.id != null) {
@@ -289,6 +290,7 @@ fun OnlinePlaylistScreen(
                                                     text = songCountText,
                                                     style = MaterialTheme.typography.titleMedium,
                                                     fontWeight = FontWeight.Normal,
+                                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                                                 )
                                             }
 
@@ -331,7 +333,7 @@ fun OnlinePlaylistScreen(
                                                                 if (dbPlaylist?.playlist?.bookmarkedAt != null) R.drawable.favorite else R.drawable.favorite_border
                                                             ),
                                                             contentDescription = null,
-                                                            tint = if (dbPlaylist?.playlist?.bookmarkedAt != null) MaterialTheme.colorScheme.error else LocalContentColor.current
+                                                            tint = if (dbPlaylist?.playlist?.bookmarkedAt != null) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurface
                                                         )
                                                     }
                                                 }
@@ -526,6 +528,7 @@ fun OnlinePlaylistScreen(
         }
 
         TopAppBar(
+            colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent, scrolledContainerColor = Color.Transparent),
             title = {
                 if (selection) {
                     val count = wrappedSongs.count { it.isSelected }

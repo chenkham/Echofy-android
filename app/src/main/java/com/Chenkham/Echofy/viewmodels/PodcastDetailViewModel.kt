@@ -37,20 +37,51 @@ class PodcastDetailViewModel @Inject constructor(
         }
     }
 
-    private fun loadPodcast(id: String) {
+    private fun loadPodcast(rawId: String) {
         viewModelScope.launch {
             _isLoading.value = true
             _error.value = null
-            
-            // Depending on ID format, it might be a Playlist (New Episodes) or Channel or Podcast
-            // Try getPodcast first as it covers most
-            ytMusicApi.getPodcast(id)
-                .onSuccess { result ->
+
+            val cleanId = rawId.removePrefix("VL")
+
+            var success = false
+            ytMusicApi.getPodcast(cleanId).onSuccess { result ->
+                if (result.episodes.isNotEmpty() || result.title.isNotBlank()) {
                     _podcast.value = result
+                    success = true
                 }
-                .onFailure { exception ->
-                    _error.value = exception.message ?: "Available offline"
+            }
+
+            if (!success) {
+                com.arturo254.opentune.innertube.YouTube.playlist(cleanId).onSuccess { page ->
+                    val episodes = page.songs.mapIndexed { index, song ->
+                        com.Chenkham.ytmusicapi.models.Episode(
+                            index = index + 1,
+                            title = song.title,
+                            description = song.artists.joinToString(", ") { it.name },
+                            duration = song.duration?.let { sec -> "${sec / 60}:${(sec % 60).toString().padStart(2, '0')}" },
+                            videoId = song.id,
+                            browseId = song.id,
+                            videoType = "MUSIC_VIDEO_TYPE_OMV",
+                            date = null,
+                            thumbnails = listOf(com.Chenkham.ytmusicapi.models.Thumbnail(url = song.thumbnail.orEmpty(), width = 500, height = 500))
+                        )
+                    }
+                    _podcast.value = com.Chenkham.ytmusicapi.models.PodcastResult(
+                        author = page.playlist.author?.let { com.Chenkham.ytmusicapi.models.Author(name = it.name, id = it.id) },
+                        title = page.playlist.title,
+                        description = page.playlist.songCountText ?: "${episodes.size} episodes",
+                        saved = false,
+                        thumbnails = listOf(com.Chenkham.ytmusicapi.models.Thumbnail(url = page.playlist.thumbnail.orEmpty(), width = 500, height = 500)),
+                        episodes = episodes
+                    )
+                    success = true
                 }
+            }
+
+            if (_podcast.value == null || (_podcast.value?.title.isNullOrBlank() && _podcast.value?.episodes.isNullOrEmpty())) {
+                _error.value = "Unable to load podcast episodes"
+            }
 
             _isLoading.value = false
         }

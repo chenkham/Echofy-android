@@ -1,20 +1,33 @@
-﻿package com.Chenkham.Echofy.extensions
+﻿/*
+ * Echofy Project Original (2026)
+ * Arturo254 (github.com/Arturo254)
+ * Licensed Under GPL-3.0 | see git history for contributors
+ */
+
+
+
+package com.Chenkham.Echofy.extensions
 
 import android.content.Context
 import android.net.ConnectivityManager
 import android.net.NetworkCapabilities
-import com.Chenkham.innertube.utils.parseCookieString
 import com.Chenkham.Echofy.constants.InnerTubeCookieKey
 import com.Chenkham.Echofy.constants.YtmSyncKey
 import com.Chenkham.Echofy.utils.dataStore
 import com.Chenkham.Echofy.utils.get
-import kotlinx.coroutines.runBlocking
+import com.arturo254.opentune.innertube.utils.parseCookieString
 
+fun Context.isSyncEnabled(): Boolean {
+    return dataStore.get(YtmSyncKey, true) && isUserLoggedIn()
+}
 
+fun Context.isUserLoggedIn(): Boolean {
+    val cookie = dataStore[InnerTubeCookieKey] ?: ""
+    return "SAPISID" in parseCookieString(cookie) && isInternetConnected()
+}
 
 fun Context.isInternetConnected(): Boolean {
     val connectivityManager = getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
-    val networkCapabilities =
-        connectivityManager.getNetworkCapabilities(connectivityManager.activeNetwork)
+    val networkCapabilities = connectivityManager.getNetworkCapabilities(connectivityManager.activeNetwork)
     return networkCapabilities?.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET) ?: false
 }

@@ -38,6 +38,8 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.ui.graphics.Color
 import androidx.compose.material3.TopAppBarScrollBehavior
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -90,6 +92,7 @@ import com.Chenkham.Echofy.ui.component.AutoResizeText
 import com.Chenkham.Echofy.ui.component.FontSizeRange
 import com.Chenkham.Echofy.ui.component.LocalMenuState
 import com.Chenkham.Echofy.ui.component.NavigationTitle
+import com.Chenkham.Echofy.ui.component.ReleaseInfoCard
 import com.Chenkham.Echofy.ui.component.PrefetchOnVisible
 import com.Chenkham.Echofy.ui.component.SongListItem
 import com.Chenkham.Echofy.ui.component.YouTubeGridItem
@@ -131,6 +134,7 @@ fun AlbumScreen(
     val playlistId by viewModel.playlistId.collectAsState()
     val albumWithSongs by viewModel.albumWithSongs.collectAsState()
     val otherVersions by viewModel.otherVersions.collectAsState()
+    val releaseInfo by viewModel.releaseInfo.collectAsState()
 
     val wrappedSongs = remember(albumWithSongs) {
         albumWithSongs?.songs?.map { item -> ItemWrapper(item) }?.toMutableStateList()
@@ -242,7 +246,7 @@ fun AlbumScreen(
                                             MaterialTheme.typography.titleMedium
                                                 .copy(
                                                     fontWeight = FontWeight.Normal,
-                                                    color = MaterialTheme.colorScheme.onBackground,
+                                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                                                 ).toSpanStyle(),
                                     ) {
                                         albumWithSongs.artists.fastForEachIndexed { index, artist ->
@@ -267,6 +271,7 @@ fun AlbumScreen(
                                     text = albumWithSongs.album.year.toString(),
                                     style = MaterialTheme.typography.titleMedium,
                                     fontWeight = FontWeight.Normal,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 )
                             }
 
@@ -296,7 +301,7 @@ fun AlbumScreen(
                                             ) {
                                                 MaterialTheme.colorScheme.error
                                             } else {
-                                                LocalContentColor.current
+                                                MaterialTheme.colorScheme.onSurface
                                             },
                                     )
                                 }
@@ -435,6 +440,14 @@ fun AlbumScreen(
                             Text(stringResource(R.string.shuffle))
                         }
                     }
+                }
+            }
+
+            // Physical release details from Discogs. Appears once the lookup
+            // resolves, so the track list never waits on it.
+            releaseInfo?.let { info ->
+                item(key = "releaseInfo") {
+                    ReleaseInfoCard(releaseInfo = info)
                 }
             }
 
@@ -589,6 +602,7 @@ fun AlbumScreen(
     }
 
     TopAppBar(
+            colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent, scrolledContainerColor = Color.Transparent),
         title = {
             if (selection) {
                 val count = wrappedSongs?.count { it.isSelected } ?: 0

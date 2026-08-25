@@ -1,4 +1,4 @@
-﻿package com.Chenkham.Echofy.ui.screens
+package com.Chenkham.Echofy.ui.screens
 
 import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
@@ -26,6 +26,13 @@ sealed class Screens(
         route = "explore"
     )
 
+    data object AiAssistant : Screens(
+        titleId = R.string.ai_assistant,
+        iconIdInactive = R.drawable.auto_awesome,
+        iconIdActive = R.drawable.auto_awesome_filled,
+        route = "ai_assistant"
+    )
+
     data object Library : Screens(
         titleId = R.string.filter_library,
         iconIdInactive = R.drawable.library_music_outlined,
@@ -40,8 +47,29 @@ sealed class Screens(
         route = "premium"
     )
 
+    data object DownloadQueue : Screens(
+        titleId = R.string.download_queue,
+        iconIdInactive = R.drawable.downloading,
+        iconIdActive = R.drawable.downloading,
+        route = "download_queue"
+    )
+
+    data object MoodAndGenres : Screens(
+        titleId = R.string.mood_and_genres,
+        iconIdInactive = R.drawable.style,
+        iconIdActive = R.drawable.style,
+        route = "mood_and_genres"
+    )
+
+    data object Search : Screens(
+        titleId = R.string.search,
+        iconIdInactive = R.drawable.search,
+        iconIdActive = R.drawable.search,
+        route = "search"
+    )
+
     companion object {
-        val MainScreens = listOf(Home, Explore, Library, Premium)
+        val MainScreens = listOf(Home, Explore, AiAssistant, Library, Premium)
     }
 }
 

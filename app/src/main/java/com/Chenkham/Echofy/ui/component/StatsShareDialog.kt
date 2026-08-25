@@ -77,6 +77,7 @@ fun StatsShareDialog(
             modifier = Modifier.fillMaxSize(),
             topBar = {
                 TopAppBar(
+            colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent, scrolledContainerColor = Color.Transparent),
                     title = { Text("Share Stats") },
                     navigationIcon = {
                         IconButton(onClick = onDismiss) {

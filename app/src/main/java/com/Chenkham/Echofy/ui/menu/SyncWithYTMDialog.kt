@@ -27,7 +27,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import com.Chenkham.innertube.YouTube
+import com.arturo254.opentune.innertube.YouTube
 import com.Chenkham.Echofy.LocalDatabase
 import com.Chenkham.Echofy.R
 import com.Chenkham.Echofy.db.addSongToPlaylist

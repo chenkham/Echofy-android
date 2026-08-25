@@ -1,8 +1,12 @@
 package com.Chenkham.Echofy.ui.screens
 
+import android.widget.Toast
 import androidx.activity.compose.BackHandler
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.WindowInsetsSides
@@ -19,11 +23,14 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.ui.graphics.Color
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -36,7 +43,6 @@ import androidx.compose.runtime.toMutableStateList
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
@@ -47,7 +53,7 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
-import com.Chenkham.innertube.utils.parseCookieString
+import com.arturo254.opentune.innertube.utils.parseCookieString
 import com.Chenkham.Echofy.LocalDatabase
 import com.Chenkham.Echofy.LocalPlayerAwareWindowInsets
 import com.Chenkham.Echofy.LocalPlayerConnection
@@ -62,6 +68,7 @@ import com.Chenkham.Echofy.models.toMediaMetadata
 import com.Chenkham.Echofy.playback.queues.ListQueue
 import com.Chenkham.Echofy.playback.queues.YouTubeQueue
 import com.Chenkham.Echofy.ui.component.ChipsRow
+import com.Chenkham.Echofy.ui.component.DefaultDialog
 import com.Chenkham.Echofy.ui.component.HideOnScrollFAB
 import com.Chenkham.Echofy.ui.component.IconButton
 import com.Chenkham.Echofy.ui.component.LocalMenuState
@@ -73,6 +80,7 @@ import com.Chenkham.Echofy.ui.menu.SelectionMediaMetadataMenu
 import com.Chenkham.Echofy.ui.menu.SongMenu
 import com.Chenkham.Echofy.ui.menu.YouTubeSongMenu
 import com.Chenkham.Echofy.ui.utils.backToMain
+import com.Chenkham.Echofy.utils.HistoryExporter
 import com.Chenkham.Echofy.utils.rememberPreference
 import com.Chenkham.Echofy.viewmodels.DateAgo
 import com.Chenkham.Echofy.viewmodels.HistoryViewModel
@@ -120,6 +128,47 @@ fun HistoryScreen(
     val historySource by viewModel.historySource.collectAsState()
     val events by viewModel.events.collectAsState()
     val historyPage by viewModel.historyPage
+
+    var showExportDialog by remember { mutableStateOf(false) }
+    var exportFormat by remember { mutableStateOf(HistoryExporter.Format.CSV) }
+    // A generic MIME type keeps one launcher valid for both formats. Rebuilding the
+    // contract from exportFormat would lag a frame behind the user's choice, because the
+    // launcher is remembered before the click that changes the format.
+    val exportLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.CreateDocument("application/octet-stream")
+    ) { uri ->
+        if (uri != null) {
+            val rows = events.values.flatten()
+            val written = HistoryExporter.export(context, uri, rows, exportFormat)
+            Toast.makeText(
+                context,
+                if (written != null) {
+                    context.getString(R.string.export_history_success, written)
+                } else {
+                    context.getString(R.string.export_history_failed)
+                },
+                Toast.LENGTH_SHORT
+            ).show()
+        }
+    }
+
+    if (showExportDialog) {
+        DefaultDialog(
+            onDismiss = { showExportDialog = false },
+            title = { Text(stringResource(R.string.export_history)) }
+        ) {
+            HistoryExporter.Format.entries.forEach { format ->
+                ListItem(
+                    headlineContent = { Text(format.name) },
+                    modifier = Modifier.clickable {
+                        showExportDialog = false
+                        exportFormat = format
+                        exportLauncher.launch("echofy_history.${format.extension}")
+                    }
+                )
+            }
+        }
+    }
 
     val innerTubeCookie by rememberPreference(InnerTubeCookieKey, "")
     val isLoggedIn = remember(innerTubeCookie) {
@@ -389,6 +438,7 @@ fun HistoryScreen(
     }
 
     TopAppBar(
+            colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent, scrolledContainerColor = Color.Transparent),
         title = {
             if (selection) {
                 val count = wrappedItems.count { it.isSelected }
@@ -495,6 +545,14 @@ fun HistoryScreen(
                     )
                 }
             } else if (!isSearching) {
+                IconButton(
+                    onClick = { showExportDialog = true }
+                ) {
+                    Icon(
+                        painter = painterResource(R.drawable.share),
+                        contentDescription = stringResource(R.string.export_history)
+                    )
+                }
                 IconButton(
                     onClick = { isSearching = true }
                 ) {

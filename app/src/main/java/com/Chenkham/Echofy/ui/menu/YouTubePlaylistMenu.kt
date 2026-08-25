@@ -46,10 +46,10 @@ import androidx.media3.exoplayer.offline.Download
 import androidx.media3.exoplayer.offline.DownloadRequest
 import androidx.media3.exoplayer.offline.DownloadService
 import coil.compose.AsyncImage
-import com.Chenkham.innertube.YouTube
-import com.Chenkham.innertube.models.PlaylistItem
-import com.Chenkham.innertube.models.SongItem
-import com.Chenkham.innertube.utils.completed
+import com.arturo254.opentune.innertube.YouTube
+import com.arturo254.opentune.innertube.models.PlaylistItem
+import com.arturo254.opentune.innertube.models.SongItem
+import com.arturo254.opentune.innertube.utils.completed
 import com.Chenkham.Echofy.LocalDatabase
 import com.Chenkham.Echofy.LocalDownloadUtil
 import com.Chenkham.Echofy.LocalPlayerConnection

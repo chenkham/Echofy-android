@@ -1,4 +1,4 @@
-﻿package com.Chenkham.Echofy.ui.menu
+package com.Chenkham.Echofy.ui.menu
 
 import com.Chenkham.Echofy.db.addSongToPlaylist
 import com.Chenkham.Echofy.db.update
@@ -31,8 +31,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
-import com.Chenkham.innertube.YouTube
-import com.Chenkham.innertube.models.SongItem
+import com.arturo254.opentune.innertube.YouTube
+import com.arturo254.opentune.innertube.models.SongItem
 import com.Chenkham.Echofy.LocalDatabase
 import com.Chenkham.Echofy.R
 import com.Chenkham.Echofy.constants.ListThumbnailSize

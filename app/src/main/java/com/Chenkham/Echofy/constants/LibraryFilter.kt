@@ -1,9 +1,11 @@
-﻿package com.Chenkham.Echofy.constants
+package com.Chenkham.Echofy.constants
 
 enum class LibraryFilter {
     SONGS,
     ARTISTS,
     ALBUMS,
     PLAYLISTS,
+    DEVICE,
+    SPOTIFY,
     LIBRARY,
 }

@@ -3,6 +3,7 @@ package com.Chenkham.Echofy
 import android.app.Application
 import android.content.Context
 import android.os.Build
+import android.os.StrictMode
 import android.widget.Toast
 import android.widget.Toast.LENGTH_SHORT
 import androidx.datastore.preferences.core.edit
@@ -10,8 +11,8 @@ import coil.ImageLoader
 import coil.ImageLoaderFactory
 import coil.disk.DiskCache
 import coil.request.CachePolicy
-import com.Chenkham.innertube.YouTube
-import com.Chenkham.innertube.models.YouTubeLocale
+import com.arturo254.opentune.innertube.YouTube
+import com.arturo254.opentune.innertube.models.YouTubeLocale
 import com.Chenkham.kugou.KuGou
 import com.Chenkham.Echofy.constants.AccountChannelHandleKey
 import com.Chenkham.Echofy.constants.AccountEmailKey
@@ -33,6 +34,8 @@ import com.Chenkham.Echofy.constants.VisitorDataTimestampKey
 import com.Chenkham.Echofy.extensions.toEnum
 import com.Chenkham.Echofy.extensions.toInetSocketAddress
 import com.Chenkham.Echofy.utils.dataStore
+import com.Chenkham.Echofy.utils.ReleaseRadarWorker
+import com.Chenkham.Echofy.constants.ReleaseRadarEnabledKey
 import com.Chenkham.Echofy.utils.get
 import kotlinx.coroutines.flow.first
 import com.Chenkham.Echofy.utils.reportException
@@ -50,25 +53,63 @@ import java.net.Proxy
 import java.util.Locale
 import javax.inject.Inject
 import com.Chenkham.Echofy.ads.AdManager
-import com.Chenkham.Echofy.ads.SubscriptionManager
 
 @HiltAndroidApp
 class App : Application(), ImageLoaderFactory {
     
     @Inject
     lateinit var adManager: AdManager
-    
-    @Inject
-    lateinit var subscriptionManager: SubscriptionManager
 
     override fun attachBaseContext(base: Context) {
         super.attachBaseContext(base)
         androidx.multidex.MultiDex.install(this)
     }
     
+    /**
+     * Debug-only jank detector. Every violation is logged with a stack trace pointing at the
+     * offending line, which is how main-thread disk/network work and leaked resources get
+     * traced back to real code. Log-only on purpose: penaltyDeath would crash the app on
+     * violations that originate inside third-party libraries.
+     */
+    private fun enableStrictModeInDebug() {
+        if (!BuildConfig.DEBUG) return
+
+        StrictMode.setThreadPolicy(
+            StrictMode.ThreadPolicy.Builder()
+                .detectDiskReads()
+                .detectDiskWrites()
+                .detectNetwork()
+                .detectCustomSlowCalls()
+                .penaltyLog()
+                .build(),
+        )
+
+        StrictMode.setVmPolicy(
+            StrictMode.VmPolicy.Builder()
+                .detectLeakedSqlLiteObjects()
+                .detectLeakedClosableObjects()
+                .detectActivityLeaks()
+                .detectLeakedRegistrationObjects()
+                .penaltyLog()
+                .build(),
+        )
+    }
+
     @OptIn(DelicateCoroutinesApi::class)
     override fun onCreate() {
         super.onCreate()
+        enableStrictModeInDebug()
+        // MainActivity.attachBaseContext must read the saved language synchronously, before
+        // any resources load, so that read cannot move off the main thread. StrictMode
+        // measured it at ~507ms because SharedPreferences was loading its file from disk at
+        // that moment. Touching it here starts that load early on a background thread, so by
+        // the time attachBaseContext asks for the value it is already in memory.
+        GlobalScope.launch(Dispatchers.IO) {
+            runCatching {
+                getSharedPreferences("locale_preferences", MODE_PRIVATE)
+                    .getString("selected_language", null)
+            }
+        }
         instance = this;
         Timber.plant(Timber.DebugTree())
         
@@ -110,12 +151,6 @@ class App : Application(), ImageLoaderFactory {
             adManager.initialize()
         }
         
-        // PERFORMANCE: Phase 4.5 - Subscription Manager (3.5 seconds delay)
-        GlobalScope.launch(Dispatchers.Main) {
-            kotlinx.coroutines.delay(3500)
-            subscriptionManager.initialize()
-        }
-
         // PERFORMANCE: Phase 5 - FCM topics (5 seconds delay)
         GlobalScope.launch(Dispatchers.IO) {
             kotlinx.coroutines.delay(5000)
@@ -126,6 +161,14 @@ class App : Application(), ImageLoaderFactory {
         GlobalScope.launch(Dispatchers.Main) {
             kotlinx.coroutines.delay(6000)
             showWelcomeNotificationIfFirstLaunch()
+        }
+
+        // PERFORMANCE: Phase 7 - Release radar rescheduling (7 seconds delay)
+        GlobalScope.launch(Dispatchers.IO) {
+            kotlinx.coroutines.delay(7000)
+            if (dataStore.data.first()[ReleaseRadarEnabledKey] == true) {
+                ReleaseRadarWorker.schedule(this@App)
+            }
         }
     }
 
@@ -403,7 +446,7 @@ class App : Application(), ImageLoaderFactory {
     }
 
     override fun newImageLoader(): ImageLoader {
-        val cacheSize = dataStore[MaxImageCacheSizeKey]
+        val cacheSize = dataStore[MaxImageCacheSizeKey] ?: 512
 
         val okHttpClient = okhttp3.OkHttpClient.Builder()
             .connectionPool(okhttp3.ConnectionPool(8, 5, java.util.concurrent.TimeUnit.MINUTES))
@@ -411,10 +454,9 @@ class App : Application(), ImageLoaderFactory {
             .readTimeout(10, java.util.concurrent.TimeUnit.SECONDS)
             .build()
 
-        // will crash app if you set to 0 after cache starts being used
-        if (cacheSize == 0) {
+        if (cacheSize <= 0) {
             return ImageLoader.Builder(this)
-                .crossfade(false) // No crossfade for instant display
+                .crossfade(false)
                 .respectCacheHeaders(false)
                 .allowHardware(Build.VERSION.SDK_INT >= Build.VERSION_CODES.P)
                 .diskCachePolicy(CachePolicy.DISABLED)
@@ -422,10 +464,12 @@ class App : Application(), ImageLoaderFactory {
                 .build()
         }
 
-        return ImageLoader.Builder(this)
-            .crossfade(false) // NO crossfade for instant display from cache
-            .respectCacheHeaders(false) // Don't re-validate cached images
-            .allowHardware(Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) // GPU rendering
+        val safeMaxSizeBytes = (cacheSize.coerceAtLeast(64) * 1024 * 1024L)
+
+        val builder = ImageLoader.Builder(this)
+            .crossfade(false)
+            .respectCacheHeaders(false)
+            .allowHardware(Build.VERSION.SDK_INT >= Build.VERSION_CODES.P)
             .okHttpClient(okHttpClient)
             .memoryCache {
                 coil.memory.MemoryCache.Builder(this)
@@ -434,15 +478,26 @@ class App : Application(), ImageLoaderFactory {
                     .weakReferencesEnabled(true)
                     .build()
             }
-            .diskCache {
+
+        try {
+            // Coil creates and manages this directory itself, lazily and off the main thread.
+            // Calling exists()/mkdirs() here cost ~1.26s of main-thread disk I/O at startup
+            // (measured by StrictMode) purely to pre-create something Coil would create anyway.
+            builder.diskCache {
                 DiskCache.Builder()
                     .directory(cacheDir.resolve("coil"))
-                    .maxSizeBytes((cacheSize ?: 512) * 1024 * 1024L)
+                    .maxSizeBytes(safeMaxSizeBytes)
                     .build()
             }
+            builder.diskCachePolicy(CachePolicy.ENABLED)
+        } catch (e: Exception) {
+            Timber.e(e, "Failed to initialize Coil disk cache, disabling disk cache")
+            builder.diskCachePolicy(CachePolicy.DISABLED)
+        }
+
+        return builder
             .memoryCachePolicy(CachePolicy.ENABLED)
-            .diskCachePolicy(cacheSize?.let { if (it > 0) CachePolicy.ENABLED else CachePolicy.DISABLED } ?: CachePolicy.ENABLED)
-            .networkCachePolicy(CachePolicy.ENABLED) // Cache network responses
+            .networkCachePolicy(CachePolicy.ENABLED)
             .build()
     }
 

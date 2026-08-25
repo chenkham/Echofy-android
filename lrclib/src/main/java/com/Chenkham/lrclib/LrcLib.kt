@@ -1,4 +1,4 @@
-﻿package com.Chenkham.lrclib
+package com.Chenkham.lrclib
 
 import com.Chenkham.lrclib.models.Track
 import com.Chenkham.lrclib.models.bestMatchingFor
@@ -68,7 +68,9 @@ object LrcLib {
         album: String? = null,
         callback: (String) -> Unit,
     ) {
-        val tracks = queryLyrics(artist, title, album)
+        // Unlike the other entry points this one had no runCatching, so any network or
+        // parsing failure propagated out of the coroutine and took the process down.
+        val tracks = runCatching { queryLyrics(artist, title, album) }.getOrElse { return }
         var count = 0
         var plain = 0
         tracks.forEach {
@@ -78,11 +80,12 @@ object LrcLib {
                         count++
                         it.syncedLyrics.let(callback)
                     } else {
-                    if (it.syncedLyrics != null && abs(it.duration - duration) <= 2) {
+                    val matchesDuration = it.duration?.let { d -> abs(d - duration) <= 2 } == true
+                    if (it.syncedLyrics != null && matchesDuration) {
                         count++
                         it.syncedLyrics.let(callback)
                     }
-                    if (it.plainLyrics != null && abs(it.duration - duration) <= 2 && plain == 0) {
+                    if (it.plainLyrics != null && matchesDuration && plain == 0) {
                         count++
                         plain++
                         it.plainLyrics.let(callback)

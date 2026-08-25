@@ -1,4 +1,4 @@
-﻿package com.Chenkham.Echofy.ui.component
+package com.Chenkham.Echofy.ui.component
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -17,18 +17,12 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.Chenkham.Echofy.R
-
-// Purple-Blue gradient colors for section headers
-private val GradientPurple = Color(0xFF7C4DFF)
-private val GradientBlue = Color(0xFF448AFF)
 
 @Composable
 fun NavigationTitle(
@@ -47,7 +41,7 @@ fun NavigationTitle(
             .clickable(enabled = onClick != null) {
                 onClick?.invoke()
             }
-            .padding(horizontal = 12.dp, vertical = 12.dp)
+            .padding(horizontal = 16.dp, vertical = 10.dp)
     ) {
         thumbnail?.invoke()
 
@@ -55,21 +49,23 @@ fun NavigationTitle(
             verticalArrangement = Arrangement.Center,
             modifier = Modifier.weight(1f)
         ) {
-            label?.let { label ->
+            label?.takeIf { it.isNotBlank() }?.let { labelText ->
                 Text(
-                    text = label,
-                    style = MaterialTheme.typography.labelLarge,
+                    text = labelText.uppercase(),
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.primary.copy(alpha = 0.9f),
+                    fontWeight = FontWeight.SemiBold,
+                    letterSpacing = 1.sp,
                     overflow = TextOverflow.Ellipsis,
+                    maxLines = 1,
+                    modifier = Modifier.padding(bottom = 2.dp)
                 )
             }
 
             Text(
                 text = title,
-                style = MaterialTheme.typography.titleLarge.copy(
-                    brush = Brush.horizontalGradient(
-                        colors = listOf(GradientPurple, GradientBlue)
-                    )
-                ),
+                style = MaterialTheme.typography.titleLarge,
+                color = MaterialTheme.colorScheme.onSurface,
                 fontWeight = FontWeight.Bold,
                 overflow = TextOverflow.Ellipsis,
                 maxLines = 1,
@@ -80,7 +76,7 @@ fun NavigationTitle(
             Icon(
                 painter = painterResource(R.drawable.arrow_forward),
                 contentDescription = null,
-                tint = GradientPurple
+                tint = MaterialTheme.colorScheme.primary.copy(alpha = 0.85f)
             )
         }
     }

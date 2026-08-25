@@ -354,7 +354,7 @@
     <string name="backup_create_failed">"åˆ›å»ºå¤‡ä»½å¤±è´¥"</string>
     <string name="restore_failed">"æ¢å¤å¤‡ä»½å¤±è´¥"</string>
     <string name="discord_integration">"Discord é›†æˆ"</string>
-    <string name="discord_information">"Echofy ä½¿ç”¨ KizzyRPC åº“æ¥è®¾ç½®æ‚¨çš„ Discord å¸æˆ·çŠ¶æ€ã€‚è¿™æ¶‰åŠä½¿ç”¨ Discord ç½‘å…³è¿žæŽ¥ï¼Œè¿™å¯èƒ½è¢«è§†ä¸ºè¿å Discord çš„æœåŠ¡æ¡æ¬¾ (TOS)ã€‚ä½†æ˜¯ï¼Œç›®å‰å°šæ— å·²çŸ¥ç”¨æˆ·å¸æˆ·å› æ­¤è¢«æš‚åœçš„æ¡ˆä¾‹ã€‚ä½¿ç”¨é£Žé™©è‡ªè´Ÿã€‚OpenTunne åªä¼šæå–æ‚¨çš„ä»¤ç‰Œï¼Œå…¶ä»–æ‰€æœ‰å†…å®¹éƒ½å­˜å‚¨åœ¨æœ¬åœ°ã€‚"</string>
+    <string name="discord_information">"Echofy ä½¿ç”¨ KizzyRPC åº“æ¥è®¾ç½®æ‚¨çš„ Discord å¸æˆ·çŠ¶æ€ã€‚è¿™æ¶‰åŠä½¿ç”¨ Discord ç½‘å…³è¿žæŽ¥ï¼Œè¿™å¯èƒ½è¢«è§†ä¸ºè¿å Discord çš„æœåŠ¡æ¡æ¬¾ (TOS)ã€‚ä½†æ˜¯ï¼Œç›®å‰å°šæ— å·²çŸ¥ç”¨æˆ·å¸æˆ·å› æ­¤è¢«æš‚åœçš„æ¡ˆä¾‹ã€‚ä½¿ç”¨é£Žé™©è‡ªè´Ÿã€‚Echofy åªä¼šæå–æ‚¨çš„ä»¤ç‰Œï¼Œå…¶ä»–æ‰€æœ‰å†…å®¹éƒ½å­˜å‚¨åœ¨æœ¬åœ°ã€‚"</string>
     <string name="dismiss">"Descartar"</string>
     <string name="options">"é€‰é¡¹"</string>
     <string name="preview">"é¢„è§ˆ"</string>

@@ -53,8 +53,8 @@ import androidx.media3.exoplayer.offline.DownloadRequest
 import androidx.media3.exoplayer.offline.DownloadService
 import androidx.navigation.NavController
 import coil.compose.AsyncImage
-import com.Chenkham.innertube.YouTube
-import com.Chenkham.innertube.models.SongItem
+import com.arturo254.opentune.innertube.YouTube
+import com.arturo254.opentune.innertube.models.SongItem
 import com.Chenkham.Echofy.LocalDatabase
 import com.Chenkham.Echofy.LocalDownloadUtil
 import com.Chenkham.Echofy.LocalPlayerConnection
@@ -73,6 +73,9 @@ import com.Chenkham.Echofy.ui.component.ListDialog
 import com.Chenkham.Echofy.utils.joinByBullet
 import com.Chenkham.Echofy.utils.makeTimeString
 import com.Chenkham.Echofy.ui.component.LocalAdManager
+import com.Chenkham.Echofy.constants.SonglinkEnabledKey
+import com.Chenkham.Echofy.ui.component.SonglinkShareDialog
+import com.Chenkham.Echofy.utils.rememberPreference
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import java.time.LocalDateTime
@@ -110,6 +113,23 @@ fun YouTubeSongMenu(
 
     var showChoosePlaylistDialog by rememberSaveable {
         mutableStateOf(false)
+    }
+
+    val (songlinkEnabled) = rememberPreference(SonglinkEnabledKey, defaultValue = false)
+    var showSonglinkDialog by rememberSaveable {
+        mutableStateOf(false)
+    }
+
+    if (showSonglinkDialog) {
+        SonglinkShareDialog(
+            videoId = song.id,
+            songTitle = song.title,
+            artistName = song.artists.joinToString { it.name },
+            onDismiss = {
+                showSonglinkDialog = false
+                onDismiss()
+            },
+        )
     }
 
     val notAddedList by remember {
@@ -398,14 +418,18 @@ fun YouTubeSongMenu(
                             )
                             .clip(RoundedCornerShape(8.dp))
                             .clickable {
-                                val intent =
-                                    Intent().apply {
-                                        action = Intent.ACTION_SEND
-                                        type = "text/plain"
-                                        putExtra(Intent.EXTRA_TEXT, song.shareLink)
-                                    }
-                                context.startActivity(Intent.createChooser(intent, null))
-                                onDismiss()
+                                if (songlinkEnabled) {
+                                    showSonglinkDialog = true
+                                } else {
+                                    val intent =
+                                        Intent().apply {
+                                            action = Intent.ACTION_SEND
+                                            type = "text/plain"
+                                            putExtra(Intent.EXTRA_TEXT, song.shareLink)
+                                        }
+                                    context.startActivity(Intent.createChooser(intent, null))
+                                    onDismiss()
+                                }
                             }
                             .padding(10.dp),
                         horizontalAlignment = Alignment.CenterHorizontally,

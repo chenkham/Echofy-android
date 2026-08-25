@@ -35,18 +35,18 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
-import com.Chenkham.innertube.YouTube.SearchFilter.Companion.FILTER_ALBUM
-import com.Chenkham.innertube.YouTube.SearchFilter.Companion.FILTER_ARTIST
-import com.Chenkham.innertube.YouTube.SearchFilter.Companion.FILTER_COMMUNITY_PLAYLIST
-import com.Chenkham.innertube.YouTube.SearchFilter.Companion.FILTER_FEATURED_PLAYLIST
-import com.Chenkham.innertube.YouTube.SearchFilter.Companion.FILTER_SONG
-import com.Chenkham.innertube.YouTube.SearchFilter.Companion.FILTER_VIDEO
-import com.Chenkham.innertube.models.AlbumItem
-import com.Chenkham.innertube.models.ArtistItem
-import com.Chenkham.innertube.models.PlaylistItem
-import com.Chenkham.innertube.models.SongItem
-import com.Chenkham.innertube.models.WatchEndpoint
-import com.Chenkham.innertube.models.YTItem
+import com.arturo254.opentune.innertube.YouTube.SearchFilter.Companion.FILTER_ALBUM
+import com.arturo254.opentune.innertube.YouTube.SearchFilter.Companion.FILTER_ARTIST
+import com.arturo254.opentune.innertube.YouTube.SearchFilter.Companion.FILTER_COMMUNITY_PLAYLIST
+import com.arturo254.opentune.innertube.YouTube.SearchFilter.Companion.FILTER_FEATURED_PLAYLIST
+import com.arturo254.opentune.innertube.YouTube.SearchFilter.Companion.FILTER_SONG
+import com.arturo254.opentune.innertube.YouTube.SearchFilter.Companion.FILTER_VIDEO
+import com.arturo254.opentune.innertube.models.AlbumItem
+import com.arturo254.opentune.innertube.models.ArtistItem
+import com.arturo254.opentune.innertube.models.PlaylistItem
+import com.arturo254.opentune.innertube.models.SongItem
+import com.arturo254.opentune.innertube.models.WatchEndpoint
+import com.arturo254.opentune.innertube.models.YTItem
 import com.Chenkham.Echofy.LocalDatabase
 import com.Chenkham.Echofy.LocalPlayerAwareWindowInsets
 import com.Chenkham.Echofy.LocalPlayerConnection
@@ -245,7 +245,7 @@ fun OnlineSearchResult(
                 .asPaddingValues(),
     ) {
         if (searchFilter == null) {
-            searchSummary?.summaries?.forEach { summary ->
+            searchSummary?.summaries?.forEachIndexed { summaryIndex, summary ->
                 item {
                     NavigationTitle(summary.title)
                 }
@@ -256,10 +256,12 @@ fun OnlineSearchResult(
                     itemContent = ytItemContent,
                 )
                 
-                // Ad after each category
-                adManager?.let {
-                    item(key = "ad_${summary.title}") {
-                        NativeAdCard(adManager = it)
+                // One ad after the first category only, instead of after every category.
+                if (summaryIndex == 0) {
+                    adManager?.let {
+                        item(key = "ad_${summary.title}") {
+                            NativeAdCard(adManager = it, slotId = "search_summary")
+                        }
                     }
                 }
             }
@@ -280,9 +282,14 @@ fun OnlineSearchResult(
             ) { index, item ->
                 ytItemContent(item)
                 
-                // Show ad every 5 items
-                if ((index + 1) % 5 == 0 && adManager != null) {
-                    NativeAdCard(adManager = adManager)
+                // Show ad every 12 items so results stay readable. Each position gets its own
+                // slot id so two visible cards never bind the same NativeAd object, which
+                // AdMob does not allow.
+                if ((index + 1) % 12 == 0 && adManager != null) {
+                    NativeAdCard(
+                        adManager = adManager,
+                        slotId = "search_list_${(index + 1) / 12}"
+                    )
                 }
             }
 
@@ -328,6 +335,18 @@ fun OnlineSearchResult(
                 FILTER_COMMUNITY_PLAYLIST to stringResource(R.string.filter_community_playlists),
                 FILTER_FEATURED_PLAYLIST to stringResource(R.string.filter_featured_playlists),
             ),
+        iconProvider = { filter ->
+            when (filter) {
+                null -> R.drawable.search
+                FILTER_SONG -> R.drawable.music_note
+                FILTER_VIDEO -> R.drawable.play
+                FILTER_ALBUM -> R.drawable.album
+                FILTER_ARTIST -> R.drawable.person
+                FILTER_COMMUNITY_PLAYLIST -> R.drawable.queue_music
+                FILTER_FEATURED_PLAYLIST -> R.drawable.star
+                else -> null
+            }
+        },
         currentValue = searchFilter,
         onValueUpdate = {
             if (viewModel.filter.value != it) {

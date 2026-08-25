@@ -1,6 +1,6 @@
-﻿package com.Chenkham.Echofy.models
+package com.Chenkham.Echofy.models
 
-import com.Chenkham.innertube.models.YTItem
+import com.arturo254.opentune.innertube.models.YTItem
 import com.Chenkham.Echofy.db.entities.LocalItem
 
 data class SimilarRecommendation(

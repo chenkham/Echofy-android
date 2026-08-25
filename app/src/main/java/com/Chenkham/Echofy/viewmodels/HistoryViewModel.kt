@@ -1,10 +1,10 @@
-﻿package com.Chenkham.Echofy.viewmodels
+package com.Chenkham.Echofy.viewmodels
 
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.Chenkham.innertube.YouTube
-import com.Chenkham.innertube.pages.HistoryPage
+import com.arturo254.opentune.innertube.YouTube
+import com.arturo254.opentune.innertube.pages.HistoryPage
 import com.Chenkham.Echofy.constants.HistorySource
 import com.Chenkham.Echofy.db.MusicDatabase
 import com.Chenkham.Echofy.utils.reportException

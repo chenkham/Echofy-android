@@ -1,6 +1,7 @@
 ﻿package com.Chenkham.Echofy.ui.component
 
 import androidx.compose.material3.LocalTextStyle
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -43,9 +44,10 @@ fun AutoResizeText(
     var fontSizeValue by remember { mutableFloatStateOf(fontSizeRange.max.value) }
     var readyToDraw by remember { mutableStateOf(false) }
 
+    val textColor = if (color == Color.Unspecified) MaterialTheme.colorScheme.onSurface else color
     Text(
         text = text,
-        color = color,
+        color = textColor,
         maxLines = maxLines,
         fontStyle = fontStyle,
         fontWeight = fontWeight,

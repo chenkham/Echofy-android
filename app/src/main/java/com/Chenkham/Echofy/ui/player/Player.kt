@@ -203,7 +203,7 @@ import com.Chenkham.Echofy.ui.component.prefersArtworkColors
 
 private fun isVideoAvailableFor(mediaMetadata: MediaMetadata?, fallbackId: String?): Boolean {
     val mediaId = mediaMetadata?.id ?: fallbackId.orEmpty()
-    if (mediaId.isBlank() || mediaId.startsWith("LA-") || mediaId.startsWith("local:")) return false
+    if (mediaId.isBlank() || mediaId.startsWith("LA-") || mediaId.startsWith("local:") || mediaId.startsWith("radio:") || mediaId.startsWith("ambient:")) return false
 
     val thumbnailUrl = mediaMetadata?.thumbnailUrl.orEmpty()
     return thumbnailUrl.contains("i.ytimg.com", ignoreCase = true) ||
@@ -287,12 +287,11 @@ fun BottomSheetPlayer(
     val canSkipPrevious by playerConnection.canSkipPrevious.collectAsState()
     val canSkipNext by playerConnection.canSkipNext.collectAsState()
 
-    // Haptic Bass Beats — premium feature
+    // Haptic Bass Beats
     val hapticBassEnabled by rememberPreference(com.Chenkham.Echofy.constants.HapticBassBeatsKey, defaultValue = false)
     val adManager = com.Chenkham.Echofy.ui.component.LocalAdManager.current
-    val isPremiumForHaptic = adManager?.isPremium?.value == true
-    androidx.compose.runtime.LaunchedEffect(isPlaying, hapticBassEnabled, isPremiumForHaptic) {
-        if (isPlaying && hapticBassEnabled && isPremiumForHaptic) {
+    androidx.compose.runtime.LaunchedEffect(isPlaying, hapticBassEnabled) {
+        if (isPlaying && hapticBassEnabled) {
             val vibrator = context.getSystemService(android.content.Context.VIBRATOR_SERVICE) as? android.os.Vibrator
             while (true) {
                 if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
@@ -359,6 +358,7 @@ fun BottomSheetPlayer(
                 PlayerBackgroundStyle.DEFAULT -> 0.92f
                 PlayerBackgroundStyle.BLUR -> 0.42f
                 PlayerBackgroundStyle.GRADIENT -> 0.58f
+                else -> 0.58f
             }
         } else {
             0f
@@ -689,72 +689,9 @@ fun BottomSheetPlayer(
     }
 
     if (showDetailsDialog) {
-        AlertDialog(
-            properties = DialogProperties(usePlatformDefaultWidth = false),
-            onDismissRequest = { showDetailsDialog = false },
-            containerColor = if (useBlackBackground) Color.Black else AlertDialogDefaults.containerColor,
-            icon = {
-                Icon(
-                    painter = painterResource(R.drawable.info),
-                    contentDescription = null,
-                )
-            },
-            confirmButton = {
-                TextButton(
-                    onClick = { showDetailsDialog = false },
-                ) {
-                    Text(stringResource(android.R.string.ok))
-                }
-            },
-            text = {
-                Column(
-                    modifier =
-                        Modifier
-                            .sizeIn(minWidth = 280.dp, maxWidth = 560.dp)
-                            .verticalScroll(rememberScrollState()),
-                ) {
-                    listOf(
-                        stringResource(R.string.song_title) to mediaMetadata?.title,
-                        stringResource(R.string.song_artists) to mediaMetadata?.artists?.joinToString { it.name },
-                        stringResource(R.string.media_id) to mediaMetadata?.id,
-                        "Itag" to currentFormat?.itag?.toString(),
-                        stringResource(R.string.mime_type) to currentFormat?.mimeType,
-                        stringResource(R.string.codecs) to currentFormat?.codecs,
-                        stringResource(R.string.bitrate) to currentFormat?.bitrate?.let { "${it / 1000} Kbps" },
-                        stringResource(R.string.sample_rate) to currentFormat?.sampleRate?.let { "$it Hz" },
-                        stringResource(R.string.loudness) to currentFormat?.loudnessDb?.let { "$it dB" },
-                        stringResource(R.string.volume) to "${(playerConnection.player.volume * 100).toInt()}%",
-                        stringResource(R.string.file_size) to
-                                currentFormat?.contentLength?.let {
-                                    Formatter.formatShortFileSize(
-                                        context,
-                                        it
-                                    )
-                                },
-                    ).forEach { (label, text) ->
-                        val displayText = text ?: stringResource(R.string.unknown)
-                        Text(
-                            text = label,
-                            style = MaterialTheme.typography.labelMedium,
-                        )
-                        Text(
-                            text = displayText,
-                            style = MaterialTheme.typography.titleMedium,
-                            modifier =
-                                Modifier.clickable(
-                                    interactionSource = remember { MutableInteractionSource() },
-                                    indication = null,
-                                    onClick = {
-                                        clipboardManager.setText(AnnotatedString(displayText))
-                                        Toast.makeText(context, R.string.copied, Toast.LENGTH_SHORT)
-                                            .show()
-                                    },
-                                ),
-                        )
-                        Spacer(Modifier.height(8.dp))
-                    }
-                }
-            },
+        com.Chenkham.Echofy.ui.utils.ShowMediaInfo(
+            mediaMetadata = mediaMetadata,
+            onDismiss = { showDetailsDialog = false }
         )
     }
 
@@ -821,7 +758,12 @@ fun BottomSheetPlayer(
                                 }
                             }
                         }
-                        PlayerBackgroundStyle.GRADIENT -> {
+                        PlayerBackgroundStyle.GRADIENT,
+                        PlayerBackgroundStyle.COLORING,
+                        PlayerBackgroundStyle.BLUR_GRADIENT,
+                        PlayerBackgroundStyle.GLOW,
+                        PlayerBackgroundStyle.GLOW_ANIMATED,
+                        PlayerBackgroundStyle.CUSTOM -> {
                             AnimatedContent(
                                 targetState = gradientColors,
                                 transitionSpec = {
@@ -854,7 +796,7 @@ fun BottomSheetPlayer(
                             }
                         }
                         else -> {
-                            PlayerBackgroundStyle.DEFAULT
+                            // PlayerBackgroundStyle.DEFAULT
                         }
                     }
                     if (liveFluidAlpha > 0f) {
@@ -1100,12 +1042,6 @@ fun BottomSheetPlayer(
                             .clip(smallButtonShape.toShape())
                             .background(actionButtonColor)
                             .clickable {
-                                // PREMIUM CHECK
-                                if (adManager?.isPremium?.value != true) {
-                                    Toast.makeText(context, R.string.premium_required, Toast.LENGTH_SHORT).show()
-                                    return@clickable
-                                }
-
                                 if (download?.state == Download.STATE_COMPLETED || download?.state == Download.STATE_DOWNLOADING || download?.state == Download.STATE_QUEUED) {
                                     DownloadService.sendRemoveDownload(
                                         context,
@@ -1173,12 +1109,8 @@ fun BottomSheetPlayer(
                                 )
                             } else {
                                 Box(
-                                    modifier = Modifier.fillMaxSize().clickable { 
-                                        if (adManager?.isPremium?.value == true) {
-                                            showSleepTimerDialog = true 
-                                        } else {
-                                            android.widget.Toast.makeText(context, "Sleep Timer is a Premium feature!", android.widget.Toast.LENGTH_SHORT).show()
-                                        }
+                                    modifier = Modifier.fillMaxSize().clickable {
+                                        showSleepTimerDialog = true
                                     },
                                     contentAlignment = Alignment.Center
                                 ) {
@@ -1198,7 +1130,7 @@ fun BottomSheetPlayer(
             PlayerProgressSection(
                 playerConnection = playerConnection,
                 sliderStyle = sliderStyle,
-                color = TextBackgroundColor,
+                color = MaterialTheme.colorScheme.primary,
                 isPlaying = isPlaying
             )
 
@@ -1265,6 +1197,16 @@ fun BottomSheetPlayer(
                             }
                         },
                 ) {
+                    if (playbackState == androidx.media3.common.Player.STATE_BUFFERING) {
+                        CircularProgressIndicator(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .padding(4.dp),
+                            strokeWidth = 3.5.dp,
+                            color = MaterialTheme.colorScheme.primary,
+                            trackColor = Color.Transparent,
+                        )
+                    }
                     Image(
                         painter =
                             painterResource(

@@ -1,13 +1,22 @@
-﻿package com.Chenkham.Echofy.viewmodels
+/*
+ * Echofy Project Original (2026)
+ * Arturo254 (github.com/Arturo254)
+ * Licensed Under GPL-3.0 | see git history for contributors
+ */
+
+package com.Chenkham.Echofy.viewmodels
 
 import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.Chenkham.innertube.YouTube
-import com.Chenkham.innertube.models.AlbumItem
-import com.Chenkham.innertube.models.filterExplicit
+import kotlinx.coroutines.Dispatchers
+import com.arturo254.opentune.innertube.YouTube
+import com.arturo254.opentune.innertube.models.AlbumItem
+import com.arturo254.opentune.innertube.models.AlbumReleaseType
+import com.arturo254.opentune.innertube.models.filterExplicit
+import com.arturo254.opentune.innertube.models.filterVideo
 import com.Chenkham.Echofy.constants.HideExplicitKey
-import com.Chenkham.Echofy.constants.LastNewReleaseCheckKey
+import com.Chenkham.Echofy.constants.HideVideoKey
 import com.Chenkham.Echofy.db.MusicDatabase
 import com.Chenkham.Echofy.utils.dataStore
 import com.Chenkham.Echofy.utils.get
@@ -17,8 +26,16 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import javax.inject.Inject
+
+sealed interface NewReleaseUiState {
+    data object Loading : NewReleaseUiState
+    data class Success(val albums: List<AlbumItem>) : NewReleaseUiState
+    data object Empty : NewReleaseUiState
+    data class Error(val throwable: Throwable?) : NewReleaseUiState
+}
 
 @HiltViewModel
 class NewReleaseViewModel
@@ -29,37 +46,46 @@ constructor(
 ) : ViewModel() {
     private val _newReleaseAlbums = MutableStateFlow<List<AlbumItem>>(emptyList())
     val newReleaseAlbums = _newReleaseAlbums.asStateFlow()
+    private val _uiState = MutableStateFlow<NewReleaseUiState>(NewReleaseUiState.Loading)
+    val uiState = _uiState.asStateFlow()
 
-    private val _hasNewReleases = MutableStateFlow(false)
-    val hasNewReleases = _hasNewReleases.asStateFlow()
-
-    private val _isLoading = MutableStateFlow(true)
-    val isLoading = _isLoading.asStateFlow()
-
-    init {
-        loadNewReleases()
+    val albums = _newReleaseAlbums.map { list ->
+        list.filter { it.releaseType == AlbumReleaseType.ALBUM }
+    }
+    val singles = _newReleaseAlbums.map { list ->
+        list.filter { it.releaseType == AlbumReleaseType.SINGLE }
+    }
+    val eps = _newReleaseAlbums.map { list ->
+        list.filter { it.releaseType == AlbumReleaseType.EP }
     }
 
-    fun loadNewReleases() {
-        viewModelScope.launch {
-            _isLoading.value = true
-            YouTube
-                .newReleaseAlbums()
-                .onSuccess { albums ->
-                    val artists: MutableMap<Int, String> = mutableMapOf()
-                    val favouriteArtists: MutableMap<Int, String> = mutableMapOf()
-                    database.allArtistsByPlayTime().first().let { list ->
-                        var favIndex = 0
-                        for ((artistsIndex, artist) in list.withIndex()) {
-                            artists[artistsIndex] = artist.id
-                            if (artist.artist.bookmarkedAt != null) {
-                                favouriteArtists[favIndex] = artist.id
-                                favIndex++
-                            }
+    init {
+        load()
+    }
+
+    fun retry() {
+        load()
+    }
+
+    private fun load() {
+        viewModelScope.launch(Dispatchers.IO) {
+            _uiState.value = NewReleaseUiState.Loading
+            try {
+                val albums = YouTube.newReleaseAlbums().getOrThrow()
+                val artists: MutableMap<Int, String> = mutableMapOf()
+                val favouriteArtists: MutableMap<Int, String> = mutableMapOf()
+                database.allArtistsByPlayTime().first().let { list ->
+                    var favIndex = 0
+                    for ((artistsIndex, artist) in list.withIndex()) {
+                        artists[artistsIndex] = artist.id
+                        if (artist.artist.bookmarkedAt != null) {
+                            favouriteArtists[favIndex] = artist.id
+                            favIndex++
                         }
                     }
-
-                    val sortedAlbums = albums
+                }
+                val filtered =
+                    albums
                         .sortedBy { album ->
                             val artistIds = album.artists.orEmpty().mapNotNull { it.id }
                             val firstArtistKey =
@@ -71,58 +97,16 @@ constructor(
                                     }
                                 } ?: Int.MAX_VALUE
                             firstArtistKey
-                        }.filterExplicit(context.dataStore.get(HideExplicitKey, false))
-
-                    _newReleaseAlbums.value = sortedAlbums
-                    _isLoading.value = false
-
-                    // Check for new releases
-                    checkForNewReleases()
-
-                }.onFailure {
-                    _isLoading.value = false
-                    reportException(it)
-                }
-        }
-    }
-
-
-
-    private suspend fun checkForNewReleases() {
-        try {
-            val lastCheckTime = context.dataStore.get(LastNewReleaseCheckKey, 0L)
-            val currentTime = System.currentTimeMillis()
-
-            // If first time checking, don't show notification
-            if (lastCheckTime == 0L) {
-                context.dataStore.updateData { it.toMutablePreferences().apply {
-                    set(LastNewReleaseCheckKey, currentTime)
-                }}
-                _hasNewReleases.value = false
-                return
-            }
-
-            // If there are albums and enough time has passed since last check
-            val hasNewReleases = _newReleaseAlbums.value.isNotEmpty() &&
-                    (currentTime - lastCheckTime) > (24 * 60 * 60 * 1000) // 24 hours
-
-            _hasNewReleases.value = hasNewReleases
-
-        } catch (e: Exception) {
-            reportException(e)
-            _hasNewReleases.value = false
-        }
-    }
-
-    fun markNewReleasesAsSeen() {
-        viewModelScope.launch {
-            try {
-                context.dataStore.updateData { it.toMutablePreferences().apply {
-                    set(LastNewReleaseCheckKey, System.currentTimeMillis())
-                }}
-                _hasNewReleases.value = false
-            } catch (e: Exception) {
-                reportException(e)
+                        }
+                        .filterExplicit(context.dataStore.get(HideExplicitKey, false))
+                        .filterVideo(context.dataStore.get(HideVideoKey, false))
+                _newReleaseAlbums.value = filtered
+                _uiState.value =
+                    if (filtered.isEmpty()) NewReleaseUiState.Empty
+                    else NewReleaseUiState.Success(filtered)
+            } catch (t: Throwable) {
+                reportException(t)
+                _uiState.value = NewReleaseUiState.Error(t)
             }
         }
     }

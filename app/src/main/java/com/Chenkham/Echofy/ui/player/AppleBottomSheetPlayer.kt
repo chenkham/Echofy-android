@@ -53,6 +53,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Slider
 import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Text
+import androidx.compose.material3.ripple
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -178,6 +179,7 @@ fun AppleBottomSheetPlayer(
     val canSkipPrevious by playerConnection.canSkipPrevious.collectAsState()
     val canSkipNext by playerConnection.canSkipNext.collectAsState()
 
+
     // Haptic bass beats (now free for all)
     val hapticBassEnabled by rememberPreference(HapticBassBeatsKey, defaultValue = false)
 
@@ -215,6 +217,7 @@ fun AppleBottomSheetPlayer(
                 PlayerBackgroundStyle.DEFAULT -> 0.92f
                 PlayerBackgroundStyle.BLUR -> 0.42f
                 PlayerBackgroundStyle.GRADIENT -> 0.58f
+                else -> 0.58f
             }
         } else {
             0f
@@ -570,7 +573,13 @@ fun AppleMainView(
                     style = MaterialTheme.typography.bodyLarge,
                     color = onBackgroundColor.copy(alpha = 0.65f),
                     maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.clickable(enabled = meta.artists.firstOrNull()?.id != null) {
+                        meta.artists.firstOrNull()?.id?.let { artistId ->
+                            navController.navigate("artist/$artistId")
+                            onCollapse()
+                        }
+                    }
                 )
             }
 
@@ -614,7 +623,14 @@ fun AppleMainView(
                                 PlayerMenu(
                                     mediaMetadata = meta,
                                     navController = navController,
-                                    onShowDetailsDialog = {},
+                                    onShowDetailsDialog = {
+                                        menuState.showDialog {
+                                            com.Chenkham.Echofy.ui.utils.ShowMediaInfo(
+                                                mediaMetadata = meta,
+                                                onDismiss = menuState::dismissDialog
+                                            )
+                                        }
+                                    },
                                     onDismiss = menuState::dismiss,
                                     onNavigateAway = onCollapse
                                 )
@@ -703,7 +719,14 @@ fun MiniHeader(
                             PlayerMenu(
                                 mediaMetadata = meta,
                                 navController = navController,
-                                onShowDetailsDialog = {},
+                                onShowDetailsDialog = {
+                                        menuState.showDialog {
+                                            com.Chenkham.Echofy.ui.utils.ShowMediaInfo(
+                                                mediaMetadata = meta,
+                                                onDismiss = menuState::dismissDialog
+                                            )
+                                        }
+                                    },
                                 onDismiss = menuState::dismiss,
                                 onNavigateAway = onCollapse
                             )
@@ -762,16 +785,10 @@ fun AppleLyricsView(
                             com.Chenkham.Echofy.di.LyricsHelperEntryPoint::class.java
                         )
                         val lyricsHelper = entryPoint.lyricsHelper()
-                        var firstValid = false
-                        lyricsHelper.getLyricsStreaming(meta, false) { result ->
-                            if (!firstValid && result.lyrics != com.Chenkham.Echofy.db.entities.LyricsEntity.LYRICS_NOT_FOUND) {
-                                firstValid = true
-                                val entity = com.Chenkham.Echofy.db.entities.LyricsEntity(meta.id, result.lyrics, result.providerName)
-                                database.query { upsert(entity) }
-                            } else if (firstValid && result.lyrics.startsWith("[")) {
-                                val entity = com.Chenkham.Echofy.db.entities.LyricsEntity(meta.id, result.lyrics, result.providerName)
-                                database.query { upsert(entity) }
-                            }
+                        val fetchedLyrics = lyricsHelper.getLyrics(meta, false)
+                        if (fetchedLyrics != com.Chenkham.Echofy.db.entities.LyricsEntity.LYRICS_NOT_FOUND) {
+                            val entity = com.Chenkham.Echofy.db.entities.LyricsEntity(meta.id, fetchedLyrics, "Auto")
+                            database.query { upsert(entity) }
                         }
                     }
                 } catch(e: Exception) {}
@@ -1122,7 +1139,7 @@ fun ApplePlaybackControls(
     ) {
         Box(
             modifier = Modifier.size(56.dp).clip(CircleShape)
-                .clickable(enabled = canSkipPrevious, indication = null, interactionSource = remember { MutableInteractionSource() }) {
+                .clickable(enabled = canSkipPrevious, indication = ripple(bounded = false), interactionSource = remember { MutableInteractionSource() }) {
                     playerConnection.seekToPrevious()
                 },
             contentAlignment = Alignment.Center
@@ -1138,7 +1155,7 @@ fun ApplePlaybackControls(
         Box(
             modifier = Modifier.size(76.dp).clip(playPauseShape)
                 .background(color.copy(alpha = 0.1f))
-                .clickable(indication = null, interactionSource = remember { MutableInteractionSource() }) {
+                .clickable(indication = ripple(bounded = false), interactionSource = remember { MutableInteractionSource() }) {
                     if (playbackState == STATE_ENDED) {
                         playerConnection.player.seekTo(0)
                         playerConnection.player.playWhenReady = true
@@ -1158,7 +1175,7 @@ fun ApplePlaybackControls(
 
         Box(
             modifier = Modifier.size(56.dp).clip(CircleShape)
-                .clickable(enabled = canSkipNext, indication = null, interactionSource = remember { MutableInteractionSource() }) {
+                .clickable(enabled = canSkipNext, indication = ripple(bounded = false), interactionSource = remember { MutableInteractionSource() }) {
                     playerConnection.seekToNext()
                 },
             contentAlignment = Alignment.Center

@@ -20,6 +20,26 @@
 # hide the original source file name.
 #-renamesourcefileattribute SourceFile
 
+## Google Mobile Ads (AdMob)
+# R8 is enabled for release, and without these keeps the ads SDK loses classes it
+# resolves reflectively, so ads silently fail to fill in the release APK only.
+-keep class com.google.android.gms.ads.** { *; }
+-keep interface com.google.android.gms.ads.** { *; }
+-keep class com.google.ads.** { *; }
+-dontwarn com.google.android.gms.ads.**
+
+## ONNX Runtime (openWakeWord "Hey Jarvis")
+# The native library resolves these classes by name through JNI (GetMethodID/FindClass), so
+# R8 cannot see the references. Stripping them made OrtSession.run() abort the whole process
+# with "ClassNotFoundException: ai.onnxruntime.TensorInfo" -> SIGABRT, which crashed the app
+# on launch in release builds only.
+-keep class ai.onnxruntime.** { *; }
+-keep interface ai.onnxruntime.** { *; }
+-keepclasseswithmembernames class ai.onnxruntime.** {
+    native <methods>;
+}
+-dontwarn ai.onnxruntime.**
+
 ## Kotlin Serialization
 # Keep `Companion` object fields of serializable classes.
 # This avoids serializer lookup through `getDeclaredClasses` as done for named companion objects.
@@ -95,6 +115,34 @@
 -allowaccessmodification
 -repackageclasses ''
 
+# ==============================================================================
+# CRASH DIAGNOSTICS — keep release stack traces readable
+# ==============================================================================
+# Without these, every Play Console crash report is obfuscated line noise. R8 still
+# renames everything; this only preserves the mapping data needed to decode a trace,
+# so it costs nothing at runtime and no size worth measuring.
+-keepattributes SourceFile,LineNumberTable
+-renamesourcefileattribute SourceFile
+
+# ==============================================================================
+# BASELINE PROFILE / ProfileInstaller
+# ==============================================================================
+# ProfileInstaller is triggered by the framework, not by app code, so R8 full mode
+# can consider it unreachable and strip it. If that happens the baseline profile is
+# never installed and the startup win silently disappears with no error.
+-keep class androidx.profileinstaller.** { *; }
+-dontwarn androidx.profileinstaller.**
+
+# ==============================================================================
+# WORKMANAGER — release radar worker is instantiated reflectively by name
+# ==============================================================================
+# WorkManager constructs workers via reflection from a class name string. Under R8
+# full mode the class is renamed, the lookup fails at runtime, and the scheduled work
+# throws instead of running. This is a release-only failure.
+-keep class * extends androidx.work.ListenableWorker {
+    public <init>(android.content.Context, androidx.work.WorkerParameters);
+}
+
 # Remove unused code more aggressively
 -assumenosideeffects class kotlin.jvm.internal.Intrinsics {
     static void checkNotNull(...);
@@ -125,6 +173,26 @@
 
 # Keep Jam models (used with JSON serialization via JSONObject)
 -keep class com.Chenkham.Echofy.jam.** { *; }
+
+# Radio Browser API models. RadioStation has non-nullable fields without defaults, so if R8
+# renames them or drops the generated serializer, every station response fails to parse and
+# the radio screen shows an error instead of stations.
+-keep class com.Chenkham.radiobrowser.** { *; }
+-keepclassmembers class com.Chenkham.radiobrowser.** {
+    kotlinx.serialization.KSerializer serializer(...);
+}
+
+# Same reasoning for the podcast and InnerTube API models: PodcastResult.title, Author.name
+# and Episode.title are non-nullable without defaults, so a stripped serializer breaks the
+# podcast screen rather than degrading gracefully.
+-keep class com.Chenkham.ytmusicapi.** { *; }
+-keepclassmembers class com.Chenkham.ytmusicapi.** {
+    kotlinx.serialization.KSerializer serializer(...);
+}
+-keep class com.Chenkham.innertube.** { *; }
+-keepclassmembers class com.Chenkham.innertube.** {
+    kotlinx.serialization.KSerializer serializer(...);
+}
 
 # Coil optimizations
 -dontwarn coil.**
@@ -207,18 +275,13 @@
 -flattenpackagehierarchy
 
 # ==============================================================================
-# GOOGLE ADMOB & PLAY BILLING
+# GOOGLE ADMOB
 # ==============================================================================
 
 # Google Mobile Ads (AdMob)
 -keep class com.google.android.gms.ads.** { *; }
 -keep class com.google.ads.** { *; }
 -dontwarn com.google.android.gms.ads.**
-
-# Google Play Billing
--keep class com.android.billingclient.** { *; }
--keep class com.android.vending.billing.** { *; }
--dontwarn com.android.billingclient.**
 
 # Keep ad-related models
 -keep class com.Chenkham.Echofy.ads.** { *; }

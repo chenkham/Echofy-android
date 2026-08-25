@@ -38,6 +38,8 @@ import com.Chenkham.Echofy.constants.PlaybackModeKey
 import com.Chenkham.Echofy.constants.VideoPlaybackEnabledKey
 import com.Chenkham.Echofy.constants.ShowLyricsKey
 import com.Chenkham.Echofy.constants.SwipeThumbnailKey
+import com.Chenkham.Echofy.constants.DoubleTapSeekKey
+import com.Chenkham.Echofy.constants.DoubleTapSeekSecondsKey
 import com.Chenkham.Echofy.ui.component.AppConfig
 import com.Chenkham.Echofy.ui.component.Lyrics
 import com.Chenkham.Echofy.utils.rememberEnumPreference
@@ -81,6 +83,8 @@ fun Thumbnail(
 
     var showLyrics by rememberPreference(ShowLyricsKey, false)
     val swipeThumbnail by rememberPreference(SwipeThumbnailKey, true)
+    val doubleTapSeek by rememberPreference(DoubleTapSeekKey, false)
+    val doubleTapSeekSeconds by rememberPreference(DoubleTapSeekSecondsKey, 10)
     val playbackModeSelected by rememberEnumPreference(PlaybackModeKey, PlaybackMode.AUDIO)
     val videoPlaybackEnabled by rememberPreference(VideoPlaybackEnabledKey, true)
     
@@ -138,6 +142,24 @@ fun Thumbnail(
                                         }
                                     }
                                     offsetX = 0f
+                                },
+                            )
+                        }
+                        .pointerInput(doubleTapSeek, doubleTapSeekSeconds) {
+                            if (!doubleTapSeek) return@pointerInput
+                            detectTapGestures(
+                                onDoubleTap = { offset ->
+                                    // Left half rewinds, right half fast-forwards, like a video player.
+                                    val step = doubleTapSeekSeconds * 1000L
+                                    val player = playerConnection.player
+                                    val target = if (offset.x < size.width / 2f) {
+                                        (player.currentPosition - step).coerceAtLeast(0L)
+                                    } else {
+                                        val duration = player.duration
+                                        val raw = player.currentPosition + step
+                                        if (duration > 0) raw.coerceAtMost(duration) else raw
+                                    }
+                                    player.seekTo(target)
                                 },
                             )
                         },

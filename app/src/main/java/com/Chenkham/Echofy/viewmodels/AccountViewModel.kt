@@ -1,12 +1,12 @@
-﻿package com.Chenkham.Echofy.viewmodels
+package com.Chenkham.Echofy.viewmodels
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.Chenkham.innertube.YouTube
-import com.Chenkham.innertube.models.AlbumItem
-import com.Chenkham.innertube.models.ArtistItem
-import com.Chenkham.innertube.models.PlaylistItem
-import com.Chenkham.innertube.utils.completedLibraryPage
+import com.arturo254.opentune.innertube.YouTube
+import com.arturo254.opentune.innertube.models.AlbumItem
+import com.arturo254.opentune.innertube.models.ArtistItem
+import com.arturo254.opentune.innertube.models.PlaylistItem
+import com.arturo254.opentune.innertube.utils.completed
 import com.Chenkham.Echofy.utils.reportException
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -21,19 +21,19 @@ class AccountViewModel @Inject constructor() : ViewModel() {
 
     init {
         viewModelScope.launch {
-            YouTube.library("FEmusic_liked_playlists").completedLibraryPage().onSuccess {
-                playlists.value = it.items.filterIsInstance<PlaylistItem>()
+            YouTube.library("FEmusic_liked_playlists").completed().onSuccess { page ->
+                playlists.value = page.items.filterIsInstance<PlaylistItem>()
                     .filterNot { it.id == "SE" }
             }.onFailure {
                 reportException(it)
             }
-            YouTube.library("FEmusic_liked_albums").completedLibraryPage().onSuccess {
-                albums.value = it.items.filterIsInstance<AlbumItem>()
+            YouTube.library("FEmusic_liked_albums").completed().onSuccess { page ->
+                albums.value = page.items.filterIsInstance<AlbumItem>()
             }.onFailure {
                 reportException(it)
             }
-            YouTube.library("FEmusic_library_corpus_artists").completedLibraryPage().onSuccess {
-                artists.value = it.items.filterIsInstance<ArtistItem>()
+            YouTube.library("FEmusic_library_corpus_artists").completed().onSuccess { page ->
+                artists.value = page.items.filterIsInstance<ArtistItem>()
             }.onFailure {
                 reportException(it)
             }

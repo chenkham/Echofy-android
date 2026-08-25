@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.spring
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -22,11 +23,17 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.Chenkham.Echofy.LocalPlayerAwareWindowInsets
 import com.Chenkham.Echofy.R
+import com.Chenkham.Echofy.ui.component.IconButton
+import com.Chenkham.Echofy.ui.utils.backToMain
+import java.text.SimpleDateFormat
+import java.util.Calendar
+import java.util.Locale
 import java.util.concurrent.TimeUnit
 
 /**
@@ -43,9 +50,9 @@ data class LocalNotification(
 )
 
 /**
- * Professional Notifications screen with expandable cards and modern UI.
+ * Professional Notifications screen with day grouping, polished cards, and modern UI.
  */
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
 fun NotificationsScreen(
     navController: NavController
@@ -129,52 +136,69 @@ fun NotificationsScreen(
     }
     
     val unreadCount = notifications.count { !it.isRead }
+    val groupedNotifications = remember(notifications) {
+        notifications.groupBy { getDayCategory(it.timestamp) }
+    }
     
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { 
+                title = {
                     Column {
                         Text(
-                            stringResource(R.string.notifications),
+                            text = stringResource(R.string.notifications),
                             style = MaterialTheme.typography.headlineSmall,
-                            fontWeight = FontWeight.Bold
+                            fontWeight = FontWeight.SemiBold
                         )
                         if (unreadCount > 0) {
                             Text(
-                                "$unreadCount unread",
-                                style = MaterialTheme.typography.bodySmall,
+                                text = "$unreadCount unread",
+                                style = MaterialTheme.typography.labelMedium,
                                 color = MaterialTheme.colorScheme.primary
                             )
                         }
                     }
                 },
                 navigationIcon = {
-                    IconButton(onClick = { navController.navigateUp() }) {
+                    IconButton(
+                        onClick = navController::navigateUp,
+                        onLongClick = navController::backToMain,
+                    ) {
                         Icon(
-                            painter = painterResource(R.drawable.arrow_back),
-                            contentDescription = stringResource(R.string.back)
+                            painterResource(R.drawable.arrow_back),
+                            contentDescription = stringResource(R.string.back),
+                            tint = MaterialTheme.colorScheme.onSurface
                         )
                     }
                 },
                 actions = {
+                    IconButton(
+                        onClick = { loadNotifications() },
+                        onLongClick = {},
+                    ) {
+                        Icon(
+                            painterResource(R.drawable.sync),
+                            contentDescription = "Refresh",
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
                     if (notifications.isNotEmpty()) {
-                        IconButton(onClick = { clearAllNotifications() }) {
+                        IconButton(
+                            onClick = { clearAllNotifications() },
+                            onLongClick = {},
+                        ) {
                             Icon(
-                                painter = painterResource(R.drawable.delete),
-                                contentDescription = "Clear all"
+                                painterResource(R.drawable.delete),
+                                contentDescription = "Clear all",
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                         }
                     }
-                    IconButton(onClick = { loadNotifications() }) {
-                        Icon(
-                            painter = painterResource(R.drawable.sync),
-                            contentDescription = "Refresh"
-                        )
-                    }
-                }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent, scrolledContainerColor = Color.Transparent)
             )
-        }
+        },
+        containerColor = MaterialTheme.colorScheme.background
     ) { paddingValues ->
         when {
             isRefreshing -> {
@@ -188,52 +212,16 @@ fun NotificationsScreen(
                 }
             }
             notifications.isEmpty() -> {
-                Box(
+                NotificationsEmptyState(
                     modifier = Modifier
                         .fillMaxSize()
-                        .padding(paddingValues),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Column(
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.Center
-                    ) {
-                        Box(
-                            modifier = Modifier
-                                .size(100.dp)
-                                .clip(CircleShape)
-                                .background(
-                                    Brush.radialGradient(
-                                        colors = listOf(
-                                            MaterialTheme.colorScheme.primaryContainer,
-                                            MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)
-                                        )
-                                    )
-                                ),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Icon(
-                                painter = painterResource(R.drawable.notification_on),
-                                contentDescription = null,
-                                modifier = Modifier.size(48.dp),
-                                tint = MaterialTheme.colorScheme.onPrimaryContainer
-                            )
-                        }
-                        Spacer(Modifier.height(24.dp))
-                        Text(
-                            text = stringResource(R.string.no_notifications),
-                            style = MaterialTheme.typography.titleMedium,
-                            color = MaterialTheme.colorScheme.onSurface,
-                            fontWeight = FontWeight.Medium
+                        .padding(paddingValues)
+                        .padding(
+                            bottom = LocalPlayerAwareWindowInsets.current
+                                .asPaddingValues()
+                                .calculateBottomPadding()
                         )
-                        Spacer(Modifier.height(8.dp))
-                        Text(
-                            text = "You're all caught up!",
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
-                }
+                )
             }
             else -> {
                 LazyColumn(
@@ -246,17 +234,23 @@ fun NotificationsScreen(
                         top = 8.dp,
                         bottom = LocalPlayerAwareWindowInsets.current.asPaddingValues().calculateBottomPadding() + 16.dp
                     ),
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                    verticalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
-                    items(
-                        items = notifications,
-                        key = { it.id }
-                    ) { notification ->
-                        NotificationCard(
-                            notification = notification,
-                            onRead = { markAsRead(notification.id) },
-                            onDelete = { deleteNotification(notification.id) }
-                        )
+                    groupedNotifications.forEach { (dayCategory, notificationsInDay) ->
+                        stickyHeader(key = "header_$dayCategory") {
+                            NotificationsDayHeader(title = dayCategory)
+                        }
+                        items(
+                            items = notificationsInDay,
+                            key = { it.id }
+                        ) { notification ->
+                            NotificationCard(
+                                notification = notification,
+                                onRead = { markAsRead(notification.id) },
+                                onDelete = { deleteNotification(notification.id) },
+                                modifier = Modifier.animateItem()
+                            )
+                        }
                     }
                 }
             }
@@ -264,11 +258,92 @@ fun NotificationsScreen(
     }
 }
 
+/**
+ * Centered, intentional empty state shown when there is nothing in the inbox.
+ */
+@Composable
+private fun NotificationsEmptyState(
+    modifier: Modifier = Modifier
+) {
+    Box(
+        modifier = modifier,
+        contentAlignment = Alignment.Center
+    ) {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center,
+            modifier = Modifier.padding(horizontal = 40.dp)
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(104.dp)
+                    .clip(CircleShape)
+                    .background(
+                        Brush.radialGradient(
+                            colors = listOf(
+                                MaterialTheme.colorScheme.primaryContainer,
+                                MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.25f)
+                            )
+                        )
+                    ),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    painter = painterResource(R.drawable.notification_on),
+                    contentDescription = null,
+                    modifier = Modifier.size(46.dp),
+                    tint = MaterialTheme.colorScheme.onPrimaryContainer
+                )
+            }
+
+            Spacer(Modifier.height(24.dp))
+
+            Text(
+                text = "You're all caught up",
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.SemiBold,
+                color = MaterialTheme.colorScheme.onSurface,
+                textAlign = TextAlign.Center
+            )
+
+            Spacer(Modifier.height(8.dp))
+
+            Text(
+                text = "New updates, releases and announcements will show up here.",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                textAlign = TextAlign.Center
+            )
+        }
+    }
+}
+
+/**
+ * Sticky day separator ("Today" / "Yesterday" / "Earlier").
+ */
+@Composable
+private fun NotificationsDayHeader(title: String) {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(MaterialTheme.colorScheme.background)
+            .padding(top = 8.dp, bottom = 6.dp)
+    ) {
+        Text(
+            text = title.uppercase(Locale.getDefault()),
+            style = MaterialTheme.typography.labelMedium,
+            fontWeight = FontWeight.SemiBold,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+    }
+}
+
 @Composable
 private fun NotificationCard(
     notification: LocalNotification,
     onRead: () -> Unit,
-    onDelete: () -> Unit
+    onDelete: () -> Unit,
+    modifier: Modifier = Modifier
 ) {
     var isExpanded by remember { mutableStateOf(false) }
     var showMenu by remember { mutableStateOf(false) }
@@ -283,7 +358,7 @@ private fun NotificationCard(
     }
     
     Card(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
             .animateContentSize(
                 animationSpec = spring(
@@ -295,19 +370,19 @@ private fun NotificationCard(
                 isExpanded = !isExpanded
                 if (!notification.isRead) onRead()
             },
-        shape = RoundedCornerShape(12.dp),
+        shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(
-            containerColor = if (notification.isRead) 
-                MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f)
-            else 
-                MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.7f)
+            containerColor = if (notification.isRead)
+                MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.28f)
+            else
+                MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.72f)
         ),
         elevation = CardDefaults.cardElevation(
             defaultElevation = 0.dp // No shadow
         )
     ) {
         Column(
-            modifier = Modifier.padding(16.dp)
+            modifier = Modifier.padding(horizontal = 16.dp, vertical = 14.dp)
         ) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -355,10 +430,11 @@ private fun NotificationCard(
                         Text(
                             text = notification.title,
                             style = MaterialTheme.typography.titleSmall,
-                            fontWeight = if (notification.isRead) FontWeight.Normal else FontWeight.SemiBold,
+                            fontWeight = if (notification.isRead) FontWeight.Medium else FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onSurface,
                             maxLines = if (isExpanded) Int.MAX_VALUE else 1,
                             overflow = TextOverflow.Ellipsis,
-                            modifier = Modifier.weight(1f)
+                            modifier = Modifier.weight(1f, fill = false)
                         )
                         
                         if (!notification.isRead) {
@@ -372,7 +448,7 @@ private fun NotificationCard(
                         }
                     }
                     
-                    Spacer(Modifier.height(4.dp))
+                    Spacer(Modifier.height(3.dp))
                     
                     // Relative timestamp
                     Text(
@@ -386,7 +462,7 @@ private fun NotificationCard(
                 Box {
                     IconButton(
                         onClick = { showMenu = true },
-                        modifier = Modifier.size(32.dp)
+                        onLongClick = {},
                     ) {
                         Icon(
                             painter = painterResource(R.drawable.more_vert),
@@ -432,7 +508,7 @@ private fun NotificationCard(
                 }
             }
             
-            Spacer(Modifier.height(12.dp))
+            Spacer(Modifier.height(10.dp))
             
             // Message - expandable
             Text(
@@ -450,6 +526,7 @@ private fun NotificationCard(
                 Text(
                     text = "Tap to read more",
                     style = MaterialTheme.typography.labelSmall,
+                    fontWeight = FontWeight.Medium,
                     color = MaterialTheme.colorScheme.primary
                 )
             }
@@ -458,7 +535,28 @@ private fun NotificationCard(
 }
 
 /**
- * Returns human-readable relative time like "2 hours ago", "Yesterday", etc.
+ * Returns the day category for grouping notifications.
+ */
+private fun getDayCategory(timestamp: Long): String {
+    val notificationCal = Calendar.getInstance().apply {
+        timeInMillis = timestamp
+    }
+    val todayCal = Calendar.getInstance()
+    
+    val notificationDay = notificationCal.get(Calendar.DAY_OF_YEAR)
+    val notificationYear = notificationCal.get(Calendar.YEAR)
+    val todayDay = todayCal.get(Calendar.DAY_OF_YEAR)
+    val todayYear = todayCal.get(Calendar.YEAR)
+    
+    return when {
+        notificationYear == todayYear && notificationDay == todayDay -> "Today"
+        notificationYear == todayYear && notificationDay == todayDay - 1 -> "Yesterday"
+        else -> "Earlier"
+    }
+}
+
+/**
+ * Returns human-readable relative time like "2m ago", "3h ago", etc.
  */
 private fun getRelativeTime(timestamp: Long): String {
     val now = System.currentTimeMillis()
@@ -468,20 +566,25 @@ private fun getRelativeTime(timestamp: Long): String {
         diff < TimeUnit.MINUTES.toMillis(1) -> "Just now"
         diff < TimeUnit.HOURS.toMillis(1) -> {
             val mins = TimeUnit.MILLISECONDS.toMinutes(diff)
-            "$mins min${if (mins > 1) "s" else ""} ago"
+            "${mins}m ago"
         }
         diff < TimeUnit.DAYS.toMillis(1) -> {
             val hours = TimeUnit.MILLISECONDS.toHours(diff)
-            "$hours hour${if (hours > 1) "s" else ""} ago"
+            "${hours}h ago"
         }
         diff < TimeUnit.DAYS.toMillis(2) -> "Yesterday"
         diff < TimeUnit.DAYS.toMillis(7) -> {
             val days = TimeUnit.MILLISECONDS.toDays(diff)
-            "$days days ago"
+            "${days}d ago"
         }
         else -> {
-            val weeks = TimeUnit.MILLISECONDS.toDays(diff) / 7
-            "$weeks week${if (weeks > 1) "s" else ""} ago"
+            val notificationCal = Calendar.getInstance().apply { timeInMillis = timestamp }
+            val pattern = if (notificationCal.get(Calendar.YEAR) == Calendar.getInstance().get(Calendar.YEAR)) {
+                "MMM d"
+            } else {
+                "MMM d, yyyy"
+            }
+            SimpleDateFormat(pattern, Locale.getDefault()).format(timestamp)
         }
     }
 }

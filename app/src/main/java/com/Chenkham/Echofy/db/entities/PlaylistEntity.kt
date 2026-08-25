@@ -1,10 +1,10 @@
-﻿package com.Chenkham.Echofy.db.entities
+package com.Chenkham.Echofy.db.entities
 
 import androidx.compose.runtime.Immutable
 import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.PrimaryKey
-import com.Chenkham.innertube.YouTube
+import com.arturo254.opentune.innertube.YouTube
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
@@ -20,19 +20,25 @@ data class PlaylistEntity(
     val browseId: String? = null,
     val createdAt: LocalDateTime? = LocalDateTime.now(),
     val lastUpdateTime: LocalDateTime? = LocalDateTime.now(),
-    @ColumnInfo(name = "isEditable", defaultValue = true.toString())
+    @ColumnInfo(name = "isEditable", defaultValue = "1")
     val isEditable: Boolean = true,
     val bookmarkedAt: LocalDateTime? = null,
     val remoteSongCount: Int? = null,
     val playEndpointParams: String? = null,
+    val thumbnailUrl: String? = null,
     val shuffleEndpointParams: String? = null,
-    val radioEndpointParams: String? = null
+    val radioEndpointParams: String? = null,
+    val customOrder: Int? = null,
+    @ColumnInfo(name = "isLocal", defaultValue = "0")
+    val isLocal: Boolean = false,
+    @ColumnInfo(name = "isAutoSync", defaultValue = "0")
+    val isAutoSync: Boolean = false
 ) {
     companion object {
         const val LIKED_PLAYLIST_ID = "LP_LIKED"
         const val DOWNLOADED_PLAYLIST_ID = "LP_DOWNLOADED"
 
-        fun generatePlaylistId() = "LP" + RandomStringUtils.random(8, true, false)
+        fun generatePlaylistId() = "LP" + RandomStringUtils.insecure().next(8, true, false)
     }
 
     val shareLink: String?

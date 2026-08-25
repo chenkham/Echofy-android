@@ -1,37 +1,26 @@
 package com.Chenkham.Echofy.ui.component
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.OverscrollEffect
-import androidx.compose.foundation.content.MediaType
-import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.heightIn
-import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
-import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.Stable
+import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalFocusManager
-import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.unit.dp
 
 val LocalMenuState = compositionLocalOf { MenuState() }
@@ -39,12 +28,15 @@ val LocalMenuState = compositionLocalOf { MenuState() }
 @Stable
 class MenuState(
     isVisible: Boolean = false,
-    content: @Composable BoxScope.() -> Unit = {},
+    content: @Composable ColumnScope.() -> Unit = {},
 ) {
     var isVisible by mutableStateOf(isVisible)
     var content by mutableStateOf(content)
+    var dialogContent by mutableStateOf<(@Composable () -> Unit)?>(null)
+        private set
 
-    fun show(content: @Composable BoxScope.() -> Unit) {
+    fun show(content: @Composable ColumnScope.() -> Unit) {
+        dialogContent = null
         isVisible = true
         this.content = content
     }
@@ -52,9 +44,18 @@ class MenuState(
     fun dismiss() {
         isVisible = false
     }
+
+    fun showDialog(content: @Composable () -> Unit) {
+        isVisible = false
+        dialogContent = content
+    }
+
+    fun dismissDialog() {
+        dialogContent = null
+    }
 }
 
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun BottomSheetMenu(
     modifier: Modifier = Modifier,
@@ -62,10 +63,11 @@ fun BottomSheetMenu(
     background: Color = MaterialTheme.colorScheme.surface,
 ) {
     val focusManager = LocalFocusManager.current
-    val maxSheetHeight = LocalConfiguration.current.screenHeightDp.dp * 0.9f
-    val sheetState = rememberModalBottomSheetState(
-        skipPartiallyExpanded = false
+    val sheetState = androidx.compose.material3.rememberModalBottomSheetState(
+        skipPartiallyExpanded = true,
     )
+
+    state.dialogContent?.invoke()
 
     if (state.isVisible) {
         ModalBottomSheet(
@@ -76,25 +78,22 @@ fun BottomSheetMenu(
             sheetState = sheetState,
             containerColor = background,
             contentColor = MaterialTheme.colorScheme.onSurface,
-            scrimColor = Color.Black.copy(alpha = 0.5f),
-            shape = RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp),
+            shape = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp),
             dragHandle = {
                 Box(
                     modifier = Modifier
                         .padding(vertical = 12.dp)
                         .size(width = 40.dp, height = 4.dp)
                         .clip(RoundedCornerShape(2.dp))
-                        .background(MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f))
+                        .background(MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f)),
                 )
             },
-            modifier = modifier
+            modifier = modifier,
         ) {
-
-            Box(
+            Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .heightIn(max = maxSheetHeight)
-                    .navigationBarsPadding()
+                    .padding(horizontal = 20.dp),
             ) {
                 state.content(this)
             }

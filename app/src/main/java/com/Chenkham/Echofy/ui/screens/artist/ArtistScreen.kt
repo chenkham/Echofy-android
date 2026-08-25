@@ -66,11 +66,11 @@ import androidx.compose.ui.util.fastForEach
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import coil.compose.AsyncImage
-import com.Chenkham.innertube.models.AlbumItem
-import com.Chenkham.innertube.models.ArtistItem
-import com.Chenkham.innertube.models.PlaylistItem
-import com.Chenkham.innertube.models.SongItem
-import com.Chenkham.innertube.models.WatchEndpoint
+import com.arturo254.opentune.innertube.models.AlbumItem
+import com.arturo254.opentune.innertube.models.ArtistItem
+import com.arturo254.opentune.innertube.models.PlaylistItem
+import com.arturo254.opentune.innertube.models.SongItem
+import com.arturo254.opentune.innertube.models.WatchEndpoint
 import com.Chenkham.Echofy.LocalDatabase
 import com.Chenkham.Echofy.LocalPlayerAwareWindowInsets
 import com.Chenkham.Echofy.LocalPlayerConnection
@@ -155,7 +155,7 @@ fun ArtistScreen(
                                 modifier = Modifier.fillMaxSize()
                             ) {
                                 AsyncImage(
-                                    model = artistPage.artist.thumbnail.resize(1200, 1000),
+                                    model = artistPage.artist.thumbnail?.resize(1200, 1000),
                                     contentDescription = null,
                                     contentScale = ContentScale.Crop,
                                     modifier = Modifier
@@ -206,7 +206,7 @@ fun ArtistScreen(
                                     modifier = Modifier.size(110.dp)
                                 ) {
                                     AsyncImage(
-                                        model = artistPage.artist.thumbnail.resize(220, 220),
+                                        model = artistPage.artist.thumbnail?.resize(220, 220),
                                         contentDescription = null,
                                         contentScale = ContentScale.Crop
                                     )

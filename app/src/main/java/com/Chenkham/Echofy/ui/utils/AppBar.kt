@@ -1,4 +1,4 @@
-﻿package com.Chenkham.Echofy.ui.utils
+package com.Chenkham.Echofy.ui.utils
 
 import androidx.compose.animation.core.AnimationSpec
 import androidx.compose.animation.core.DecayAnimationSpec
@@ -54,7 +54,9 @@ class AppBarScrollBehavior(
                         state.contentOffset = 0f
                     }
                 }
-                state.heightOffset += consumed.y
+                val newOffset = state.heightOffset + consumed.y
+                val minLimit = if (state.heightOffsetLimit != 0f) state.heightOffsetLimit else -Float.MAX_VALUE
+                state.heightOffset = newOffset.coerceIn(minLimit, 0f)
                 return Offset.Zero
             }
         }

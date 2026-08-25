@@ -5,12 +5,24 @@ import androidx.datastore.preferences.core.floatPreferencesKey
 import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.longPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
+import androidx.datastore.preferences.core.stringSetPreferencesKey
+import com.Chenkham.Echofy.R
 import java.time.LocalDateTime
 import java.time.ZoneOffset
 
 val DynamicThemeKey = booleanPreferencesKey("dynamicTheme")
 val DarkModeKey = stringPreferencesKey("darkMode")
 val PureBlackKey = booleanPreferencesKey("pureBlack")
+val CustomThemeColorKey = stringPreferencesKey("customThemeColor")
+val WebClientPoTokenEnabledKey = booleanPreferencesKey("webClientPoTokenEnabled")
+val UseVisitorDataKey = booleanPreferencesKey("useVisitorData")
+val PoTokenSourceUrlKey = stringPreferencesKey("poTokenSourceUrl")
+val PoTokenGvsKey = stringPreferencesKey("poTokenGvs")
+val PoTokenPlayerKey = stringPreferencesKey("poTokenPlayer")
+val PlayerCustomImageUriKey = stringPreferencesKey("playerCustomImageUri")
+val PlayerCustomBlurKey = floatPreferencesKey("playerCustomBlur")
+val PlayerCustomContrastKey = floatPreferencesKey("playerCustomContrast")
+val PlayerCustomBrightnessKey = floatPreferencesKey("playerCustomBrightness")
 val DefaultOpenTabKey = stringPreferencesKey("defaultOpenTab")
 val SlimNavBarKey = booleanPreferencesKey("slimNavBar")
 val GridItemsSizeKey = stringPreferencesKey("gridItemSize")
@@ -23,7 +35,72 @@ val DataSaverEnabledKey = booleanPreferencesKey("dataSaverEnabled")
 val BatterySaverEnabledKey = booleanPreferencesKey("batterySaverEnabled")
 val VideoCacheEnabledKey = booleanPreferencesKey("videoCacheEnabled")
 val VideoPlaybackEnabledKey = booleanPreferencesKey("videoPlaybackEnabled")
+val AodArtShapeKey = stringPreferencesKey("aodArtShape")
+val AodStyleKey = stringPreferencesKey("aodStyle")
+val AodControlStyleKey = stringPreferencesKey("aodControlStyle")
+val AodDarknessKey = floatPreferencesKey("aodDarkness")
+val AodArtSizeKey = floatPreferencesKey("aodArtSize")
+val AodShowTitleKey = booleanPreferencesKey("aodShowTitle")
+val AodShowArtistKey = booleanPreferencesKey("aodShowArtist")
+val AodShowTimeKey = booleanPreferencesKey("aodShowTime")
+val AodShowProgressKey = booleanPreferencesKey("aodShowProgress")
+val AodShowControlsKey = booleanPreferencesKey("aodShowControls")
+val AodFullscreenKey = booleanPreferencesKey("aodFullscreen")
+val AodAutoActivationKey = intPreferencesKey("aodAutoActivation")
+val AodSpotlightIntensityKey = floatPreferencesKey("aodSpotlightIntensity")
+val AodSpotlightPulseKey = booleanPreferencesKey("aodSpotlightPulse")
+val AodTransitionDurationKey = intPreferencesKey("aodTransitionDuration")
+val AodTextScaleKey = floatPreferencesKey("aodTextScale")
+val AodShowClockKey = booleanPreferencesKey("aodShowClock")
+val AodClockFormatKey = booleanPreferencesKey("aodClockFormat")
+val DisableBlurKey = booleanPreferencesKey("disableBlur")
+val SelectedLocalFoldersKey = stringSetPreferencesKey("selected_local_folders")
+val CanvasSourceKey = stringPreferencesKey("canvasSource")
 
+enum class CanvasSource {
+    AUTO,
+    APPLE_MUSIC,
+    TIDAL,
+    CUSTOM,
+}
+
+enum class WidgetBackgroundMode {
+    BLUR,
+    DOMINANT_COLOR,
+    SOLID,
+}
+
+val WidgetBackgroundModeKey = stringPreferencesKey("widget_background_mode")
+val WidgetScrimOpacityKey = floatPreferencesKey("widget_scrim_opacity")
+val WidgetCornerRadiusKey = floatPreferencesKey("widget_corner_radius")
+val WidgetShowProgressBarKey = booleanPreferencesKey("widget_show_progress_bar")
+
+
+enum class AodArtShape {
+    ROUNDED,
+    CIRCLE,
+    SQUIRCLE,
+    DIAMOND,
+    HEXAGON,
+    STAR,
+    ARCH,
+    PETAL
+}
+
+enum class AodStyle {
+    CLASSIC,
+    BACKGROUND,
+    MINIMAL,
+    LARGE,
+    SPOTLIGHT
+}
+
+enum class AodControlStyle {
+    ROUNDED,
+    SQUARE,
+    ACCENT,
+    MINIMAL_FLAT
+}
 
 enum class PlaybackMode {
     AUDIO,  // Default - shows album art thumbnail
@@ -51,6 +128,7 @@ val ContentCountryKey = stringPreferencesKey("contentCountry")
 val EnableKugouKey = booleanPreferencesKey("enableKugou")
 val EnableLrcLibKey = booleanPreferencesKey("enableLrclib")
 val HideExplicitKey = booleanPreferencesKey("hideExplicit")
+val HideVideoKey = booleanPreferencesKey("hideVideo")
 val LastNewReleaseCheckKey = longPreferencesKey("last_new_release_check")
 val minPlaybackDurKey = intPreferencesKey("minPlaybackDur")
 val ProxyEnabledKey = booleanPreferencesKey("proxyEnabled")
@@ -63,7 +141,18 @@ val AudioQualityKey = stringPreferencesKey("audioQuality")
 enum class AudioQuality {
     AUTO,
     HIGH,
+    HIGHEST,
     LOW,
+}
+
+val PlayerStreamClientKey = stringPreferencesKey("playerStreamClient")
+
+enum class PlayerStreamClient {
+    ANDROID_VR,
+    WEB_REMIX,
+    IOS,
+    TVHTML5,
+    ANDROID_MUSIC,
 }
 
 val PersistentQueueKey = booleanPreferencesKey("persistentQueue")
@@ -88,6 +177,8 @@ val LastFmApiKeyKey = stringPreferencesKey("lastFmApiKey")
 val LastFmApiSecretKey = stringPreferencesKey("lastFmApiSecret")
 val LastFmSessionKeyKey = stringPreferencesKey("lastFmSessionKey")
 val LastFmUsernameKey = stringPreferencesKey("lastFmUsername")
+val LastFMSessionKey = LastFmSessionKeyKey
+val LastFMUsernameKey = LastFmUsernameKey
 val LastFmTokenKey = stringPreferencesKey("lastFmToken")
 val AudioOffload = booleanPreferencesKey("audioOffload")
 
@@ -126,6 +217,23 @@ val DiscordInfoDismissedKey = booleanPreferencesKey("discordInfoDismissed")
 val DiscordUsernameKey = stringPreferencesKey("discordUsername")
 val DiscordNameKey = stringPreferencesKey("discordName")
 val EnableDiscordRPCKey = booleanPreferencesKey("discordRPCEnable")
+val DiscordLargeImageTypeKey = stringPreferencesKey("discordLargeImageType")
+val DiscordLargeTextSourceKey = stringPreferencesKey("discordLargeTextSource")
+val DiscordLargeTextCustomKey = stringPreferencesKey("discordLargeTextCustom")
+val DiscordLargeImageCustomUrlKey = stringPreferencesKey("discordLargeImageCustomUrl")
+val DiscordSmallImageTypeKey = stringPreferencesKey("discordSmallImageType")
+val DiscordSmallImageCustomUrlKey = stringPreferencesKey("discordSmallImageCustomUrl")
+val SelectedYtmPlaylistsKey = stringPreferencesKey("selected_ytm_playlists")
+
+val EnableUpdateNotificationKey = booleanPreferencesKey("enableUpdateNotification")
+val UpdateChannelKey = stringPreferencesKey("updateChannel")
+val LastUpdateCheckKey = longPreferencesKey("lastUpdateCheck")
+val LastNotifiedVersionKey = stringPreferencesKey("lastNotifiedVersion")
+
+enum class UpdateChannel {
+    STABLE,
+    NIGHTLY,
+}
 
 val ChipSortTypeKey = stringPreferencesKey("chipSortType")
 val SongSortTypeKey = stringPreferencesKey("songSortType")
@@ -164,17 +272,18 @@ val QuickPicksKey = stringPreferencesKey("discover")
 val PreferredLyricsProviderKey = stringPreferencesKey("lyricsProvider")
 val CurrentLyricsProviderKey = stringPreferencesKey("currentLyricsProvider") // Manual provider override
 val QueueEditLockKey = booleanPreferencesKey("queueEditLock")
-
 val LyricFontSizeKey = intPreferencesKey("lyricFontSize")
 val fullScreenLyricsKey = booleanPreferencesKey("fullScreenLyrics")
 val AnimateLyricsKey = booleanPreferencesKey("animate_lyrics")
 
+fun lyricsSyncOffsetKey(songId: String) = longPreferencesKey("lyricsSyncOffset_$songId")
 
 val PlayPauseButtonShapeKey = stringPreferencesKey("playPauseButtonShape")
 const val DefaultPlayPauseButtonShape = "Circle"
 
 val MiniPlayerThumbnailShapeKey = stringPreferencesKey("miniPlayerThumbnailShape")
 const val DefaultMiniPlayerThumbnailShape = "Circle"
+
 enum class LibraryViewType {
     LIST,
     GRID,
@@ -190,17 +299,19 @@ enum class LibraryViewType {
 enum class SongFilter {
     LIBRARY,
     LIKED,
-    DOWNLOADED, UPLOADED
+    DOWNLOADED,
 }
 
 enum class ArtistFilter {
     LIBRARY,
-    LIKED
+    LIKED,
 }
 
 enum class AlbumFilter {
     LIBRARY,
-    LIKED
+    LIKED,
+    DOWNLOADED,
+    DOWNLOADED_FULL,
 }
 
 enum class SongSortType {
@@ -253,6 +364,7 @@ enum class PlaylistSortType {
     NAME,
     SONG_COUNT,
     LAST_UPDATED,
+    CUSTOM,
 }
 
 enum class MixSortType {
@@ -316,12 +428,21 @@ enum class QuickPicks {
 enum class PreferredLyricsProvider {
     LRCLIB,
     KUGOU,
+    BETTER_LYRICS,
+    GENIUS,
+    YOUTUBE,
+    YOUTUBE_SUBTITLES,
 }
 
 enum class PlayerBackgroundStyle {
     DEFAULT,
     GRADIENT,
+    CUSTOM,
     BLUR,
+    COLORING,
+    BLUR_GRADIENT,
+    GLOW,
+    GLOW_ANIMATED,
 }
 
 
@@ -636,6 +757,7 @@ val InstagramShareCardsKey = booleanPreferencesKey("instagramShareCards")
 val BatchOfflineLyricsKey = booleanPreferencesKey("batchOfflineLyrics")
 val IncognitoModeKey = booleanPreferencesKey("incognitoMode")
 val CustomFontKey = stringPreferencesKey("customFont")
+val UseSystemFontKey = booleanPreferencesKey("use_system_font")
 val LiveFluidBackgroundKey = booleanPreferencesKey("liveFluidBackground")
 val LiveFluidColorPaletteKey = stringPreferencesKey("liveFluidColorPalette")
 val RealTimeVisualizerKey = booleanPreferencesKey("realTimeVisualizer")
@@ -652,3 +774,325 @@ enum class LiveFluidColorPalette {
 
 val PremiumCustomIconEnabledKey = booleanPreferencesKey("premiumAppIconEnabled")
 val PremiumCustomFontEnabledKey = booleanPreferencesKey("premiumCustomFontEnabled")
+
+// Internet Radio (Radio Browser)
+val RadioEnabledKey = booleanPreferencesKey("radioEnabled")
+val RadioDefaultCountryKey = stringPreferencesKey("radioDefaultCountry")
+val RadioMinBitrateKey = stringPreferencesKey("radioMinBitrate")
+val RadioHideBrokenKey = booleanPreferencesKey("radioHideBroken")
+
+// Artist metadata enrichment (MusicBrainz)
+val ArtistInfoEnabledKey = booleanPreferencesKey("artistInfoEnabled")
+val ArtistInfoShowGenresKey = booleanPreferencesKey("artistInfoShowGenres")
+val ArtistInfoShowLinksKey = booleanPreferencesKey("artistInfoShowLinks")
+
+// Artist biography and artwork (TheAudioDB)
+val ArtistBioEnabledKey = booleanPreferencesKey("artistBioEnabled")
+val TheAudioDbApiKeyKey = stringPreferencesKey("theAudioDbApiKey")
+
+// Concerts (Bandsintown)
+val ConcertsEnabledKey = booleanPreferencesKey("concertsEnabled")
+val BandsintownAppIdKey = stringPreferencesKey("bandsintownAppId")
+
+// Similar artists and cross-domain recommendations (TasteDive)
+val SimilarArtistsEnabledKey = booleanPreferencesKey("similarArtistsEnabled")
+val TasteDiveApiKeyKey = stringPreferencesKey("tasteDiveApiKey")
+
+// Genius lyrics provider
+val EnableGeniusKey = booleanPreferencesKey("enableGenius")
+val GeniusAccessTokenKey = stringPreferencesKey("geniusAccessToken")
+
+// Cross-platform share links (Songlink / Odesli)
+val SonglinkEnabledKey = booleanPreferencesKey("songlinkEnabled")
+val SonglinkApiKeyKey = stringPreferencesKey("songlinkApiKey")
+
+// Physical release details (Discogs)
+val DiscogsEnabledKey = booleanPreferencesKey("discogsEnabled")
+val DiscogsTokenKey = stringPreferencesKey("discogsToken")
+
+// Ambient sounds (Freesound)
+val AmbientSoundsEnabledKey = booleanPreferencesKey("ambientSoundsEnabled")
+val FreesoundApiKeyKey = stringPreferencesKey("freesoundApiKey")
+
+// DJ mixes and radio shows (Mixcloud)
+val MixcloudEnabledKey = booleanPreferencesKey("mixcloudEnabled")
+
+// ---------------------------------------------------------------------------
+// Sleep timer comfort options
+// ---------------------------------------------------------------------------
+/** Fades the volume down before the sleep timer pauses instead of cutting abruptly. */
+val SleepTimerFadeOutKey = booleanPreferencesKey("sleepTimerFadeOut")
+/** Length of the sleep timer fade, in seconds. */
+val SleepTimerFadeDurationKey = intPreferencesKey("sleepTimerFadeDuration")
+
+// ---------------------------------------------------------------------------
+// Playback comfort
+// ---------------------------------------------------------------------------
+/** Short volume ramp when playback is paused or resumed instead of an abrupt cut. */
+val VolumeFadeOnPauseKey = booleanPreferencesKey("volumeFadeOnPause")
+
+// ---------------------------------------------------------------------------
+// Safe listening
+// ---------------------------------------------------------------------------
+/** Caps the in-app playback volume to protect hearing. */
+val VolumeLimitEnabledKey = booleanPreferencesKey("volumeLimitEnabled")
+/** Maximum volume as a percentage (10..100) when the limit is enabled. */
+val VolumeLimitPercentKey = intPreferencesKey("volumeLimitPercent")
+
+// ---------------------------------------------------------------------------
+// Per-track playback settings memory (tempo / pitch)
+// ---------------------------------------------------------------------------
+/** Master switch for remembering tempo and pitch per song. */
+val RememberPlaybackSettingsKey = booleanPreferencesKey("rememberPlaybackSettings")
+
+/** Saved tempo for a specific song. */
+fun playbackTempoKey(songId: String) = floatPreferencesKey("playbackTempo_$songId")
+
+/** Saved pitch (in semitones) for a specific song. */
+fun playbackPitchKey(songId: String) = floatPreferencesKey("playbackPitch_$songId")
+
+// ---------------------------------------------------------------------------
+// Listening streaks and milestones
+// ---------------------------------------------------------------------------
+/** Master switch for streak tracking and milestone notices. */
+val ListeningStreakEnabledKey = booleanPreferencesKey("listeningStreakEnabled")
+/** Current consecutive-day listening streak. */
+val ListeningStreakCountKey = intPreferencesKey("listeningStreakCount")
+/** Longest streak ever reached. */
+val ListeningStreakBestKey = intPreferencesKey("listeningStreakBest")
+/** Epoch day of the most recent counted listening day. */
+val ListeningStreakLastDayKey = longPreferencesKey("listeningStreakLastDay")
+
+// ---------------------------------------------------------------------------
+// Quick Settings tile
+// ---------------------------------------------------------------------------
+/** Allows the notification-shade tile to control playback. */
+val QuickSettingsTileEnabledKey = booleanPreferencesKey("quickSettingsTileEnabled")
+/** Keeps launcher long-press shortcuts up to date with recent listening. */
+val DynamicShortcutsEnabledKey = booleanPreferencesKey("dynamicShortcutsEnabled")
+
+// ---------------------------------------------------------------------------
+// A-B loop
+// ---------------------------------------------------------------------------
+/** Shows the A-B loop control in the player menu. */
+val AbLoopEnabledKey = booleanPreferencesKey("abLoopEnabled")
+
+// ---------------------------------------------------------------------------
+// Mono audio and channel balance (accessibility)
+// ---------------------------------------------------------------------------
+/** Downmixes stereo to mono for single-ear listening. */
+val MonoAudioKey = booleanPreferencesKey("monoAudio")
+/** Left/right balance from -1 (full left) to 1 (full right). */
+val AudioBalanceKey = floatPreferencesKey("audioBalance")
+
+// ---------------------------------------------------------------------------
+// Karaoke
+// ---------------------------------------------------------------------------
+/**
+ * Strength of karaoke vocal suppression, 0 = off through 1 = full centre cancellation.
+ * Adjustable rather than a plain switch because how much of the vocal disappears, and how
+ * thin the backing ends up, varies from mix to mix.
+ */
+val VocalSuppressionKey = floatPreferencesKey("vocalSuppression")
+
+// ---------------------------------------------------------------------------
+// New release radar
+// ---------------------------------------------------------------------------
+/** Checks daily for new albums by followed artists and posts a notification. */
+val ReleaseRadarEnabledKey = booleanPreferencesKey("releaseRadarEnabled")
+
+/**
+ * Album ids already announced, comma separated, so the same release is never notified
+ * twice. Trimmed to the newest [RELEASE_RADAR_SEEN_LIMIT] ids to stop it growing forever.
+ */
+val ReleaseRadarSeenIdsKey = stringPreferencesKey("releaseRadarSeenIds")
+
+/** Upper bound on remembered album ids; comfortably more than a year of releases. */
+const val RELEASE_RADAR_SEEN_LIMIT = 300
+
+// ---------------------------------------------------------------------------
+// Mood / activity playlists
+// ---------------------------------------------------------------------------
+/** Shows the behaviour-derived mood mixes on Home. */
+val MoodPlaylistsEnabledKey = booleanPreferencesKey("moodPlaylistsEnabled")
+
+/**
+ * Auto-generated mood mixes built from listening behaviour rather than acoustic analysis.
+ *
+ * YouTube Music exposes no tempo/energy/valence data, so a mood here means "the music you
+ * actually reach for at this time of day", taken from the `event` table. [FOCUS] is the
+ * exception: it uses track length and sustained play time instead of the clock.
+ *
+ * Hours are inclusive and expressed in the device's local zone.
+ */
+enum class MoodPlaylist(
+    val titleRes: Int,
+    val startHour: Int,
+    val endHour: Int,
+) {
+    MORNING(R.string.mood_morning, 5, 11),
+    AFTERNOON(R.string.mood_afternoon, 12, 17),
+    EVENING(R.string.mood_evening, 18, 21),
+    LATE_NIGHT(R.string.mood_late_night, 22, 4),
+    FOCUS(R.string.mood_focus, -1, -1),
+    ;
+
+    /** True when the window crosses midnight and needs the wrapping query. */
+    val wrapsMidnight: Boolean get() = startHour > endHour
+}
+
+// ---------------------------------------------------------------------------
+// Smart resume for long-form content
+// ---------------------------------------------------------------------------
+/** Offers to resume long tracks (mixes, podcasts, live sets) where they left off. */
+val SmartResumeEnabledKey = booleanPreferencesKey("smartResumeEnabled")
+/** Minimum track length, in minutes, before a position is remembered. */
+val SmartResumeMinMinutesKey = intPreferencesKey("smartResumeMinMinutes")
+/** Saved playback position for a specific song. */
+fun resumePositionKey(songId: String) = longPreferencesKey("resumePosition_$songId")
+
+// ---------------------------------------------------------------------------
+// Headphone automation
+// ---------------------------------------------------------------------------
+/** Resumes playback automatically when headphones are connected. */
+val ResumeOnHeadphonesKey = booleanPreferencesKey("resumeOnHeadphones")
+
+// ---------------------------------------------------------------------------
+// Gestures
+// ---------------------------------------------------------------------------
+/** Double tapping the artwork seeks backward or forward. */
+val DoubleTapSeekKey = booleanPreferencesKey("doubleTapSeek")
+/** How many seconds a single double-tap seek jumps. */
+val DoubleTapSeekSecondsKey = intPreferencesKey("doubleTapSeekSeconds")
+
+// ---------------------------------------------------------------------------
+// Accessibility and wellbeing
+// ---------------------------------------------------------------------------
+/** Disables decorative animations across the app. */
+val ReduceMotionKey = booleanPreferencesKey("reduceMotion")
+/** Reminds the user after a long continuous listening session. */
+val ListeningReminderEnabledKey = booleanPreferencesKey("listeningReminderEnabled")
+/** How many minutes of listening before a reminder appears. */
+val ListeningReminderMinutesKey = intPreferencesKey("listeningReminderMinutes")
+/** Larger, higher-contrast lyrics for readability. */
+val HighContrastLyricsKey = booleanPreferencesKey("highContrastLyrics")
+
+// ---------------------------------------------------------------------------
+// Lyrics extras
+// ---------------------------------------------------------------------------
+/** Caches translated lyrics so repeat plays are instant and work offline. */
+val CacheTranslationsKey = booleanPreferencesKey("cacheTranslations")
+
+// ---------------------------------------------------------------------------
+// Discovery
+// ---------------------------------------------------------------------------
+/** Shows a "this week in previous years" row built from listening history. */
+val TimeMachineEnabledKey = booleanPreferencesKey("timeMachineEnabled")
+/** Surfaces rarely played songs from the user's own library. */
+val HiddenGemsEnabledKey = booleanPreferencesKey("hiddenGemsEnabled")
+/** Shows an explainable "because you listened to [artist]" row on Home. */
+val BecauseYouListenedEnabledKey = booleanPreferencesKey("becauseYouListenedEnabled")
+
+/**
+ * Home row order and visibility, stored as a comma-separated list of [HomeRow] names.
+ * Rows missing from the stored value fall back to the end of the list in declaration
+ * order, so adding a new row in a future release does not strand it.
+ */
+val HomeRowOrderKey = stringPreferencesKey("homeRowOrder")
+
+/**
+ * The Home screen rows the user can reorder or hide. [Quick picks] is deliberately not
+ * included: it is the primary landing content and always renders first.
+ */
+enum class HomeRow(val titleRes: Int) {
+    FORGOTTEN_FAVORITES(R.string.forgotten_favorites),
+    KEEP_LISTENING(R.string.keep_listening),
+    HIDDEN_GEMS(R.string.hidden_gems),
+    TIME_MACHINE(R.string.time_machine),
+    BECAUSE_YOU_LISTENED(R.string.because_you_listened),
+    MOOD(R.string.mood_playlists),
+}
+
+// ---------------------------------------------------------------------------
+// Playback speed per content type
+// ---------------------------------------------------------------------------
+/** Applies a separate default speed to long-form content such as podcasts and DJ sets. */
+val SpeedPerContentTypeKey = booleanPreferencesKey("speedPerContentType")
+/** Default speed used for long-form content when [SpeedPerContentTypeKey] is on. */
+val LongFormPlaybackSpeedKey = floatPreferencesKey("longFormPlaybackSpeed")
+/** Track length, in minutes, at or above which a track counts as long-form. */
+val LongFormMinMinutesKey = intPreferencesKey("longFormMinMinutes")
+
+// ---------------------------------------------------------------------------
+// Silent outro skip
+// ---------------------------------------------------------------------------
+/** Skips to the next track once a trailing silent outro is reached. */
+val SkipSilentOutroKey = booleanPreferencesKey("skipSilentOutro")
+/** How many seconds of trailing audio are treated as a skippable outro. */
+val SilentOutroSecondsKey = intPreferencesKey("silentOutroSeconds")
+
+// ---------------------------------------------------------------------------
+// Personalisation: font and launcher icon
+// ---------------------------------------------------------------------------
+/** Font family applied app-wide. Stored via [CustomFontKey]. */
+enum class AppFont {
+    SYSTEM,
+    LINOTTE,
+    POPPINS,
+    SF_PRO,
+    ANYBODY,
+    SANS_SERIF,
+    SERIF,
+    MONOSPACE,
+    CURSIVE,
+}
+
+/**
+ * Launcher icon variants. [aliasName] must match an `activity-alias` in the manifest,
+ * since [com.Chenkham.Echofy.utils.AppIconManager] toggles them by component name.
+ */
+enum class AppIcon(val aliasName: String) {
+    DEFAULT("com.Chenkham.Echofy.icon.Default"),
+    CLASSIC("com.Chenkham.Echofy.icon.Classic"),
+    MONOCHROME("com.Chenkham.Echofy.icon.Monochrome"),
+}
+
+val GitHubReleasesEtagKey = stringPreferencesKey("github_releases_etag")
+val GitHubReleasesJsonKey = stringPreferencesKey("github_releases_json")
+val GitHubReleasesLastCheckedAtKey = longPreferencesKey("github_releases_last_checked_at")
+val GitHubReleasesFingerprintKey = stringPreferencesKey("github_releases_fingerprint")
+
+
+
+
+
+val SpotifySpDcKey = stringPreferencesKey("spotify_sp_dc")
+val SpotifySpKeyKey = stringPreferencesKey("spotify_sp_key")
+val SpotifyAccessTokenKey = stringPreferencesKey("spotify_access_token")
+val SpotifyAccessTokenExpiresAtKey = longPreferencesKey("spotify_access_token_expires_at")
+val SpotifyAccountNameKey = stringPreferencesKey("spotify_account_name")
+val SpotifyAccountAvatarUrlKey = stringPreferencesKey("spotify_account_avatar_url")
+val ShowSpotifyPlaylistsKey = booleanPreferencesKey("show_spotify_playlists")
+val SpotifyLibraryPlaylistsCacheKey = stringPreferencesKey("spotify_library_playlists_cache")
+
+val ProviderOrderKey = stringPreferencesKey("provider_order")
+
+val EnableBetterLyricsKey = booleanPreferencesKey("enable_better_lyrics")
+
+val DiscordActivityNameKey = stringPreferencesKey("discordActivityName")
+val DiscordActivityDetailsKey = stringPreferencesKey("discordActivityDetails")
+val DiscordActivityStateKey = stringPreferencesKey("discordActivityState")
+val DiscordActivityButton1LabelKey = stringPreferencesKey("discordActivityButton1Label")
+val DiscordActivityButton1UrlSourceKey = stringPreferencesKey("discordActivityButton1UrlSource")
+val DiscordActivityButton1CustomUrlKey = stringPreferencesKey("discordActivityButton1CustomUrl")
+val DiscordActivityButton2LabelKey = stringPreferencesKey("discordActivityButton2Label")
+val DiscordActivityButton2UrlSourceKey = stringPreferencesKey("discordActivityButton2UrlSource")
+val DiscordActivityButton2CustomUrlKey = stringPreferencesKey("discordActivityButton2CustomUrl")
+val DiscordActivityButton1EnabledKey = booleanPreferencesKey("discordActivityButton1Enabled")
+val DiscordActivityButton2EnabledKey = booleanPreferencesKey("discordActivityButton2Enabled")
+val DiscordShowWhenPausedKey = booleanPreferencesKey("discordShowWhenPaused")
+val DiscordActivityTypeKey = stringPreferencesKey("discordActivityType")
+val DiscordPresenceIntervalValueKey = intPreferencesKey("discordPresenceIntervalValue")
+val DiscordPresenceIntervalUnitKey = stringPreferencesKey("discordPresenceIntervalUnit")
+val DiscordPresenceStatusKey = stringPreferencesKey("discordPresenceStatus")
+val DiscordActivityPlatformKey = stringPreferencesKey("discordActivityPlatform")

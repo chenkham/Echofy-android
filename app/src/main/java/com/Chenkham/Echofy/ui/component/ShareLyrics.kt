@@ -1,4 +1,4 @@
-﻿package com.Chenkham.Echofy.ui.component
+package com.Chenkham.Echofy.ui.component
 
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateFloatAsState
@@ -222,72 +222,6 @@ val colorPresets = listOf(
 )
 
 
-@Composable
-fun rememberAdjustedFontSize(
-    text: String,
-    maxWidth: Dp,
-    maxHeight: Dp,
-    density: Density,
-    initialFontSize: TextUnit = 20.sp,
-    minFontSize: TextUnit = 14.sp,
-    style: TextStyle = TextStyle.Default,
-    textMeasurer: androidx.compose.ui.text.TextMeasurer? = null
-): TextUnit {
-    val measurer = textMeasurer ?: rememberTextMeasurer()
-
-    var calculatedFontSize by remember(text, maxWidth, maxHeight, style, density) {
-        val initialSize = when {
-            text.length < 30 -> (initialFontSize.value * 1.1f).sp
-            text.length < 60 -> initialFontSize
-            text.length < 120 -> (initialFontSize.value * 0.85f).sp
-            text.length < 200 -> (initialFontSize.value * 0.7f).sp
-            else -> (initialFontSize.value * 0.6f).sp
-        }
-        mutableStateOf(initialSize)
-    }
-
-    LaunchedEffect(key1 = text, key2 = maxWidth, key3 = maxHeight) {
-        val targetWidthPx = with(density) { maxWidth.toPx() * 0.85f }
-        val targetHeightPx = with(density) { maxHeight.toPx() * 0.8f }
-
-        if (text.isBlank()) {
-            calculatedFontSize = minFontSize
-            return@LaunchedEffect
-        }
-
-        var minSize = minFontSize.value
-        var maxSize = (initialFontSize.value * 1.2f)
-        var bestFit = minSize
-        var iterations = 0
-
-        while (minSize <= maxSize && iterations < 20) {
-            iterations++
-            val midSize = (minSize + maxSize) / 2
-            val midSizeSp = midSize.sp
-
-            val result = measurer.measure(
-                text = AnnotatedString(text),
-                style = style.copy(
-                    fontSize = midSizeSp,
-                    fontWeight = FontWeight.ExtraBold,
-                    lineHeight = (midSize * 1.3f).sp,
-                    letterSpacing = 0.3.sp
-                )
-            )
-
-            if (result.size.width <= targetWidthPx && result.size.height <= targetHeightPx) {
-                bestFit = midSize
-                minSize = midSize + 0.5f
-            } else {
-                maxSize = midSize - 0.5f
-            }
-        }
-
-        calculatedFontSize = if (bestFit < minFontSize.value) minFontSize else bestFit.sp
-    }
-
-    return calculatedFontSize
-}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

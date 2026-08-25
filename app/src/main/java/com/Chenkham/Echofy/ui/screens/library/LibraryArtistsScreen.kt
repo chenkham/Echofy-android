@@ -167,7 +167,7 @@ fun LibraryArtistsScreen(
             Text(
                 text = pluralStringResource(R.plurals.n_artist, artists.size, artists.size),
                 style = MaterialTheme.typography.titleSmall,
-                color = MaterialTheme.colorScheme.secondary,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
 
             IconButton(
@@ -184,6 +184,7 @@ fun LibraryArtistsScreen(
                                 LibraryViewType.GRID -> R.drawable.grid_view
                             },
                         ),
+                    tint = MaterialTheme.colorScheme.onSurface,
                     contentDescription = null,
                 )
             }

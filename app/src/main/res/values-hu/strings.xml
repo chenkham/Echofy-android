@@ -345,7 +345,7 @@
     <string name="backup_create_failed">MentÃ©s sikertelen</string>
     <string name="restore_failed">MentÃ©s visszaÃ¡llÃ­tÃ¡sa sikertelen</string>
     <string name="discord_integration">Discord integrÃ¡ciÃ³</string>
-    <string name="discord_information">Az Echofy a KizzyRPC kÃ¶nyvtÃ¡rat hasznÃ¡lja a Discord fiÃ³k stÃ¡tusz megvÃ¡ltoztatÃ¡sÃ¡hoz. Ehhez szorosan hozzÃ¡jÃ¡rul a Discord Gateway kapcsolat, amely szigorÃºan vÃ©ve a Discord felhasznÃ¡lÃ¡si feltÃ©telek megszegÃ©sekÃ©nt foghatÃ³ fel. HabÃ¡r nincs ismert fiÃ³k tiltÃ¡si eset ilyen okbÃ³l kifolyÃ³lag, csak sajÃ¡t felelÅ‘ssÃ©gre ajÃ¡nlott. Az OpenTunne csak a tokenjÃ©t fogja kinyerni, minden mÃ¡s helyileg kerÃ¼l tÃ¡rolÃ¡sra.</string>
+    <string name="discord_information">Az Echofy a KizzyRPC kÃ¶nyvtÃ¡rat hasznÃ¡lja a Discord fiÃ³k stÃ¡tusz megvÃ¡ltoztatÃ¡sÃ¡hoz. Ehhez szorosan hozzÃ¡jÃ¡rul a Discord Gateway kapcsolat, amely szigorÃºan vÃ©ve a Discord felhasznÃ¡lÃ¡si feltÃ©telek megszegÃ©sekÃ©nt foghatÃ³ fel. HabÃ¡r nincs ismert fiÃ³k tiltÃ¡si eset ilyen okbÃ³l kifolyÃ³lag, csak sajÃ¡t felelÅ‘ssÃ©gre ajÃ¡nlott. Az Echofy csak a tokenjÃ©t fogja kinyerni, minden mÃ¡s helyileg kerÃ¼l tÃ¡rolÃ¡sra.</string>
     <string name="dismiss">Elrejt</string>
     <string name="options">OpciÃ³k</string>
     <string name="preview">ElÅ‘nÃ©zet</string>

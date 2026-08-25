@@ -354,7 +354,7 @@
     <string name="backup_create_failed">"KhÃ´ng thá»ƒ táº¡o báº£n sao lÆ°u"</string>
     <string name="restore_failed">"KhÃ´i phá»¥c báº£n sao lÆ°u tháº¥t báº¡i"</string>
     <string name="discord_integration">"TÃ­ch há»£p Discord"</string>
-    <string name="discord_information">"Echofy sá»­ dá»¥ng thÆ° viá»‡n KizzyRPC Ä‘á»ƒ thiáº¿t láº­p tráº¡ng thÃ¡i tÃ i khoáº£n Discord cá»§a báº¡n. Viá»‡c nÃ y liÃªn quan Ä‘áº¿n viá»‡c sá»­ dá»¥ng káº¿t ná»‘i Discord Gateway, cÃ³ thá»ƒ bá»‹ coi lÃ  vi pháº¡m Äiá»u khoáº£n Dá»‹ch vá»¥ cá»§a Discord. Tuy nhiÃªn, chÆ°a cÃ³ trÆ°á»ng há»£p nÃ o tÃ i khoáº£n ngÆ°á»i dÃ¹ng bá»‹ táº¡m ngÆ°ng vÃ¬ lÃ½ do nÃ y. Vui lÃ²ng tá»± chá»‹u rá»§i ro khi sá»­ dá»¥ng. OpenTunne sáº½ chá»‰ trÃ­ch xuáº¥t token cá»§a báº¡n, cÃ²n láº¡i má»i thá»© khÃ¡c sáº½ Ä‘Æ°á»£c lÆ°u trá»¯ cá»¥c bá»™."</string>
+    <string name="discord_information">"Echofy sá»­ dá»¥ng thÆ° viá»‡n KizzyRPC Ä‘á»ƒ thiáº¿t láº­p tráº¡ng thÃ¡i tÃ i khoáº£n Discord cá»§a báº¡n. Viá»‡c nÃ y liÃªn quan Ä‘áº¿n viá»‡c sá»­ dá»¥ng káº¿t ná»‘i Discord Gateway, cÃ³ thá»ƒ bá»‹ coi lÃ  vi pháº¡m Äiá»u khoáº£n Dá»‹ch vá»¥ cá»§a Discord. Tuy nhiÃªn, chÆ°a cÃ³ trÆ°á»ng há»£p nÃ o tÃ i khoáº£n ngÆ°á»i dÃ¹ng bá»‹ táº¡m ngÆ°ng vÃ¬ lÃ½ do nÃ y. Vui lÃ²ng tá»± chá»‹u rá»§i ro khi sá»­ dá»¥ng. Echofy sáº½ chá»‰ trÃ­ch xuáº¥t token cá»§a báº¡n, cÃ²n láº¡i má»i thá»© khÃ¡c sáº½ Ä‘Æ°á»£c lÆ°u trá»¯ cá»¥c bá»™."</string>
     <string name="dismiss">"Bá» qua"</string>
     <string name="options">"TÃ¹y chá»n"</string>
     <string name="preview">"Xem trÆ°á»›c"</string>

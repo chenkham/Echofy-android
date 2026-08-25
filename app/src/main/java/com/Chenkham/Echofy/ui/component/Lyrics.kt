@@ -125,6 +125,7 @@ import androidx.compose.ui.zIndex
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
+import androidx.datastore.preferences.core.edit
 import androidx.media3.common.C
 import androidx.media3.common.Player
 import androidx.media3.common.Player.STATE_ENDED
@@ -137,7 +138,11 @@ import com.Chenkham.Echofy.constants.AnimateLyricsKey
 import com.Chenkham.Echofy.constants.DarkModeKey
 import com.Chenkham.Echofy.constants.LyricsClickKey
 import com.Chenkham.Echofy.constants.LyricsScrollKey
+import com.Chenkham.Echofy.constants.lyricsSyncOffsetKey
 import com.Chenkham.Echofy.constants.LyricsTextPositionKey
+import com.Chenkham.Echofy.constants.HighContrastLyricsKey
+import com.Chenkham.Echofy.constants.ReduceMotionKey
+import com.Chenkham.Echofy.constants.CacheTranslationsKey
 import com.Chenkham.Echofy.constants.PlayerBackgroundStyle
 import com.Chenkham.Echofy.constants.PlayerBackgroundStyleKey
 import com.Chenkham.Echofy.constants.PlayerLayoutStyle
@@ -158,6 +163,7 @@ import com.Chenkham.Echofy.lyrics.LyricsUtils.parseLyrics
 import com.Chenkham.Echofy.ui.component.shimmer.ShimmerHost
 import com.Chenkham.Echofy.ui.component.shimmer.TextPlaceholder
 import com.Chenkham.Echofy.utils.LyricsTranslationService
+import com.Chenkham.Echofy.utils.dataStore
 import com.Chenkham.Echofy.ui.menu.LyricsMenu
 import com.Chenkham.Echofy.ui.screens.settings.DarkMode
 import com.Chenkham.Echofy.ui.screens.settings.LyricsPosition
@@ -168,9 +174,12 @@ import com.Chenkham.Echofy.utils.rememberPreference
 import dagger.hilt.android.EntryPointAccessors
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import java.util.Locale
 import me.saket.squiggles.SquigglySlider
 import kotlin.time.Duration.Companion.seconds
 
@@ -196,7 +205,18 @@ fun Lyrics(
     val savedLyricsTextPosition by rememberEnumPreference(LyricsTextPositionKey, LyricsPosition.CENTER)
     val changeLyrics by rememberPreference(LyricsClickKey, true)
     val scrollLyrics by rememberPreference(LyricsScrollKey, true)
-    val animateLyrics by rememberPreference(AnimateLyricsKey, true)
+    val animateLyricsPref by rememberPreference(AnimateLyricsKey, true)
+    val reduceMotion by rememberPreference(ReduceMotionKey, false)
+    // Reduce motion is a global accessibility override, so it wins over the lyrics toggle.
+    val animateLyrics = animateLyricsPref && !reduceMotion
+    val highContrastLyrics by rememberPreference(HighContrastLyricsKey, false)
+    val cacheTranslations by rememberPreference(CacheTranslationsKey, true)
+    LaunchedEffect(cacheTranslations) {
+        LyricsTranslationService.cachingEnabled = cacheTranslations
+        if (!cacheTranslations) LyricsTranslationService.clearCache()
+    }
+    // Larger type when the user asks for high contrast lyrics.
+    val lyricsFontSize = if (highContrastLyrics) 32.sp else 25.sp
 
     var showLyrics by rememberPreference(ShowLyricsKey, defaultValue = false)
 
@@ -264,8 +284,22 @@ fun Lyrics(
     }
     var isLoadingLyrics by remember(currentSongId) { mutableStateOf(false) }
     var refetchTrigger by remember { mutableIntStateOf(0) } // Increment to trigger refetch
+    // Distinct from refetchTrigger: re-reads the database without forcing a network
+    // refetch. Picking lyrics from search used to bump refetchTrigger, which skipped the
+    // database and overwrote the user's choice with whatever the providers returned.
+    var reloadTrigger by remember { mutableIntStateOf(0) }
     var showProviderDialog by remember { mutableStateOf(false) } // Provider selector dialog
     var showLyricsMenuDialog by remember { mutableStateOf(false) } // 3-dot lyrics menu dialog
+    var showSyncDialog by remember { mutableStateOf(false) } // Lyrics sync offset dialog
+    // Per-song lyrics sync offset in ms. Positive values make lyrics appear earlier.
+    var syncOffsetMs by remember(currentSongId) { mutableLongStateOf(0L) }
+
+    LaunchedEffect(currentSongId) {
+        val songId = currentSongId ?: return@LaunchedEffect
+        syncOffsetMs = context.dataStore.data
+            .map { it[lyricsSyncOffsetKey(songId)] ?: 0L }
+            .first()
+    }
     var selectedProviderIndex by rememberSaveable { mutableIntStateOf(0) } // Current provider
     val providerNames = remember { listOf("Musixmatch", "LrcLib", "KuGou", "YouTube") }
 
@@ -313,10 +347,10 @@ fun Lyrics(
         }
     }
 
-    LaunchedEffect(currentSongId, refetchTrigger) {
+    LaunchedEffect(currentSongId, refetchTrigger, reloadTrigger) {
         currentSongId?.let { songId ->
-            // Check cache first (unless refetching)
-            if (lyricsCache.containsKey(songId) && refetchTrigger == 0) {
+            // Check cache first (unless refetching or reloading a user selection)
+            if (lyricsCache.containsKey(songId) && refetchTrigger == 0 && reloadTrigger == 0) {
                 currentLyricsEntity = lyricsCache[songId]
                 if (currentProvider == null) currentProvider = "Cached"
                 return@LaunchedEffect
@@ -327,7 +361,8 @@ fun Lyrics(
 
            withContext(Dispatchers.IO) {
                 try {
-                    // If refetching, skip database cache
+                    // If refetching, skip database cache. A reload must read the database,
+                    // because that is where the freshly picked lyrics were just written.
                     val existingLyrics = if (refetchTrigger == 0) {
                         try {
                             database.getLyrics(songId)
@@ -582,7 +617,7 @@ fun Lyrics(
         }
     }
 
-    LaunchedEffect(lyrics) {
+    LaunchedEffect(lyrics, syncOffsetMs) {
         if (lyrics.isNullOrEmpty() || !lyrics.startsWith("[")) {
             currentLineIndex = -1
             return@LaunchedEffect
@@ -593,7 +628,8 @@ fun Lyrics(
             isSeeking = sliderPos != null
             currentLineIndex = findCurrentLineIndex(
                 lines,
-                sliderPos ?: playerConnection.player.currentPosition
+                sliderPos ?: playerConnection.player.currentPosition,
+                syncOffsetMs
             )
         }
     }
@@ -1444,11 +1480,11 @@ fun Lyrics(
                                 ).value
                                 Text(
                                     text = item.text,
-                                    fontSize = 25.sp,
+                                    fontSize = lyricsFontSize,
                                     style = if (isActiveLine) {
                                         TextStyle(
                                             brush = activeLyricsBrush,
-                                            fontSize = 25.sp,
+                                            fontSize = lyricsFontSize,
                                             fontWeight = FontWeight.ExtraBold,
                                             textAlign = when (lyricsTextPosition) {
                                                 LyricsPosition.LEFT -> TextAlign.Left
@@ -1459,7 +1495,7 @@ fun Lyrics(
                                     } else if (isElapsedLine) {
                                         TextStyle(
                                             brush = elapsedLyricsBrush,
-                                            fontSize = 25.sp,
+                                            fontSize = lyricsFontSize,
                                             fontWeight = FontWeight.ExtraBold,
                                             textAlign = when (lyricsTextPosition) {
                                                 LyricsPosition.LEFT -> TextAlign.Left
@@ -1470,7 +1506,7 @@ fun Lyrics(
                                     } else {
                                         TextStyle(
                                             color = inactiveColor,
-                                            fontSize = 25.sp,
+                                            fontSize = lyricsFontSize,
                                             fontWeight = FontWeight.Bold,
                                             textAlign = when (lyricsTextPosition) {
                                                 LyricsPosition.LEFT -> TextAlign.Left
@@ -1805,10 +1841,42 @@ fun Lyrics(
                     lyricsProvider = { currentLyricsEntity },
                     mediaMetadataProvider = { metadata },
                     onDismiss = { showLyricsMenuDialog = false },
-                    onLyricsUpdated = { refetchTrigger++ }
+                    onLyricsUpdated = {
+                        // Drop the in-memory cache so the database read below wins, then
+                        // reload from the database instead of refetching from the network.
+                        currentSongId?.let { songId ->
+                            lyricsCache = lyricsCache.toMutableMap().also { it.remove(songId) }
+                        }
+                        reloadTrigger++
+                    },
+                    onAdjustSync = {
+                        showLyricsMenuDialog = false
+                        showSyncDialog = true
+                    }
                 )
             }
         }
+    }
+
+    if (showSyncDialog) {
+        LyricsSyncDialog(
+            offsetMs = syncOffsetMs,
+            onOffsetChange = { newOffset ->
+                syncOffsetMs = newOffset
+                currentSongId?.let { songId ->
+                    scope.launch(Dispatchers.IO) {
+                        context.dataStore.edit { prefs ->
+                            if (newOffset == 0L) {
+                                prefs.remove(lyricsSyncOffsetKey(songId))
+                            } else {
+                                prefs[lyricsSyncOffsetKey(songId)] = newOffset
+                            }
+                        }
+                    }
+                }
+            },
+            onDismiss = { showSyncDialog = false }
+        )
     }
 
     // Compact language picker dropdown for translation
@@ -1928,20 +1996,47 @@ fun Lyrics(
                                                 scope.launch {
                                                     try {
                                                         val lyricsLines = lines.map { it.text }
-                                                        val combinedText = lyricsLines.joinToString("\n")
-                                                        
-                                                        LyricsTranslationService.translate(combinedText, code)
+
+                                                        // Blank lines (notably the leading
+                                                        // HEAD_LYRICS_ENTRY) are stripped by the
+                                                        // translation API, so joining everything
+                                                        // and splitting the response shifted every
+                                                        // translation one line up. Translate only
+                                                        // the non-blank lines and map each result
+                                                        // back to its original index.
+                                                        val indexedLines = lyricsLines
+                                                            .withIndex()
+                                                            .filter { it.value.isNotBlank() }
+                                                        val combinedText = indexedLines
+                                                            .joinToString("\n") { it.value }
+
+                                                        LyricsTranslationService.translateCached(
+                                                            currentSongId.orEmpty(),
+                                                            combinedText,
+                                                            code,
+                                                        )
                                                             .onSuccess { translated ->
-                                                                val translatedList = translated.split("\n")
+                                                                val translatedList = translated.lines()
                                                                 val lineMap = mutableMapOf<Int, String>()
-                                                                lyricsLines.forEachIndexed { index, _ ->
-                                                                    if (index < translatedList.size) {
-                                                                        lineMap[index] = translatedList[index]
+                                                                if (translatedList.size == indexedLines.size) {
+                                                                    indexedLines.forEachIndexed { position, entry ->
+                                                                        lineMap[entry.index] =
+                                                                            translatedList[position]
                                                                     }
+                                                                    translatedLines = lineMap
+                                                                    translatedLyrics = translated
+                                                                    showTranslation = true
+                                                                } else {
+                                                                    // Line counts disagree, so any
+                                                                    // positional mapping would be
+                                                                    // misaligned again. Fail loudly
+                                                                    // instead of showing wrong pairs.
+                                                                    Toast.makeText(
+                                                                        context,
+                                                                        "Translation alignment failed, please try again",
+                                                                        Toast.LENGTH_SHORT
+                                                                    ).show()
                                                                 }
-                                                                translatedLines = lineMap
-                                                                translatedLyrics = translated
-                                                                showTranslation = true
                                                             }
                                                             .onFailure { e ->
                                                                 Toast.makeText(
@@ -2339,6 +2434,78 @@ private fun ShareLyricsDialog(
                             .padding(vertical = 8.dp, horizontal = 12.dp)
                     )
                 }
+            }
+        }
+    }
+}
+
+
+/**
+ * Lets the user nudge lyric timing when it drifts against the audio.
+ * Range is +/-10s in 0.5s steps; positive values make lyrics appear earlier.
+ */
+@Composable
+fun LyricsSyncDialog(
+    offsetMs: Long,
+    onOffsetChange: (Long) -> Unit,
+    onDismiss: () -> Unit,
+) {
+    val step = 500L
+    val range = 10_000L
+
+    DefaultDialog(
+        onDismiss = onDismiss,
+        title = { Text(stringResource(R.string.lyrics_sync_title)) },
+        buttons = {
+            TextButton(onClick = { onOffsetChange(0L) }) {
+                Text(stringResource(R.string.reset))
+            }
+            TextButton(onClick = onDismiss) {
+                Text(stringResource(android.R.string.ok))
+            }
+        },
+    ) {
+        Text(
+            text = when {
+                offsetMs > 0 -> stringResource(R.string.lyrics_sync_earlier, offsetMs / 1000f)
+                offsetMs < 0 -> stringResource(R.string.lyrics_sync_later, -offsetMs / 1000f)
+                else -> stringResource(R.string.lyrics_sync_none)
+            },
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            textAlign = TextAlign.Center,
+            modifier = Modifier.padding(bottom = 8.dp),
+        )
+
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(16.dp),
+        ) {
+            IconButton(
+                onClick = { onOffsetChange((offsetMs - step).coerceAtLeast(-range)) },
+                enabled = offsetMs > -range,
+            ) {
+                Icon(
+                    painter = painterResource(R.drawable.remove),
+                    contentDescription = stringResource(R.string.lyrics_sync_decrease),
+                )
+            }
+
+            Text(
+                text = String.format(Locale.US, "%+.1fs", offsetMs / 1000f),
+                style = MaterialTheme.typography.headlineSmall,
+                fontWeight = FontWeight.Medium,
+                color = MaterialTheme.colorScheme.onSurface,
+            )
+
+            IconButton(
+                onClick = { onOffsetChange((offsetMs + step).coerceAtMost(range)) },
+                enabled = offsetMs < range,
+            ) {
+                Icon(
+                    painter = painterResource(R.drawable.add),
+                    contentDescription = stringResource(R.string.lyrics_sync_increase),
+                )
             }
         }
     }

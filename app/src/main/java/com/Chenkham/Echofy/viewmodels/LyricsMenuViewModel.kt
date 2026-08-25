@@ -1,4 +1,12 @@
-﻿package com.Chenkham.Echofy.viewmodels
+﻿/*
+ * Echofy Project Original (2026)
+ * Arturo254 (github.com/Arturo254)
+ * Licensed Under GPL-3.0 | see git history for contributors
+ */
+
+
+
+package com.Chenkham.Echofy.viewmodels
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -7,13 +15,16 @@ import com.Chenkham.Echofy.db.entities.LyricsEntity
 import com.Chenkham.Echofy.lyrics.LyricsHelper
 import com.Chenkham.Echofy.lyrics.LyricsResult
 import com.Chenkham.Echofy.models.MediaMetadata
+import com.Chenkham.Echofy.utils.NetworkConnectivityObserver
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
+ 
 import javax.inject.Inject
 
 @HiltViewModel
@@ -22,10 +33,29 @@ class LyricsMenuViewModel
 constructor(
     private val lyricsHelper: LyricsHelper,
     val database: MusicDatabase,
+    private val networkConnectivity: NetworkConnectivityObserver,
 ) : ViewModel() {
     private var job: Job? = null
     val results = MutableStateFlow(emptyList<LyricsResult>())
     val isLoading = MutableStateFlow(false)
+
+    private val _isNetworkAvailable = MutableStateFlow(false)
+    val isNetworkAvailable: StateFlow<Boolean> = _isNetworkAvailable.asStateFlow()
+
+    init {
+        viewModelScope.launch {
+            networkConnectivity.networkStatus.collect { isConnected ->
+                _isNetworkAvailable.value = isConnected
+            }
+        }
+        
+        // Set initial state using synchronous check
+        _isNetworkAvailable.value = try {
+            networkConnectivity.isCurrentlyConnected()
+        } catch (e: Exception) {
+            true // Assume connected as fallback
+        }
+    }
 
     fun search(
         mediaId: String,
@@ -38,7 +68,7 @@ constructor(
         job?.cancel()
         job =
             viewModelScope.launch(Dispatchers.IO) {
-                lyricsHelper.getAllLyrics(mediaId, title, artist, duration) { result ->
+                lyricsHelper.getAllLyrics(mediaId, title, artist, null, duration) { result ->
                     results.update {
                         it + result
                     }
@@ -57,9 +87,23 @@ constructor(
         lyricsEntity: LyricsEntity?,
     ) {
         viewModelScope.launch(Dispatchers.IO) {
-            val lyrics = lyricsHelper.getLyrics(mediaMetadata)
+            try {
+                val lyrics = lyricsHelper.getLyrics(mediaMetadata)
+                database.query {
+                    lyricsEntity?.let(::delete)
+                    upsert(LyricsEntity(mediaMetadata.id, lyrics))
+                }
+            } catch (_: Exception) {
+            }
+        }
+    }
+
+    fun updateLyrics(
+        mediaMetadata: MediaMetadata,
+        lyrics: String,
+    ) {
+        viewModelScope.launch(Dispatchers.IO) {
             database.query {
-                lyricsEntity?.let(::delete)
                 upsert(LyricsEntity(mediaMetadata.id, lyrics))
             }
         }

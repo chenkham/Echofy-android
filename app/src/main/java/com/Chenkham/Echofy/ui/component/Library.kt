@@ -1,4 +1,4 @@
-﻿package com.Chenkham.Echofy.ui.component
+package com.Chenkham.Echofy.ui.component
 
 import android.content.Context
 import androidx.compose.foundation.ExperimentalFoundationApi
@@ -11,8 +11,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.navigation.NavController
-import com.Chenkham.innertube.models.PlaylistItem
-import com.Chenkham.innertube.models.WatchEndpoint
+import com.arturo254.opentune.innertube.models.PlaylistItem
+import com.arturo254.opentune.innertube.models.WatchEndpoint
 import com.Chenkham.Echofy.R
 import com.Chenkham.Echofy.db.entities.Album
 import com.Chenkham.Echofy.db.entities.Artist

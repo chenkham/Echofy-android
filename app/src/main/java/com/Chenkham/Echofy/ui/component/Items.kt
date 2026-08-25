@@ -1,4 +1,4 @@
-﻿@file:OptIn(ExperimentalFoundationApi::class)
+@file:OptIn(ExperimentalFoundationApi::class)
 
 package com.Chenkham.Echofy.ui.component
 
@@ -74,12 +74,12 @@ import coil.compose.AsyncImage
 import coil.compose.AsyncImagePainter
 import coil.request.CachePolicy
 import coil.request.ImageRequest
-import com.Chenkham.innertube.YouTube
-import com.Chenkham.innertube.models.AlbumItem
-import com.Chenkham.innertube.models.ArtistItem
-import com.Chenkham.innertube.models.PlaylistItem
-import com.Chenkham.innertube.models.SongItem
-import com.Chenkham.innertube.models.YTItem
+import com.arturo254.opentune.innertube.YouTube
+import com.arturo254.opentune.innertube.models.AlbumItem
+import com.arturo254.opentune.innertube.models.ArtistItem
+import com.arturo254.opentune.innertube.models.PlaylistItem
+import com.arturo254.opentune.innertube.models.SongItem
+import com.arturo254.opentune.innertube.models.YTItem
 import com.Chenkham.Echofy.LocalDatabase
 import com.Chenkham.Echofy.LocalDownloadUtil
 import com.Chenkham.Echofy.LocalPlayerConnection
@@ -102,6 +102,7 @@ import com.Chenkham.Echofy.utils.makeTimeString
 import com.Chenkham.Echofy.utils.reportException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -150,6 +151,7 @@ inline fun ListItem(
                 text = title,
                 fontSize = 14.sp,
                 fontWeight = FontWeight.Bold,
+                color = if (isActive) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
                 modifier =
@@ -186,7 +188,7 @@ fun ListItem(
         if (!subtitle.isNullOrEmpty()) {
             Text(
                 text = subtitle,
-                color = MaterialTheme.colorScheme.secondary,
+                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.85f),
                 fontSize = 12.sp,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
@@ -244,6 +246,7 @@ fun GridItem(
             text = title,
             style = MaterialTheme.typography.bodyLarge,
             fontWeight = FontWeight.Bold,
+            color = MaterialTheme.colorScheme.onSurface,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
             textAlign = TextAlign.Start,
@@ -306,6 +309,7 @@ fun SmallGridItem(
                 text = title,
                 style = MaterialTheme.typography.bodyMedium,
                 fontWeight = FontWeight.Medium,
+                color = MaterialTheme.colorScheme.onSurface,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
                 textAlign = TextAlign.Start,
@@ -331,7 +335,7 @@ fun SongListItem(
         if (showLikedIcon && song.song.liked) {
             Icon(
                 painter = painterResource(R.drawable.favorite),
-                contentDescription = null,
+                contentDescription = "Liked",
                 tint = MaterialTheme.colorScheme.error,
                 modifier =
                     Modifier
@@ -342,7 +346,7 @@ fun SongListItem(
         if (showInLibraryIcon && song.song.inLibrary != null) {
             Icon(
                 painter = painterResource(R.drawable.library_add_check),
-                contentDescription = null,
+                contentDescription = "In library",
                 modifier =
                     Modifier
                         .size(18.dp)
@@ -356,7 +360,7 @@ fun SongListItem(
                 STATE_COMPLETED ->
                     Icon(
                         painter = painterResource(R.drawable.offline),
-                        contentDescription = null,
+                        contentDescription = "Downloaded",
                         modifier =
                             Modifier
                                 .size(18.dp)
@@ -1448,8 +1452,14 @@ fun YouTubeListItem(
             )
         }
         if (item is SongItem) {
-            val downloads by LocalDownloadUtil.current.downloads.collectAsState()
-            when (downloads[item.id]?.state) {
+            // Subscribing to the whole downloads map made every visible row recompose whenever
+            // any download progressed. getDownload() scopes the subscription to this song, so
+            // a row only recomposes when its own download state changes.
+            val downloadUtil = LocalDownloadUtil.current
+            val download by remember(item.id, downloadUtil) {
+                downloadUtil.getDownload(item.id).distinctUntilChanged()
+            }.collectAsState(initial = null)
+            when (download?.state) {
                 STATE_COMPLETED ->
                     Icon(
                         painter = painterResource(R.drawable.offline),
@@ -1819,6 +1829,7 @@ fun YouTubeGridItem(
             text = item.title,
             style = MaterialTheme.typography.bodyLarge,
             fontWeight = FontWeight.Bold,
+            color = MaterialTheme.colorScheme.onSurface,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
             textAlign = if (item is ArtistItem) TextAlign.Center else TextAlign.Start,

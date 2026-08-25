@@ -19,7 +19,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
-import com.Chenkham.innertube.YouTube
+import com.arturo254.opentune.innertube.YouTube
 import com.Chenkham.Echofy.LocalDatabase
 import com.Chenkham.Echofy.R
 import com.Chenkham.Echofy.db.entities.Playlist
@@ -48,6 +48,7 @@ fun CreatePlaylistDialog(
     val workerScope = remember { CoroutineScope(Dispatchers.IO) }
     var syncedPlaylist by remember { mutableStateOf(false) }
     
+    
     val context = LocalContext.current
     val innerTubeCookie by context.dataStore.data
         .map { it[InnerTubeCookieKey] }
@@ -55,7 +56,7 @@ fun CreatePlaylistDialog(
     
     val isLoggedIn = !innerTubeCookie.isNullOrEmpty()
     TextFieldDialog(
-        icon = { Icon(painter = painterResource(R.drawable.add), contentDescription = null) },
+        icon = { Icon(painter = painterResource(R.drawable.add), contentDescription = stringResource(R.string.create_playlist)) },
         title = { Text(text = stringResource(R.string.create_playlist)) },
         initialTextFieldValue = TextFieldValue(initialTextFieldValue ?: ""),
         onDismiss = onDismiss,

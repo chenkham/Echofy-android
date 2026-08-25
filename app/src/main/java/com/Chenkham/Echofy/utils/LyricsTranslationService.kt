@@ -22,6 +22,36 @@ import java.net.URLEncoder
 object LyricsTranslationService {
     
     private const val API_URL = "https://translate.googleapis.com/translate_a/single"
+
+    /**
+     * Recently translated lyrics, keyed by song id and target language. Re-opening the same
+     * track avoids a network round trip (and the visible spinner) when caching is enabled.
+     */
+    private val translationCache = android.util.LruCache<String, String>(32)
+
+    /** Whether [translateCached] should consult [translationCache]; mirrors the user setting. */
+    @Volatile
+    var cachingEnabled: Boolean = true
+
+    /**
+     * Translates [text] and remembers the result against [songId] so repeat views are instant.
+     * Falls straight through to [translate] when caching is switched off.
+     */
+    suspend fun translateCached(
+        songId: String,
+        text: String,
+        targetLang: String,
+    ): Result<String> {
+        if (!cachingEnabled) return translate(text, targetLang)
+
+        val key = "$songId::$targetLang"
+        translationCache.get(key)?.let { return Result.success(it) }
+
+        return translate(text, targetLang).onSuccess { translationCache.put(key, it) }
+    }
+
+    /** Drops every cached translation, used when the user turns caching off. */
+    fun clearCache() = translationCache.evictAll()
     
     private val client = HttpClient {
         expectSuccess = false

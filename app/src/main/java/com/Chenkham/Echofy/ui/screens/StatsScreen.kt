@@ -2,70 +2,51 @@ package com.Chenkham.Echofy.ui.screens
 
 import android.content.Context
 import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.WindowInsetsSides
-import androidx.compose.foundation.layout.asPaddingValues
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.only
-import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
-import androidx.compose.material3.LinearProgressIndicator
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
-import androidx.compose.material3.TopAppBar
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.setValue
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
-import androidx.compose.ui.unit.dp
-import androidx.core.graphics.drawable.toBitmap
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
-import androidx.core.content.FileProvider
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
-import com.Chenkham.innertube.models.WatchEndpoint
+import coil.compose.AsyncImage
+import com.arturo254.opentune.innertube.models.WatchEndpoint
 import com.Chenkham.Echofy.LocalPlayerAwareWindowInsets
 import com.Chenkham.Echofy.LocalPlayerConnection
 import com.Chenkham.Echofy.R
 import com.Chenkham.Echofy.constants.StatPeriod
+import com.Chenkham.Echofy.db.entities.Artist
 import com.Chenkham.Echofy.extensions.toMediaItem
 import com.Chenkham.Echofy.extensions.togglePlayPause
 import com.Chenkham.Echofy.models.toMediaMetadata
 import com.Chenkham.Echofy.playback.queues.ListQueue
 import com.Chenkham.Echofy.playback.queues.YouTubeQueue
+import com.Chenkham.Echofy.ui.component.AnimatedMusicalMinion
 import com.Chenkham.Echofy.ui.component.ChoiceChipsRow
-import com.Chenkham.Echofy.ui.component.HideOnScrollFAB
 import com.Chenkham.Echofy.ui.component.IconButton
-import com.Chenkham.Echofy.ui.component.LocalAlbumsGrid
-import com.Chenkham.Echofy.ui.component.LocalArtistsGrid
 import com.Chenkham.Echofy.ui.component.LocalMenuState
-import com.Chenkham.Echofy.ui.component.LocalSongsGrid
-import com.Chenkham.Echofy.ui.component.NavigationTitle
-import com.Chenkham.Echofy.ui.menu.AlbumMenu
-import com.Chenkham.Echofy.ui.menu.ArtistMenu
 import com.Chenkham.Echofy.ui.menu.SongMenu
 import com.Chenkham.Echofy.ui.utils.backToMain
 import com.Chenkham.Echofy.utils.joinByBullet
@@ -73,6 +54,13 @@ import com.Chenkham.Echofy.utils.makeTimeString
 import com.Chenkham.Echofy.viewmodels.StatsViewModel
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
+
+enum class OptionStats {
+    CONTINUOUS,
+    WEEKS,
+    MONTHS,
+    YEARS,
+}
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
@@ -91,13 +79,14 @@ fun StatsScreen(
     val mostPlayedSongs by viewModel.mostPlayedSongs.collectAsState()
     val mostPlayedSongsStats by viewModel.mostPlayedSongsStats.collectAsState()
     val mostPlayedArtists by viewModel.mostPlayedArtists.collectAsState()
-    val mostPlayedAlbums by viewModel.mostPlayedAlbums.collectAsState()
     val firstEvent by viewModel.firstEvent.collectAsState()
     val currentDate = LocalDateTime.now()
 
     val coroutineScope = rememberCoroutineScope()
     val lazyListState = rememberLazyListState()
     val selectedOption by viewModel.selectedOption.collectAsState()
+
+    var showInsightDialog by remember { mutableStateOf(false) }
 
     val weeklyDates =
         if (currentDate != null && firstEvent != null) {
@@ -144,7 +133,7 @@ fun StatsScreen(
                     val formattedDate = formatter.format(date)
                     val text =
                         if (date.year != currentDate.year) {
-                            "$formattedDate ${date.year}"
+                            "$formattedDate, ${date.year}"
                         } else {
                             formattedDate
                         }
@@ -157,313 +146,475 @@ fun StatsScreen(
     val yearlyDates =
         if (currentDate != null && firstEvent != null) {
             generateSequence(
-                currentDate
-                    .plusYears(1)
-                    .withDayOfYear(1)
-                    .minusDays(1),
+                currentDate.plusYears(1).withDayOfYear(1).minusDays(1)
             ) { it.minusYears(1) }
                 .takeWhile {
                     it.isAfter(
                         firstEvent
                             ?.event
-                            ?.timestamp,
+                            ?.timestamp
+                            ?.withDayOfYear(1),
                     )
                 }.mapIndexed { index, date ->
-                    Pair(index, "${date.year}")
+                    Pair(index, date.year.toString())
                 }.toList()
         } else {
             emptyList()
         }
 
-    Box(modifier = Modifier.fillMaxSize()) {
-        LazyColumn(
-            state = lazyListState,
-            contentPadding = LocalPlayerAwareWindowInsets.current
-                .only(WindowInsetsSides.Horizontal + WindowInsetsSides.Bottom)
-                .asPaddingValues(),
-            modifier = Modifier.windowInsetsPadding(
-                LocalPlayerAwareWindowInsets.current.only(WindowInsetsSides.Top)
+    val favoriteArtist = mostPlayedArtists.firstOrNull()
+    val favoriteSong = mostPlayedSongsStats.firstOrNull()
+    val totalTimeListenedMs = remember(mostPlayedSongsStats) {
+        mostPlayedSongsStats.sumOf { it.timeListened ?: 0L }
+    }
+
+    if (showInsightDialog) {
+        EchofyInsightDialog(
+            topSongs = mostPlayedSongsStats,
+            topArtists = mostPlayedArtists,
+            totalListenTimeMs = totalTimeListenedMs,
+            onDismiss = { showInsightDialog = false }
+        )
+    }
+
+    Scaffold(
+        containerColor = Color.Transparent,
+        topBar = {
+            TopAppBar(
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = Color.Transparent,
+                    scrolledContainerColor = Color.Transparent
+                ),
+                title = {
+                    Text(
+                        text = "Stats",
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                },
+                navigationIcon = {
+                    IconButton(
+                        onClick = navController::navigateUp,
+                        onLongClick = navController::backToMain,
+                    ) {
+                        Icon(
+                            painter = painterResource(R.drawable.arrow_back),
+                            contentDescription = "Back",
+                            tint = MaterialTheme.colorScheme.onSurface
+                        )
+                    }
+                },
+                actions = {
+                    // OpenTune Note-Type Insight Action Button
+                    IconButton(onClick = { showInsightDialog = true }) {
+                        Icon(
+                            painter = painterResource(R.drawable.calendar_today),
+                            contentDescription = "Insight",
+                            tint = MaterialTheme.colorScheme.onSurface
+                        )
+                    }
+                }
             )
+        },
+    ) { paddingValues ->
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(paddingValues),
         ) {
-            item(key = "choiceChips") {
-                ChoiceChipsRow(
-                    chips =
-                        when (selectedOption) {
-                            OptionStats.WEEKS -> weeklyDates
-                            OptionStats.MONTHS -> monthlyDates
-                            OptionStats.YEARS -> yearlyDates
-                            OptionStats.CONTINUOUS -> {
-                                listOf(
-                                    StatPeriod.WEEK_1.ordinal to pluralStringResource(
-                                        R.plurals.n_week,
-                                        1,
-                                        1
-                                    ),
-                                    StatPeriod.MONTH_1.ordinal to pluralStringResource(
-                                        R.plurals.n_month,
-                                        1,
-                                        1
-                                    ),
-                                    StatPeriod.MONTH_3.ordinal to pluralStringResource(
-                                        R.plurals.n_month,
-                                        3,
-                                        3
-                                    ),
-                                    StatPeriod.MONTH_6.ordinal to pluralStringResource(
-                                        R.plurals.n_month,
-                                        6,
-                                        6
-                                    ),
-                                    StatPeriod.YEAR_1.ordinal to pluralStringResource(
-                                        R.plurals.n_year,
-                                        1,
-                                        1
-                                    ),
-                                    StatPeriod.ALL.ordinal to stringResource(R.string.filter_all),
+            LazyColumn(
+                state = lazyListState,
+                contentPadding = LocalPlayerAwareWindowInsets.current.asPaddingValues(),
+                verticalArrangement = Arrangement.spacedBy(16.dp),
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(horizontal = 16.dp),
+            ) {
+                // Animated Musical Minion Mascot (Dancing in the top gap)
+                item(key = "animatedMinion") {
+                    AnimatedMusicalMinion()
+                }
+
+                // Filter Choice Chips (Continuous ⌵ | 1 week | 1 month | 3 months ...)
+                item(key = "choiceChips") {
+                    ChoiceChipsRow(
+                        chips =
+                            when (selectedOption) {
+                                OptionStats.WEEKS -> weeklyDates
+                                OptionStats.MONTHS -> monthlyDates
+                                OptionStats.YEARS -> yearlyDates
+                                OptionStats.CONTINUOUS -> {
+                                    listOf(
+                                        StatPeriod.WEEK_1.ordinal to pluralStringResource(
+                                            R.plurals.n_week,
+                                            1,
+                                            1
+                                        ),
+                                        StatPeriod.MONTH_1.ordinal to pluralStringResource(
+                                            R.plurals.n_month,
+                                            1,
+                                            1
+                                        ),
+                                        StatPeriod.MONTH_3.ordinal to pluralStringResource(
+                                            R.plurals.n_month,
+                                            3,
+                                            3
+                                        ),
+                                        StatPeriod.MONTH_6.ordinal to pluralStringResource(
+                                            R.plurals.n_month,
+                                            6,
+                                            6
+                                        ),
+                                        StatPeriod.YEAR_1.ordinal to pluralStringResource(
+                                            R.plurals.n_year,
+                                            1,
+                                            1
+                                        ),
+                                        StatPeriod.ALL.ordinal to stringResource(R.string.filter_all),
+                                    )
+                                }
+                            },
+                        options =
+                            listOf(
+                                OptionStats.CONTINUOUS to stringResource(id = R.string.continuous),
+                                OptionStats.WEEKS to stringResource(R.string.weeks),
+                                OptionStats.MONTHS to stringResource(R.string.months),
+                                OptionStats.YEARS to stringResource(R.string.years),
+                            ),
+                        selectedOption = selectedOption,
+                        onSelectionChange = {
+                            viewModel.selectedOption.value = it
+                            viewModel.indexChips.value = 0
+                        },
+                        currentValue = indexChips,
+                        onValueUpdate = { viewModel.indexChips.value = it },
+                    )
+                }
+
+                // 1. Favourite Artist Card (OpenTune layout: media_1787641439229.png)
+                if (favoriteArtist != null) {
+                    item(key = "favArtistCard") {
+                        Card(
+                            shape = RoundedCornerShape(20.dp),
+                            colors = CardDefaults.cardColors(
+                                containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.45f)
+                            ),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable {
+                                    navController.navigate("artist/${favoriteArtist.id}")
+                                }
+                        ) {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(16.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                AsyncImage(
+                                    model = favoriteArtist.artist.thumbnailUrl,
+                                    contentDescription = favoriteArtist.artist.name,
+                                    contentScale = ContentScale.Crop,
+                                    modifier = Modifier
+                                        .size(68.dp)
+                                        .clip(CircleShape)
+                                        .background(MaterialTheme.colorScheme.surfaceContainerHigh)
+                                )
+
+                                Spacer(modifier = Modifier.width(16.dp))
+
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Text(
+                                        text = "Your Favourite Artist",
+                                        style = MaterialTheme.typography.labelMedium,
+                                        fontWeight = FontWeight.Medium,
+                                        color = MaterialTheme.colorScheme.primary
+                                    )
+                                    Spacer(modifier = Modifier.height(2.dp))
+                                    Text(
+                                        text = favoriteArtist.artist.name,
+                                        style = MaterialTheme.typography.titleLarge,
+                                        fontWeight = FontWeight.Bold,
+                                        color = MaterialTheme.colorScheme.onSurface,
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis
+                                    )
+                                    Spacer(modifier = Modifier.height(2.dp))
+                                    Text(
+                                        text = "${favoriteArtist.songCount} songs played • ${makeTimeString(favoriteArtist.timeListened?.toLong()?.times(1000L))}",
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+
+                // 2. Favourite Song Card (OpenTune layout: media_1787641439229.png)
+                if (favoriteSong != null) {
+                    item(key = "favSongCard") {
+                        Card(
+                            shape = RoundedCornerShape(20.dp),
+                            colors = CardDefaults.cardColors(
+                                containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.45f)
+                            ),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable {
+                                    playerConnection.playQueue(
+                                        YouTubeQueue(
+                                            endpoint = WatchEndpoint(favoriteSong.id),
+                                            preloadItem = mostPlayedSongs.firstOrNull()?.toMediaMetadata(),
+                                        ),
+                                    )
+                                }
+                        ) {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(16.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                AsyncImage(
+                                    model = favoriteSong.thumbnailUrl,
+                                    contentDescription = favoriteSong.title,
+                                    contentScale = ContentScale.Crop,
+                                    modifier = Modifier
+                                        .size(68.dp)
+                                        .clip(CircleShape)
+                                        .background(MaterialTheme.colorScheme.surfaceContainerHigh)
+                                )
+
+                                Spacer(modifier = Modifier.width(16.dp))
+
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Text(
+                                        text = "Your Favourite Song",
+                                        style = MaterialTheme.typography.labelMedium,
+                                        fontWeight = FontWeight.Medium,
+                                        color = MaterialTheme.colorScheme.primary
+                                    )
+                                    Spacer(modifier = Modifier.height(2.dp))
+                                    Text(
+                                        text = favoriteSong.title,
+                                        style = MaterialTheme.typography.titleLarge,
+                                        fontWeight = FontWeight.Bold,
+                                        color = MaterialTheme.colorScheme.onSurface,
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis
+                                    )
+                                    Spacer(modifier = Modifier.height(2.dp))
+                                    Text(
+                                        text = "${favoriteSong.songCountListened} plays • ${makeTimeString(favoriteSong.timeListened)}",
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+
+                // 3. Total Time Listened Section (OpenTune collage circle + big number)
+                if (totalTimeListenedMs > 0) {
+                    item(key = "totalTimeCard") {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 12.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            // Quadrant circle collage of top artists
+                            Box(
+                                modifier = Modifier
+                                    .size(136.dp)
+                                    .clip(CircleShape)
+                                    .background(MaterialTheme.colorScheme.surfaceContainerHigh)
+                            ) {
+                                val top4Artists = mostPlayedArtists.take(4)
+                                if (top4Artists.size >= 4) {
+                                    Column(modifier = Modifier.fillMaxSize()) {
+                                        Row(modifier = Modifier.weight(1f)) {
+                                            AsyncImage(
+                                                model = top4Artists[0].artist.thumbnailUrl,
+                                                contentDescription = null,
+                                                contentScale = ContentScale.Crop,
+                                                modifier = Modifier
+                                                    .weight(1f)
+                                                    .fillMaxHeight()
+                                            )
+                                            AsyncImage(
+                                                model = top4Artists[1].artist.thumbnailUrl,
+                                                contentDescription = null,
+                                                contentScale = ContentScale.Crop,
+                                                modifier = Modifier
+                                                    .weight(1f)
+                                                    .fillMaxHeight()
+                                            )
+                                        }
+                                        Row(modifier = Modifier.weight(1f)) {
+                                            AsyncImage(
+                                                model = top4Artists[2].artist.thumbnailUrl,
+                                                contentDescription = null,
+                                                contentScale = ContentScale.Crop,
+                                                modifier = Modifier
+                                                    .weight(1f)
+                                                    .fillMaxHeight()
+                                            )
+                                            AsyncImage(
+                                                model = top4Artists[3].artist.thumbnailUrl,
+                                                contentDescription = null,
+                                                contentScale = ContentScale.Crop,
+                                                modifier = Modifier
+                                                    .weight(1f)
+                                                    .fillMaxHeight()
+                                            )
+                                        }
+                                    }
+                                } else {
+                                    AsyncImage(
+                                        model = favoriteArtist?.artist?.thumbnailUrl ?: favoriteSong?.thumbnailUrl,
+                                        contentDescription = null,
+                                        contentScale = ContentScale.Crop,
+                                        modifier = Modifier.fillMaxSize()
+                                    )
+                                }
+                            }
+
+                            Spacer(modifier = Modifier.width(24.dp))
+
+                            Column {
+                                Text(
+                                    text = "Total Time Listened",
+                                    style = MaterialTheme.typography.titleMedium,
+                                    fontWeight = FontWeight.Bold,
+                                    color = MaterialTheme.colorScheme.onSurface
+                                )
+                                Spacer(modifier = Modifier.height(4.dp))
+                                Text(
+                                    text = makeTimeString(totalTimeListenedMs),
+                                    fontSize = 44.sp,
+                                    fontWeight = FontWeight.ExtraBold,
+                                    color = Color(0xFF90CAF9)
                                 )
                             }
-                        },
-                    options =
-                        listOf(
-                            OptionStats.CONTINUOUS to stringResource(id = R.string.continuous),
-                            OptionStats.WEEKS to stringResource(R.string.weeks),
-                            OptionStats.MONTHS to stringResource(R.string.months),
-                            OptionStats.YEARS to stringResource(R.string.years),
-                        ),
-                    selectedOption = selectedOption,
-                    onSelectionChange = {
-                        viewModel.selectedOption.value = it
-                        viewModel.indexChips.value = 0
-                    },
-                    currentValue = indexChips,
-                    onValueUpdate = { viewModel.indexChips.value = it },
-                )
-            }
+                        }
+                    }
+                }
 
-            item(key = "mostPlayedSongs") {
-                NavigationTitle(
-                    title = "${mostPlayedSongsStats.size} ${stringResource(id = R.string.songs)}",
-                    modifier = Modifier.animateItem(),
-                )
-
-                LazyRow(
-                    modifier = Modifier.animateItem(),
-                ) {
-                    itemsIndexed(
-                        items = mostPlayedSongsStats,
-                        key = { _, song -> song.id },
-                    ) { index, song ->
-                        LocalSongsGrid(
-                            title = "${index + 1}. ${song.title}",
-                            subtitle =
-                                joinByBullet(
-                                    pluralStringResource(
-                                        R.plurals.n_time,
-                                        song.songCountListened,
-                                        song.songCountListened,
-                                    ),
-                                    makeTimeString(song.timeListened),
-                                ),
-                            thumbnailUrl = song.thumbnailUrl,
-                            isActive = song.id == mediaMetadata?.id,
-                            isPlaying = isPlaying,
-                            modifier =
-                                Modifier
-                                    .fillMaxWidth()
-                                    .combinedClickable(
-                                        onClick = {
-                                            if (song.id == mediaMetadata?.id) {
-                                                playerConnection.togglePlayPause()
-                                            } else {
-                                                playerConnection.playQueue(
-                                                    YouTubeQueue(
-                                                        endpoint = WatchEndpoint(song.id),
-                                                        preloadItem = mostPlayedSongs[index].toMediaMetadata(),
-                                                    ),
-                                                )
-                                            }
-                                        },
-                                        onLongClick = {
-                                            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                                            menuState.show {
-                                                SongMenu(
-                                                    originalSong = mostPlayedSongs[index],
-                                                    navController = navController,
-                                                    onDismiss = menuState::dismiss,
-                                                )
-                                            }
-                                        },
-                                    )
-                                    .animateItem(),
+                // 4. Songs Header
+                if (mostPlayedSongsStats.isNotEmpty()) {
+                    item(key = "songsHeader") {
+                        Text(
+                            text = "${mostPlayedSongsStats.size} Songs",
+                            style = MaterialTheme.typography.titleLarge,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onSurface,
+                            modifier = Modifier.padding(top = 8.dp)
                         )
                     }
                 }
-            }
 
-            item(key = "mostPlayedArtists") {
-                NavigationTitle(
-                    title = "${mostPlayedArtists.size} ${stringResource(id = R.string.artists)}",
-                    modifier = Modifier.animateItem(),
-                )
-
-                LazyRow(
-                    modifier = Modifier.animateItem(),
-                ) {
-                    itemsIndexed(
-                        items = mostPlayedArtists,
-                        key = { _, artist -> artist.id },
-                    ) { index, artist ->
-                        LocalArtistsGrid(
-                            title = "${index + 1}. ${artist.artist.name}",
-                            subtitle =
-                                joinByBullet(
-                                    pluralStringResource(
-                                        R.plurals.n_time,
-                                        artist.songCount,
-                                        artist.songCount
-                                    ),
-                                    makeTimeString(artist.timeListened?.toLong()),
-                                ),
-                            thumbnailUrl = artist.artist.thumbnailUrl,
-                            modifier =
-                                Modifier
-                                    .combinedClickable(
-                                        onClick = {
-                                            navController.navigate("artist/${artist.id}")
-                                        },
-                                        onLongClick = {
-                                            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                                            menuState.show {
-                                                ArtistMenu(
-                                                    originalArtist = artist,
-                                                    coroutineScope = coroutineScope,
-                                                    onDismiss = menuState::dismiss,
-                                                )
-                                            }
-                                        },
-                                    )
-                                    .animateItem(),
-                        )
-                    }
-                }
-            }
-
-            item(key = "mostPlayedAlbums") {
-                NavigationTitle(
-                    title = "${mostPlayedAlbums.size} ${stringResource(id = R.string.albums)}",
-                    modifier = Modifier.animateItem(),
-                )
-
-                if (mostPlayedAlbums.isNotEmpty()) {
-                    LazyRow(
-                        modifier = Modifier.animateItem(),
-                    ) {
-                        itemsIndexed(
-                            items = mostPlayedAlbums,
-                            key = { _, album -> album.id },
-                        ) { index, album ->
-                            LocalAlbumsGrid(
-                                title = "${index + 1}. ${album.album.title}",
-                                subtitle =
-                                    joinByBullet(
-                                        pluralStringResource(
-                                            R.plurals.n_time,
-                                            album.songCountListened!!,
-                                            album.songCountListened
-                                        ),
-                                        makeTimeString(album.timeListened?.toLong()),
-                                    ),
-                                thumbnailUrl = album.album.thumbnailUrl,
-                                isActive = album.id == mediaMetadata?.album?.id,
-                                isPlaying = isPlaying,
-                                modifier =
-                                    Modifier
-                                        .fillMaxWidth()
-                                        .combinedClickable(
-                                            onClick = {
-                                                navController.navigate("album/${album.id}")
-                                            },
-                                            onLongClick = {
-                                                haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                                                menuState.show {
-                                                    AlbumMenu(
-                                                        originalAlbum = album,
-                                                        navController = navController,
-                                                        onDismiss = menuState::dismiss,
-                                                    )
-                                                }
-                                            },
+                // 5. Ranked Songs List
+                itemsIndexed(
+                    items = mostPlayedSongsStats,
+                    key = { _, song -> song.id },
+                ) { index, song ->
+                    val isSongActive = song.id == mediaMetadata?.id
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(12.dp))
+                            .combinedClickable(
+                                onClick = {
+                                    if (isSongActive) {
+                                        playerConnection.togglePlayPause()
+                                    } else {
+                                        playerConnection.playQueue(
+                                            YouTubeQueue(
+                                                endpoint = WatchEndpoint(song.id),
+                                                preloadItem = mostPlayedSongs.getOrNull(index)?.toMediaMetadata(),
+                                            ),
                                         )
-                                        .animateItem(),
+                                    }
+                                },
+                                onLongClick = {
+                                    haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                    mostPlayedSongs.getOrNull(index)?.let { originalSong ->
+                                        menuState.show {
+                                            SongMenu(
+                                                originalSong = originalSong,
+                                                navController = navController,
+                                                onDismiss = menuState::dismiss,
+                                            )
+                                        }
+                                    }
+                                }
+                            )
+                            .padding(vertical = 6.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        AsyncImage(
+                            model = song.thumbnailUrl,
+                            contentDescription = song.title,
+                            contentScale = ContentScale.Crop,
+                            modifier = Modifier
+                                .size(52.dp)
+                                .clip(RoundedCornerShape(8.dp))
+                                .background(MaterialTheme.colorScheme.surfaceContainerHigh)
+                        )
+
+                        Spacer(modifier = Modifier.width(14.dp))
+
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                text = "${index + 1}. ${song.title}",
+                                style = MaterialTheme.typography.bodyLarge,
+                                fontWeight = FontWeight.Bold,
+                                color = if (isSongActive) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
+                            )
+                            Spacer(modifier = Modifier.height(2.dp))
+                            Text(
+                                text = "${song.songCountListened} time • ${makeTimeString(song.timeListened)}",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
                             )
                         }
                     }
                 }
             }
-        }
 
-        // FAB to shuffle most played songs
-        if (mostPlayedSongs.isNotEmpty()) {
-            HideOnScrollFAB(
-                visible = true,
-                lazyListState = lazyListState,
-                icon = R.drawable.shuffle,
-                onClick = {
-                    playerConnection.playQueue(
-                        ListQueue(
-                            title = context.getString(R.string.most_played_songs),
-                            items = mostPlayedSongs.map { it.toMediaMetadata().toMediaItem() }
-                                .shuffled()
+            // Shuffle FAB (Blue floating button on bottom right)
+            if (mostPlayedSongs.isNotEmpty()) {
+                FloatingActionButton(
+                    onClick = {
+                        playerConnection.playQueue(
+                            ListQueue(
+                                title = context.getString(R.string.most_played_songs),
+                                items = mostPlayedSongs.map { it.toMediaMetadata().toMediaItem() }.shuffled()
+                            )
                         )
-                    )
-                }
-            )
-        }
-
-        // Share Stats Dialog
-        var showShareDialog by remember { mutableStateOf(false) }
-        
-        if (showShareDialog) {
-            com.Chenkham.Echofy.ui.component.StatsShareDialog(
-                topSongs = mostPlayedSongsStats,
-                topArtists = mostPlayedArtists.take(5),
-                totalListenTime = mostPlayedSongsStats.sumOf { it.timeListened ?: 0L },
-                periodText = when (selectedOption) {
-                    OptionStats.WEEKS -> stringResource(R.string.this_week)
-                    OptionStats.MONTHS -> stringResource(R.string.past_month)
-                    OptionStats.YEARS -> stringResource(R.string.past_year)
-                    OptionStats.CONTINUOUS -> stringResource(R.string.all_time)
-                },
-                onDismiss = { showShareDialog = false }
-            )
-        }
-
-        TopAppBar(
-            title = { Text(stringResource(R.string.stats)) },
-            navigationIcon = {
-                IconButton(
-                    onClick = navController::navigateUp,
-                    onLongClick = navController::backToMain,
+                    },
+                    shape = RoundedCornerShape(16.dp),
+                    containerColor = Color(0xFF0066CC),
+                    contentColor = Color.White,
+                    modifier = Modifier
+                        .align(Alignment.BottomEnd)
+                        .padding(24.dp)
                 ) {
                     Icon(
-                        painterResource(R.drawable.arrow_back),
-                        contentDescription = null,
+                        painter = painterResource(R.drawable.shuffle),
+                        contentDescription = "Shuffle",
+                        modifier = Modifier.size(24.dp)
                     )
                 }
-            },
-            actions = {
-                IconButton(
-                    onClick = { showShareDialog = true },
-                    onLongClick = {},
-                ) {
-                    Icon(
-                        painterResource(R.drawable.share),
-                        contentDescription = stringResource(R.string.share_stats),
-                    )
-                }
-            },
-        )
+            }
+        }
     }
 }
-
-enum class OptionStats { WEEKS, MONTHS, YEARS, CONTINUOUS }

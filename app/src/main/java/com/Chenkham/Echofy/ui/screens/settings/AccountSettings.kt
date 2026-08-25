@@ -39,8 +39,8 @@ import com.Chenkham.Echofy.ui.component.InfoLabel
 import com.Chenkham.Echofy.ui.component.SwitchPreference
 import com.Chenkham.Echofy.ui.component.TextFieldDialog
 import com.Chenkham.Echofy.utils.rememberPreference
-import com.Chenkham.innertube.YouTube
-import com.Chenkham.innertube.utils.parseCookieString
+import com.arturo254.opentune.innertube.YouTube
+import com.arturo254.opentune.innertube.utils.parseCookieString
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

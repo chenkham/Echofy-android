@@ -1,4 +1,4 @@
-﻿package com.Chenkham.Echofy.lyrics
+package com.Chenkham.Echofy.lyrics
 
 import android.text.format.DateUtils
 import com.Chenkham.Echofy.ui.component.ANIMATE_SCROLL_DURATION
@@ -41,9 +41,11 @@ object LyricsUtils {
     fun findCurrentLineIndex(
         lines: List<LyricsEntry>,
         position: Long,
+        offsetMs: Long = 0L,
     ): Int {
+        val adjusted = position + offsetMs
         for (index in lines.indices) {
-            if (lines[index].time >= position + ANIMATE_SCROLL_DURATION) {
+            if (lines[index].time >= adjusted + ANIMATE_SCROLL_DURATION) {
                 return index - 1
             }
         }

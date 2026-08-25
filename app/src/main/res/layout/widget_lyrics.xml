@@ -1,88 +1,153 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/widget_lyrics_root"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@drawable/widget_background"
-    android:orientation="vertical"
+    android:background="@drawable/widget_lyrics_bg"
     android:padding="16dp">
 
-    <LinearLayout
+    <!-- Top Header Container -->
+    <RelativeLayout
+        android:id="@+id/widget_lyrics_header"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:gravity="center_vertical"
-        android:orientation="horizontal">
+        android:layout_alignParentTop="true">
 
+        <!-- Album Art on Left -->
         <ImageView
-            android:id="@+id/widget_lyrics_icon"
-            android:layout_width="24dp"
-            android:layout_height="24dp"
-            android:src="@drawable/lyrics"
-            android:contentDescription="@string/acc_lyrics"
-            android:layout_marginEnd="8dp"/>
+            android:id="@+id/widget_lyrics_art"
+            android:layout_width="64dp"
+            android:layout_height="64dp"
+            android:layout_alignParentStart="true"
+            android:layout_centerVertical="true"
+            android:src="@drawable/previewalbum"
+            android:scaleType="centerCrop"
+            android:background="@drawable/widget_rounded_art_bg"
+            android:clipToOutline="true"
+            android:contentDescription="@string/song_title" />
 
+        <!-- Echofy Logo on Top Right -->
+        <ImageView
+            android:id="@+id/widget_lyrics_logo"
+            android:layout_width="32dp"
+            android:layout_height="32dp"
+            android:layout_alignParentEnd="true"
+            android:layout_alignParentTop="true"
+            android:background="@drawable/widget_circle_subtle_bg"
+            android:padding="6dp"
+            android:src="@drawable/echofy"
+            android:contentDescription="@string/app_name" />
+
+        <!-- Track Info & Pill in Middle -->
         <LinearLayout
-            android:layout_width="0dp"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_weight="1"
+            android:layout_toEndOf="@id/widget_lyrics_art"
+            android:layout_toStartOf="@id/widget_lyrics_logo"
+            android:layout_marginStart="12dp"
+            android:layout_marginEnd="8dp"
+            android:layout_centerVertical="true"
             android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/widget_lyrics_now_playing_tag"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="NOW PLAYING •"
+                android:textColor="#FFB74D"
+                android:textSize="10sp"
+                android:textStyle="bold"
+                android:letterSpacing="0.05" />
 
             <TextView
                 android:id="@+id/widget_lyrics_title"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:layout_marginTop="1dp"
                 android:ellipsize="end"
                 android:maxLines="1"
                 android:text="@string/song_title"
-                android:textColor="@android:color/white"
-                android:textSize="14sp"
+                android:textColor="#FFFFFF"
+                android:textSize="15sp"
                 android:textStyle="bold" />
 
             <TextView
                 android:id="@+id/widget_lyrics_artist"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:layout_marginTop="1dp"
                 android:ellipsize="end"
                 android:maxLines="1"
                 android:text="@string/artist_name"
-                android:textColor="#B3FFFFFF"
+                android:textColor="#CCFFFFFF"
                 android:textSize="12sp" />
+
+            <!-- Play/Pause Pill Button -->
+            <TextView
+                android:id="@+id/widget_lyrics_play_pause"
+                android:layout_width="wrap_content"
+                android:layout_height="24dp"
+                android:layout_marginTop="4dp"
+                android:background="@drawable/widget_pill_bg"
+                android:gravity="center"
+                android:paddingHorizontal="10dp"
+                android:text="❚❚ Pause"
+                android:textColor="#FFFFFF"
+                android:textSize="11sp"
+                android:textStyle="bold" />
         </LinearLayout>
-        
-        <ImageView
-            android:id="@+id/widget_lyrics_refresh"
-            android:layout_width="24dp"
-            android:layout_height="24dp"
-            android:src="@drawable/refresh"
-            android:padding="2dp"
-            android:contentDescription="Refresh" />
-    </LinearLayout>
+    </RelativeLayout>
 
-    <ImageView
+    <!-- Bottom Action Bar (Edit & Output Icon) -->
+    <RelativeLayout
+        android:id="@+id/widget_lyrics_bottom_bar"
         android:layout_width="match_parent"
-        android:layout_height="1dp"
-        android:layout_marginTop="8dp"
-        android:layout_marginBottom="8dp"
-        android:background="#33FFFFFF"
-        android:contentDescription="@null" />
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true">
 
+        <ImageView
+            android:id="@+id/widget_lyrics_edit"
+            android:layout_width="22dp"
+            android:layout_height="22dp"
+            android:layout_alignParentStart="true"
+            android:layout_centerVertical="true"
+            android:src="@drawable/edit"
+            android:tint="#CCFFFFFF"
+            android:contentDescription="Edit Lyrics" />
+
+        <ImageView
+            android:id="@+id/widget_lyrics_output"
+            android:layout_width="22dp"
+            android:layout_height="22dp"
+            android:layout_alignParentEnd="true"
+            android:layout_centerVertical="true"
+            android:src="@drawable/headphones"
+            android:tint="#CCFFFFFF"
+            android:contentDescription="Audio Output" />
+    </RelativeLayout>
+
+    <!-- Lyrics Display List in Center -->
     <ListView
         android:id="@+id/widget_lyrics_list"
         android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="1"
+        android:layout_height="match_parent"
+        android:layout_below="@id/widget_lyrics_header"
+        android:layout_above="@id/widget_lyrics_bottom_bar"
+        android:layout_marginTop="10dp"
+        android:layout_marginBottom="6dp"
         android:divider="@null"
         android:dividerHeight="0dp"
         android:scrollbars="none" />
-        
+
     <TextView
         android:id="@+id/widget_lyrics_status"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:textAlignment="center"
-        android:textColor="#80FFFFFF"
-        android:textSize="10sp"
+        android:layout_centerInParent="true"
+        android:gravity="center"
+        android:textColor="#99FFFFFF"
+        android:textSize="13sp"
         android:visibility="gone"
-        android:text="Loading..." />
+        android:text="No music playing" />
 
-</LinearLayout>
+</RelativeLayout>

@@ -72,7 +72,7 @@ import androidx.media3.exoplayer.offline.DownloadRequest
 import androidx.media3.exoplayer.offline.DownloadService
 import androidx.navigation.NavController
 import coil.compose.AsyncImage
-import com.Chenkham.innertube.YouTube
+import com.arturo254.opentune.innertube.YouTube
 import com.Chenkham.Echofy.LocalDatabase
 import com.Chenkham.Echofy.LocalDownloadUtil
 import com.Chenkham.Echofy.LocalPlayerConnection
@@ -89,6 +89,9 @@ import com.Chenkham.Echofy.playback.ExoDownloadService
 import com.Chenkham.Echofy.playback.queues.YouTubeQueue
 import com.Chenkham.Echofy.ui.component.LocalBottomSheetPageState
 import com.Chenkham.Echofy.ui.component.SongListItem
+import com.Chenkham.Echofy.ui.component.SonglinkShareDialog
+import com.Chenkham.Echofy.constants.SonglinkEnabledKey
+import com.Chenkham.Echofy.utils.rememberPreference
 import com.Chenkham.Echofy.ui.component.TextFieldDialog
 import com.Chenkham.Echofy.ui.component.ListDialog
 import com.Chenkham.Echofy.ads.AdManager
@@ -100,7 +103,6 @@ import androidx.compose.material3.RippleConfiguration
 import androidx.compose.material3.RippleDefaults
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.input.nestedscroll.nestedScroll
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -151,49 +153,9 @@ fun SongMenu(
     }
     
     if (showDetailsDialog) {
-        androidx.compose.material3.AlertDialog(
-            onDismissRequest = { showDetailsDialog = false },
-            icon = {
-                Icon(
-                    painter = painterResource(R.drawable.info),
-                    contentDescription = null,
-                )
-            },
-            title = { Text(stringResource(R.string.details)) },
-            confirmButton = {
-                androidx.compose.material3.TextButton(
-                    onClick = { showDetailsDialog = false },
-                ) {
-                    Text(stringResource(android.R.string.ok))
-                }
-            },
-            text = {
-                Column(
-                    modifier = Modifier.verticalScroll(rememberScrollState()),
-                ) {
-                    listOf(
-                        stringResource(R.string.song_title) to song.song.title,
-                        stringResource(R.string.song_artists) to song.artists.joinToString { it.name },
-                        stringResource(R.string.media_id) to song.id,
-                        "Album" to (song.song.albumName ?: "N/A"),
-                        "Duration" to song.song.duration?.let { 
-                            "%d:%02d".format(it / 60, it % 60)
-                        },
-                        "Date Added" to song.song.inLibrary?.toString()
-                    ).forEach { (label, text) ->
-                        val displayText = text ?: "Unknown"
-                        Text(
-                            text = label,
-                            style = MaterialTheme.typography.labelMedium,
-                        )
-                        Text(
-                            text = displayText,
-                            style = MaterialTheme.typography.titleMedium,
-                        )
-                        Spacer(Modifier.height(8.dp))
-                    }
-                }
-            },
+        com.Chenkham.Echofy.ui.utils.ShowMediaInfo(
+            songId = song.id,
+            onDismiss = { showDetailsDialog = false }
         )
     }
 
@@ -221,6 +183,23 @@ fun SongMenu(
 
     var showErrorPlaylistAddDialog by rememberSaveable {
         mutableStateOf(false)
+    }
+
+    val (songlinkEnabled) = rememberPreference(SonglinkEnabledKey, defaultValue = false)
+    var showSonglinkDialog by rememberSaveable {
+        mutableStateOf(false)
+    }
+
+    if (showSonglinkDialog) {
+        SonglinkShareDialog(
+            videoId = song.id,
+            songTitle = song.title,
+            artistName = song.artists.joinToString { it.name },
+            onDismiss = {
+                showSonglinkDialog = false
+                onDismiss()
+            },
+        )
     }
 
     AddToPlaylistDialog(
@@ -330,56 +309,6 @@ fun SongMenu(
     // LazyListState to track scroll position for nested scroll handling
     val lazyListState = androidx.compose.foundation.lazy.rememberLazyListState()
 
-    // Nested scroll connection to properly handle scroll gestures
-    // Prevents vibration/bounce when over-scrolling at the top of the menu
-    val nestedScrollConnection = remember(lazyListState) {
-        object : androidx.compose.ui.input.nestedscroll.NestedScrollConnection {
-            override fun onPreScroll(
-                available: androidx.compose.ui.geometry.Offset,
-                source: androidx.compose.ui.input.nestedscroll.NestedScrollSource
-            ): androidx.compose.ui.geometry.Offset {
-                val isAtTop = !lazyListState.canScrollBackward
-                val isAtBottom = !lazyListState.canScrollForward
-                val isScrollingUp = available.y > 0
-                val isScrollingDown = available.y < 0
-
-                // When at top and trying to scroll up (pull down gesture), consume the scroll
-                // to prevent bounce/vibration, but allow large gestures for dismiss
-                if (isAtTop && isScrollingUp && source == androidx.compose.ui.input.nestedscroll.NestedScrollSource.UserInput) {
-                    // Only pass through if it's a significant gesture (for dismiss)
-                    return if (available.y > 50f) {
-                        androidx.compose.ui.geometry.Offset.Zero
-                    } else {
-                        // Consume small scroll to prevent vibration
-                        available.copy(x = 0f)
-                    }
-                }
-
-                // When at bottom and trying to scroll down, consume to prevent bounce
-                if (isAtBottom && isScrollingDown) {
-                    return available.copy(x = 0f)
-                }
-
-                return androidx.compose.ui.geometry.Offset.Zero
-            }
-
-            override fun onPostScroll(
-                consumed: androidx.compose.ui.geometry.Offset,
-                available: androidx.compose.ui.geometry.Offset,
-                source: androidx.compose.ui.input.nestedscroll.NestedScrollSource
-            ): androidx.compose.ui.geometry.Offset {
-                // Consume any leftover scroll to prevent vibration
-                val isAtTop = !lazyListState.canScrollBackward
-                val isAtBottom = !lazyListState.canScrollForward
-
-                if ((isAtTop && available.y > 0) || (isAtBottom && available.y < 0)) {
-                    return available.copy(x = 0f)
-                }
-                return androidx.compose.ui.geometry.Offset.Zero
-            }
-        }
-    }
-
     CompositionLocalProvider(
         LocalRippleConfiguration provides ghostRippleConfig
     ) {
@@ -387,8 +316,7 @@ fun SongMenu(
             state = lazyListState,
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(8.dp)
-                .nestedScroll(nestedScrollConnection),
+                .padding(8.dp),
             userScrollEnabled = true
         ) {
             item {
@@ -500,16 +428,22 @@ fun SongMenu(
                             )
                             .clip(RoundedCornerShape(8.dp))
                             .clickable {
-                                onDismiss()
-                                val shareIntent = Intent().apply {
-                                    action = Intent.ACTION_SEND
-                                    type = "text/plain"
-                                    putExtra(
-                                        Intent.EXTRA_TEXT,
-                                        "Check out this song on Echofy!\n${song.title} - ${song.artists.joinToString { it.name }}\nhttps://music.youtube.com/watch?v=${song.id}"
-                                    )
+                                // With Songlink enabled the user picks a target
+                                // service first; otherwise share the plain link.
+                                if (songlinkEnabled) {
+                                    showSonglinkDialog = true
+                                } else {
+                                    onDismiss()
+                                    val shareIntent = Intent().apply {
+                                        action = Intent.ACTION_SEND
+                                        type = "text/plain"
+                                        putExtra(
+                                            Intent.EXTRA_TEXT,
+                                            "Check out this song on Echofy!\n${song.title} - ${song.artists.joinToString { it.name }}\nhttps://music.youtube.com/watch?v=${song.id}"
+                                        )
+                                    }
+                                    context.startActivity(Intent.createChooser(shareIntent, "Share via"))
                                 }
-                                context.startActivity(Intent.createChooser(shareIntent, "Share via"))
                             }
                             .padding(12.dp),
                         horizontalAlignment = Alignment.CenterHorizontally,

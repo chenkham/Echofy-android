@@ -1,7 +1,6 @@
 package com.Chenkham.Echofy.models
 
 import androidx.annotation.DrawableRes
-import com.Chenkham.Echofy.R
 import com.Chenkham.Echofy.constants.WallpaperCategory
 
 /**
@@ -15,58 +14,10 @@ data class BuiltInWallpaper(
 )
 
 /**
- * List of all built-in wallpapers available in the app
+ * List of all built-in wallpapers available in the app (Removed default stock pictures)
  */
 object BuiltInWallpapers {
-    val all: List<BuiltInWallpaper> = listOf(
-        // Abstract / Modern
-        BuiltInWallpaper(
-            id = "abstract_dark",
-            resourceId = R.drawable.wallpaper_abstract_dark,
-            category = WallpaperCategory.ABSTRACT,
-            name = "Dark Abstract Flows"
-        ),
-        BuiltInWallpaper(
-            id = "nature_mist",
-            resourceId = R.drawable.wallpaper_nature_mist,
-            category = WallpaperCategory.NATURE,
-            name = "Misty Mountains"
-        ),
-        BuiltInWallpaper(
-            id = "geo_colorful",
-            resourceId = R.drawable.wallpaper_geometric_colorful,
-            category = WallpaperCategory.ABSTRACT,
-            name = "Geometric Prism"
-        ),
-        BuiltInWallpaper(
-            id = "min_gradient",
-            resourceId = R.drawable.wallpaper_minimalist_gradient,
-            category = WallpaperCategory.ABSTRACT,
-            name = "Lo-Fi Gradient"
-        ),
-        
-        // Winter (Legacy)
-        BuiltInWallpaper(
-            id = "winter_1",
-            resourceId = R.drawable.wallpaper_winter_1,
-            category = WallpaperCategory.WINTER,
-            name = "Winter River"
-        ),
-        BuiltInWallpaper(
-            id = "winter_2",
-            resourceId = R.drawable.wallpaper_winter_2,
-            category = WallpaperCategory.WINTER,
-            name = "Night Village"
-        ),
-        
-        // Autumn (Legacy)
-        BuiltInWallpaper(
-            id = "autumn_1",
-            resourceId = R.drawable.wallpaper_autumn_1,
-            category = WallpaperCategory.AUTUMN,
-            name = "Golden Park"
-        )
-    )
+    val all: List<BuiltInWallpaper> = emptyList()
     
     fun getByCategory(category: WallpaperCategory): List<BuiltInWallpaper> {
         return all.filter { it.category == category }

@@ -35,13 +35,13 @@ import androidx.core.net.toUri
 import androidx.media3.exoplayer.offline.Download
 import androidx.media3.exoplayer.offline.DownloadRequest
 import androidx.media3.exoplayer.offline.DownloadService
-import com.Chenkham.innertube.YouTube
+import com.arturo254.opentune.innertube.YouTube
 import com.Chenkham.Echofy.LocalDatabase
 import com.Chenkham.Echofy.LocalDownloadUtil
 import com.Chenkham.Echofy.LocalPlayerConnection
 import com.Chenkham.Echofy.R
 import com.Chenkham.Echofy.constants.InnerTubeCookieKey
-import com.Chenkham.innertube.utils.parseCookieString
+import com.arturo254.opentune.innertube.utils.parseCookieString
 import com.Chenkham.Echofy.db.entities.Playlist
 import com.Chenkham.Echofy.db.entities.PlaylistSong
 import com.Chenkham.Echofy.db.entities.Song

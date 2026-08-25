@@ -1,0 +1,144 @@
+﻿/*
+ * Echofy Project Original (2026)
+ * Arturo254 (github.com/Arturo254)
+ * Licensed Under GPL-3.0 | see git history for contributors
+ */
+
+package com.Chenkham.Echofy.ui.component
+
+import android.annotation.SuppressLint
+import androidx.compose.runtime.*
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.rememberTextMeasurer
+import androidx.compose.ui.unit.*
+import com.Chenkham.Echofy.models.MediaMetadata
+
+// ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ
+// rememberAdjustedFontSize
+//
+// Utilidad compartida ÔÇö package-internal, accesible desde LyricsCardLayouts.
+// Calcula el tama├▒o de fuente ├│ptimo mediante b├║squeda binaria para que
+// el texto quepa dentro de maxWidth ├ù maxHeight sin desbordarse.
+// Sin cambios respecto al original: es agn├│stica al estilo/proporci├│n.
+// ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ
+
+@Composable
+fun rememberAdjustedFontSize(
+    text: String,
+    maxWidth: Dp,
+    maxHeight: Dp,
+    density: Density,
+    initialFontSize: TextUnit = 20.sp,
+    minFontSize: TextUnit = 14.sp,
+    style: TextStyle = TextStyle.Default,
+    textMeasurer: androidx.compose.ui.text.TextMeasurer? = null,
+): TextUnit {
+    val measurer = textMeasurer ?: rememberTextMeasurer()
+
+    var calculatedFontSize by remember(text, maxWidth, maxHeight, style, density) {
+        val initialSize = when {
+            text.length < 50 -> initialFontSize
+            text.length < 100 -> (initialFontSize.value * 0.8f).sp
+            text.length < 200 -> (initialFontSize.value * 0.6f).sp
+            else -> (initialFontSize.value * 0.5f).sp
+        }
+        mutableStateOf(initialSize)
+    }
+
+    LaunchedEffect(key1 = text, key2 = maxWidth, key3 = maxHeight) {
+        val targetWidthPx = with(density) { maxWidth.toPx() * 0.92f }
+        val targetHeightPx = with(density) { maxHeight.toPx() * 0.92f }
+
+        if (text.isBlank()) {
+            calculatedFontSize = minFontSize
+            return@LaunchedEffect
+        }
+
+        // Intenta un tama├▒o mayor para textos muy cortos
+        when {
+            text.length < 20 -> {
+                val largerSize = (initialFontSize.value * 1.1f).sp
+                val result = measurer.measure(
+                    text = AnnotatedString(text),
+                    style = style.copy(fontSize = largerSize),
+                )
+                if (result.size.width <= targetWidthPx && result.size.height <= targetHeightPx) {
+                    calculatedFontSize = largerSize
+                    return@LaunchedEffect
+                }
+            }
+            text.length < 30 -> {
+                val largerSize = (initialFontSize.value * 0.9f).sp
+                val result = measurer.measure(
+                    text = AnnotatedString(text),
+                    style = style.copy(fontSize = largerSize),
+                )
+                if (result.size.width <= targetWidthPx && result.size.height <= targetHeightPx) {
+                    calculatedFontSize = largerSize
+                    return@LaunchedEffect
+                }
+            }
+        }
+
+        // B├║squeda binaria
+        var minSize = minFontSize.value
+        var maxSize = initialFontSize.value
+        var bestFit = minSize
+        var iterations = 0
+
+        while (minSize <= maxSize && iterations < 20) {
+            iterations++
+            val midSize = (minSize + maxSize) / 2
+            val midSizeSp = midSize.sp
+            val result = measurer.measure(
+                text = AnnotatedString(text),
+                style = style.copy(fontSize = midSizeSp),
+            )
+            if (result.size.width <= targetWidthPx && result.size.height <= targetHeightPx) {
+                bestFit = midSize
+                minSize = midSize + 0.5f
+            } else {
+                maxSize = midSize - 0.5f
+            }
+        }
+
+        calculatedFontSize = if (bestFit < minFontSize.value) minFontSize else bestFit.sp
+    }
+
+    return calculatedFontSize
+}
+
+// ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ
+// LyricsImageCard ÔÇö punto de entrada simple para callers que no necesitan
+// el panel de personalizaci├│n completo (LyricsShareCarouselSheet).
+//
+// Internamente delega a LyricsCardByLayout con un LyricsCardConfig derivado.
+// Para elegir estilo / proporci├│n / accent expl├¡citamente, usa
+// LyricsCardByLayout(config = ...) directamente.
+// ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ
+
+@SuppressLint("UnusedBoxWithConstraintsScope")
+@Composable
+fun LyricsImageCard(
+    lyricText: String,
+    mediaMetadata: MediaMetadata,
+    accent: LyricsAccent = LyricsAccents.Indigo,
+    style: LyricsCardStyle = LyricsCardStyle.Tonal,
+    aspectRatio: LyricsAspectRatio = LyricsAspectRatio.Square,
+    modifier: Modifier = Modifier,
+) {
+    LyricsCardByLayout(
+        lyricText = lyricText,
+        mediaMetadata = mediaMetadata,
+        config = LyricsCardConfig(
+            style = style,
+            accent = accent,
+            aspectRatio = aspectRatio,
+        ),
+        modifier = modifier,
+    )
+}

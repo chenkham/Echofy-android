@@ -1,168 +1,219 @@
-﻿package com.Chenkham.Echofy.ui.screens.settings
+/*
+ * Echofy Project Original (2026)
+ * Arturo254 (github.com/Arturo254)
+ * Licensed Under GPL-3.0 | see git history for contributors
+ */
+
+package com.Chenkham.Echofy.ui.screens.settings
 
 import android.annotation.SuppressLint
-import android.content.ClipData
-import android.content.ClipboardManager
-import android.content.Context
+import android.content.Intent
 import android.net.Uri
-import android.provider.OpenableColumns
-import android.util.Log
+import android.os.Message
+import android.view.ViewGroup
+import android.webkit.CookieManager
+import android.webkit.WebChromeClient
+import android.webkit.WebResourceRequest
+import android.webkit.WebSettings
+import android.webkit.WebView
+import android.webkit.WebViewClient
+import android.widget.FrameLayout
+import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.annotation.DrawableRes
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.tween
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
 import androidx.compose.animation.shrinkVertically
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsetsSides
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.AssistChip
+import androidx.compose.material3.AssistChipDefaults
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
+// import androidx.compose.material3.CircularWavyProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FilledTonalButton
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
+import androidx.compose.material3.MaterialShapes
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
+import androidx.compose.ui.graphics.Color
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.TopAppBarScrollBehavior
+import androidx.compose.material3.rememberModalBottomSheetState
+import androidx.compose.material3.toShape
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.painter.Painter
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.viewinterop.AndroidView
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
-import coil.annotation.ExperimentalCoilApi
+import coil.compose.AsyncImage
+import coil.request.ImageRequest
+import com.Chenkham.Echofy.LocalPlayerAwareWindowInsets
 import com.Chenkham.Echofy.LocalPlayerConnection
 import com.Chenkham.Echofy.R
+import com.Chenkham.Echofy.constants.ShowSpotifyPlaylistsKey
 import com.Chenkham.Echofy.db.entities.Song
-import com.Chenkham.Echofy.extensions.tryOrNull
+import com.Chenkham.Echofy.spotify.SpotifyAccountUiState
+import com.Chenkham.Echofy.spotify.SpotifyAccountViewModel
+import com.arturo254.opentune.spotify.SpotifyAuth
+import com.Chenkham.Echofy.ui.component.Material3SettingsGroup
+import com.Chenkham.Echofy.ui.component.Material3SettingsItem
+import com.Chenkham.Echofy.ui.component.NewActionButton
 import com.Chenkham.Echofy.ui.component.IconButton
-import com.Chenkham.Echofy.ui.component.PreferenceEntry
-import com.Chenkham.Echofy.ui.component.SettingsGeneralCategory
-import com.Chenkham.Echofy.ui.component.SettingsPage
-import com.Chenkham.Echofy.ui.component.SwitchPreference
-import com.Chenkham.Echofy.ui.menu.OnlinePlaylistAdder
+import com.Chenkham.Echofy.ui.menu.AddToPlaylistDialogOnline
+import com.Chenkham.Echofy.ui.menu.LoadingScreen
 import com.Chenkham.Echofy.ui.utils.backToMain
-import com.Chenkham.Echofy.ui.utils.formatFileSize
+import com.Chenkham.Echofy.utils.rememberPreference
+import com.Chenkham.Echofy.utils.resetAuthWebViewSession
 import com.Chenkham.Echofy.viewmodels.BackupRestoreViewModel
+import com.Chenkham.Echofy.viewmodels.CloudUploadState
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
-import okhttp3.MediaType.Companion.toMediaTypeOrNull
-import okhttp3.OkHttpClient
-import okhttp3.Request
-import okhttp3.RequestBody
-import okio.BufferedSink
-import java.io.File
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
-import java.util.UUID
-import java.util.concurrent.TimeUnit
 
-@OptIn(ExperimentalCoilApi::class, ExperimentalMaterial3Api::class)
-@SuppressLint("LogNotTimber")
+private val CSV_MIME_TYPES =
+    arrayOf(
+        "text/csv",
+        "text/x-csv",
+        "text/comma-separated-values",
+        "text/x-comma-separated-values",
+        "application/csv",
+        "application/x-csv",
+        "application/vnd.ms-excel",
+        "text/plain",
+        "text/*",
+        "application/octet-stream",
+    )
+
+private val SpotifyAccountIconSize = 44.dp
+private const val SpotifyLoginUserAgent =
+    "Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Mobile Safari/537.36"
+
+@SuppressLint("LocalContextGetResourceValueCall")
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun BackupAndRestore(
     navController: NavController,
     scrollBehavior: TopAppBarScrollBehavior,
     viewModel: BackupRestoreViewModel = hiltViewModel(),
+    spotifyAccountViewModel: SpotifyAccountViewModel = hiltViewModel(),
 ) {
-    val context = LocalContext.current
-    val coroutineScope = rememberCoroutineScope()
-    val playerCache = LocalPlayerConnection.current?.service?.playerCache
-
-    // Statuses
-    var uploadStatus by remember { mutableStateOf<UploadStatus?>(null) }
-    var showVisitorDataDialog by remember { mutableStateOf(false) }
-    var showVisitorDataResetDialog by remember { mutableStateOf(false) }
     var importedTitle by remember { mutableStateOf("") }
     val importedSongs = remember { mutableStateListOf<Song>() }
-    var showChoosePlaylistDialogOnline by remember { mutableStateOf(false) }
-    var isProgressStarted by remember { mutableStateOf(false) }
-    var progressPercentage by remember { mutableIntStateOf(0) }
+    var showChoosePlaylistDialogOnline by rememberSaveable { mutableStateOf(false) }
+    var isProgressStarted by rememberSaveable { mutableStateOf(false) }
+    var progressStatus by remember { mutableStateOf("") }
+    var progressPercentage by rememberSaveable { mutableIntStateOf(0) }
+    var showSpotifyLogin by rememberSaveable { mutableStateOf(false) }
 
-    // NEW: Status to control automatic upload to the cloud
-    var enableCloudUpload by remember {
-        mutableStateOf(
-            context.getSharedPreferences("backup_settings", Context.MODE_PRIVATE)
-                .getBoolean("enable_cloud_upload", false)
-        )
-    }
-
-    // Cache stats
-    var playerCacheSize by remember { mutableLongStateOf(tryOrNull { playerCache?.cacheSpace } ?: 0L) }
-    var isClearing by remember { mutableStateOf(false) }
-
-    val animatedPlayerCacheSize by animateFloatAsState(
-        targetValue = if (playerCacheSize > 0) 1f else 0f,
-        label = "playerCacheProgress"
+    val spotifyState by spotifyAccountViewModel.uiState.collectAsState()
+    val (showSpotifyPlaylists, onShowSpotifyPlaylistsChange) = rememberPreference(
+        ShowSpotifyPlaylistsKey,
+        false
     )
 
-    // Update cache size
-    LaunchedEffect(playerCache) {
-        while (true) {
-            delay(1000)
-            playerCacheSize = tryOrNull { playerCache?.cacheSpace } ?: 0L
+    val backupRestoreProgress by viewModel.backupRestoreProgress.collectAsState()
+    val cloudState by viewModel.cloudUploadState.collectAsState()
+    val context = LocalContext.current
+    val coroutineScope = rememberCoroutineScope()
+    val clipboardManager = LocalClipboardManager.current
+
+    // Cargar estado inicial del switch
+    LaunchedEffect(Unit) {
+        val enabled = viewModel.loadCloudBackupEnabled(context)
+        viewModel.setCloudBackupEnabled(context, enabled)
+    }
+
+    // ── Spotify auto-logout on authentication ────────────────────────────────
+    LaunchedEffect(spotifyState.isAuthenticated) {
+        if (spotifyState.isAuthenticated) {
+            showSpotifyLogin = false
         }
     }
 
-    // Launchers
     val backupLauncher =
         rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("application/octet-stream")) { uri ->
             if (uri != null) {
                 viewModel.backup(context, uri)
-
-                // MODIFIED: Only upload to the cloud if the user has enabled it.
-                if (enableCloudUpload) {
+                // Si el switch está activado, subir a la nube después del backup
+                if (cloudState.isEnabled) {
                     coroutineScope.launch {
-                        uploadStatus = UploadStatus.Uploading
-                        val fileUrl = uploadBackupToFilebin(context, uri)
-                        uploadStatus = if (fileUrl != null) {
-                            UploadStatus.Success(fileUrl)
-                        } else {
-                            UploadStatus.Failure
-                        }
+                        delay(2000) // Esperar a que termine el backup
+                        viewModel.uploadExistingBackupToCloud(context, uri)
                     }
                 }
             }
@@ -170,163 +221,743 @@ fun BackupAndRestore(
 
     val restoreLauncher =
         rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
-            if (uri != null) {
-                viewModel.restore(context, uri)
-            }
+            if (uri != null) viewModel.restore(context, uri)
         }
 
     val importPlaylistFromCsv =
         rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
             if (uri == null) return@rememberLauncherForActivityResult
-            val result = viewModel.importPlaylistFromCsv(context, uri)
-            importedSongs.clear()
-            importedSongs.addAll(result)
-            if (importedSongs.isNotEmpty()) {
-                showChoosePlaylistDialogOnline = true
+            coroutineScope.launch {
+                val result = viewModel.importPlaylistFromCsv(context, uri)
+                importedSongs.clear()
+                importedSongs.addAll(result)
+                if (importedSongs.isNotEmpty()) showChoosePlaylistDialogOnline = true
             }
         }
 
     val importM3uLauncherOnline =
         rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
             if (uri == null) return@rememberLauncherForActivityResult
-            val result = viewModel.loadM3UOnline(context, uri)
-            importedSongs.clear()
-            importedSongs.addAll(result)
-            if (importedSongs.isNotEmpty()) {
-                showChoosePlaylistDialogOnline = true
+            coroutineScope.launch {
+                val result = viewModel.loadM3UOnline(context, uri)
+                importedSongs.clear()
+                importedSongs.addAll(result)
+                if (importedSongs.isNotEmpty()) showChoosePlaylistDialogOnline = true
             }
         }
 
-    SettingsPage(
-        title = stringResource(R.string.backup_restore),
-        navController = navController,
-        scrollBehavior = scrollBehavior,
-        verticalArrangement = Arrangement.spacedBy(16.dp)
-    ) {
-        SettingsGeneralCategory(
-            title = stringResource(R.string.backup_restore),
-            items = listOf(
-                {SwitchPreference(
-                    title = { Text(stringResource(R.string.cloud_upload_title)) },
-                    icon = { Icon(painterResource(R.drawable.cloud_lock), null) },
-                    checked = enableCloudUpload,
-                    description = stringResource(
-                        if (enableCloudUpload) {
-                            R.string.cloud_upload_enabled_description
-                        } else {
-                            R.string.cloud_upload_disabled_description
-                        }
-                    ),
-                    onCheckedChange = { isEnabled ->
-                        enableCloudUpload = isEnabled
-                        // Save preference
-                        context.getSharedPreferences("backup_settings", Context.MODE_PRIVATE)
-                            .edit()
-                            .putBoolean("enable_cloud_upload", isEnabled)
-                            .apply()
-                    }
-                )},
-                {PreferenceEntry(
-                    title = { Text(stringResource(R.string.backup)) },
-                    icon = { Icon(painterResource(R.drawable.backup), null) },
-                    description = stringResource(if (enableCloudUpload) R.string.backup_with_cloud else R.string.backup_description),
-                    isEnabled = uploadStatus !is UploadStatus.Uploading,
-                    onClick = {
-                        val formatter = DateTimeFormatter.ofPattern("yyyyMMddHHmmss")
-                        backupLauncher.launch(
-                            "${context.getString(R.string.app_name)}_${
-                                LocalDateTime.now().format(formatter)
-                            }.backup"
+    Scaffold(
+        containerColor = Color.Transparent,
+        topBar = {
+            TopAppBar(
+            colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent, scrolledContainerColor = Color.Transparent),
+                title = { Text(stringResource(R.string.backup_restore)) },
+                navigationIcon = {
+                    IconButton(
+                        onClick = navController::navigateUp,
+                        onLongClick = navController::backToMain,
+                    ) {
+                        Icon(
+                            painterResource(R.drawable.arrow_back),
+                            contentDescription = null,
                         )
                     }
-                )},
-                {PreferenceEntry(
-                    title = { Text(stringResource(R.string.restore)) },
-                    icon = { Icon(painterResource(R.drawable.restore), null) },
-                    description = stringResource(R.string.restore_description),
-                    isEnabled = uploadStatus !is UploadStatus.Uploading,
-                    onClick = {
-                        restoreLauncher.launch(arrayOf("application/octet-stream"))
-                    }
-                )},
-                {AnimatedVisibility(
-                    visible = uploadStatus != null,
-                    enter = fadeIn() + expandVertically(),
-                    exit = fadeOut() + shrinkVertically()
-                ) {MinimalUploadStatus(uploadStatus) {
-                    copyToClipboard(context, (uploadStatus as UploadStatus.Success).fileUrl)
-                }}}
+                },
+                scrollBehavior = scrollBehavior,
             )
-        )
+        },
+    ) { innerPadding ->
+        LazyColumn(
+            modifier = Modifier
+                .nestedScroll(scrollBehavior.nestedScrollConnection)
+                .padding(innerPadding)
+                .windowInsetsPadding(
+                    LocalPlayerAwareWindowInsets.current.only(
+                        WindowInsetsSides.Horizontal + WindowInsetsSides.Bottom
+                    )
+                ),
+            verticalArrangement = Arrangement.spacedBy(16.dp),
+            contentPadding = PaddingValues(
+                start = 16.dp, end = 16.dp, bottom = 16.dp, top = 8.dp
+            ),
+        ) {
 
-        // VISITOR_DATA Card
-        MinimalVisitorDataCard(
-            playerCacheSize = playerCacheSize,
-            progress = animatedPlayerCacheSize,
-            isClearing = isClearing,
-            onResetClick = { showVisitorDataResetDialog = true },
-            onInfoClick = { showVisitorDataDialog = true }
-        )
-    }
+            // ── Backup / Restore card ─────────────────────────────────────────
+            item {
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(24.dp),
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.surfaceContainer
+                    ),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
+                ) {
+                    Column(
+                        modifier = Modifier.padding(16.dp),
+                        verticalArrangement = Arrangement.spacedBy(16.dp),
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(12.dp),
+                        ) {
+                            Surface(
+                                shape = RoundedCornerShape(18.dp),
+                                color = MaterialTheme.colorScheme.primaryContainer,
+                            ) {
+                                Box(
+                                    modifier = Modifier.size(52.dp),
+                                    contentAlignment = Alignment.Center,
+                                ) {
+                                    Icon(
+                                        painter = painterResource(R.drawable.backup),
+                                        contentDescription = null,
+                                        tint = MaterialTheme.colorScheme.onPrimaryContainer,
+                                        modifier = Modifier.size(26.dp),
+                                    )
+                                }
+                            }
 
-    // Dialogs
-    if (showVisitorDataDialog) {
-        MinimalInfoDialog(
-            icon = painterResource(R.drawable.info),
-            title = stringResource(R.string.visitor_data_info_title),
-            message = stringResource(R.string.visitor_data_info_intro) + "\n\n" +
-                    stringResource(R.string.visitor_data_info_problems) + "\n\n" +
-                    stringResource(R.string.visitor_data_info_solution),
-            onDismiss = { showVisitorDataDialog = false }
-        )
-    }
-
-    if (showVisitorDataResetDialog) {
-        MinimalConfirmDialog(
-            icon = painterResource(R.drawable.replay),
-            title = stringResource(R.string.visitor_data_reset_title),
-            message = stringResource(R.string.visitor_data_reset_message),
-            confirmText = stringResource(R.string.visitor_data_reset_confirm),
-            onConfirm = {
-                isClearing = true
-                coroutineScope.launch(Dispatchers.IO) {
-                    try {
-                        // Clear song cache
-                        playerCache?.keys?.toList()?.forEach { key ->
-                            tryOrNull { playerCache.removeResource(key) }
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(
+                                    text = stringResource(R.string.backup_restore),
+                                    style = MaterialTheme.typography.titleLarge,
+                                )
+                                Row(
+                                    modifier = Modifier
+                                        .padding(top = 10.dp)
+                                        .horizontalScroll(rememberScrollState()),
+                                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                ) {
+                                    AssistChip(
+                                        onClick = {},
+                                        label = { Text(".backup") },
+                                        colors = AssistChipDefaults.assistChipColors(
+                                            containerColor = MaterialTheme.colorScheme.surfaceVariant,
+                                            labelColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        ),
+                                    )
+                                    AssistChip(
+                                        onClick = {},
+                                        label = { Text(".m3u") },
+                                        colors = AssistChipDefaults.assistChipColors(
+                                            containerColor = MaterialTheme.colorScheme.surfaceVariant,
+                                            labelColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        ),
+                                    )
+                                    AssistChip(
+                                        onClick = {},
+                                        label = { Text(".csv") },
+                                        colors = AssistChipDefaults.assistChipColors(
+                                            containerColor = MaterialTheme.colorScheme.surfaceVariant,
+                                            labelColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        ),
+                                    )
+                                }
+                            }
                         }
 
-                        // Reset VISITOR_DATA
-                        viewModel.resetVisitorData(context)
-
-                        delay(500) // Short delay to ensure completion
-
-                        withContext(Dispatchers.Main) {
-                            playerCacheSize = 0L
-                            isClearing = false
-                            showVisitorDataResetDialog = false
-                        }
-                    } catch (e: Exception) {
-                        Log.e("BackupRestore", "Error when resetting VISITOR_DATA", e)
-                        withContext(Dispatchers.Main) {
-                            isClearing = false
-                            showVisitorDataResetDialog = false
+                        Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                            NewActionButton(
+                                icon = {
+                                    Icon(
+                                        painter = painterResource(R.drawable.backup),
+                                        contentDescription = null,
+                                        tint = MaterialTheme.colorScheme.onPrimaryContainer,
+                                    )
+                                },
+                                text = stringResource(R.string.action_backup),
+                                onClick = {
+                                    val formatter = DateTimeFormatter.ofPattern("yyyyMMddHHmmss")
+                                    backupLauncher.launch(
+                                        "${context.getString(R.string.app_name)}_${
+                                            LocalDateTime.now().format(formatter)
+                                        }.backup"
+                                    )
+                                },
+                                modifier = Modifier.weight(1f),
+                                backgroundColor = MaterialTheme.colorScheme.primaryContainer,
+                                contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                            )
+                            NewActionButton(
+                                icon = {
+                                    Icon(
+                                        painter = painterResource(R.drawable.restore),
+                                        contentDescription = null,
+                                        tint = MaterialTheme.colorScheme.onSecondaryContainer,
+                                    )
+                                },
+                                text = stringResource(R.string.action_restore),
+                                onClick = { restoreLauncher.launch(arrayOf("application/octet-stream")) },
+                                modifier = Modifier.weight(1f),
+                                backgroundColor = MaterialTheme.colorScheme.secondaryContainer,
+                                contentColor = MaterialTheme.colorScheme.onSecondaryContainer,
+                            )
                         }
                     }
                 }
-            },
-            onDismiss = { showVisitorDataResetDialog = false }
-        )
+            }
+
+            // ── Cloud Backup card ─────────────────────────────────────────────
+            item {
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(24.dp),
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.surfaceContainer
+                    ),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
+                ) {
+                    Column(
+                        modifier = Modifier.padding(16.dp),
+                        verticalArrangement = Arrangement.spacedBy(16.dp),
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(12.dp),
+                        ) {
+                            Surface(
+                                shape = RoundedCornerShape(18.dp),
+                                color = MaterialTheme.colorScheme.secondaryContainer,
+                            ) {
+                                Box(
+                                    modifier = Modifier.size(52.dp),
+                                    contentAlignment = Alignment.Center,
+                                ) {
+                                    Icon(
+                                        painter = painterResource(R.drawable.cloud_upload),
+                                        contentDescription = null,
+                                        tint = MaterialTheme.colorScheme.onSecondaryContainer,
+                                        modifier = Modifier.size(26.dp),
+                                    )
+                                }
+                            }
+
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(
+                                    text = stringResource(R.string.cloud_backup),
+                                    style = MaterialTheme.typography.titleLarge,
+                                )
+                                Text(
+                                    text = stringResource(R.string.cloud_backup_desc),
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    modifier = Modifier.padding(top = 4.dp),
+                                )
+                            }
+
+                            Switch(
+                                checked = cloudState.isEnabled,
+                                onCheckedChange = { enabled ->
+                                    viewModel.setCloudBackupEnabled(context, enabled)
+                                },
+                                modifier = Modifier.padding(start = 8.dp)
+                            )
+                        }
+
+                        // Mostrar estado de subida
+                        AnimatedVisibility(
+                            visible = cloudState.isUploading,
+                            enter = fadeIn() + expandVertically(),
+                            exit = fadeOut() + shrinkVertically(),
+                        ) {
+                            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                                LinearProgressIndicator(
+                                    progress = { cloudState.uploadProgress / 100f },
+                                    modifier = Modifier.fillMaxWidth(),
+                                    color = MaterialTheme.colorScheme.secondary,
+                                    trackColor = MaterialTheme.colorScheme.surfaceVariant,
+                                    strokeCap = StrokeCap.Round,
+                                )
+                                Text(
+                                    text = stringResource(R.string.cloud_uploading, cloudState.uploadProgress),
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                )
+                            }
+                        }
+
+                        // Mostrar último enlace si existe
+                        AnimatedVisibility(
+                            visible = !cloudState.isUploading && cloudState.lastUploadUrl != null,
+                            enter = fadeIn() + expandVertically(),
+                            exit = fadeOut() + shrinkVertically(),
+                        ) {
+                            Surface(
+                                shape = RoundedCornerShape(12.dp),
+                                color = MaterialTheme.colorScheme.primaryContainer,
+                                modifier = Modifier.fillMaxWidth(),
+                            ) {
+                                Column(
+                                    modifier = Modifier.padding(12.dp),
+                                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                                ) {
+                                    Row(
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                    ) {
+                                        Icon(
+                                            painter = painterResource(R.drawable.link),
+                                            contentDescription = null,
+                                            tint = MaterialTheme.colorScheme.onPrimaryContainer,
+                                            modifier = Modifier.size(16.dp),
+                                        )
+                                        Text(
+                                            text = stringResource(R.string.last_cloud_url),
+                                            style = MaterialTheme.typography.labelMedium,
+                                            fontWeight = FontWeight.Medium,
+                                            color = MaterialTheme.colorScheme.onPrimaryContainer,
+                                        )
+                                    }
+
+                                    Row(
+                                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Text(
+                                            text = cloudState.lastUploadUrl.orEmpty(),
+                                            style = MaterialTheme.typography.bodySmall,
+                                            color = MaterialTheme.colorScheme.onPrimaryContainer,
+                                            modifier = Modifier
+                                                .weight(1f)
+                                                .clickable {
+                                                    clipboardManager.setText(
+                                                        AnnotatedString(
+                                                            cloudState.lastUploadUrl.orEmpty()
+                                                        )
+                                                    )
+                                                    android.widget.Toast.makeText(
+                                                        context,
+                                                        R.string.link_copied,
+                                                        android.widget.Toast.LENGTH_SHORT
+                                                    ).show()
+                                                }
+                                        )
+
+                                        AssistChip(
+                                            onClick = {
+                                                clipboardManager.setText(AnnotatedString(cloudState.lastUploadUrl.orEmpty()))
+                                                android.widget.Toast.makeText(context, R.string.link_copied, android.widget.Toast.LENGTH_SHORT).show()
+                                            },
+                                            label = { Text(stringResource(R.string.copy_link)) },
+                                            leadingIcon = {
+                                                Icon(
+                                                    painter = painterResource(R.drawable.content_copy),
+                                                    contentDescription = null,
+                                                    modifier = Modifier.size(16.dp)
+                                                )
+                                            },
+                                            colors = AssistChipDefaults.assistChipColors(
+                                                containerColor = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.1f),
+                                                labelColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                                            )
+                                        )
+                                    }
+                                }
+                            }
+                        }
+
+                        // Mostrar error si existe
+                        AnimatedVisibility(
+                            visible = cloudState.lastError != null && !cloudState.isUploading,
+                            enter = fadeIn() + expandVertically(),
+                            exit = fadeOut() + shrinkVertically(),
+                        ) {
+                            Surface(
+                                shape = RoundedCornerShape(12.dp),
+                                color = MaterialTheme.colorScheme.errorContainer,
+                                modifier = Modifier.fillMaxWidth(),
+                            ) {
+                                Row(
+                                    modifier = Modifier.padding(12.dp),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                ) {
+                                    Icon(
+                                        painter = painterResource(R.drawable.error),
+                                        contentDescription = null,
+                                        tint = MaterialTheme.colorScheme.onErrorContainer,
+                                        modifier = Modifier.size(18.dp),
+                                    )
+                                    Text(
+                                        text = stringResource(R.string.cloud_upload_error_detail, cloudState.lastError.orEmpty()),
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.onErrorContainer,
+                                        modifier = Modifier.weight(1f)
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            // ── Import playlist ───────────────────────────────────────────────
+            item {
+                Material3SettingsGroup(
+                    title = stringResource(R.string.import_playlist),
+                    items = listOf(
+                        Material3SettingsItem(
+                            icon = painterResource(R.drawable.playlist_add),
+                            title = {
+                                Text(
+                                    text = stringResource(R.string.import_online),
+                                    style = MaterialTheme.typography.titleMedium,
+                                )
+                            },
+                            description = {
+                                Text(
+                                    text = "audio/*",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                )
+                            },
+                            onClick = { importM3uLauncherOnline.launch(arrayOf("audio/*")) },
+                        ),
+                        Material3SettingsItem(
+                            icon = painterResource(R.drawable.playlist_add),
+                            title = {
+                                Text(
+                                    text = stringResource(R.string.import_csv),
+                                    style = MaterialTheme.typography.titleMedium,
+                                )
+                            },
+                            description = {
+                                Text(
+                                    text = "text/csv",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                )
+                            },
+                            onClick = { importPlaylistFromCsv.launch(CSV_MIME_TYPES) },
+                        ),
+                    )
+                )
+            }
+
+            // ── Spotify Account card ──────────────────────────────────────────
+            item {
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .animateContentSize(),
+                    shape = RoundedCornerShape(28.dp),
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.surfaceContainer
+                    ),
+                    elevation = CardDefaults.cardElevation(
+                        defaultElevation = 4.dp,
+                        pressedElevation = 8.dp
+                    ),
+                ) {
+                    Column(
+                        modifier = Modifier.padding(24.dp),
+                        verticalArrangement = Arrangement.spacedBy(20.dp),
+                    ) {
+                        // ============ HEADER DRAMÁTICO ============
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(24.dp))
+                                .background(
+                                    brush = Brush.linearGradient(
+                                        colors = listOf(
+                                            MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = 0.7f),
+                                            MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = 0.3f)
+                                        ),
+                                        start = Offset(0f, 0f),
+                                        end = Offset(
+                                            Float.POSITIVE_INFINITY,
+                                            Float.POSITIVE_INFINITY
+                                        )
+                                    )
+                                )
+                                .padding(20.dp),
+                        ) {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(16.dp),
+                            ) {
+                                // Icon animado
+                                Box(
+                                    modifier = Modifier
+                                        .size(64.dp)
+                                        .clip(RoundedCornerShape(20.dp))
+                                        .background(MaterialTheme.colorScheme.tertiaryContainer),
+                                    contentAlignment = Alignment.Center,
+                                ) {
+                                    Icon(
+                                        painter = painterResource(R.drawable.spotify_icon),
+                                        contentDescription = null,
+                                        tint = MaterialTheme.colorScheme.onTertiaryContainer,
+                                        modifier = Modifier
+                                            .size(32.dp)
+                                            .animateContentSize(),
+                                    )
+                                }
+
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Text(
+                                        text = stringResource(R.string.spotify_account),
+                                        style = MaterialTheme.typography.headlineSmall,
+                                        fontWeight = FontWeight.Bold,
+                                    )
+
+                                    Text(
+                                        text = if (spotifyState.isAuthenticated) {
+                                            spotifyState.accountName.ifBlank {
+                                                stringResource(R.string.spotify_connected)
+                                            }
+                                        } else {
+                                            stringResource(R.string.spotify_not_connected)
+                                        },
+                                        style = MaterialTheme.typography.labelLarge,
+                                        color = MaterialTheme.colorScheme.onTertiaryContainer.copy(
+                                            alpha = 0.8f
+                                        ),
+                                    )
+                                }
+
+                                // Loading indicator animado
+                                AnimatedVisibility(
+                                    visible = spotifyState.isLoading,
+                                    enter = scaleIn(animationSpec = spring(dampingRatio = 0.6f)),
+                                    exit = scaleOut(),
+                                ) {
+                                    CircularProgressIndicator(
+                                        modifier = Modifier.size(36.dp),
+                                        color = MaterialTheme.colorScheme.onTertiaryContainer,
+                                    )
+                                }
+                            }
+                        }
+
+                        // ============ INFO DE CUENTA (Cuando conectado) ============
+                        AnimatedVisibility(
+                            visible = spotifyState.isAuthenticated,
+                            enter = expandVertically(animationSpec = spring(dampingRatio = 0.75f)) + fadeIn(),
+                            exit = shrinkVertically(animationSpec = spring()) + fadeOut(),
+                        ) {
+                            Column(
+                                verticalArrangement = Arrangement.spacedBy(16.dp),
+                            ) {
+                                // Account avatar + info
+                                Surface(
+                                    shape = RoundedCornerShape(20.dp),
+                                    color = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.5f),
+                                    modifier = Modifier.fillMaxWidth(),
+                                ) {
+                                    Row(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .padding(16.dp),
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.spacedBy(14.dp),
+                                    ) {
+                                        Surface(
+                                            modifier = Modifier
+                                                .clip(MaterialShapes.Cookie6Sided.toShape())
+                                                .size(56.dp)
+                                        ) {
+                                            SpotifyAccountIcon(
+                                                avatarUrl = spotifyState.accountAvatarUrl,
+                                            )
+                                        }
+
+                                        Column(modifier = Modifier.weight(1f)) {
+                                            Text(
+                                                text = spotifyState.accountName.takeIf { it.isNotBlank() }
+                                                    ?: stringResource(R.string.spotify_account),
+                                                style = MaterialTheme.typography.titleMedium,
+                                                fontWeight = FontWeight.SemiBold,
+                                            )
+
+                                            Text(
+                                                text = if (spotifyState.playlistCount > 0) {
+                                                    stringResource(
+                                                        R.string.spotify_available_count,
+                                                        spotifyState.playlistCount
+                                                    )
+                                                } else {
+                                                    stringResource(R.string.spotify_no_sources)
+                                                },
+                                                style = MaterialTheme.typography.labelMedium,
+                                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                            )
+                                        }
+                                    }
+                                }
+
+                                // Toggle con label mejorado
+                                Surface(
+                                    shape = RoundedCornerShape(20.dp),
+                                    color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.4f),
+                                ) {
+                                    Row(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .padding(16.dp),
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.SpaceBetween,
+                                    ) {
+                                        Row(
+                                            modifier = Modifier.weight(1f),
+                                            verticalAlignment = Alignment.CenterVertically,
+                                            horizontalArrangement = Arrangement.spacedBy(12.dp),
+                                        ) {
+                                            Surface(
+                                                shape = RoundedCornerShape(12.dp),
+                                                color = MaterialTheme.colorScheme.primary.copy(alpha = 0.2f),
+                                                modifier = Modifier.size(40.dp),
+                                            ) {
+                                                Box(contentAlignment = Alignment.Center) {
+                                                    Icon(
+                                                        painter = painterResource(R.drawable.spotify_icon),
+                                                        contentDescription = null,
+                                                        tint = MaterialTheme.colorScheme.primary,
+                                                        modifier = Modifier.size(20.dp),
+                                                    )
+                                                }
+                                            }
+
+                                            Text(
+                                                text = stringResource(R.string.spotify_show_playlist),
+                                                style = MaterialTheme.typography.bodyMedium,
+                                                fontWeight = FontWeight.Medium,
+                                            )
+                                        }
+
+                                        Switch(
+                                            checked = showSpotifyPlaylists,
+                                            onCheckedChange = onShowSpotifyPlaylistsChange,
+                                            enabled = !spotifyState.isLoading,
+                                        )
+                                    }
+                                }
+
+                                // Botones de acción con mejor layout
+                                Column(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    verticalArrangement = Arrangement.spacedBy(10.dp),
+                                ) {
+                                    SpotifyActionButton(
+                                        icon = R.drawable.sync,
+                                        label = stringResource(R.string.spotify_reload_playlist),
+                                        backgroundColor = MaterialTheme.colorScheme.secondaryContainer,
+                                        contentColor = MaterialTheme.colorScheme.onSecondaryContainer,
+                                        onClick = { spotifyAccountViewModel.reloadPlaylists() },
+                                        enabled = !spotifyState.isLoading,
+                                        isLoading = spotifyState.isLoading,
+                                    )
+
+                                    SpotifyActionButton(
+                                        icon = R.drawable.logout,
+                                        label = stringResource(R.string.action_logout),
+                                        backgroundColor = MaterialTheme.colorScheme.errorContainer,
+                                        contentColor = MaterialTheme.colorScheme.onErrorContainer,
+                                        onClick = { spotifyAccountViewModel.logout() },
+                                        enabled = !spotifyState.isLoading,
+                                    )
+                                }
+                            }
+                        }
+
+                        // ============ BOTÓN CONECTAR (Cuando desconectado) ============
+                        AnimatedVisibility(
+                            visible = !spotifyState.isAuthenticated,
+                            enter = expandVertically(animationSpec = spring(dampingRatio = 0.75f)) + fadeIn(),
+                            exit = shrinkVertically(animationSpec = spring()) + fadeOut(),
+                        ) {
+                            SpotifyActionButton(
+                                icon = R.drawable.spotify_icon,
+                                label = stringResource(R.string.spotify_connect),
+                                backgroundColor = MaterialTheme.colorScheme.tertiaryContainer,
+                                contentColor = MaterialTheme.colorScheme.onTertiaryContainer,
+                                onClick = { showSpotifyLogin = true },
+                                enabled = !spotifyState.isLoading,
+                                modifier = Modifier.fillMaxWidth(),
+                            )
+                        }
+
+                        // ============ ERROR DISPLAY (Expressive) ============
+                        spotifyState.errorMessage?.let { error ->
+                            AnimatedVisibility(
+                                visible = true,
+                                enter = slideInVertically(
+                                    animationSpec = spring(dampingRatio = 0.7f),
+                                    initialOffsetY = { it / 2 }
+                                ) + fadeIn(),
+                                exit = slideOutVertically(animationSpec = spring()) + fadeOut(),
+                            ) {
+                                Surface(
+                                    shape = RoundedCornerShape(18.dp),
+                                    color = MaterialTheme.colorScheme.errorContainer,
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .clip(RoundedCornerShape(18.dp)),
+                                ) {
+                                    Row(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .padding(16.dp),
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.spacedBy(12.dp),
+                                    ) {
+                                        Surface(
+                                            shape = RoundedCornerShape(12.dp),
+                                            color = MaterialTheme.colorScheme.onErrorContainer.copy(
+                                                alpha = 0.15f
+                                            ),
+                                            modifier = Modifier.size(40.dp),
+                                        ) {
+                                            Box(contentAlignment = Alignment.Center) {
+                                                Icon(
+                                                    painter = painterResource(R.drawable.error),
+                                                    contentDescription = null,
+                                                    tint = MaterialTheme.colorScheme.onErrorContainer,
+                                                    modifier = Modifier.size(20.dp),
+                                                )
+                                            }
+                                        }
+
+                                        Text(
+                                            text = error,
+                                            style = MaterialTheme.typography.bodySmall,
+                                            color = MaterialTheme.colorScheme.onErrorContainer,
+                                            modifier = Modifier.weight(1f),
+                                        )
+
+                                        IconButton(
+                                            onClick = { spotifyAccountViewModel.dismissError() },
+                                            modifier = Modifier.size(32.dp),
+                                        ) {
+                                            Icon(
+                                                painter = painterResource(R.drawable.close),
+                                                contentDescription = null,
+                                                tint = MaterialTheme.colorScheme.onErrorContainer,
+                                                modifier = Modifier.size(18.dp),
+                                            )
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+        }
     }
 
-    OnlinePlaylistAdder(
+    AddToPlaylistDialogOnline(
         isVisible = showChoosePlaylistDialogOnline,
         allowSyncing = false,
         initialTextFieldValue = importedTitle,
         songs = importedSongs,
         onDismiss = { showChoosePlaylistDialogOnline = false },
         onProgressStart = { newVal -> isProgressStarted = newVal },
-        onPercentageChange = { newPercentage -> progressPercentage = newPercentage }
+        onPercentageChange = { newPercentage -> progressPercentage = newPercentage },
+        onStatusChange = { progressStatus = it }
     )
 
     LaunchedEffect(progressPercentage, isProgressStarted) {
@@ -339,486 +970,477 @@ fun BackupAndRestore(
         }
     }
 
-    if (isProgressStarted) {
-        MinimalLoadingOverlay(progress = progressPercentage)
-    }
-}
+    LoadingScreen(
+        isVisible = backupRestoreProgress != null || isProgressStarted,
+        value = backupRestoreProgress?.percent ?: progressPercentage,
+        title = backupRestoreProgress?.title,
+        stepText = backupRestoreProgress?.step ?: progressStatus,
+        indeterminate = backupRestoreProgress?.indeterminate ?: false,
+    )
 
-
-@Composable
-private fun MinimalVisitorDataCard(
-    playerCacheSize: Long,
-    progress: Float,
-    isClearing: Boolean,
-    onResetClick: () -> Unit,
-    onInfoClick: () -> Unit
-) {
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp),
-        shape = RoundedCornerShape(24.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f)
-        ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
-    ) {
-        Column(
-            modifier = Modifier.padding(20.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
-        ) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                Box(
-                    modifier = Modifier
-                        .size(40.dp)
-                        .clip(RoundedCornerShape(12.dp))
-                        .background(
-                            MaterialTheme.colorScheme.primary.copy(alpha = 0.1f)
-                        ),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(
-                        painter = painterResource(R.drawable.replay),
-                        contentDescription = null,
-//                        tint = MaterialTheme.colorScheme.onPrimaryContainer,
-                        modifier = Modifier.size(20.dp)
-                    )
-                }
-
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(
-                        text = stringResource(R.string.visitor_data_title),
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Medium
-                    )
-                }
-            }
-
-            Text(
-                text = stringResource(R.string.visitor_data_description),
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-
-            // Cache indicator
-            if (playerCacheSize > 0 || isClearing) {
-                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    LinearProgressIndicator(
-                        progress = { if (isClearing) 0f else progress },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(4.dp)
-                            .clip(RoundedCornerShape(2.dp)),
-                    )
-
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        Text(
-                            text = if (isClearing) {
-                                stringResource(R.string.cache_clearing)
-                            } else {
-                                stringResource(R.string.song_cache)
-                            },
-                            style = MaterialTheme.typography.labelSmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                        Text(
-                            text = formatFileSize(playerCacheSize),
-                            style = MaterialTheme.typography.labelSmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
-                }
-            }
-
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                OutlinedButton(
-                    onClick = onInfoClick,
-                    modifier = Modifier.weight(1f),
-                    shape = RoundedCornerShape(12.dp),
-                    enabled = !isClearing
-                ) {
-                    Icon(
-                        painter = painterResource(R.drawable.help),
-                        contentDescription = null,
-                        modifier = Modifier.size(16.dp)
-                    )
-                    Spacer(modifier = Modifier.width(4.dp))
-                    Text(stringResource(R.string.info_button), style = MaterialTheme.typography.labelLarge)
-                }
-
-                FilledTonalButton(
-                    onClick = onResetClick,
-                    modifier = Modifier.weight(1f),
-                    shape = RoundedCornerShape(12.dp),
-                    enabled = !isClearing
-                ) {
-                    if (isClearing) {
-                        CircularProgressIndicator(
-                            modifier = Modifier.size(16.dp),
-                            strokeWidth = 2.dp
-                        )
-                    } else {
-                        Icon(
-                            painter = painterResource(R.drawable.replay),
-                            contentDescription = null,
-                            modifier = Modifier.size(16.dp)
-                        )
-                    }
-                    Spacer(modifier = Modifier.width(4.dp))
-                    Text(stringResource(R.string.reset_button), style = MaterialTheme.typography.labelLarge)
-                }
-            }
-        }
+    // ── Spotify Login Sheet ──────────────────────────────────────────────────
+    if (showSpotifyLogin) {
+        SpotifyLoginSheet(
+            onDismiss = { showSpotifyLogin = false },
+            onCookiesCaptured = { spDc, spKey ->
+                showSpotifyLogin = false
+                spotifyAccountViewModel.connectWithCookies(spDc = spDc, spKey = spKey)
+            },
+        )
     }
 }
 
 @Composable
-private fun MinimalUploadStatus(
-    uploadStatus: UploadStatus?,
-    onCopyClick: () -> Unit
-) {
-    when (uploadStatus) {
-        is UploadStatus.Uploading -> {
-            Surface(
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(16.dp),
-                color = MaterialTheme.colorScheme.primaryContainer
-            ) {
-                Row(
-                    modifier = Modifier.padding(16.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    CircularProgressIndicator(
-                        modifier = Modifier.size(24.dp),
-                        strokeWidth = 2.dp
-                    )
-                    Text(
-                        text = stringResource(R.string.uploading_backup),
-                        style = MaterialTheme.typography.bodyMedium
-                    )
+private fun SpotifyAccountIcon(avatarUrl: String?) {
+    val context = LocalContext.current
+    val requestSize = with(LocalDensity.current) { SpotifyAccountIconSize.roundToPx() }
+    val accountIcon = painterResource(R.drawable.spotify_icon)
+    val imageRequest =
+        remember(context, avatarUrl, requestSize) {
+            avatarUrl
+                ?.takeIf(String::isNotBlank)
+                ?.let {
+                    ImageRequest
+                        .Builder(context)
+                        .data(it)
+                        .size(requestSize)
+                        .build()
                 }
-            }
         }
 
-        is UploadStatus.Success -> {
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(16.dp),
-                colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.secondaryContainer
-                )
-            ) {
-                Column(
-                    modifier = Modifier.padding(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        Icon(
-                            painter = painterResource(R.drawable.check_circle),
-                            contentDescription = null,
-                            tint = MaterialTheme.colorScheme.primary,
-                            modifier = Modifier.size(20.dp)
-                        )
-                        Text(
-                            text = stringResource(R.string.backup_success),
-                            style = MaterialTheme.typography.titleSmall,
-                            fontWeight = FontWeight.Medium
-                        )
-                    }
-
-                    Text(
-                        text = uploadStatus.fileUrl,
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSecondaryContainer
-                    )
-
-                    Button(
-                        onClick = onCopyClick,
-                        modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(12.dp)
-                    ) {
-                        Icon(
-                            painter = painterResource(R.drawable.content_copy),
-                            contentDescription = null,
-                            modifier = Modifier.size(16.dp)
-                        )
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text(stringResource(R.string.copy_link))
-                    }
-                }
-            }
-        }
-
-        is UploadStatus.Failure -> {
-            Surface(
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(16.dp),
-                color = MaterialTheme.colorScheme.errorContainer
-            ) {
-                Row(
-                    modifier = Modifier.padding(16.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    Icon(
-                        painter = painterResource(R.drawable.error),
-                        contentDescription = null,
-                        tint = MaterialTheme.colorScheme.error,
-                        modifier = Modifier.size(20.dp)
-                    )
-                    Text(
-                        text = stringResource(R.string.backup_upload_error),
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onErrorContainer
-                    )
-                }
-            }
-        }
-
-        null -> {}
-    }
-}
-
-@Composable
-private fun MinimalLoadingOverlay(progress: Int) {
     Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.98f)),
-        contentAlignment = Alignment.Center
+        modifier =
+            Modifier
+                .size(SpotifyAccountIconSize)
+                .clip(CircleShape)
+                .background(MaterialTheme.colorScheme.primaryContainer),
+        contentAlignment = Alignment.Center,
+    ) {
+        if (imageRequest != null) {
+            AsyncImage(
+                model = imageRequest,
+                contentDescription = null,
+                placeholder = accountIcon,
+                error = accountIcon,
+                contentScale = ContentScale.Crop,
+                modifier = Modifier.fillMaxWidth(),
+            )
+        } else {
+            Icon(
+                painter = accountIcon,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.onPrimaryContainer,
+                modifier = Modifier.size(24.dp),
+            )
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@SuppressLint("SetJavaScriptEnabled")
+@Composable
+private fun SpotifyLoginSheet(
+    onDismiss: () -> Unit,
+    onCookiesCaptured: (spDc: String, spKey: String) -> Unit,
+) {
+    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    var webView by remember { mutableStateOf<WebView?>(null) }
+    var mainWebView by remember { mutableStateOf<WebView?>(null) }
+    var captured by remember { mutableStateOf(false) }
+
+    DisposableEffect(Unit) {
+        onDispose {
+            webView?.destroySpotifyLoginWebView()
+            mainWebView?.takeIf { it !== webView }?.destroySpotifyLoginWebView()
+            webView = null
+            mainWebView = null
+        }
+    }
+
+    BackHandler(enabled = webView != null) {
+        val activeWebView = webView
+        val rootWebView = mainWebView
+        when {
+            activeWebView?.canGoBack() == true -> {
+                activeWebView.goBack()
+            }
+
+            activeWebView != null && rootWebView != null && activeWebView !== rootWebView -> {
+                activeWebView.destroySpotifyLoginWebView()
+                webView = rootWebView
+            }
+
+            else -> {
+                onDismiss()
+            }
+        }
+    }
+
+    ModalBottomSheet(
+        modifier = Modifier.fillMaxHeight(),
+        onDismissRequest = onDismiss,
+        sheetState = sheetState,
+        shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp),
+        containerColor = MaterialTheme.colorScheme.surface,
     ) {
         Column(
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(16.dp)
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .fillMaxHeight()
+                    .padding(horizontal = 20.dp)
+                    .padding(bottom = 20.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-            CircularProgressIndicator(
-                progress = { progress / 100f },
-                modifier = Modifier.size(64.dp),
-                strokeWidth = 4.dp
+            Text(
+                text = stringResource(R.string.spotify_login_title),
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.Bold,
             )
             Text(
-                text = "$progress%",
-                style = MaterialTheme.typography.headlineMedium,
-                fontWeight = FontWeight.Medium
-            )
-            Text(
-                text = stringResource(R.string.processing_songs),
+                text = stringResource(R.string.spotify_waiting_for_login),
                 style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            AndroidView(
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .weight(1f)
+                        .clip(MaterialTheme.shapes.large),
+                factory = { context ->
+                    val container = FrameLayout(context)
+                    val spotifyWebView =
+                        WebView(context).apply {
+                            val cookieManager = CookieManager.getInstance()
+                            cookieManager.setAcceptCookie(true)
+                            cookieManager.setAcceptThirdPartyCookies(this, true)
+                            configureSpotifyLoginWebView()
+
+                            fun captureCookies(url: String?): Boolean {
+                                if (captured) return true
+                                val cookies = readSpotifyCookies(cookieManager, url)
+                                val spDc = cookies["sp_dc"].orEmpty()
+                                if (spDc.isBlank()) return false
+                                captured = true
+                                cookieManager.flush()
+                                onCookiesCaptured(spDc, cookies["sp_key"].orEmpty())
+                                return true
+                            }
+
+                            webViewClient =
+                                object : WebViewClient() {
+                                    override fun shouldOverrideUrlLoading(
+                                        view: WebView,
+                                        request: WebResourceRequest,
+                                    ): Boolean =
+                                        shouldOverrideSpotifyLoginUrl(
+                                            view = view,
+                                            url = request.url?.toString(),
+                                            captureCookies = { url -> captureCookies(url) },
+                                        )
+
+                                    @Deprecated("Deprecated in Java")
+                                    override fun shouldOverrideUrlLoading(
+                                        view: WebView,
+                                        url: String?,
+                                    ): Boolean =
+                                        shouldOverrideSpotifyLoginUrl(
+                                            view = view,
+                                            url = url,
+                                            captureCookies = { targetUrl -> captureCookies(targetUrl) },
+                                        )
+
+                                    override fun onPageStarted(
+                                        view: WebView,
+                                        url: String?,
+                                        favicon: android.graphics.Bitmap?,
+                                    ) {
+                                        captureCookies(url)
+                                    }
+
+                                    override fun onPageFinished(
+                                        view: WebView,
+                                        url: String?,
+                                    ) {
+                                        captureCookies(url)
+                                    }
+                                }
+                            webChromeClient =
+                                SpotifyLoginWebChromeClient(
+                                    container = container,
+                                    parentWebView = this,
+                                    captureCookies = { url -> captureCookies(url) },
+                                    onActiveWebViewChanged = { activeWebView ->
+                                        webView = activeWebView
+                                    },
+                                )
+                            webView = this
+                            mainWebView = this
+                            resetAuthWebViewSession(context, this) {
+                                loadUrl(SpotifyAuth.LOGIN_URL)
+                            }
+                        }
+                    container.addView(
+                        spotifyWebView,
+                        FrameLayout.LayoutParams(
+                            ViewGroup.LayoutParams.MATCH_PARENT,
+                            ViewGroup.LayoutParams.MATCH_PARENT,
+                        ),
+                    )
+                    container
+                },
+                update = {
+                    webView = webView ?: mainWebView
+                },
             )
         }
     }
 }
 
-@Composable
-private fun MinimalInfoDialog(
-    icon: Painter,
-    title: String,
-    message: String,
-    onDismiss: () -> Unit
-) {
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        icon = {
-            Icon(
-                painter = icon,
-                contentDescription = null,
-                tint = MaterialTheme.colorScheme.primary
-            )
-        },
-        title = {
-            Text(
-                text = title,
-                style = MaterialTheme.typography.titleLarge
-            )
-        },
-        text = {
-            Text(
-                text = message,
-                style = MaterialTheme.typography.bodyMedium
-            )
-        },
-        confirmButton = {
-            TextButton(onClick = onDismiss) {
-                Text(stringResource(R.string.understood))
-            }
-        },
-        shape = RoundedCornerShape(24.dp)
-    )
+private fun WebView.destroySpotifyLoginWebView() {
+    stopLoading()
+    loadUrl("about:blank")
+    (parent as? ViewGroup)?.removeView(this)
+    destroy()
 }
 
-@Composable
-private fun MinimalConfirmDialog(
-    icon: Painter,
-    title: String,
-    message: String,
-    confirmText: String,
-    onConfirm: () -> Unit,
-    onDismiss: () -> Unit
-) {
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        icon = {
-            Icon(
-                painter = icon,
-                contentDescription = null,
-                tint = MaterialTheme.colorScheme.primary
-            )
-        },
-        title = {
-            Text(
-                text = title,
-                style = MaterialTheme.typography.titleLarge
-            )
-        },
-        text = {
-            Text(
-                text = message,
-                style = MaterialTheme.typography.bodyMedium
-            )
-        },
-        confirmButton = {
-            Button(
-                onClick = onConfirm,
-                shape = RoundedCornerShape(12.dp)
-            ) {
-                Text(confirmText)
-            }
-        },
-        dismissButton = {
-            TextButton(onClick = onDismiss) {
-                Text(stringResource(R.string.cancel))
-            }
-        },
-        shape = RoundedCornerShape(24.dp)
-    )
+@SuppressLint("SetJavaScriptEnabled")
+private fun WebView.configureSpotifyLoginWebView() {
+    settings.apply {
+        javaScriptEnabled = true
+        domStorageEnabled = true
+        javaScriptCanOpenWindowsAutomatically = true
+        setSupportMultipleWindows(true)
+        setSupportZoom(true)
+        builtInZoomControls = true
+        displayZoomControls = false
+        mixedContentMode = WebSettings.MIXED_CONTENT_COMPATIBILITY_MODE
+        userAgentString = SpotifyLoginUserAgent
+    }
 }
 
-// Filebin upload function (no significant changes)
-@SuppressLint("LogNotTimber")
-suspend fun uploadBackupToFilebin(
-    context: Context,
-    uri: Uri,
-    progressCallback: (Float) -> Unit = {}
-): String? {
-    return withContext(Dispatchers.IO) {
-        val tempFile = File(context.cacheDir, "temp_backup_${System.currentTimeMillis()}.backup")
+private class SpotifyLoginWebChromeClient(
+    private val container: FrameLayout,
+    private val parentWebView: WebView,
+    private val captureCookies: (String?) -> Boolean,
+    private val onActiveWebViewChanged: (WebView) -> Unit,
+) : WebChromeClient() {
+    override fun onCreateWindow(
+        view: WebView,
+        isDialog: Boolean,
+        isUserGesture: Boolean,
+        resultMsg: Message,
+    ): Boolean {
+        closePopupWebViews()
 
-        try {
-            val inputStream = context.contentResolver.openInputStream(uri)
-                ?: return@withContext null
+        val popupWebView =
+            WebView(view.context).apply {
+                val cookieManager = CookieManager.getInstance()
+                cookieManager.setAcceptCookie(true)
+                cookieManager.setAcceptThirdPartyCookies(this, true)
+                configureSpotifyLoginWebView()
+                webViewClient =
+                    object : WebViewClient() {
+                        override fun shouldOverrideUrlLoading(
+                            view: WebView,
+                            request: WebResourceRequest,
+                        ): Boolean =
+                            shouldOverrideSpotifyLoginUrl(
+                                view = view,
+                                url = request.url?.toString(),
+                                captureCookies = captureCookies,
+                            )
 
-            inputStream.use { input ->
-                val fileSize = try {
-                    context.contentResolver.query(uri, null, null, null, null)?.use { cursor ->
-                        val sizeIndex = cursor.getColumnIndex(OpenableColumns.SIZE)
-                        if (sizeIndex != -1 && cursor.moveToFirst()) {
-                            cursor.getLong(sizeIndex)
-                        } else {
-                            input.available().toLong()
+                        @Deprecated("Deprecated in Java")
+                        override fun shouldOverrideUrlLoading(
+                            view: WebView,
+                            url: String?,
+                        ): Boolean =
+                            shouldOverrideSpotifyLoginUrl(
+                                view = view,
+                                url = url,
+                                captureCookies = captureCookies,
+                            )
+
+                        override fun onPageStarted(
+                            view: WebView,
+                            url: String?,
+                            favicon: android.graphics.Bitmap?,
+                        ) {
+                            captureCookies(url)
                         }
-                    } ?: input.available().toLong()
-                } catch (e: Exception) {
-                    Log.w("BackupRestore", "The file size could not be obtained: ${e.message}")
-                    input.available().toLong()
-                }
 
-                var totalBytesRead = 0L
-                tempFile.outputStream().use { outputStream ->
-                    val buffer = ByteArray(DEFAULT_BUFFER_SIZE)
-                    var bytesRead: Int
-
-                    while (input.read(buffer).also { bytesRead = it } != -1) {
-                        outputStream.write(buffer, 0, bytesRead)
-                        totalBytesRead += bytesRead
-                        if (fileSize > 0) {
-                            progressCallback(totalBytesRead / fileSize.toFloat() * 0.5f)
-                        }
-                    }
-                }
-            }
-
-            val binId = UUID.randomUUID().toString().substring(0, 8)
-
-            val fileRequestBody = object : RequestBody() {
-                override fun contentType() = "application/octet-stream".toMediaTypeOrNull()
-                override fun contentLength() = tempFile.length()
-
-                override fun writeTo(sink: BufferedSink) {
-                    tempFile.inputStream().use { input ->
-                        val fileSize = tempFile.length().toFloat()
-                        val buffer = ByteArray(DEFAULT_BUFFER_SIZE)
-                        var bytesRead: Int
-                        var totalBytesRead = 0L
-
-                        while (input.read(buffer).also { bytesRead = it } != -1) {
-                            sink.write(buffer, 0, bytesRead)
-                            totalBytesRead += bytesRead
-                            val uploadProgress = 0.5f + (totalBytesRead / fileSize * 0.5f)
-                            progressCallback(uploadProgress)
+                        override fun onPageFinished(
+                            view: WebView,
+                            url: String?,
+                        ) {
+                            captureCookies(url)
                         }
                     }
-                }
             }
 
-            val client = OkHttpClient.Builder()
-                .connectTimeout(30, TimeUnit.SECONDS)
-                .writeTimeout(60, TimeUnit.SECONDS)
-                .readTimeout(30, TimeUnit.SECONDS)
-                .build()
+        val transport = resultMsg.obj as? WebView.WebViewTransport ?: return false
+        container.addView(
+            popupWebView,
+            FrameLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.MATCH_PARENT,
+            ),
+        )
+        popupWebView.bringToFront()
+        popupWebView.requestFocus()
+        onActiveWebViewChanged(popupWebView)
+        transport.webView = popupWebView
+        resultMsg.sendToTarget()
+        return true
+    }
 
-            val fileName = tempFile.name
-            val request = Request.Builder()
-                .url("https://filebin.net/$binId/$fileName")
-                .put(fileRequestBody)
-                .build()
+    override fun onCloseWindow(window: WebView) {
+        window.destroySpotifyLoginWebView()
+        onActiveWebViewChanged(parentWebView)
+    }
 
-            val response = client.newCall(request).execute()
-
-            if (!response.isSuccessful) {
-                Log.e("BackupRestore", "Error in server response: ${response.code}")
-                return@withContext null
-            }
-
-            return@withContext "https://filebin.net/$binId/$fileName"
-
-        } catch (e: Exception) {
-            Log.e("BackupRestore", "Error during upload", e)
-            return@withContext null
-        } finally {
-            if (tempFile.exists()) {
-                tryOrNull { tempFile.delete() }
+    private fun closePopupWebViews() {
+        for (index in container.childCount - 1 downTo 0) {
+            val child = container.getChildAt(index) as? WebView ?: continue
+            if (child !== parentWebView) {
+                child.destroySpotifyLoginWebView()
             }
         }
+        onActiveWebViewChanged(parentWebView)
     }
 }
 
-@SuppressLint("LogNotTimber")
-fun copyToClipboard(context: Context, text: String) {
-    try {
-        val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
-        val clip = ClipData.newPlainText("Backup URL", text)
-        clipboard.setPrimaryClip(clip)
-    } catch (e: Exception) {
-        Log.e("BackupRestore", "Error copying to clipboard: ${e.message}")
-    }
+private fun shouldOverrideSpotifyLoginUrl(
+    view: WebView,
+    url: String?,
+    captureCookies: (String?) -> Boolean,
+): Boolean {
+    if (captureCookies(url)) return true
+
+    val targetUrl = url?.takeIf(String::isNotBlank) ?: return false
+    if (targetUrl.isWebViewLoadableUrl()) return false
+
+    targetUrl.intentBrowserFallbackUrl()?.let { fallbackUrl -> view.loadUrl(fallbackUrl) }
+    return true
 }
 
-sealed class UploadStatus {
-    data object Uploading : UploadStatus()
-    data class Success(val fileUrl: String) : UploadStatus()
-    data object Failure : UploadStatus()
+private fun String.isWebViewLoadableUrl(): Boolean {
+    val scheme = runCatching { Uri.parse(this).scheme?.lowercase() }.getOrNull()
+    return scheme == "http" ||
+            scheme == "https" ||
+            scheme == "javascript" ||
+            scheme == "data" ||
+            scheme == "blob"
+}
+
+private fun String.intentBrowserFallbackUrl(): String? =
+    runCatching { Intent.parseUri(this, Intent.URI_INTENT_SCHEME) }
+        .getOrNull()
+        ?.getStringExtra("browser_fallback_url")
+        ?.takeIf { it.isWebViewLoadableUrl() }
+
+private fun readSpotifyCookies(
+    cookieManager: CookieManager,
+    currentUrl: String?,
+): Map<String, String> {
+    val urls =
+        linkedSetOf(
+            "https://open.spotify.com",
+            "https://accounts.spotify.com",
+            "https://spotify.com",
+        )
+    currentUrl?.toSpotifyCookieOrigin()?.let(urls::add)
+    val cookies = linkedMapOf<String, String>()
+    cookieManager.flush()
+    urls.forEach { url ->
+        cookieManager
+            .getCookie(url)
+            ?.split(";")
+            ?.map(String::trim)
+            ?.filter(String::isNotBlank)
+            ?.forEach { part ->
+                val separator = part.indexOf('=')
+                if (separator <= 0) return@forEach
+                val key = part.substring(0, separator).trim()
+                val value = part.substring(separator + 1).trim()
+                if (key.isNotBlank()) {
+                    cookies[key] = value
+                }
+            }
+    }
+    return cookies
+}
+
+private fun String.toSpotifyCookieOrigin(): String? {
+    val uri = runCatching { Uri.parse(this) }.getOrNull() ?: return null
+    val host = uri.host?.lowercase() ?: return null
+    if (host != "spotify.com" && !host.endsWith(".spotify.com")) return null
+    val scheme =
+        uri.scheme
+            ?.takeIf {
+                it.equals("https", ignoreCase = true) || it.equals(
+                    "http",
+                    ignoreCase = true
+                )
+            }
+            ?: "https"
+    return "$scheme://$host"
+}
+
+@Composable
+fun SpotifyActionButton(
+    @DrawableRes icon: Int,
+    label: String,
+    backgroundColor: androidx.compose.ui.graphics.Color,
+    contentColor: androidx.compose.ui.graphics.Color,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    enabled: Boolean = true,
+    isLoading: Boolean = false,
+) {
+    Button(
+        onClick = onClick,
+        modifier = modifier
+            .height(56.dp)
+            .clip(RoundedCornerShape(20.dp)),
+        colors = ButtonDefaults.buttonColors(
+            containerColor = backgroundColor,
+            disabledContainerColor = backgroundColor.copy(alpha = 0.5f),
+        ),
+        enabled = enabled,
+    ) {
+        Row(
+            modifier = Modifier.fillMaxSize(),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.Center,
+        ) {
+            if (isLoading) {
+                CircularProgressIndicator(
+                    modifier = Modifier
+                        .size(20.dp)
+                        .padding(end = 8.dp),
+                    color = contentColor,
+                    strokeWidth = 2.dp,
+                )
+            } else {
+                Icon(
+                    painter = painterResource(icon),
+                    contentDescription = null,
+                    tint = contentColor,
+                    modifier = Modifier
+                        .size(20.dp)
+                        .padding(end = 8.dp),
+                )
+            }
+
+            Text(
+                text = label,
+                style = MaterialTheme.typography.labelLarge,
+                fontWeight = FontWeight.SemiBold,
+                color = contentColor,
+            )
+        }
+    }
 }

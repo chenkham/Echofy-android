@@ -53,6 +53,8 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
+import androidx.compose.ui.graphics.Color
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.TopAppBarScrollBehavior
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
@@ -85,7 +87,7 @@ import androidx.core.net.toUri
 import androidx.navigation.NavController
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
-import com.Chenkham.innertube.utils.parseCookieString
+import com.arturo254.opentune.innertube.utils.parseCookieString
 import com.Chenkham.Echofy.BuildConfig
 import com.Chenkham.Echofy.LocalPlayerAwareWindowInsets
 import com.Chenkham.Echofy.R
@@ -108,7 +110,6 @@ import java.io.File
 import java.net.URL
 import androidx.compose.material3.Switch
 import com.Chenkham.Echofy.ads.AdManager
-import com.Chenkham.Echofy.ads.SubscriptionManager
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.ButtonDefaults
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -438,6 +439,7 @@ fun SettingsScreen(
                 )
             )
         )
+        Spacer(Modifier.height(64.dp))
         val context = LocalContext.current
         val avatarManager = remember { AvatarPreferenceManager(context) }
         val currentSelection by avatarManager.getAvatarSelection.collectAsState(initial = AvatarSelection.Default)
@@ -702,29 +704,101 @@ fun SettingsScreen(
             }
         }
 
-        // Main settings category
+        // 1. Playback & Sound Category
         SettingsCategory(
-            title = stringResource(R.string.general_settings),
+            title = "Playback & Sound",
             items = listOf(
                 SettingsCategoryItem(
-                    icon = painterResource(R.drawable.person),
-                    title = { Text(stringResource(R.string.account)) },
-                    onClick = { navController.navigate("account_settings") }
+                    icon = painterResource(R.drawable.play),
+                    title = { Text(stringResource(R.string.player_and_audio)) },
+                    onClick = { navController.navigate("settings/player") }
                 ),
                 SettingsCategoryItem(
-                    icon = painterResource(R.drawable.group),
-                    title = { Text("Together & Controls") },
-                    onClick = { navController.navigate("settings/premium_features") }
+                    icon = painterResource(R.drawable.radio),
+                    title = { Text(stringResource(R.string.radio)) },
+                    onClick = { navController.navigate("settings/radio") }
                 ),
                 SettingsCategoryItem(
-                    icon = painterResource(R.drawable.palette),
-                    title = { Text("Player Visuals") },
-                    onClick = { navController.navigate("settings/player_visuals") }
+                    icon = painterResource(R.drawable.data_saver_on),
+                    title = { Text("Stream & Data Saver") },
+                    onClick = { navController.navigate("settings/saver") }
                 ),
+            )
+        )
+
+        Spacer(Modifier.height(16.dp))
+
+        // 2. Appearance & UI Category
+        SettingsCategory(
+            title = "Appearance & Style",
+            items = listOf(
                 SettingsCategoryItem(
                     icon = painterResource(R.drawable.palette),
                     title = { Text(stringResource(R.string.appearance)) },
                     onClick = { navController.navigate("settings/appearance") }
+                ),
+                SettingsCategoryItem(
+                    icon = painterResource(R.drawable.palette),
+                    title = { Text("Theme & Palette Creator") },
+                    onClick = { navController.navigate("settings/theme_creator") }
+                ),
+                SettingsCategoryItem(
+                    icon = painterResource(R.drawable.wallpaper),
+                    title = { Text("Player Background & Glass") },
+                    onClick = { navController.navigate("settings/backpaper") }
+                ),
+                SettingsCategoryItem(
+                    icon = painterResource(R.drawable.bedtime),
+                    title = { Text("Always On Display (AOD)") },
+                    onClick = { navController.navigate("settings/aod") }
+                ),
+                SettingsCategoryItem(
+                    icon = painterResource(R.drawable.tune),
+                    title = { Text("Home Screen Widgets") },
+                    onClick = { navController.navigate("settings/widget") }
+                ),
+            )
+        )
+
+        Spacer(Modifier.height(16.dp))
+
+        // 3. Integrations & Connected Services
+        SettingsCategory(
+            title = "Integrations & Services",
+            items = listOf(
+                SettingsCategoryItem(
+                    icon = painterResource(R.drawable.auto_awesome),
+                    title = { Text("Echofy AI Assistant") },
+                    onClick = { navController.navigate("settings/ai") }
+                ),
+                SettingsCategoryItem(
+                    icon = painterResource(R.drawable.link),
+                    title = { Text(stringResource(R.string.integrations)) },
+                    onClick = { navController.navigate("settings/integrations") }
+                ),
+                SettingsCategoryItem(
+                    icon = painterResource(R.drawable.directions_car),
+                    title = { Text("Android Auto") },
+                    onClick = { navController.navigate("settings/android_auto") }
+                ),
+                SettingsCategoryItem(
+                    icon = painterResource(R.drawable.group),
+                    title = { Text("Echofy Jam Together") },
+                    onClick = { navController.navigate("settings/premium_features") }
+                ),
+            )
+        )
+
+        Spacer(Modifier.height(16.dp))
+
+        // 4. Content & Privacy
+        SettingsCategory(
+            title = "Content & Privacy",
+            items = listOf(
+                SettingsCategoryItem(
+                    icon = painterResource(R.drawable.person),
+                    title = { Text("Account & Login") },
+                    onClick = { navController.navigate("account_settings") }
                 ),
                 SettingsCategoryItem(
                     icon = painterResource(R.drawable.language),
@@ -732,9 +806,28 @@ fun SettingsScreen(
                     onClick = { navController.navigate("settings/content") }
                 ),
                 SettingsCategoryItem(
-                    icon = painterResource(R.drawable.play),
-                    title = { Text(stringResource(R.string.player_and_audio)) },
-                    onClick = { navController.navigate("settings/player") }
+                    icon = painterResource(R.drawable.security),
+                    title = { Text("PoToken Authentication") },
+                    onClick = { navController.navigate("settings/potoken") }
+                ),
+                SettingsCategoryItem(
+                    icon = painterResource(R.drawable.security),
+                    title = { Text(stringResource(R.string.privacy)) },
+                    onClick = { navController.navigate("settings/privacy") }
+                ),
+            )
+        )
+
+        Spacer(Modifier.height(16.dp))
+
+        // 5. Data & System
+        SettingsCategory(
+            title = "Data & App Management",
+            items = listOf(
+                SettingsCategoryItem(
+                    icon = painterResource(R.drawable.restore),
+                    title = { Text(stringResource(R.string.backup_restore)) },
+                    onClick = { navController.navigate("settings/backup_restore") }
                 ),
                 SettingsCategoryItem(
                     icon = painterResource(R.drawable.storage),
@@ -742,19 +835,14 @@ fun SettingsScreen(
                     onClick = { navController.navigate("settings/storage") }
                 ),
                 SettingsCategoryItem(
-                    icon = painterResource(R.drawable.data_saver_on),
-                    title = { Text("Saver") },
-                    onClick = { navController.navigate("settings/saver") }
+                    icon = painterResource(R.drawable.sync),
+                    title = { Text("Check for Updates") },
+                    onClick = { navController.navigate("settings/update") }
                 ),
                 SettingsCategoryItem(
-                    icon = painterResource(R.drawable.security),
-                    title = { Text(stringResource(R.string.privacy)) },
-                    onClick = { navController.navigate("settings/privacy") }
-                ),
-                SettingsCategoryItem(
-                    icon = painterResource(R.drawable.restore),
-                    title = { Text(stringResource(R.string.backup_restore)) },
-                    onClick = { navController.navigate("settings/backup_restore") }
+                    icon = painterResource(R.drawable.info),
+                    title = { Text(stringResource(R.string.about)) },
+                    onClick = { navController.navigate("settings/about") }
                 ),
             )
         )
@@ -811,6 +899,7 @@ fun SettingsScreen(
     }
 
     TopAppBar(
+            colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent, scrolledContainerColor = Color.Transparent),
         title = { Text(stringResource(R.string.settings)) },
         modifier = Modifier
             .clip(RoundedCornerShape(bottomStart = 20.dp, bottomEnd = 20.dp)),

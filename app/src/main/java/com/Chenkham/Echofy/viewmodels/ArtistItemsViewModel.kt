@@ -1,12 +1,12 @@
-﻿package com.Chenkham.Echofy.viewmodels
+package com.Chenkham.Echofy.viewmodels
 
 import android.content.Context
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.Chenkham.innertube.YouTube
-import com.Chenkham.innertube.models.BrowseEndpoint
-import com.Chenkham.innertube.models.filterExplicit
+import com.arturo254.opentune.innertube.YouTube
+import com.arturo254.opentune.innertube.models.BrowseEndpoint
+import com.arturo254.opentune.innertube.models.filterExplicit
 import com.Chenkham.Echofy.constants.HideExplicitKey
 import com.Chenkham.Echofy.models.ItemsPage
 import com.Chenkham.Echofy.utils.dataStore

@@ -33,6 +33,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -55,6 +56,9 @@ import com.Chenkham.Echofy.ui.component.GridMenuItem
 import com.Chenkham.Echofy.ui.component.ListDialog
 import com.Chenkham.Echofy.ui.component.TextFieldDialog
 import com.Chenkham.Echofy.viewmodels.LyricsMenuViewModel
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -64,10 +68,12 @@ fun LyricsMenu(
     onDismiss: () -> Unit,
     onLyricsUpdated: () -> Unit = {}, // NUEVO: Callback para notificar actualizaciÃ³n
     onChooseFetchedLyrics: (() -> Unit)? = null,
+    onAdjustSync: (() -> Unit)? = null,
     viewModel: LyricsMenuViewModel = hiltViewModel(),
 ) {
     val context = LocalContext.current
     val database = LocalDatabase.current
+    val coroutineScope = rememberCoroutineScope()
 
     var showEditDialog by rememberSaveable {
         mutableStateOf(false)
@@ -217,17 +223,21 @@ fun LyricsMenu(
                             .fillMaxWidth()
                             .clickable {
                                 viewModel.cancelSearch()
-                                database.query {
-                                    upsert(
-                                        LyricsEntity(
-                                            id = searchMediaMetadata.id,
-                                            lyrics = result.lyrics,
-                                            providerName = result.providerName,
-                                        ),
-                                    )
+                                // database.query dispatches to a background executor and
+                                // returns immediately. Notifying before the write commits
+                                // let the reload read the previous lyrics, so await it.
+                                coroutineScope.launch {
+                                    withContext(Dispatchers.IO) {
+                                        database.upsert(
+                                            LyricsEntity(
+                                                id = searchMediaMetadata.id,
+                                                lyrics = result.lyrics,
+                                                providerName = result.providerName,
+                                            ),
+                                        )
+                                    }
+                                    onLyricsUpdated()
                                 }
-                                // NUEVO: Notificar actualizaciÃ³n antes de cerrar
-                                onLyricsUpdated()
                                 showSearchResultDialog = false
                                 onDismiss()
                             }
@@ -307,7 +317,13 @@ fun LyricsMenu(
     }
 
     GridMenu(
-        modifier = Modifier.height(if (onChooseFetchedLyrics != null) 260.dp else 200.dp),
+        modifier = Modifier.height(
+            when {
+                onChooseFetchedLyrics != null && onAdjustSync != null -> 320.dp
+                onChooseFetchedLyrics != null || onAdjustSync != null -> 260.dp
+                else -> 200.dp
+            }
+        ),
         contentPadding =
             PaddingValues(
                 start = 8.dp,
@@ -344,6 +360,14 @@ fun LyricsMenu(
             title = R.string.search,
         ) {
             showSearchDialog = true
+        }
+        if (onAdjustSync != null) {
+            GridMenuItem(
+                icon = R.drawable.schedule,
+                title = R.string.lyrics_sync,
+            ) {
+                onAdjustSync()
+            }
         }
     }
 }
