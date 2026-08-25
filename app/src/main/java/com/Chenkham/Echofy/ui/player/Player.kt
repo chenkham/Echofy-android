@@ -7,6 +7,7 @@ import android.text.format.Formatter
 import android.widget.Toast
 import com.Chenkham.Echofy.utils.makeTimeString
 import com.Chenkham.Echofy.utils.toShape
+import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.FastOutSlowInEasing
@@ -1931,6 +1932,52 @@ fun PlayerProgressSection(
                 modifier = Modifier.padding(horizontal = PlayerHorizontalPadding)
             )
         }
+
+        SliderStyle.VINTAGE_CABLE -> {
+            val progressFraction = remember(sliderPosition, position, duration) {
+                val current = (sliderPosition ?: position).toFloat()
+                val total = if (duration == C.TIME_UNSET || duration <= 0) 1f else duration.toFloat()
+                (current / total).coerceIn(0f, 1f)
+            }
+            Slider(
+                value = (sliderPosition ?: position).toFloat(),
+                valueRange = 0f..(if (duration == C.TIME_UNSET) 0f else duration.toFloat()),
+                onValueChange = {
+                    sliderPosition = it.toLong()
+                },
+                onValueChangeFinished = {
+                    sliderPosition?.let {
+                        playerConnection.player.seekTo(it)
+                        position = it
+                    }
+                    sliderPosition = null
+                },
+                thumb = {
+                    VintageCableCarThumb(
+                        tint = color,
+                        modifier = Modifier.size(width = 30.dp, height = 24.dp)
+                    )
+                },
+                track = {
+                    Box(
+                        modifier = Modifier
+                            .height(2.5.dp)
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(1.5.dp))
+                            .background(color.copy(alpha = 0.25f))
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxHeight()
+                                .fillMaxWidth(fraction = progressFraction)
+                                .clip(RoundedCornerShape(1.5.dp))
+                                .background(color)
+                        )
+                    }
+                },
+                modifier = Modifier.padding(horizontal = PlayerHorizontalPadding)
+            )
+        }
     }
 
     Spacer(Modifier.height(4.dp))
@@ -1957,6 +2004,78 @@ fun PlayerProgressSection(
             color = color,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
+        )
+    }
+}
+
+@Composable
+fun VintageCableCarThumb(
+    tint: Color,
+    modifier: Modifier = Modifier
+) {
+    Canvas(modifier = modifier) {
+        val w = size.width
+        val h = size.height
+
+        // 1. Suspension arm & wheel on track wire (top center)
+        val armTop = Offset(w * 0.5f, h * 0.05f)
+        val armBottom = Offset(w * 0.5f, h * 0.35f)
+
+        // Wheel on the wire
+        drawCircle(
+            color = tint,
+            radius = w * 0.09f,
+            center = armTop
+        )
+
+        // Vertical suspension bar
+        drawLine(
+            color = tint,
+            start = armTop,
+            end = armBottom,
+            strokeWidth = 2.dp.toPx(),
+            cap = StrokeCap.Round
+        )
+
+        // 2. Cabin Body (Vintage Tram/Trolley shape)
+        val cabinLeft = w * 0.1f
+        val cabinTop = h * 0.35f
+        val cabinWidth = w * 0.8f
+        val cabinHeight = h * 0.6f
+        val cornerRadius = CornerRadius(3.5.dp.toPx(), 3.5.dp.toPx())
+
+        drawRoundRect(
+            color = tint,
+            topLeft = Offset(cabinLeft, cabinTop),
+            size = Size(cabinWidth, cabinHeight),
+            cornerRadius = cornerRadius
+        )
+
+        // 3. Three distinct windows
+        val windowTop = cabinTop + cabinHeight * 0.18f
+        val windowHeight = cabinHeight * 0.42f
+        val windowWidth = cabinWidth * 0.22f
+        val windowSpacing = cabinWidth * 0.07f
+        val startWindowX = cabinLeft + cabinWidth * 0.10f
+        val windowRadius = CornerRadius(1.5.dp.toPx(), 1.5.dp.toPx())
+
+        for (i in 0..2) {
+            val winX = startWindowX + i * (windowWidth + windowSpacing)
+            drawRoundRect(
+                color = Color.Black.copy(alpha = 0.55f),
+                topLeft = Offset(winX, windowTop),
+                size = Size(windowWidth, windowHeight),
+                cornerRadius = windowRadius
+            )
+        }
+
+        // 4. Subtle lower bumper line
+        drawLine(
+            color = tint.copy(alpha = 0.8f),
+            start = Offset(cabinLeft - 1.dp.toPx(), cabinTop + cabinHeight),
+            end = Offset(cabinLeft + cabinWidth + 1.dp.toPx(), cabinTop + cabinHeight),
+            strokeWidth = 1.5.dp.toPx(),
+            cap = StrokeCap.Round
         )
     }
 }

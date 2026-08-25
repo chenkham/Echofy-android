@@ -459,6 +459,72 @@ fun AppearanceSettings(
                     )
                 }
             }
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(4.dp),
+                    modifier = Modifier
+                        .fillMaxWidth(0.5f)
+                        .aspectRatio(1f)
+                        .clip(RoundedCornerShape(16.dp))
+                        .border(
+                            1.dp,
+                            if (sliderStyle == SliderStyle.VINTAGE_CABLE) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outlineVariant,
+                            RoundedCornerShape(16.dp)
+                        )
+                        .clickable {
+                            onSliderStyleChange(SliderStyle.VINTAGE_CABLE)
+                            showSliderOptionDialog = false
+                        }
+                        .padding(16.dp)
+                ) {
+                    var sliderValue by remember {
+                        mutableFloatStateOf(0.5f)
+                    }
+                    Slider(
+                        value = sliderValue,
+                        valueRange = 0f..1f,
+                        onValueChange = {
+                            sliderValue = it
+                        },
+                        thumb = {
+                            com.Chenkham.Echofy.ui.player.VintageCableCarThumb(
+                                tint = MaterialTheme.colorScheme.primary,
+                                modifier = Modifier.size(width = 24.dp, height = 18.dp)
+                            )
+                        },
+                        track = {
+                            Box(
+                                modifier = Modifier
+                                    .height(2.5.dp)
+                                    .fillMaxWidth()
+                                    .background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.25f))
+                            ) {
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxHeight()
+                                        .fillMaxWidth(fraction = sliderValue)
+                                        .background(MaterialTheme.colorScheme.primary)
+                                    )
+                            }
+                        },
+                        modifier = Modifier
+                            .weight(1f)
+                            .pointerInput(Unit) {
+                                detectTapGestures(
+                                    onPress = {}
+                                )
+                            }
+                    )
+
+                    Text(
+                        text = "Vintage Cable",
+                        style = MaterialTheme.typography.labelLarge
+                    )
+                }
+            }
         }
     }
     }
@@ -629,6 +695,7 @@ fun AppearanceSettings(
                             SliderStyle.SQUIGGLY -> stringResource(R.string.squiggly)
                             SliderStyle.SLIM -> stringResource(R.string.slim)
                             SliderStyle.YOUTUBE_MUSIC -> "YT Music"
+                            SliderStyle.VINTAGE_CABLE -> "Vintage Cable Car"
                         },
                     icon = { Icon(painterResource(R.drawable.sliders), null) },
                     onClick = {

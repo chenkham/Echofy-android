@@ -119,7 +119,8 @@ enum class SliderStyle {
     DEFAULT,
     SQUIGGLY,
     SLIM,
-    YOUTUBE_MUSIC
+    YOUTUBE_MUSIC,
+    VINTAGE_CABLE
 }
 
 const val SYSTEM_DEFAULT = "SYSTEM_DEFAULT"
