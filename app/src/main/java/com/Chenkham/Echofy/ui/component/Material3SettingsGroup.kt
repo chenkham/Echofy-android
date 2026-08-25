@@ -140,13 +140,25 @@ private fun Material3SettingsItemRow(
             Column(
                 modifier = Modifier.weight(1f)
             ) {
-                // Title content (can be Text or custom composable)
-                item.title()
+                ProvideTextStyle(
+                    MaterialTheme.typography.bodyLarge.copy(
+                        fontWeight = FontWeight.Medium,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                ) {
+                    item.title()
+                }
                 
                 // Description if provided
                 item.description?.let { desc ->
                     Spacer(modifier = Modifier.height(2.dp))
-                    desc()
+                    ProvideTextStyle(
+                        MaterialTheme.typography.bodySmall.copy(
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    ) {
+                        desc()
+                    }
                 }
             }
             

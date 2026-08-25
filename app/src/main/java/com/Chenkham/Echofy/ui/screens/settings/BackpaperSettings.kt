@@ -153,6 +153,7 @@ fun BackpaperSettings(
                 text = stringResource(R.string.preview),
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.SemiBold,
+                color = MaterialTheme.colorScheme.onSurface,
                 modifier = Modifier.padding(horizontal = 16.dp)
             )
             
@@ -218,6 +219,7 @@ fun BackpaperSettings(
                 text = stringResource(R.string.adjustments),
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.SemiBold,
+                color = MaterialTheme.colorScheme.onSurface,
                 modifier = Modifier.padding(horizontal = 16.dp)
             )
             
@@ -227,8 +229,14 @@ fun BackpaperSettings(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
-                    Text(stringResource(R.string.opacity))
-                    Text("${(opacity * 100).toInt()}%")
+                    Text(
+                        text = stringResource(R.string.opacity),
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                    Text(
+                        text = "${(opacity * 100).toInt()}%",
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
                 }
                 Slider(
                     value = opacity,
@@ -247,8 +255,14 @@ fun BackpaperSettings(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
-                    Text(stringResource(R.string.blur))
-                    Text("${blurAmount.toInt()}dp")
+                    Text(
+                        text = stringResource(R.string.blur),
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                    Text(
+                        text = "${blurAmount.toInt()}dp",
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
                 }
                 Slider(
                     value = blurAmount,
@@ -268,6 +282,7 @@ fun BackpaperSettings(
                 text = stringResource(R.string.built_in_wallpapers),
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.SemiBold,
+                color = MaterialTheme.colorScheme.onSurface,
                 modifier = Modifier.padding(horizontal = 16.dp)
             )
             
@@ -340,6 +355,7 @@ fun BackpaperSettings(
                 text = stringResource(R.string.apply_to_screens),
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.SemiBold,
+                color = MaterialTheme.colorScheme.onSurface,
                 modifier = Modifier.padding(horizontal = 16.dp)
             )
             

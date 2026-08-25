@@ -602,6 +602,7 @@ fun BackupAndRestore(
                                 Text(
                                     text = stringResource(R.string.import_online),
                                     style = MaterialTheme.typography.titleMedium,
+                                    color = MaterialTheme.colorScheme.onSurface,
                                 )
                             },
                             description = {
@@ -619,6 +620,7 @@ fun BackupAndRestore(
                                 Text(
                                     text = stringResource(R.string.import_csv),
                                     style = MaterialTheme.typography.titleMedium,
+                                    color = MaterialTheme.colorScheme.onSurface,
                                 )
                             },
                             description = {

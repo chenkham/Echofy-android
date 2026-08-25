@@ -12,6 +12,7 @@ import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import android.content.Intent
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -154,7 +155,7 @@ fun EchofyInsightDialog(
 
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
                         Text(
-                            text = "OpenTune",
+                            text = "Echofy",
                             fontSize = 12.sp,
                             fontWeight = FontWeight.Medium,
                             color = Color.White.copy(alpha = 0.65f)
@@ -167,19 +168,50 @@ fun EchofyInsightDialog(
                         )
                     }
 
-                    // Year Dropdown Pill
-                    Surface(
-                        shape = RoundedCornerShape(20.dp),
-                        color = Color.White.copy(alpha = 0.18f),
-                        modifier = Modifier.clickable { }
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        Text(
-                            text = "$currentYear ⌵",
-                            fontSize = 14.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = Color.White,
-                            modifier = Modifier.padding(horizontal = 14.dp, vertical = 6.dp)
-                        )
+                        // Year Dropdown Pill
+                        Surface(
+                            shape = RoundedCornerShape(20.dp),
+                            color = Color.White.copy(alpha = 0.18f),
+                            modifier = Modifier.clickable { }
+                        ) {
+                            Text(
+                                text = "$currentYear ⌵",
+                                fontSize = 14.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = Color.White,
+                                modifier = Modifier.padding(horizontal = 14.dp, vertical = 6.dp)
+                            )
+                        }
+
+                        // Share Button
+                        val context = androidx.compose.ui.platform.LocalContext.current
+                        IconButton(
+                            onClick = {
+                                val topArtist = topArtists.firstOrNull()?.artist?.name ?: "Echofy Artist"
+                                val topSong = topSongs.firstOrNull()?.title ?: "Echofy Track"
+                                val totalMin = (totalListenTimeMs / 60000L)
+                                val shareText = "🎵 My Echofy Insight $currentYear 🎵\n\n👑 Top Artist: $topArtist\n🎧 Top Song: $topSong\n⏱️ Total Listening Time: $totalMin minutes\n\nListen and explore with Echofy Music!"
+                                val sendIntent = Intent().apply {
+                                    action = Intent.ACTION_SEND
+                                    putExtra(Intent.EXTRA_TEXT, shareText)
+                                    type = "text/plain"
+                                }
+                                val shareIntent = Intent.createChooser(sendIntent, "Share Insight")
+                                context.startActivity(shareIntent)
+                            },
+                            modifier = Modifier.size(36.dp)
+                        ) {
+                            Icon(
+                                painter = painterResource(R.drawable.share),
+                                contentDescription = "Share Insight",
+                                tint = Color.White,
+                                modifier = Modifier.size(20.dp)
+                            )
+                        }
                     }
                 }
 
