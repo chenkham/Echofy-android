@@ -248,26 +248,46 @@ object YTPlayerUtils {
                 PlayerStreamClient.ANDROID_MUSIC -> ANDROID_MUSIC
             }
 
-        val metadataClient =
-            preferredYouTubeClient.takeIf { preferredStreamClient == PlayerStreamClient.ANDROID_VR } ?: MAIN_CLIENT
+        // Attempt to fetch valid metadata from primary or robust fallback clients
+        val candidateMetadataClients = listOf(preferredYouTubeClient, MAIN_CLIENT, ANDROID_VR_1_61_48, ANDROID_VR_NO_AUTH, IPADOS, VISIONOS, MOBILE, WEB)
+        var metadataPlayerResponse: PlayerResponse? = null
+        var activeMetadataClient: YouTubeClient = preferredYouTubeClient
 
-        Timber.tag(logTag).i("Fetching metadata response using client: ${metadataClient.clientName}")
-        val metadataPlayerResponse =
-            YouTube.player(videoId, playlistId, metadataClient, signatureTimestamp).getOrThrow()
+        for (mClient in candidateMetadataClients) {
+            val resp = YouTube.player(videoId, playlistId, mClient, signatureTimestamp).getOrNull()
+            if (resp != null && resp.playabilityStatus.status == "OK") {
+                metadataPlayerResponse = resp
+                activeMetadataClient = mClient
+                Timber.tag(logTag).i("Metadata successfully obtained from ${mClient.clientName}")
+                break
+            }
+        }
+
+        if (metadataPlayerResponse == null) {
+            Timber.tag(logTag).w("Falling back to initial metadata fetch for $videoId")
+            metadataPlayerResponse = YouTube.player(videoId, playlistId, preferredYouTubeClient, signatureTimestamp).getOrNull()
+                ?: YouTube.player(videoId, playlistId, ANDROID_VR_1_61_48, signatureTimestamp).getOrThrow()
+            activeMetadataClient = preferredYouTubeClient
+        }
+
         val audioConfig = metadataPlayerResponse.playerConfig?.audioConfig
         val videoDetails = metadataPlayerResponse.videoDetails
         val playbackTracking = metadataPlayerResponse.playbackTracking
         val expectedDurationMs = videoDetails?.lengthSeconds?.toLongOrNull()?.takeIf { it > 0 }?.times(1000L)
 
-        val videoPreferredClients = listOf(ANDROID_TESTSUITE, WEB, IOS, TVHTML5, ANDROID_VR_NO_AUTH)
         val streamClients =
             buildList {
-                if (isVideo) {
-                    addAll(videoPreferredClients)
-                }
+                add(activeMetadataClient)
                 add(preferredYouTubeClient)
+                add(ANDROID_VR_1_61_48)
+                add(ANDROID_VR_NO_AUTH)
+                add(IPADOS)
+                add(VISIONOS)
+                add(MOBILE)
+                add(IOS)
+                add(MAIN_CLIENT)
+                add(WEB)
                 addAll(orderedFallbackClients)
-                if (preferredYouTubeClient != MAIN_CLIENT) add(MAIN_CLIENT)
             }.distinct().filterNot { client ->
                 val blocked = isStreamClientTemporarilyBlocked(videoId, client.clientName)
                 if (blocked) {
@@ -295,7 +315,7 @@ object YTPlayerUtils {
             }
 
             streamPlayerResponse =
-                if (client == metadataClient) {
+                if (client == activeMetadataClient && metadataPlayerResponse.playabilityStatus.status == "OK") {
                     metadataPlayerResponse
                 } else {
                     Timber.tag(logTag).i("Fetching player response for fallback client: ${client.clientName}")
