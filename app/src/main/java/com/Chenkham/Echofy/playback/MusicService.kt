@@ -2698,6 +2698,9 @@ class MusicService :
                 val length = if (dataSpec.length >= 0) minOf(dataSpec.length, CHUNK_LENGTH) else CHUNK_LENGTH
                 return@Factory resolvedDataSpec(dataSpec, streamUrl, cacheKey).subrange(dataSpec.uriPositionOffset, length)
             } catch (e: Exception) {
+                if (e is InterruptedException || e is kotlinx.coroutines.CancellationException) {
+                    throw e
+                }
                 Timber.tag(ytLogTag).e(e, "YouTube playback error, trying JossRed as fallback")
 
                 // Verificar si la fuente alternativa estÃ¡ habilitada

@@ -249,7 +249,7 @@ object YTPlayerUtils {
             }
 
         // Attempt to fetch valid metadata from primary or robust fallback clients
-        val candidateMetadataClients = listOf(ANDROID_VR_1_61_48, preferredYouTubeClient, MAIN_CLIENT, MOBILE, IPADOS, VISIONOS, WEB)
+        val candidateMetadataClients = listOf(VISIONOS, IPADOS, MOBILE, ANDROID_VR_1_61_48, preferredYouTubeClient, MAIN_CLIENT, WEB, IOS)
         var metadataPlayerResponse: PlayerResponse? = null
         var activeMetadataClient: YouTubeClient = preferredYouTubeClient
 
@@ -278,15 +278,14 @@ object YTPlayerUtils {
         val streamClients =
             buildList {
                 add(activeMetadataClient)
-                add(preferredYouTubeClient)
-                add(ANDROID_VR_1_61_48)
-                add(ANDROID_VR_NO_AUTH)
-                add(IPADOS)
                 add(VISIONOS)
+                add(IPADOS)
                 add(MOBILE)
-                add(IOS)
+                add(ANDROID_VR_1_61_48)
+                add(preferredYouTubeClient)
                 add(MAIN_CLIENT)
                 add(WEB)
+                add(IOS)
                 addAll(orderedFallbackClients)
             }.distinct().filterNot { client ->
                 val blocked = isStreamClientTemporarilyBlocked(videoId, client.clientName)
