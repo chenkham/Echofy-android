@@ -200,7 +200,7 @@ fun Lyrics(
     val database = LocalDatabase.current
 
     val isFullscreen = onNavigateBack != null
-    val sliderStyle by rememberEnumPreference(SliderStyleKey, SliderStyle.DEFAULT)
+    val sliderStyle by rememberEnumPreference(SliderStyleKey, SliderStyle.VINTAGE_CABLE)
     val landscapeOffset = configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
     val savedLyricsTextPosition by rememberEnumPreference(LyricsTextPositionKey, LyricsPosition.CENTER)
     val changeLyrics by rememberPreference(LyricsClickKey, true)

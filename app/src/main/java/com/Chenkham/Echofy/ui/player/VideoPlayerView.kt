@@ -119,38 +119,14 @@ fun VideoPlayerView(
     LaunchedEffect(isFullscreen) {
         if (isFullscreen) {
             activity?.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE
+        } else {
+            activity?.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
         }
-    }
-
-    // Rotating the device into landscape enters fullscreen, like YouTube.
-    LaunchedEffect(isLandscape, isFullscreen, pinnedPortrait) {
-        if (isLandscape && !isFullscreen && !pinnedPortrait) isFullscreen = true
-    }
-
-    // While portrait is pinned the configuration can never report landscape, so the lock
-    // cannot be released from LocalConfiguration. Watch the physical device angle instead;
-    // without this, exiting fullscreen while holding the phone sideways would immediately
-    // re-enter fullscreen in a loop.
-    DisposableEffect(pinnedPortrait, activity) {
-        if (!pinnedPortrait || activity == null) return@DisposableEffect onDispose { }
-        val listener = object : OrientationEventListener(activity) {
-            override fun onOrientationChanged(degrees: Int) {
-                if (degrees == ORIENTATION_UNKNOWN) return
-                val portraitish = degrees < 30 || degrees > 330 || degrees in 150..210
-                if (portraitish) {
-                    pinnedPortrait = false
-                    activity.requestedOrientation =
-                        ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
-                }
-            }
-        }
-        listener.enable()
-        onDispose { listener.disable() }
     }
 
     DisposableEffect(activity) {
         onDispose {
-            activity?.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
+            activity?.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
         }
     }
 

@@ -127,6 +127,7 @@
             android:exported="true"
             android:launchMode="singleTask"
             android:theme="@style/Theme.App.Starting"
+            android:screenOrientation="portrait"
             android:supportsPictureInPicture="true"
             android:configChanges="screenSize|smallestScreenSize|screenLayout|orientation"
             android:windowSoftInputMode="adjustResize">

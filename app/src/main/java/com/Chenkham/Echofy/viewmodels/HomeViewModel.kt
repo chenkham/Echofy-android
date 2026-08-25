@@ -197,7 +197,7 @@ class HomeViewModel @Inject constructor(
                     async(Dispatchers.IO) { database.hiddenGems().first() }
                 } else null
 
-                val timeMachineDeferred = if (prefs[TimeMachineEnabledKey] == true) {
+                val timeMachineDeferred = if (prefs[TimeMachineEnabledKey] ?: true) {
                     async(Dispatchers.IO) {
                         val lastYear = LocalDate.now().minusYears(1)
                         val songs = database.songsPlayedBetween(
@@ -209,7 +209,7 @@ class HomeViewModel @Inject constructor(
                     }
                 } else null
 
-                val becauseYouListenedDeferred = if (prefs[BecauseYouListenedEnabledKey] == true) {
+                val becauseYouListenedDeferred = if (prefs[BecauseYouListenedEnabledKey] ?: true) {
                     async(Dispatchers.IO) {
                         database.topRecentArtistName(fromTimeStamp)?.let { artist ->
                             artist to database.songsByArtistName(artist).first()
@@ -217,7 +217,7 @@ class HomeViewModel @Inject constructor(
                     }
                 } else null
 
-                val moodDeferred = if (prefs[MoodPlaylistsEnabledKey] == true) {
+                val moodDeferred = if (prefs[MoodPlaylistsEnabledKey] ?: true) {
                     async(Dispatchers.IO) {
                         val offset = currentUtcOffsetSeconds()
                         val hour = LocalTime.now().hour

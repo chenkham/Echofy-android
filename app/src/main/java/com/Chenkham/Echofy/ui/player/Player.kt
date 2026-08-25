@@ -315,7 +315,7 @@ fun BottomSheetPlayer(
     )
     val useArtworkFluidColors = liveFluidBackground && liveFluidPalette.prefersArtworkColors()
 
-    val sliderStyle by rememberEnumPreference(SliderStyleKey, SliderStyle.SLIM)
+    val sliderStyle by rememberEnumPreference(SliderStyleKey, SliderStyle.VINTAGE_CABLE)
 
 // Position state removed for performance - moved to PlayerProgressSection
 

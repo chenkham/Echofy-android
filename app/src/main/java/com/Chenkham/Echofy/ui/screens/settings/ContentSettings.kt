@@ -81,7 +81,7 @@ fun ContentSettings(
     val context = LocalContext.current
     val (releaseRadarEnabled, onReleaseRadarEnabledChange) = rememberPreference(
         key = ReleaseRadarEnabledKey,
-        defaultValue = false
+        defaultValue = true
     )
     val (contentLanguage, onContentLanguageChange) = rememberPreference(
         key = ContentLanguageKey,
@@ -143,23 +143,23 @@ fun ContentSettings(
     )
     val (listeningStreakEnabled, onListeningStreakEnabledChange) = rememberPreference(
         key = ListeningStreakEnabledKey,
-        defaultValue = false
+        defaultValue = true
     )
     val (timeMachineEnabled, onTimeMachineEnabledChange) = rememberPreference(
         key = TimeMachineEnabledKey,
-        defaultValue = false
+        defaultValue = true
     )
     val (hiddenGemsEnabled, onHiddenGemsEnabledChange) = rememberPreference(
         key = HiddenGemsEnabledKey,
-        defaultValue = false
+        defaultValue = true
     )
     val (becauseYouListenedEnabled, onBecauseYouListenedEnabledChange) = rememberPreference(
         key = BecauseYouListenedEnabledKey,
-        defaultValue = false
+        defaultValue = true
     )
     val (moodPlaylistsEnabled, onMoodPlaylistsEnabledChange) = rememberPreference(
         key = MoodPlaylistsEnabledKey,
-        defaultValue = false
+        defaultValue = true
     )
 
 

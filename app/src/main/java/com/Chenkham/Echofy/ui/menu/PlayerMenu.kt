@@ -970,7 +970,6 @@ fun VideoQualityDialog(onDismiss: () -> Unit) {
 @Composable
 fun AudioQualityDialog(onDismiss: () -> Unit) {
     val context = LocalContext.current
-    val coroutineScope = rememberCoroutineScope()
     
     // Use direct DataStore collection for reliable state
     val audioQualityString by remember(context) {
@@ -984,52 +983,66 @@ fun AudioQualityDialog(onDismiss: () -> Unit) {
         AudioQuality.AUTO
     }
 
+    val audioOptions = listOf(
+        AudioQuality.AUTO to (stringResource(R.string.audio_quality_auto) to "Auto (recommended)"),
+        AudioQuality.HIGHEST to (stringResource(R.string.audio_quality_highest) to "Lossless / Maximum Available"),
+        AudioQuality.HIGH to (stringResource(R.string.audio_quality_high) to "High Quality (256/160 kbps)"),
+        AudioQuality.LOW to (stringResource(R.string.audio_quality_low) to "Low Quality (data saver)")
+    )
+
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text(stringResource(R.string.audio_quality)) },
+        title = { 
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                Icon(
+                    painter = painterResource(R.drawable.graphic_eq),
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.size(24.dp)
+                )
+                Text(
+                    text = stringResource(R.string.audio_quality),
+                    style = MaterialTheme.typography.titleLarge,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+            }
+        },
         text = {
             Column(
-                verticalArrangement = Arrangement.spacedBy(8.dp),
+                verticalArrangement = Arrangement.spacedBy(10.dp),
                 modifier = Modifier.fillMaxWidth()
             ) {
-                // Auto option
-                androidx.compose.material3.FilterChip(
-                    selected = audioQuality == AudioQuality.AUTO,
-                    onClick = {
-                        coroutineScope.launch {
-                            context.dataStore.edit { it[AudioQualityKey] = AudioQuality.AUTO.name }
-                        }
-                        onDismiss()
-                    },
-                    label = { Text("Auto (based on network)") },
-                    modifier = Modifier.fillMaxWidth()
-                )
-                
-                // High option
-                androidx.compose.material3.FilterChip(
-                    selected = audioQuality == AudioQuality.HIGH,
-                    onClick = {
-                        coroutineScope.launch {
-                            context.dataStore.edit { it[AudioQualityKey] = AudioQuality.HIGH.name }
-                        }
-                        onDismiss()
-                    },
-                    label = { Text("High (better quality)") },
-                    modifier = Modifier.fillMaxWidth()
-                )
-                
-                // Low option
-                androidx.compose.material3.FilterChip(
-                    selected = audioQuality == AudioQuality.LOW,
-                    onClick = {
-                        coroutineScope.launch {
-                            context.dataStore.edit { it[AudioQualityKey] = AudioQuality.LOW.name }
-                        }
-                        onDismiss()
-                    },
-                    label = { Text("Low (saves data)") },
-                    modifier = Modifier.fillMaxWidth()
-                )
+                audioOptions.forEach { (quality, labels) ->
+                    val isSelected = audioQuality == quality
+                    androidx.compose.material3.FilterChip(
+                        selected = isSelected,
+                        onClick = {
+                            CoroutineScope(Dispatchers.IO).launch {
+                                context.dataStore.edit { it[AudioQualityKey] = quality.name }
+                            }
+                            onDismiss()
+                        },
+                        label = {
+                            Column(modifier = Modifier.padding(vertical = 6.dp)) {
+                                Text(
+                                    text = labels.first,
+                                    style = MaterialTheme.typography.bodyLarge,
+                                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
+                                    color = if (isSelected) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurface
+                                )
+                                Text(
+                                    text = labels.second,
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = if (isSelected) MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f) else MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                        },
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
             }
         },
         confirmButton = {

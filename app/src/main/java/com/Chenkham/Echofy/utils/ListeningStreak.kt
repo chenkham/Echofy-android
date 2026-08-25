@@ -26,7 +26,7 @@ object ListeningStreak {
         context: Context,
         dao: DatabaseDao,
     ): Int {
-        val enabled = context.dataStore.data.first()[ListeningStreakEnabledKey] ?: false
+        val enabled = context.dataStore.data.first()[ListeningStreakEnabledKey] ?: true
         if (!enabled) return 0
 
         val days = dao.listeningDays(currentUtcOffsetSeconds())
