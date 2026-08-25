@@ -573,10 +573,7 @@ fun LocalPlaylistScreen(
                                                 }
                                             },
                                         ) {
-                                            Icon(
-                                                painter = painterResource(R.drawable.more_vert),
-                                                contentDescription = null,
-                                            )
+                                            Icon(painter = painterResource(R.drawable.more_vert), tint = MaterialTheme.colorScheme.onSurface, contentDescription = null)
                                         }
 
                                         if (sortType == PlaylistSongSortType.CUSTOM && !locked && !selection && !isSearching) {
@@ -711,10 +708,7 @@ fun LocalPlaylistScreen(
                                                 }
                                             },
                                         ) {
-                                            Icon(
-                                                painter = painterResource(R.drawable.more_vert),
-                                                contentDescription = null,
-                                            )
+                                            Icon(painter = painterResource(R.drawable.more_vert), tint = MaterialTheme.colorScheme.onSurface, contentDescription = null)
                                         }
                                         if (sortType == PlaylistSongSortType.CUSTOM && !locked && !selection && !isSearching) {
                                             IconButton(
@@ -879,10 +873,7 @@ fun LocalPlaylistScreen(
                             }
                         },
                     ) {
-                        Icon(
-                            painter = painterResource(R.drawable.more_vert),
-                            contentDescription = null
-                        )
+                        Icon(painter = painterResource(R.drawable.more_vert), tint = MaterialTheme.colorScheme.onSurface, contentDescription = null)
                     }
                 } else if (!isSearching) {
                     IconButton(

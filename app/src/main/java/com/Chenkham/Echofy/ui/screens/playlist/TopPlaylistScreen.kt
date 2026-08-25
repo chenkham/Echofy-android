@@ -477,10 +477,7 @@ fun TopPlaylistScreen(
                                         }
                                     },
                                 ) {
-                                    Icon(
-                                        painter = painterResource(R.drawable.more_vert),
-                                        contentDescription = null,
-                                    )
+                                    Icon(painter = painterResource(R.drawable.more_vert), tint = MaterialTheme.colorScheme.onSurface, contentDescription = null)
                                 }
                             },
                             isSelected = songWrapper.isSelected && selection,
@@ -618,10 +615,7 @@ fun TopPlaylistScreen(
                             }
                         },
                     ) {
-                        Icon(
-                            painter = painterResource(R.drawable.more_vert),
-                            contentDescription = null
-                        )
+                        Icon(painter = painterResource(R.drawable.more_vert), tint = MaterialTheme.colorScheme.onSurface, contentDescription = null)
                     }
                 } else if (!isSearching) {
                     IconButton(

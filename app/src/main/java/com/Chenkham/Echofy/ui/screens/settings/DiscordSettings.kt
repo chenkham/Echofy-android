@@ -803,10 +803,7 @@ if (smallImageType == "custom") {
             var threeDotMenuExpanded by remember { mutableStateOf(false) }
 
             IconButton(onClick = { threeDotMenuExpanded = true }) {
-                Icon(
-                    painter = painterResource(R.drawable.more_vert),
-                    contentDescription = null
-                )
+                Icon(painter = painterResource(R.drawable.more_vert), tint = MaterialTheme.colorScheme.onSurface, contentDescription = null)
             }
 
             DropdownMenu(

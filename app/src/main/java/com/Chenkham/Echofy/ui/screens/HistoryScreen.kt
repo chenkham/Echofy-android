@@ -291,10 +291,7 @@ fun HistoryScreen(
                                         }
                                     }
                                 ) {
-                                    Icon(
-                                        painter = painterResource(R.drawable.more_vert),
-                                        contentDescription = null
-                                    )
+                                    Icon(painter = painterResource(R.drawable.more_vert), tint = MaterialTheme.colorScheme.onSurface, contentDescription = null)
                                 }
                             },
                             modifier = Modifier
@@ -364,10 +361,7 @@ fun HistoryScreen(
                                         }
                                     }
                                 ) {
-                                    Icon(
-                                        painter = painterResource(R.drawable.more_vert),
-                                        contentDescription = null
-                                    )
+                                    Icon(painter = painterResource(R.drawable.more_vert), tint = MaterialTheme.colorScheme.onSurface, contentDescription = null)
                                 }
                             },
                             modifier = Modifier
@@ -539,10 +533,7 @@ fun HistoryScreen(
                         }
                     }
                 ) {
-                    Icon(
-                        painter = painterResource(R.drawable.more_vert),
-                        contentDescription = null
-                    )
+                    Icon(painter = painterResource(R.drawable.more_vert), tint = MaterialTheme.colorScheme.onSurface, contentDescription = null)
                 }
             } else if (!isSearching) {
                 IconButton(

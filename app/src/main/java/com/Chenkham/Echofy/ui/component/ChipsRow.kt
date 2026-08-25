@@ -78,12 +78,12 @@ fun <E> ChipsRow(
                 },
                 selected = currentValue == value,
                 colors = FilterChipDefaults.filterChipColors(
-                    containerColor = containerColor,
+                    containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
                     labelColor = MaterialTheme.colorScheme.onSurface,
-                    selectedContainerColor = MaterialTheme.colorScheme.primary,
-                    selectedLabelColor = MaterialTheme.colorScheme.onPrimary,
+                    selectedContainerColor = MaterialTheme.colorScheme.secondaryContainer,
+                    selectedLabelColor = MaterialTheme.colorScheme.onSecondaryContainer,
                     iconColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                    selectedLeadingIconColor = MaterialTheme.colorScheme.onPrimary
+                    selectedLeadingIconColor = MaterialTheme.colorScheme.onSecondaryContainer
                 ),
                 onClick = { onValueUpdate(value) },
                 shape = RoundedCornerShape(20.dp),

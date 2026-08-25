@@ -168,10 +168,7 @@ fun OnlineSearchResult(
                 IconButton(
                     onClick = longClick,
                 ) {
-                    Icon(
-                        painter = painterResource(R.drawable.more_vert),
-                        contentDescription = null,
-                    )
+                    Icon(painter = painterResource(R.drawable.more_vert), tint = MaterialTheme.colorScheme.onSurface, contentDescription = null)
                 }
             },
             modifier =

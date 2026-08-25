@@ -284,7 +284,10 @@ class MusicWidget : AppWidgetProvider() {
 
             val bgMode = com.Chenkham.Echofy.widget.WidgetPreferences.cachedBackgroundMode
             val scrim = com.Chenkham.Echofy.widget.WidgetPreferences.cachedScrimOpacity
+            val cornerRadius = com.Chenkham.Echofy.widget.WidgetPreferences.cachedCornerRadius
             val showProgress = com.Chenkham.Echofy.widget.WidgetPreferences.cachedShowProgressBar
+            val density = context.resources.displayMetrics.density
+            val cornerRadiusPx = cornerRadius * density
 
             views.setInt(
                 R.id.widget_scrim_overlay,
@@ -295,11 +298,11 @@ class MusicWidget : AppWidgetProvider() {
             when (bgMode) {
                 com.Chenkham.Echofy.constants.WidgetBackgroundMode.DOMINANT_COLOR -> {
                     views.setViewVisibility(R.id.widget_background_image, android.view.View.VISIBLE)
-                    views.setInt(R.id.widget_root, "setBackgroundColor", android.graphics.Color.argb(255, 20, 20, 26))
+                    views.setInt(R.id.widget_root, "setBackgroundResource", R.drawable.widget_background)
                 }
                 com.Chenkham.Echofy.constants.WidgetBackgroundMode.SOLID -> {
                     views.setViewVisibility(R.id.widget_background_image, android.view.View.GONE)
-                    views.setInt(R.id.widget_root, "setBackgroundColor", android.graphics.Color.argb(255, 22, 22, 28))
+                    views.setInt(R.id.widget_root, "setBackgroundResource", R.drawable.widget_background)
                 }
                 else -> {
                     views.setViewVisibility(R.id.widget_background_image, android.view.View.VISIBLE)
@@ -350,7 +353,9 @@ class MusicWidget : AppWidgetProvider() {
                                 .build()
                             val drawable = widgetImageLoader(appContext).execute(request).drawable
                             drawable?.let {
-                                views.setImageViewBitmap(R.id.widget_background_image, it.toBitmap())
+                                val bmp = it.toBitmap()
+                                val rounded = createRoundedBitmap(bmp, cornerRadiusPx)
+                                views.setImageViewBitmap(R.id.widget_background_image, rounded)
                                 appWidgetManager.partiallyUpdateAppWidget(appWidgetId, views)
                             }
                         } catch (e: Exception) {
@@ -401,6 +406,20 @@ class MusicWidget : AppWidgetProvider() {
             }
 
             return PendingIntent.getBroadcast(context, action.hashCode(), intent, flags)
+        }
+
+
+        fun createRoundedBitmap(source: Bitmap, cornerRadiusPx: Float): Bitmap {
+            val output = Bitmap.createBitmap(source.width, source.height, Bitmap.Config.ARGB_8888)
+            val canvas = android.graphics.Canvas(output)
+            val paint = android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG)
+            val rect = android.graphics.RectF(0f, 0f, source.width.toFloat(), source.height.toFloat())
+            val path = android.graphics.Path().apply {
+                addRoundRect(rect, cornerRadiusPx, cornerRadiusPx, android.graphics.Path.Direction.CW)
+            }
+            canvas.clipPath(path)
+            canvas.drawBitmap(source, 0f, 0f, paint)
+            return output
         }
 
         private fun openApp(context: Context) {

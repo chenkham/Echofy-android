@@ -408,57 +408,21 @@ fun Queue(
                                     isActive = displayIndex == currentWindowIndex,
                                     isPlaying = isPlaying,
                                     trailingContent = {
+                                        val iconTint = if (displayIndex == currentWindowIndex) MaterialTheme.colorScheme.onSecondaryContainer else MaterialTheme.colorScheme.onSurface
                                         if (!locked) {
                                             IconButton(
                                                 onClick = { },
-                                                modifier =
-                                                    Modifier.draggableHandle(),
+                                                modifier = Modifier.draggableHandle(),
                                             ) {
                                                 Icon(
                                                     painter = painterResource(R.drawable.drag_handle),
                                                     contentDescription = null,
+                                                    tint = iconTint,
                                                 )
                                             }
                                         }
                                         IconButton(
                                             onClick = {
-                                                haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                                                val removedItem = currentItem.mediaItem
-                                                val removedIndex = currentItem.firstPeriodIndex
-                                                playerConnection.removeFromQueue(actualIndex)
-                                                dismissJob?.cancel()
-                                                dismissJob =
-                                                    coroutineScope.launch {
-                                                        val snackbarResult =
-                                                            snackbarHostState.showSnackbar(
-                                                                message =
-                                                                    context.getString(
-                                                                        R.string.removed_song_from_playlist,
-                                                                        removedItem.metadata?.title,
-                                                                    ),
-                                                                actionLabel = context.getString(R.string.undo),
-                                                                duration = SnackbarDuration.Short,
-                                                            )
-                                                        if (snackbarResult == SnackbarResult.ActionPerformed) {
-                                                            playerConnection.player.addMediaItem(removedItem)
-                                                            playerConnection.player.moveMediaItem(
-                                                                playerConnection.player.mediaItemCount - 1,
-                                                                removedIndex,
-                                                            )
-                                                        }
-                                                    }
-                                            },
-                                        ) {
-                                            Icon(
-                                                painter = painterResource(R.drawable.close),
-                                                contentDescription = stringResource(R.string.remove_from_queue),
-                                                tint = LocalContentColor.current,
-                                            )
-                                        }
-                                        IconButton(
-                                            onClick = {
-                                                // If not in selection mode or no songs selected, 
-                                                // add the current song to selection so the menu works
                                                 val songsToShow = if (selectedSongs.isEmpty()) {
                                                     listOf(window.mediaItem.metadata!!)
                                                 } else {
@@ -486,7 +450,7 @@ fun Queue(
                                             Icon(
                                                 painter = painterResource(R.drawable.more_vert),
                                                 contentDescription = null,
-                                                tint = LocalContentColor.current,
+                                                tint = iconTint,
                                             )
                                         }
                                     },

@@ -111,11 +111,11 @@ fun AiSettings(
             items = listOf(
                 {
                     SwitchPreference(
-                        title = { Text("Hey Jarvis Wake Word") },
+                        title = { Text("Google Assistant & Gemini Voice Control") },
                         description = if (drivingModeEnabled) {
                             "Required by Driving Mode \u2014 turn Driving Mode off to disable"
                         } else {
-                            "Say \"Hey Jarvis\", then your command. The mic stays idle until the wake word is heard."
+                            "Say \"Hey Google, play [song] on Echofy\" to start instant music playback via Google Assistant or Gemini."
                         },
                         icon = { Icon(painterResource(R.drawable.auto_awesome), contentDescription = null) },
                         checked = wakeWordEnabled,
@@ -322,7 +322,7 @@ fun AiSettings(
         AlertDialog(
             onDismissRequest = { showPermissionRationaleDialog = false },
             title = { Text("Microphone Permission Required") },
-            text = { Text("Echofy needs microphone permission to listen for the 'Hey Jarvis' wake word on-device while playing music. Audio is processed strictly locally on your device.") },
+            text = { Text("Echofy needs microphone permission to listen for the 'Google Assistant & Gemini' wake word on-device while playing music. Audio is processed strictly locally on your device.") },
             confirmButton = {
                 TextButton(
                     onClick = {
@@ -348,7 +348,7 @@ fun AiSettings(
             text = {
                 Text(
                     "Driving Mode listens continuously and runs commands without the " +
-                        "\"Hey Jarvis\" wake word, so you never touch your phone.\n\n" +
+                        "\"Google Assistant & Gemini\" wake word, so you never touch your phone.\n\n" +
                         "For best results, use it alone in a quiet car. Passengers " +
                         "talking, radio audio or road noise can be picked up as " +
                         "commands.\n\nThe wake word stays enabled while Driving Mode is on."

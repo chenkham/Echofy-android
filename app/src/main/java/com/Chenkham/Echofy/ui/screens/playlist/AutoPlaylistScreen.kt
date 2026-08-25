@@ -529,6 +529,7 @@ fun AutoPlaylistScreen(
                                     text = playlist,
                                     style = MaterialTheme.typography.headlineMedium,
                                     fontWeight = FontWeight.Bold,
+                                    color = Color.White,
                                     textAlign = TextAlign.Center,
                                     maxLines = 2,
                                     overflow = TextOverflow.Ellipsis
@@ -544,7 +545,7 @@ fun AutoPlaylistScreen(
                                     // Song count chip
                                     Surface(
                                         shape = RoundedCornerShape(16.dp),
-                                        color = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.7f)
+                                        color = Color.White.copy(alpha = 0.2f)
                                     ) {
                                         Text(
                                             text = pluralStringResource(
@@ -553,6 +554,8 @@ fun AutoPlaylistScreen(
                                                 songs!!.size
                                             ),
                                             style = MaterialTheme.typography.labelMedium,
+                                            fontWeight = FontWeight.SemiBold,
+                                            color = Color.White,
                                             modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
                                         )
                                     }
@@ -560,11 +563,13 @@ fun AutoPlaylistScreen(
                                     // Duration chip
                                     Surface(
                                         shape = RoundedCornerShape(16.dp),
-                                        color = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.7f)
+                                        color = Color.White.copy(alpha = 0.2f)
                                     ) {
                                         Text(
                                             text = makeTimeString(likeLength * 1000L),
                                             style = MaterialTheme.typography.labelMedium,
+                                            fontWeight = FontWeight.SemiBold,
+                                            color = Color.White,
                                             modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
                                         )
                                     }
@@ -730,6 +735,7 @@ fun AutoPlaylistScreen(
                                 ) {
                                     Icon(
                                         painter = painterResource(R.drawable.more_vert),
+                                        tint = MaterialTheme.colorScheme.onSurface,
                                         contentDescription = null,
                                     )
                                 }
@@ -889,10 +895,7 @@ fun AutoPlaylistScreen(
                             }
                         },
                     ) {
-                        Icon(
-                            painter = painterResource(R.drawable.more_vert),
-                            contentDescription = null
-                        )
+                        Icon(painter = painterResource(R.drawable.more_vert), tint = MaterialTheme.colorScheme.onSurface, contentDescription = null)
                     }
                 } else if (!isSearching) {
                     androidx.compose.material3.IconButton(
