@@ -1216,42 +1216,11 @@ class MusicService :
                 currentSong.value?.let { song ->
                     invalidateCachedUrls(song.id)
                     withContext(Dispatchers.Main) {
-                        val currentPos = player.currentPosition
-                        val wasPlaying = player.isPlaying
-                        
-                        // Properly stop and release resources before switching
-                        player.pause()
-                        
-                        // Small delay to allow MediaCodec to properly release
-                        delay(100)
-                        
-                        // Clear video surface only if switching TO audio mode
                         if (!isSwitchedToVideo) {
                             player.clearVideoSurface()
                         }
-                        
-                        // Stop after pause to ensure clean state
-                        player.stop()
-                        
-                        // Another small delay for codec cleanup
-                        delay(50)
-                        
-                        // Re-set the queue rather than only preparing: the media source has to be
-                        // rebuilt so video mode gets its companion audio track merged in.
+                        // Instantly rebuild queue at exact positionMs with zero artificial delay
                         rebuildCurrentQueue()
-                        
-                        // Seek after preparation is ready
-                        player.addListener(object : Player.Listener {
-                            override fun onPlaybackStateChanged(state: Int) {
-                                if (state == Player.STATE_READY) {
-                                    player.seekTo(currentPos)
-                                    if (wasPlaying) {
-                                        player.play()
-                                    }
-                                    player.removeListener(this)
-                                }
-                            }
-                        })
                     }
                 }
             }
@@ -1279,27 +1248,8 @@ class MusicService :
                         evictPlayerCache(song.id)
 
                         withContext(Dispatchers.Main) {
-                            val currentPos = player.currentPosition
-                            val wasPlaying = player.isPlaying
-                            
-                            player.stop()
-                            
-                            // Re-set the queue rather than only preparing, so the new-quality
-                            // video source is rebuilt together with its companion audio track.
+                            // Instantly rebuild queue at exact positionMs with new video quality
                             rebuildCurrentQueue()
-                            
-                            // Seek after preparation is ready
-                            player.addListener(object : Player.Listener {
-                                override fun onPlaybackStateChanged(state: Int) {
-                                    if (state == Player.STATE_READY) {
-                                        player.seekTo(currentPos)
-                                        if (wasPlaying) {
-                                            player.play()
-                                        }
-                                        player.removeListener(this)
-                                    }
-                                }
-                            })
                         }
                     }
                 }

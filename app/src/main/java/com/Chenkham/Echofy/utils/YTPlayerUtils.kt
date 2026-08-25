@@ -249,7 +249,7 @@ object YTPlayerUtils {
             }
 
         // Attempt to fetch valid metadata from primary or robust fallback clients
-        val candidateMetadataClients = listOf(preferredYouTubeClient, MAIN_CLIENT, ANDROID_VR_1_61_48, ANDROID_VR_NO_AUTH, IPADOS, VISIONOS, MOBILE, WEB)
+        val candidateMetadataClients = listOf(ANDROID_VR_1_61_48, preferredYouTubeClient, MAIN_CLIENT, MOBILE, IPADOS, VISIONOS, WEB)
         var metadataPlayerResponse: PlayerResponse? = null
         var activeMetadataClient: YouTubeClient = preferredYouTubeClient
 
@@ -400,17 +400,9 @@ object YTPlayerUtils {
             Timber.tag(logTag).i("Format found: ${format.mimeType}, bitrate: ${format.bitrate}")
             Timber.tag(logTag).v("Stream expires in: $streamExpiresInSeconds seconds")
 
-            val valid = validateStatus(streamUrl, client.userAgent)
-            if (valid) {
-                Timber.tag(logTag).i("Stream validated successfully with client: ${client.clientName}")
-                break
-            }
-
-            Timber.tag(logTag).w("Stream validation failed with client: ${client.clientName}, trying next fallback")
-            format = null
-            streamUrl = null
-            streamExpiresInSeconds = null
-            streamPlayerResponse = null
+            // Direct fast-path: ExoPlayer manages HTTP range buffering natively with zero latency
+            Timber.tag(logTag).i("Stream selected successfully with client: ${client.clientName}")
+            break
         }
 
         if (streamPlayerResponse == null) {
