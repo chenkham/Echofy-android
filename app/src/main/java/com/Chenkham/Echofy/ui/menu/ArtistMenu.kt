@@ -139,7 +139,11 @@ fun ArtistMenu(
                         type = "text/plain"
                         putExtra(
                             Intent.EXTRA_TEXT,
-                            "https://music.youtube.com/channel/${artist.id}"
+                            com.Chenkham.Echofy.utils.ShareUtils.buildArtistShareText(
+                                context = context,
+                                artistId = artist.id,
+                                name = artist.artist.name
+                            )
                         )
                     }
                 context.startActivity(Intent.createChooser(intent, null))

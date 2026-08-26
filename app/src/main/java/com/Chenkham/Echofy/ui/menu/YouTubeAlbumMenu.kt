@@ -397,7 +397,15 @@ fun YouTubeAlbumMenu(
                             Intent().apply {
                                 action = Intent.ACTION_SEND
                                 type = "text/plain"
-                                putExtra(Intent.EXTRA_TEXT, albumItem.shareLink)
+                                putExtra(
+                                    Intent.EXTRA_TEXT,
+                                    com.Chenkham.Echofy.utils.ShareUtils.buildAlbumShareText(
+                                        context = context,
+                                        albumId = albumItem.id,
+                                        title = albumItem.title,
+                                        artist = albumItem.artists?.firstOrNull()?.name
+                                    )
+                                )
                             }
                         context.startActivity(Intent.createChooser(intent, null))
                         onDismiss()

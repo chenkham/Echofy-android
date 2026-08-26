@@ -47,6 +47,7 @@ import com.Chenkham.Echofy.constants.BandsintownAppIdKey
 import com.Chenkham.Echofy.constants.ConcertsEnabledKey
 import com.Chenkham.Echofy.constants.DiscogsEnabledKey
 import com.Chenkham.Echofy.constants.DiscogsTokenKey
+import com.Chenkham.Echofy.constants.CustomShareDomainKey
 import com.Chenkham.Echofy.constants.EnableGeniusKey
 import com.Chenkham.Echofy.constants.FreesoundApiKeyKey
 import com.Chenkham.Echofy.constants.GeniusAccessTokenKey
@@ -138,6 +139,10 @@ fun IntegrationSettings(
     )
     val (freesoundApiKey, onFreesoundApiKeyChange) = rememberPreference(
         key = FreesoundApiKeyKey,
+        defaultValue = ""
+    )
+    val (customShareDomain, onCustomShareDomainChange) = rememberPreference(
+        key = CustomShareDomainKey,
         defaultValue = ""
     )
 
@@ -281,6 +286,24 @@ fun IntegrationSettings(
                         icon = { Icon(painterResource(R.drawable.share), null) },
                         checked = songlinkEnabled,
                         onCheckedChange = onSonglinkEnabledChange,
+                    )
+                },
+                {
+                    EditTextPreference(
+                        title = {
+                            Column {
+                                Text("Echofy Share Domain")
+                                Text(
+                                    text = if (customShareDomain.isBlank()) "Default: https://chenkham.github.io" else customShareDomain,
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                        },
+                        icon = { Icon(painterResource(R.drawable.link), null) },
+                        value = customShareDomain,
+                        onValueChange = onCustomShareDomainChange,
+                        isInputValid = { true },
                     )
                 },
             )

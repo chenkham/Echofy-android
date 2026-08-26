@@ -372,7 +372,12 @@ fun AlbumMenu(
                     type = "text/plain"
                     putExtra(
                         Intent.EXTRA_TEXT,
-                        "https://music.youtube.com/browse/${album.album.id}"
+                        com.Chenkham.Echofy.utils.ShareUtils.buildAlbumShareText(
+                            context = context,
+                            albumId = album.album.id,
+                            title = album.album.title,
+                            artist = album.artists.firstOrNull()?.name
+                        )
                     )
                 }
             context.startActivity(Intent.createChooser(intent, null))

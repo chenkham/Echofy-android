@@ -439,7 +439,12 @@ fun SongMenu(
                                         type = "text/plain"
                                         putExtra(
                                             Intent.EXTRA_TEXT,
-                                            "Check out this song on Echofy!\n${song.title} - ${song.artists.joinToString { it.name }}\nhttps://music.youtube.com/watch?v=${song.id}"
+                                            com.Chenkham.Echofy.utils.ShareUtils.buildTrackShareText(
+                                                context = context,
+                                                songId = song.id,
+                                                title = song.title,
+                                                artist = song.artists.joinToString { it.name }
+                                            )
                                         )
                                     }
                                     context.startActivity(Intent.createChooser(shareIntent, "Share via"))

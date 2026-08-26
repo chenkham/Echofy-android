@@ -157,7 +157,14 @@ fun YouTubeArtistMenu(
                         val intent = Intent().apply {
                             action = Intent.ACTION_SEND
                             type = "text/plain"
-                            putExtra(Intent.EXTRA_TEXT, artist.shareLink)
+                            putExtra(
+                                Intent.EXTRA_TEXT,
+                                com.Chenkham.Echofy.utils.ShareUtils.buildArtistShareText(
+                                    context = context,
+                                    artistId = artist.id,
+                                    name = artist.title
+                                )
+                            )
                         }
                         context.startActivity(Intent.createChooser(intent, null))
                         onDismiss()

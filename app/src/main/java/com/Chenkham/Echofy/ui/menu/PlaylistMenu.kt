@@ -404,19 +404,24 @@ fun PlaylistMenu(
             }
         }
 
-        playlist.playlist.shareLink?.let { shareLink ->
-            GridMenuItem(
-                icon = R.drawable.share,
-                title = R.string.share
-            ) {
-                val intent = Intent().apply {
-                    action = Intent.ACTION_SEND
-                    type = "text/plain"
-                    putExtra(Intent.EXTRA_TEXT, shareLink)
-                }
-                context.startActivity(Intent.createChooser(intent, null))
-                onDismiss()
+        GridMenuItem(
+            icon = R.drawable.share,
+            title = R.string.share
+        ) {
+            val intent = Intent().apply {
+                action = Intent.ACTION_SEND
+                type = "text/plain"
+                putExtra(
+                    Intent.EXTRA_TEXT,
+                    com.Chenkham.Echofy.utils.ShareUtils.buildPlaylistShareText(
+                        context = context,
+                        playlistId = playlist.id,
+                        title = playlist.playlist.name
+                    )
+                )
             }
+            context.startActivity(Intent.createChooser(intent, null))
+            onDismiss()
         }
     }
 }

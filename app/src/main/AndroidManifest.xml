@@ -212,12 +212,41 @@
                 <data android:mimeType="text/plain" />
             </intent-filter>
 
-            <!-- Custom Deep Link for App Actions -->
+            <!-- Custom Deep Link for App Actions and Echofy scheme -->
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
                 <data android:scheme="echofy" />
+            </intent-filter>
+
+            <!-- Echofy Web & Custom Domain Deep Links -->
+            <intent-filter android:autoVerify="true">
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+
+                <data android:scheme="http" />
+                <data android:scheme="https" />
+                <data android:host="chenkham.github.io" />
+                <data android:host="echofy.app" />
+                <data android:host="www.echofy.app" />
+
+                <data android:pathPrefix="/track/" />
+                <data android:pathPrefix="/song/" />
+                <data android:pathPrefix="/jam/" />
+                <data android:pathPrefix="/r/" />
+                <data android:pathPrefix="/together/" />
+                <data android:pathPrefix="/playlist/" />
+                <data android:pathPrefix="/album/" />
+                <data android:pathPrefix="/artist/" />
+                <data android:pathPrefix="/echofy-website/track/" />
+                <data android:pathPrefix="/echofy-website/song/" />
+                <data android:pathPrefix="/echofy-website/jam/" />
+                <data android:pathPrefix="/echofy-website/r/" />
+                <data android:pathPrefix="/echofy-website/playlist/" />
+                <data android:pathPrefix="/echofy-website/album/" />
+                <data android:pathPrefix="/echofy-website/artist/" />
             </intent-filter>
 
             <meta-data

@@ -425,7 +425,15 @@ fun YouTubeSongMenu(
                                         Intent().apply {
                                             action = Intent.ACTION_SEND
                                             type = "text/plain"
-                                            putExtra(Intent.EXTRA_TEXT, song.shareLink)
+                                            putExtra(
+                                                Intent.EXTRA_TEXT,
+                                                com.Chenkham.Echofy.utils.ShareUtils.buildTrackShareText(
+                                                    context = context,
+                                                    songId = song.id,
+                                                    title = song.title,
+                                                    artist = song.artists.joinToString { it.name }
+                                                )
+                                            )
                                         }
                                     context.startActivity(Intent.createChooser(intent, null))
                                     onDismiss()

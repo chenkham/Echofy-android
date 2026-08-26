@@ -2087,12 +2087,15 @@ private fun buildInviteLink(
     roomCode: String,
 ): String? {
     if (roomCode.isBlank()) return null
-    val base = registry.inviteBaseUrl.removeSuffix("/")
-    if (base.isBlank()) return null
-    return if (base.endsWith("/r")) {
-        "$base/$roomCode"
+    val base = registry.inviteBaseUrl.trim().removeSuffix("/")
+    return if (base.isNotBlank()) {
+        if (base.endsWith("/r") || base.endsWith("/jam")) {
+            "$base/$roomCode"
+        } else {
+            "$base/jam/$roomCode"
+        }
     } else {
-        "$base/r/$roomCode"
+        "${com.Chenkham.Echofy.utils.ShareUtils.DEFAULT_SHARE_DOMAIN}/jam/$roomCode"
     }
 }
 
@@ -2100,11 +2103,11 @@ private fun buildInviteShareText(
     roomCode: String,
     inviteLink: String?,
 ): String = buildString {
-    append("Join my Echofy Together session")
+    append("Join my Echofy Jam Together session! 🎧")
     appendLine()
     append("Room code: $roomCode")
     inviteLink?.takeIf { it.isNotBlank() }?.let {
         appendLine()
-        append(it)
+        append("Tap to listen together: $it")
     }
 }

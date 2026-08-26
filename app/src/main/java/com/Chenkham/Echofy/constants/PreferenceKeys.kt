@@ -806,6 +806,8 @@ val GeniusAccessTokenKey = stringPreferencesKey("geniusAccessToken")
 // Cross-platform share links (Songlink / Odesli)
 val SonglinkEnabledKey = booleanPreferencesKey("songlinkEnabled")
 val SonglinkApiKeyKey = stringPreferencesKey("songlinkApiKey")
+val CustomShareDomainKey = stringPreferencesKey("customShareDomain")
+val GoogleDriveApkUrlKey = stringPreferencesKey("googleDriveApkUrl")
 
 // Physical release details (Discogs)
 val DiscogsEnabledKey = booleanPreferencesKey("discogsEnabled")

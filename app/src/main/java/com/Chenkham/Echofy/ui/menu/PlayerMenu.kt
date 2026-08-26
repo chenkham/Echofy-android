@@ -421,7 +421,12 @@ fun PlayerMenu(
                         type = "text/plain"
                         putExtra(
                             Intent.EXTRA_TEXT,
-                            "https://music.youtube.com/watch?v=${mediaMetadata.id}"
+                            com.Chenkham.Echofy.utils.ShareUtils.buildTrackShareText(
+                                context = context,
+                                songId = mediaMetadata.id,
+                                title = mediaMetadata.title,
+                                artist = mediaMetadata.artists.joinToString { it.name }
+                            )
                         )
                     }
                     context.startActivity(Intent.createChooser(intent, null))

@@ -443,7 +443,14 @@ fun YouTubePlaylistMenu(
                 Intent().apply {
                     action = Intent.ACTION_SEND
                     type = "text/plain"
-                    putExtra(Intent.EXTRA_TEXT, playlist.shareLink)
+                    putExtra(
+                        Intent.EXTRA_TEXT,
+                        com.Chenkham.Echofy.utils.ShareUtils.buildPlaylistShareText(
+                            context = context,
+                            playlistId = playlist.id,
+                            title = playlist.title
+                        )
+                    )
                 }
             context.startActivity(Intent.createChooser(intent, null))
             onDismiss()

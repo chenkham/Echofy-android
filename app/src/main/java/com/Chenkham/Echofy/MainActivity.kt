@@ -1111,58 +1111,34 @@ class MainActivity : ComponentActivity() {
                                 val uri = intent.data ?: intent.extras?.getString(Intent.EXTRA_TEXT)
                                     ?.toUri() ?: return@Consumer
 
-                                // Handle "echofy://" App Actions deep links
-                                if (uri.scheme == "echofy" && uri.host == "open") {
-                                    val feature = uri.pathSegments.firstOrNull()
-                                    when (feature) {
-                                        "search" -> {
-                                            onActiveChange(true)
-                                            openSearchImmediately = true
-                                        }
-                                        "library" -> navController.navigate(Screens.Library.route)
-                                        "settings" -> navController.navigate("settings")
-                                        "home" -> navController.navigate(Screens.Home.route)
-                                        "explore" -> navController.navigate(Screens.Explore.route)
-                                    }
+                                // Handle Jam Together invite intents
+                                val jamCode = extractJamRoomCode(uri)
+                                if (jamCode != null) {
+                                    pendingJamRoomCode = jamCode
+                                    Toast.makeText(this@MainActivity, "Together invite ready: $jamCode", Toast.LENGTH_SHORT).show()
                                     return@Consumer
                                 }
 
-                                when (val path = uri.pathSegments.firstOrNull()) {
-                                    "playlist" ->
-                                        uri.getQueryParameter("list")?.let { playlistId ->
-                                            if (playlistId.startsWith("OLAK5uy_")) {
-                                                coroutineScope.launch {
-                                                    YouTube
-                                                        .albumSongs(playlistId)
-                                                        .onSuccess { songs ->
-                                                            songs.firstOrNull()?.album?.id?.let { browseId ->
-                                                                navController.navigate("album/$browseId")
-                                                            }
-                                                        }.onFailure {
-                                                            reportException(it)
-                                                        }
-                                                }
-                                            } else {
-                                                navController.navigate("online_playlist/$playlistId")
+                                // Handle "echofy://" App Actions & custom scheme deep links
+                                if (uri.scheme == "echofy") {
+                                    if (uri.host == "open") {
+                                        when (uri.pathSegments.firstOrNull()) {
+                                            "search" -> {
+                                                onActiveChange(true)
+                                                openSearchImmediately = true
                                             }
+                                            "library" -> navController.navigate(Screens.Library.route)
+                                            "settings" -> navController.navigate("settings")
+                                            "home" -> navController.navigate(Screens.Home.route)
+                                            "explore" -> navController.navigate(Screens.Explore.route)
                                         }
+                                        return@Consumer
+                                    }
 
-                                    "browse" ->
-                                        uri.lastPathSegment?.let { browseId ->
-                                            navController.navigate("album/$browseId")
-                                        }
-
-                                    "channel", "c" ->
-                                        uri.lastPathSegment?.let { artistId ->
-                                            navController.navigate("artist/$artistId")
-                                        }
-
-                                    else ->
-                                        when {
-                                            path == "watch" -> uri.getQueryParameter("v")
-                                            uri.host == "youtu.be" -> path
-                                            else -> null
-                                        }?.let { videoId ->
+                                    val targetType = uri.host?.lowercase() ?: uri.pathSegments.firstOrNull()?.lowercase()
+                                    val targetId = uri.pathSegments.lastOrNull() ?: uri.getQueryParameter("id") ?: uri.getQueryParameter("v")
+                                    when (targetType) {
+                                        "track", "song" -> targetId?.let { videoId ->
                                             coroutineScope.launch {
                                                 withContext(Dispatchers.IO) {
                                                     YouTube.queue(listOf(videoId))
@@ -1173,11 +1149,99 @@ class MainActivity : ComponentActivity() {
                                                             it.firstOrNull()?.toMediaMetadata()
                                                         )
                                                     )
-                                                }.onFailure {
-                                                    reportException(it)
-                                                }
+                                                }.onFailure { reportException(it) }
+                                            }
+                                            return@Consumer
+                                        }
+                                        "playlist" -> targetId?.let { playlistId ->
+                                            navController.navigate("online_playlist/$playlistId")
+                                            return@Consumer
+                                        }
+                                        "album" -> targetId?.let { albumId ->
+                                            navController.navigate("album/$albumId")
+                                            return@Consumer
+                                        }
+                                        "artist" -> targetId?.let { artistId ->
+                                            navController.navigate("artist/$artistId")
+                                            return@Consumer
+                                        }
+                                    }
+                                }
+
+                                // Handle Web & Universal Deep Links (chenkham.github.io, echofy.app, youtube.com, etc.)
+                                val cleanSegments = uri.pathSegments.filterNot { it.equals("echofy-website", ignoreCase = true) }
+                                val firstSegment = cleanSegments.firstOrNull()?.lowercase()
+                                val secondSegment = cleanSegments.getOrNull(1)
+
+                                when (firstSegment) {
+                                    "track", "song" -> {
+                                        val videoId = secondSegment ?: uri.getQueryParameter("track") ?: uri.getQueryParameter("song") ?: uri.getQueryParameter("v")
+                                        videoId?.let { id ->
+                                            coroutineScope.launch {
+                                                withContext(Dispatchers.IO) {
+                                                    YouTube.queue(listOf(id))
+                                                }.onSuccess {
+                                                    playerConnection?.playQueue(
+                                                        YouTubeQueue(
+                                                            WatchEndpoint(videoId = it.firstOrNull()?.id),
+                                                            it.firstOrNull()?.toMediaMetadata()
+                                                        )
+                                                    )
+                                                }.onFailure { reportException(it) }
                                             }
                                         }
+                                    }
+
+                                    "playlist" -> {
+                                        val playlistId = secondSegment ?: uri.getQueryParameter("list") ?: uri.getQueryParameter("playlist")
+                                        playlistId?.let { id ->
+                                            if (id.startsWith("OLAK5uy_")) {
+                                                coroutineScope.launch {
+                                                    YouTube.albumSongs(id).onSuccess { songs ->
+                                                        songs.firstOrNull()?.album?.id?.let { browseId ->
+                                                            navController.navigate("album/$browseId")
+                                                        }
+                                                    }.onFailure { reportException(it) }
+                                                }
+                                            } else {
+                                                navController.navigate("online_playlist/$id")
+                                            }
+                                        }
+                                    }
+
+                                    "album", "browse" -> {
+                                        val albumId = secondSegment ?: cleanSegments.lastOrNull() ?: uri.getQueryParameter("album")
+                                        albumId?.let { id -> navController.navigate("album/$id") }
+                                    }
+
+                                    "artist", "channel", "c" -> {
+                                        val artistId = secondSegment ?: cleanSegments.lastOrNull() ?: uri.getQueryParameter("artist")
+                                        artistId?.let { id -> navController.navigate("artist/$id") }
+                                    }
+
+                                    else -> {
+                                        val videoId = when {
+                                            firstSegment == "watch" -> uri.getQueryParameter("v")
+                                            uri.host == "youtu.be" -> firstSegment
+                                            uri.getQueryParameter("track") != null -> uri.getQueryParameter("track")
+                                            uri.getQueryParameter("v") != null -> uri.getQueryParameter("v")
+                                            else -> null
+                                        }
+                                        videoId?.let { id ->
+                                            coroutineScope.launch {
+                                                withContext(Dispatchers.IO) {
+                                                    YouTube.queue(listOf(id))
+                                                }.onSuccess {
+                                                    playerConnection?.playQueue(
+                                                        YouTubeQueue(
+                                                            WatchEndpoint(videoId = it.firstOrNull()?.id),
+                                                            it.firstOrNull()?.toMediaMetadata()
+                                                        )
+                                                    )
+                                                }.onFailure { reportException(it) }
+                                            }
+                                        }
+                                    }
                                 }
                             }
 
@@ -2257,20 +2321,26 @@ class MainActivity : ComponentActivity() {
     private fun extractJamRoomCode(uri: Uri): String? {
         val normalizedScheme = uri.scheme?.lowercase()
         val normalizedHost = uri.host?.lowercase()
+        val cleanSegments = uri.pathSegments.filterNot { it.equals("echofy-website", ignoreCase = true) }
 
         val candidate = when {
-            normalizedScheme == "echofy" && normalizedHost in setOf("jam", "r") ->
-                uri.pathSegments.firstOrNull()
+            normalizedScheme == "echofy" && normalizedHost in setOf("jam", "r", "together") ->
+                uri.pathSegments.firstOrNull() ?: uri.getQueryParameter("code") ?: uri.getQueryParameter("room")
 
-            normalizedScheme == "echofy" && normalizedHost == "join" ->
+            normalizedScheme == "echofy" && normalizedHost in setOf("join", "open") ->
                 uri.getQueryParameter("room")
                     ?: uri.getQueryParameter("roomCode")
+                    ?: uri.getQueryParameter("jam")
                     ?: uri.getQueryParameter("code")
 
-            uri.pathSegments.firstOrNull()?.lowercase() == "r" ->
-                uri.pathSegments.getOrNull(1)
+            cleanSegments.firstOrNull()?.lowercase() in setOf("jam", "r", "together") ->
+                cleanSegments.getOrNull(1)
 
-            else -> null
+            else ->
+                uri.getQueryParameter("jam")
+                    ?: uri.getQueryParameter("room")
+                    ?: uri.getQueryParameter("together")
+                    ?: uri.getQueryParameter("code")
         }
 
         return candidate
