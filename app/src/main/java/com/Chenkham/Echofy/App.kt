@@ -110,7 +110,21 @@ class App : Application(), ImageLoaderFactory {
                     .getString("selected_language", null)
             }
         }
-        instance = this;
+        val defaultHandler = Thread.getDefaultUncaughtExceptionHandler()
+        Thread.setDefaultUncaughtExceptionHandler { thread, throwable ->
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                var current: Throwable? = throwable
+                while (current != null) {
+                    if (current is android.app.ForegroundServiceStartNotAllowedException) {
+                        Timber.tag("App").e(throwable, "Suppressed uncaught ForegroundServiceStartNotAllowedException")
+                        return@setDefaultUncaughtExceptionHandler
+                    }
+                    current = current.cause
+                }
+            }
+            defaultHandler?.uncaughtException(thread, throwable)
+        }
+        instance = this
         Timber.plant(Timber.DebugTree())
         
         // PERFORMANCE: Set locale immediately with system defaults (no IO blocking)
@@ -174,7 +188,7 @@ class App : Application(), ImageLoaderFactory {
 
     /**
      * Initialize visitorData for YouTube API calls.
-     * - If stored data is fresh (<6h), use it immediately.
+     * - If stored data is fresh (<6h) and valid (starts with Cgt/Cgs, len 10..120), use it immediately.
      * - Always schedules a periodic refresh every 6 hours.
      * - Retries the fetch up to 3 times with exponential backoff on failure.
      */
@@ -186,19 +200,28 @@ class App : Application(), ImageLoaderFactory {
                 .map { it[VisitorDataKey] }
                 .distinctUntilChanged()
                 .collect { stored ->
-                    YouTube.visitorData = stored?.takeIf { it.isNotBlank() && it != "null" }
+                    val valid = stored?.takeIf { it.isNotBlank() && it != "null" && it.length in 10..120 && (it.startsWith("Cgt") || it.startsWith("Cgs")) }
+                    YouTube.visitorData = valid
+                    if (stored != null && valid == null) {
+                        dataStore.edit { prefs ->
+                            prefs.remove(VisitorDataKey)
+                            prefs.remove(VisitorDataTimestampKey)
+                        }
+                    }
                 }
         }
 
         GlobalScope.launch(Dispatchers.IO) {
-            // On startup: refresh only if stale (>6 hours old) or missing
+            // On startup: refresh only if stale (>6 hours old), missing, or invalid
             val stored = dataStore.data.first()[VisitorDataKey]
             val timestamp = dataStore.data.first()[VisitorDataTimestampKey] ?: 0L
             val ageMs = System.currentTimeMillis() - timestamp
             val sixHoursMs = 6 * 60 * 60 * 1000L
+            val isStoredValid = stored != null && stored.isNotBlank() && stored != "null" && stored.length in 10..120 && (stored.startsWith("Cgt") || stored.startsWith("Cgs"))
 
-            if (stored.isNullOrBlank() || stored == "null" || ageMs > sixHoursMs) {
-                android.util.Log.d("App", "VisitorData is stale (${ageMs / 1000}s old) or missing — refreshing")
+            if (!isStoredValid || ageMs > sixHoursMs) {
+                android.util.Log.d("App", "VisitorData is stale (${ageMs / 1000}s old) or missing/invalid — refreshing")
+                YouTube.visitorData = null
                 fetchAndSaveVisitorData()
             } else {
                 android.util.Log.d("App", "VisitorData is fresh (${ageMs / 1000}s old) — skipping startup refresh")

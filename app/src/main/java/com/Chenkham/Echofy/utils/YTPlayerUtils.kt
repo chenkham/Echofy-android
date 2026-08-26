@@ -12,6 +12,7 @@ import android.net.ConnectivityManager
 import androidx.media3.common.PlaybackException
 import com.Chenkham.Echofy.constants.AudioQuality
 import com.Chenkham.Echofy.constants.PlayerStreamClient
+import com.Chenkham.Echofy.utils.potoken.PoTokenGenerator
 import com.arturo254.opentune.innertube.NewPipeUtils
 import com.arturo254.opentune.innertube.YouTube
 import com.arturo254.opentune.innertube.models.YouTubeClient
@@ -58,6 +59,61 @@ object YTPlayerUtils {
 
     @Volatile private var streamClientPair: Pair<java.net.Proxy?, OkHttpClient>? = null
 
+    private val poTokenGenerator = PoTokenGenerator()
+
+    /**
+     * PoTokens are bound to a session id. When logged out that id is [YouTube.visitorData], which
+     * [com.Chenkham.Echofy.playback.PlayerConnection] clears on any HTTP 403. Re-mint it here so a
+     * single 403 cannot permanently strand playback without a session.
+     */
+    private suspend fun currentSessionId(isLoggedIn: Boolean): String? {
+        if (isLoggedIn) return YouTube.dataSyncId
+        YouTube.visitorData?.takeIf { it.isNotBlank() }?.let { return it }
+
+        Timber.tag(logTag).w("visitorData missing; requesting a new one")
+        val refreshed = YouTube.visitorData().getOrNull()?.takeIf { it.isNotBlank() }
+        if (refreshed != null) {
+            YouTube.visitorData = refreshed
+            Timber.tag(logTag).i("visitorData re-minted")
+        } else {
+            Timber.tag(logTag).e("Could not re-mint visitorData; PoTokens unavailable")
+        }
+        return refreshed
+    }
+
+    /**
+     * Generates the WEB PoTokens for this session and publishes them into [YouTube]'s auth state.
+     *
+     * OpenTune resolves playback without PoTokens because its first fallback clients (IOS, ANDROID,
+     * ANDROID_MUSIC, ANDROID_VR) return unciphered direct URLs that GVS serves without one. So this
+     * is only worth paying for when those clients have all been refused and a ciphered web stream is
+     * the last option. Generating it eagerly costs a WebView round-trip on every track.
+     *
+     * Returns true when tokens are available.
+     */
+    private suspend fun ensureWebPoTokens(videoId: String, sessionId: String?): Boolean {
+        if (YouTube.poTokenGvs != null) return true
+        if (sessionId.isNullOrBlank()) {
+            Timber.tag(logTag).e("No sessionId available; cannot generate PoTokens")
+            return false
+        }
+        Timber.tag(logTag).i("Requesting PoTokens for $videoId")
+        val result =
+            runCatching {
+                kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+                    poTokenGenerator.getWebClientPoToken(videoId, sessionId)
+                }
+            }
+                .onFailure { Timber.tag(logTag).w(it, "PoToken generation failed") }
+                .getOrNull() ?: return false
+
+        YouTube.poTokenPlayer = result.playerRequestPoToken
+        YouTube.poTokenGvs = result.streamingDataPoToken
+        YouTube.webClientPoTokenEnabled = true
+        Timber.tag(logTag).i("PoTokens ready for $videoId")
+        return true
+    }
+
     private fun currentStreamClient(): OkHttpClient {
         val current = YouTube.streamProxy
         streamClientPair?.let { (proxy, client) ->
@@ -83,23 +139,18 @@ object YTPlayerUtils {
      * Clients used for fallback streams in case the streams of the main client do not work.
      */
     private val STREAM_FALLBACK_CLIENTS: Array<YouTubeClient> = arrayOf(
-        IOS,
+        VISIONOS,
+        ANDROID_VR_1_61_48,
+        ANDROID_VR_NO_AUTH,
+        ANDROID_VR_1_43_32,
+        ANDROID_CREATOR,
+        IPADOS,
         MOBILE,
         ANDROID_MUSIC,
         IOS_MUSIC,
-        ANDROID_VR_NO_AUTH,
-        ANDROID_VR_1_61_48,
-        ANDROID_VR_1_43_32,
-        ANDROID_CREATOR,
-        ANDROID_TESTSUITE,
-        ANDROID_UNPLUGGED,
-        IPADOS,
-        VISIONOS,
-        TVHTML5,
-        TVHTML5_SIMPLY_EMBEDDED_PLAYER,
+        WEB_REMIX,
         WEB,
         WEB_CREATOR,
-        WEB_REMIX
     )
     private data class CachedStreamUrl(
         val url: String,
@@ -159,6 +210,7 @@ object YTPlayerUtils {
         val format: PlayerResponse.StreamingData.Format,
         val streamUrl: String,
         val streamExpiresInSeconds: Int,
+        val userAgent: String? = null,
     )
     /**
      * Custom player response intended to use for playback.
@@ -222,13 +274,14 @@ object YTPlayerUtils {
         Timber.tag(logTag).v("Signature timestamp: $signatureTimestamp")
 
         val isLoggedIn = YouTube.cookie != null
-        val sessionId = if (isLoggedIn) YouTube.dataSyncId else YouTube.visitorData
+        val sessionId = currentSessionId(isLoggedIn)
         Timber.tag(logTag).v("Session authentication status: ${if (isLoggedIn) "Logged in" else "Not logged in"} (sessionId=${sessionId.orEmpty()})")
 
         var format: PlayerResponse.StreamingData.Format? = null
         var streamUrl: String? = null
         var streamExpiresInSeconds: Int? = null
         var streamPlayerResponse: PlayerResponse? = null
+        var selectedUserAgent: String? = null
 
         val orderedFallbackClients =
             (
@@ -249,7 +302,19 @@ object YTPlayerUtils {
             }
 
         // Attempt to fetch valid metadata from primary or robust fallback clients
-        val candidateMetadataClients = listOf(VISIONOS, IPADOS, MOBILE, ANDROID_VR_1_61_48, preferredYouTubeClient, MAIN_CLIENT, WEB, IOS)
+        val candidateMetadataClients = listOf(
+            VISIONOS,
+            preferredYouTubeClient,
+            ANDROID_VR_1_61_48,
+            ANDROID_VR_NO_AUTH,
+            MAIN_CLIENT,
+            ANDROID_VR_1_43_32,
+            ANDROID_CREATOR,
+            IPADOS,
+            MOBILE,
+            IOS,
+            WEB,
+        ).distinct()
         var metadataPlayerResponse: PlayerResponse? = null
         var activeMetadataClient: YouTubeClient = preferredYouTubeClient
 
@@ -265,9 +330,11 @@ object YTPlayerUtils {
 
         if (metadataPlayerResponse == null) {
             Timber.tag(logTag).w("Falling back to initial metadata fetch for $videoId")
-            metadataPlayerResponse = YouTube.player(videoId, playlistId, preferredYouTubeClient, signatureTimestamp).getOrNull()
-                ?: YouTube.player(videoId, playlistId, ANDROID_VR_1_61_48, signatureTimestamp).getOrThrow()
-            activeMetadataClient = preferredYouTubeClient
+            metadataPlayerResponse = YouTube.player(videoId, playlistId, VISIONOS, signatureTimestamp).getOrNull()
+                ?: YouTube.player(videoId, playlistId, preferredYouTubeClient, signatureTimestamp).getOrNull()
+                ?: YouTube.player(videoId, playlistId, ANDROID_VR_1_61_48, signatureTimestamp).getOrNull()
+                ?: YouTube.player(videoId, playlistId, MAIN_CLIENT, signatureTimestamp).getOrThrow()
+            activeMetadataClient = VISIONOS
         }
 
         val audioConfig = metadataPlayerResponse.playerConfig?.audioConfig
@@ -277,15 +344,19 @@ object YTPlayerUtils {
 
         val streamClients =
             buildList {
-                add(activeMetadataClient)
                 add(VISIONOS)
+                add(preferredYouTubeClient)
+                add(ANDROID_VR_1_61_48)
+                add(ANDROID_VR_NO_AUTH)
+                add(ANDROID_VR_1_43_32)
+                add(ANDROID_CREATOR)
                 add(IPADOS)
                 add(MOBILE)
-                add(ANDROID_VR_1_61_48)
-                add(preferredYouTubeClient)
-                add(MAIN_CLIENT)
-                add(WEB)
+                add(ANDROID_MUSIC)
+                add(IOS_MUSIC)
                 add(IOS)
+                add(activeMetadataClient)
+                add(MAIN_CLIENT)
                 addAll(orderedFallbackClients)
             }.distinct().filterNot { client ->
                 val blocked = isStreamClientTemporarilyBlocked(videoId, client.clientName)
@@ -318,7 +389,11 @@ object YTPlayerUtils {
                     metadataPlayerResponse
                 } else {
                     Timber.tag(logTag).i("Fetching player response for fallback client: ${client.clientName}")
-                    YouTube.player(videoId, playlistId, client, signatureTimestamp).getOrNull()
+                    YouTube.player(videoId, playlistId, client, signatureTimestamp)
+                        .onFailure {
+                            Timber.tag(logTag).w(it, "Player request failed for client ${client.clientName}")
+                        }
+                        .getOrNull()
                 }
 
             if (streamPlayerResponse == null) continue
@@ -367,13 +442,24 @@ object YTPlayerUtils {
                     )
                 }
 
-            if (candidates.isEmpty()) continue
+            if (candidates.isEmpty()) {
+                Timber.tag(logTag).w(
+                    "No usable format candidates from ${client.clientName}; adaptive=${streamPlayerResponse.streamingData?.adaptiveFormats?.size ?: 0}, progressive=${streamPlayerResponse.streamingData?.formats?.size ?: 0}"
+                )
+                continue
+            }
 
             var selectedFormat: PlayerResponse.StreamingData.Format? = null
             var selectedUrl: String? = null
 
             for (candidate in candidates.asSequence().take(6)) {
                 if (isLoggedIn && expectedDurationMs != null && isLikelyPreview(candidate, expectedDurationMs)) continue
+                // A ciphered web stream is only served in full when a GVS PoToken is attached, and
+                // minting one costs a WebView round-trip, so defer it until such a candidate is
+                // actually the best remaining option.
+                if (isCipheredFormat(candidate) && StreamClientUtils.isWebClient(client.clientName)) {
+                    ensureWebPoTokens(videoId, sessionId)
+                }
                 if (shouldSkipCipheredWebCandidate(client, candidate)) continue
                 val cacheKey = buildCacheKey(videoId, candidate.itag)
                 val cached = streamUrlCache[cacheKey]
@@ -393,6 +479,7 @@ object YTPlayerUtils {
             format = selectedFormat
             streamUrl = selectedUrl
             streamExpiresInSeconds = streamPlayerResponse.streamingData?.expiresInSeconds
+            selectedUserAgent = client.userAgent
 
             if (streamExpiresInSeconds == null) continue
 
@@ -475,6 +562,7 @@ object YTPlayerUtils {
             format,
             streamUrl,
             streamExpiresInSeconds,
+            selectedUserAgent,
         )
     }
     /**
@@ -519,12 +607,20 @@ object YTPlayerUtils {
         // 1. Adaptive video streams (video-only) provide true HD/4K resolutions (1080p, 1440p, 2160p, 720p, 480p, etc.)
         val adaptiveVideoFormats = streamingData.adaptiveFormats
             ?.filter { (it.mimeType.startsWith("video/") || !it.isAudio) && (it.url != null || it.signatureCipher != null || it.cipher != null) }
+            ?.filter { format ->
+                val codec = extractCodec(format.mimeType)?.lowercase()
+                codec == null || codec !in avoidCodecs
+            }
             ?.sortedByDescending { it.height ?: (it.bitrate / 1000) }
             .orEmpty()
 
         // 2. Progressive formats (video+audio) as fallback
         val fallbackFormats = streamingData.formats
             ?.filter { it.url != null || it.signatureCipher != null || it.cipher != null }
+            ?.filter { format ->
+                val codec = extractCodec(format.mimeType)?.lowercase()
+                codec == null || codec !in avoidCodecs
+            }
             ?.sortedByDescending { it.height ?: (it.bitrate / 1000) }
             .orEmpty()
 
@@ -549,6 +645,16 @@ object YTPlayerUtils {
                 if (exactOrLower.isNotEmpty()) return exactOrLower
             }
         }
+
+        // In Auto mode: on metered network cap default to 720p, on unmetered prioritize 1080p/720p
+        if (networkMetered) {
+            val meteredFiltered = allVideo.filter { (it.height ?: 0) <= 720 }
+            if (meteredFiltered.isNotEmpty()) return meteredFiltered
+        } else {
+            val autoPreferred = allVideo.filter { (it.height ?: 0) <= 1080 }
+            if (autoPreferred.isNotEmpty()) return autoPreferred
+        }
+
         return allVideo
     }
 
@@ -642,6 +748,8 @@ object YTPlayerUtils {
         format: PlayerResponse.StreamingData.Format,
     ): Boolean {
         if (!YouTube.webClientPoTokenEnabled) return false
+        // Once a GVS PoToken is attached, ciphered web streams are served in full, so keep them.
+        if (YouTube.poTokenGvs != null) return false
         if (!StreamClientUtils.isWebClient(client.clientName)) return false
         if (!isCipheredFormat(format)) return false
 

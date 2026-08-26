@@ -15,6 +15,7 @@ import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import okhttp3.OkHttpClient
 import okhttp3.RequestBody.Companion.toRequestBody
 import org.schabi.newpipe.extractor.NewPipe
+import org.schabi.newpipe.extractor.downloader.CancellableCall
 import org.schabi.newpipe.extractor.downloader.Downloader
 import org.schabi.newpipe.extractor.downloader.Request
 import org.schabi.newpipe.extractor.downloader.Response
@@ -78,7 +79,59 @@ private class NewPipeDownloaderImpl(proxy: Proxy?) : Downloader() {
         val responseBodyToReturn = response.body.string()
 
         val latestUrl = response.request.url.toString()
-        return Response(response.code, response.message, response.headers.toMultimap(), responseBodyToReturn, latestUrl)
+        return Response(
+            response.code,
+            response.message,
+            response.headers.toMultimap(),
+            responseBodyToReturn,
+            responseBodyToReturn.toByteArray(),
+            latestUrl,
+        )
+    }
+
+    override fun executeAsync(request: Request, callback: AsyncCallback?): CancellableCall {
+        val httpRequest = okhttp3.Request.Builder()
+            .method(request.httpMethod(), request.dataToSend()?.toRequestBody())
+            .url(request.url())
+            .addHeader("User-Agent", YouTubeClient.USER_AGENT_WEB)
+            .apply {
+                request.headers().forEach { (name, values) ->
+                    values.forEach { addHeader(name, it) }
+                }
+            }
+            .build()
+
+        val call = client.newCall(httpRequest)
+        call.enqueue(
+            object : okhttp3.Callback {
+                override fun onResponse(call: okhttp3.Call, response: okhttp3.Response) {
+                    if (response.code == 429) {
+                        response.close()
+                        callback?.onError(ReCaptchaException("reCaptcha Challenge requested", request.url()))
+                        return
+                    }
+                    val latestUrl = response.request.url.toString()
+                    val body = response.body.string()
+                    val parsed = Response(
+                        response.code,
+                        response.message,
+                        response.headers.toMultimap(),
+                        body,
+                        body.toByteArray(),
+                        latestUrl,
+                    )
+                    runCatching { callback?.onSuccess(parsed) }
+                        .onFailure { error ->
+                            callback?.onError(if (error is Exception) error else RuntimeException(error))
+                        }
+                }
+
+                override fun onFailure(call: okhttp3.Call, e: IOException) {
+                    callback?.onError(e)
+                }
+            },
+        )
+        return CancellableCall(call)
     }
 
 }

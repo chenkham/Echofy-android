@@ -31,6 +31,8 @@ import com.Chenkham.Echofy.ui.screens.artist.ArtistScreen
 import com.Chenkham.Echofy.ui.screens.artist.ArtistSongsScreen
 import com.Chenkham.Echofy.ui.screens.library.CachePlaylistScreen
 import com.Chenkham.Echofy.ui.screens.library.LibraryScreen
+import com.Chenkham.Echofy.ui.screens.musicrecognition.MusicRecognitionRoute
+import com.Chenkham.Echofy.ui.screens.musicrecognition.MusicRecognitionScreen
 import com.Chenkham.Echofy.ui.screens.playlist.AutoPlaylistScreen
 import com.Chenkham.Echofy.ui.screens.playlist.LocalPlaylistScreen
 import com.Chenkham.Echofy.ui.screens.playlist.OnlinePlaylistScreen
@@ -170,6 +172,11 @@ fun NavGraphBuilder.navigationBuilder(
     composable("notifications") {
         TouchBlockingWrapper {
             NotificationsScreen(navController)
+        }
+    }
+    composable(MusicRecognitionRoute) {
+        TouchBlockingWrapper {
+            MusicRecognitionScreen(navController)
         }
     }
 

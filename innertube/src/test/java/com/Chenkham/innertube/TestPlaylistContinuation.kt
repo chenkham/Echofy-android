@@ -1,4 +1,6 @@
-package com.Chenkham.innertube
+package com.arturo254.opentune.innertube
+
+import com.arturo254.opentune.innertube.YouTube
 
 import kotlinx.coroutines.runBlocking
 import org.junit.Test

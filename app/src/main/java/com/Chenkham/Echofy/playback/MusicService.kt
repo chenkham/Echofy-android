@@ -630,6 +630,8 @@ class MusicService :
                     val expiresAt = System.currentTimeMillis() + (playbackData.streamExpiresInSeconds * 1000L)
                     val targetKey = if (videoMode) "${mediaId}_video" else mediaId
                     playbackUrlCache[targetKey] = playbackData.streamUrl to expiresAt
+                    songUrlUserAgentCache[targetKey] = playbackData.userAgent
+                        ?: com.Chenkham.Echofy.utils.StreamClientUtils.resolveUserAgent(playbackData.streamUrl)
 
                     if (preloadToCache) {
                         preloadBytesToCache(targetKey, playbackData.streamUrl)
@@ -1290,48 +1292,52 @@ class MusicService :
             }
 
         if (isQueuePersistent) {
-            runCatching {
-                filesDir.resolve(PERSISTENT_QUEUE_FILE).inputStream().use { fis ->
-                    ObjectInputStream(fis).use { oos ->
-                        oos.readObject() as PersistQueue
+            scope.launch(Dispatchers.IO) {
+                runCatching {
+                    filesDir.resolve(PERSISTENT_QUEUE_FILE).inputStream().use { fis ->
+                        ObjectInputStream(fis).use { oos ->
+                            oos.readObject() as PersistQueue
+                        }
+                    }
+                }.onSuccess { queue ->
+                    withContext(Dispatchers.Main) {
+                        val restoredQueue = queue.toQueue()
+                        playQueue(
+                            queue = restoredQueue,
+                            playWhenReady = false,
+                        )
                     }
                 }
-            }.onSuccess { queue ->
-                // Convertir de vuelta al tipo de cola apropiado
-                val restoredQueue = queue.toQueue()
-                playQueue(
-                    queue = restoredQueue,
-                    playWhenReady = false,
-                )
-            }
-            runCatching {
-                filesDir.resolve(PERSISTENT_AUTOMIX_FILE).inputStream().use { fis ->
-                    ObjectInputStream(fis).use { oos ->
-                        oos.readObject() as PersistQueue
+                runCatching {
+                    filesDir.resolve(PERSISTENT_AUTOMIX_FILE).inputStream().use { fis ->
+                        ObjectInputStream(fis).use { oos ->
+                            oos.readObject() as PersistQueue
+                        }
+                    }
+                }.onSuccess { queue ->
+                    withContext(Dispatchers.Main) {
+                        automixItems.value = queue.items.map { it.toMediaItem() }
                     }
                 }
-            }.onSuccess { queue ->
-                automixItems.value = queue.items.map { it.toMediaItem() }
-            }
 
-            // Restaurar estado del reproductor
-            runCatching {
-                filesDir.resolve(PERSISTENT_PLAYER_STATE_FILE).inputStream().use { fis ->
-                    ObjectInputStream(fis).use { oos ->
-                        oos.readObject() as PersistPlayerState
+                // Restaurar estado del reproductor
+                runCatching {
+                    filesDir.resolve(PERSISTENT_PLAYER_STATE_FILE).inputStream().use { fis ->
+                        ObjectInputStream(fis).use { oos ->
+                            oos.readObject() as PersistPlayerState
+                        }
                     }
-                }
-            }.onSuccess { playerState ->
-                // Restaurar configuraciÃ³n del reproductor despuÃ©s de cargar la cola
-                scope.launch {
-                    delay(1000) // Esperar a que la cola se cargue
-                    player.repeatMode = playerState.repeatMode
-                    player.shuffleModeEnabled = playerState.shuffleModeEnabled
-                    player.volume = playerState.volume
+                }.onSuccess { playerState ->
+                    withContext(Dispatchers.Main) {
+                        delay(1000) // Esperar a que la cola se cargue
+                        player.repeatMode = playerState.repeatMode
+                        player.shuffleModeEnabled = playerState.shuffleModeEnabled
+                        player.volume = playerState.volume
 
-                    // Restaurar posiciÃ³n si sigue siendo vÃ¡lida
-                    if (playerState.currentMediaItemIndex < player.mediaItemCount) {
-                        player.seekTo(playerState.currentMediaItemIndex, playerState.currentPosition)
+                        // Restaurar posición si sigue siendo válida
+                        if (playerState.currentMediaItemIndex < player.mediaItemCount) {
+                            player.seekTo(playerState.currentMediaItemIndex, playerState.currentPosition)
+                        }
                     }
                 }
             }
@@ -2710,9 +2716,10 @@ class MusicService :
                 val streamUrl = playbackData.streamUrl
 
                 playbackUrlCache[cacheKey] = streamUrl to expiresAt
+                songUrlUserAgentCache[cacheKey] = playbackData.userAgent
+                    ?: com.Chenkham.Echofy.utils.StreamClientUtils.resolveUserAgent(streamUrl)
 
-                val length = if (dataSpec.length >= 0) minOf(dataSpec.length, CHUNK_LENGTH) else CHUNK_LENGTH
-                return@Factory resolvedDataSpec(dataSpec, streamUrl, cacheKey).subrange(dataSpec.uriPositionOffset, length)
+                return@Factory resolvedDataSpec(dataSpec, streamUrl, cacheKey)
             } catch (e: Exception) {
                 if (e is InterruptedException || e is kotlinx.coroutines.CancellationException) {
                     throw e
@@ -3440,6 +3447,18 @@ class MusicService :
         jamPlaybackHeartbeatJob?.cancel()
         player.release()
         super.onDestroy()
+    }
+
+    override fun onUpdateNotification(session: androidx.media3.session.MediaSession, startInForegroundRequired: Boolean) {
+        try {
+            super.onUpdateNotification(session, startInForegroundRequired)
+        } catch (e: Exception) {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && e is android.app.ForegroundServiceStartNotAllowedException) {
+                Timber.tag(TAG).e(e, "ForegroundServiceStartNotAllowedException in onUpdateNotification suppressed")
+            } else {
+                throw e
+            }
+        }
     }
 
     override fun startForegroundService(service: Intent?): ComponentName? {

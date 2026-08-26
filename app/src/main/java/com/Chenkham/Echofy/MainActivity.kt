@@ -232,6 +232,7 @@ import com.Chenkham.Echofy.constants.PlayerLayoutStyleKey
 import com.Chenkham.Echofy.constants.PlayerLayoutStyle
 import com.Chenkham.Echofy.jam.JamRoomCode
 import com.Chenkham.Echofy.ui.screens.Screens
+import com.Chenkham.Echofy.ui.screens.musicrecognition.openMusicRecognition
 import com.Chenkham.Echofy.ui.screens.navigationBuilder
 
 import com.Chenkham.Echofy.ui.screens.search.LocalSearchScreen
@@ -1274,6 +1275,27 @@ class MainActivity : ComponentActivity() {
                                                     hasUnreadNotifications.value = notifications.any { 
                                                         it.contains("|false")
                                                     }
+                                                }
+
+                                                IconButton(
+                                                    onClick = {
+                                                        try {
+                                                            navController.openMusicRecognition()
+                                                        } catch (e: Exception) {
+                                                            e.printStackTrace()
+                                                            Toast.makeText(
+                                                                context,
+                                                                R.string.navigation_error,
+                                                                Toast.LENGTH_SHORT
+                                                            ).show()
+                                                        }
+                                                    }
+                                                ) {
+                                                    Icon(
+                                                        painter = painterResource(R.drawable.mic),
+                                                        contentDescription = stringResource(R.string.music_recognition),
+                                                        tint = MaterialTheme.colorScheme.onSurfaceVariant
+                                                    )
                                                 }
 
                                                 // Notifications icon with badge

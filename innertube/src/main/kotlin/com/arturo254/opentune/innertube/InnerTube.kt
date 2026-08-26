@@ -195,13 +195,19 @@ class InnerTube {
         val requestOrigin = client.requestOrigin()
         val requestReferer = client.requestReferer()
         val cookieMap = authState.cookie?.let(::parseCookieString).orEmpty()
+        val isWeb = client.clientName.startsWith("WEB", ignoreCase = true) ||
+                client.clientName.startsWith("MWEB", ignoreCase = true) ||
+                client.clientName.startsWith("TV", ignoreCase = true)
         contentType(ContentType.Application.Json)
         headers {
             append("X-Goog-Api-Format-Version", "1")
             append("X-YouTube-Client-Name", client.clientId)
             append("X-YouTube-Client-Version", client.clientVersion)
-            append("X-Origin", requestOrigin)
-            append("Referer", requestReferer)
+            if (isWeb) {
+                append("X-Origin", requestOrigin)
+                append("Referer", requestReferer)
+                append("Origin", requestOrigin)
+            }
             authState.visitorData?.let { append("X-Goog-Visitor-Id", it) }
             if (setLogin && client.loginSupported) {
                 authState.cookie?.let { cookie ->
@@ -316,13 +322,14 @@ class InnerTube {
         setLogin: Boolean,
         authState: PlaybackAuthState,
         includeDataSyncId: Boolean,
-    ) = httpClient.post("player") {
+    ) = httpClient.post(client.playerEndpoint()) {
         ytClient(client, setLogin = setLogin, authState = authState)
+        val effectiveVisitorData = authState.visitorData
         setBody(
             PlayerBody(
                 context = client.toContext(
                     locale = locale,
-                    visitorData = authState.visitorData,
+                    visitorData = effectiveVisitorData,
                     dataSyncId = if (includeDataSyncId) authState.dataSyncId else null,
                 ).let {
                     if (client.isEmbedded) {
