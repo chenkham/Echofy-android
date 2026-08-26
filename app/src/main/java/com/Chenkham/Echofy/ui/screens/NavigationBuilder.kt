@@ -36,6 +36,7 @@ import com.Chenkham.Echofy.ui.screens.musicrecognition.MusicRecognitionScreen
 import com.Chenkham.Echofy.ui.screens.playlist.AutoPlaylistScreen
 import com.Chenkham.Echofy.ui.screens.playlist.LocalPlaylistScreen
 import com.Chenkham.Echofy.ui.screens.playlist.OnlinePlaylistScreen
+import com.Chenkham.Echofy.ui.screens.playlist.SpotifyPlaylistScreen
 import com.Chenkham.Echofy.ui.screens.playlist.TopPlaylistScreen
 import com.Chenkham.Echofy.ui.screens.search.OnlineSearchResult
 import com.Chenkham.Echofy.ui.screens.settings.AboutScreen
@@ -177,6 +178,20 @@ fun NavGraphBuilder.navigationBuilder(
     composable(MusicRecognitionRoute) {
         TouchBlockingWrapper {
             MusicRecognitionScreen(navController)
+        }
+    }
+
+    composable(
+        route = "spotify_playlist/{playlistId}",
+        arguments =
+            listOf(
+                navArgument("playlistId") {
+                    type = NavType.StringType
+                },
+            ),
+    ) {
+        TouchBlockingWrapper {
+            SpotifyPlaylistScreen(navController, scrollBehavior)
         }
     }
 

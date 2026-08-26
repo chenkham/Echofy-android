@@ -49,6 +49,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
@@ -272,7 +273,7 @@ fun MusicRecognitionScreen(
                     .fillMaxSize()
                     .background(backgroundBrush)
                     .padding(padding)
-                    .statusBarsPadding(),
+                    .navigationBarsPadding(),
         ) {
             val scrollState = rememberScrollState()
             val contentWidthModifier =
@@ -357,7 +358,7 @@ private fun RecognitionListenPane(
         Spacer(modifier = Modifier.height(28.dp))
 
         ListeningOrb(
-            modifier = Modifier.size(260.dp),
+            modifier = Modifier.size(220.dp),
             isActive = isListening,
             isProcessing = isProcessing,
             onClick = onStart,
@@ -374,7 +375,7 @@ private fun RecognitionListenPane(
                 MusicRecognitionState.Ready -> {
                     StatusPill(
                         label = stringResource(R.string.music_recognition_tap_to_listen),
-                        iconRes = R.drawable.mic,
+                        iconRes = R.drawable.ic_shazam,
                     )
                 }
 
@@ -920,7 +921,7 @@ private fun ListeningOrb(
             when {
                 isProcessing -> R.drawable.cached
                 isActive -> R.drawable.listening
-                else -> R.drawable.mic
+                else -> R.drawable.ic_shazam
             }
 
         val iconAlpha by animateFloatAsState(

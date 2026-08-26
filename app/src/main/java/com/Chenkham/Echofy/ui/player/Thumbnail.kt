@@ -12,6 +12,8 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -182,6 +184,24 @@ fun Thumbnail(
                             .aspectRatio(16f / 9f), // Standard video aspect ratio
                         cornerRadius = 0f // Edge-to-edge, no rounded corners
                     )
+                } else if (mediaMetadata?.thumbnailUrl.isNullOrBlank()) {
+                    val isRadio = mediaMetadata?.id?.startsWith(com.Chenkham.Echofy.playback.MusicService.RADIO_MEDIA_ID_PREFIX) == true
+                    Box(
+                        modifier = Modifier
+                            .offset { IntOffset(offsetX.roundToInt(), 0) }
+                            .fillMaxWidth()
+                            .aspectRatio(1f)
+                            .clip(RoundedCornerShape(cornerRadius * 2))
+                            .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.6f)),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        Icon(
+                            painter = painterResource(if (isRadio) R.drawable.radio else R.drawable.music_note),
+                            contentDescription = null,
+                            modifier = Modifier.size(72.dp),
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
+                        )
+                    }
                 } else {
                     AsyncImage(
                         model = mediaMetadata?.thumbnailUrl,

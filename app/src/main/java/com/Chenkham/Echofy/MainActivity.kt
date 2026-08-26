@@ -961,8 +961,13 @@ class MainActivity : ComponentActivity() {
                                     !active
                         }
 
+                    val configuration = LocalConfiguration.current
+                    val isLandscape = configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
+                    val shouldShowBottomNav = !isLandscape && shouldShowNavigationBar
+                    val shouldShowNavigationRail = isLandscape && shouldShowNavigationBar
+
                     val navigationBarHeight by animateDpAsState(
-                        targetValue = if (shouldShowNavigationBar) NavigationBarHeight else 0.dp,
+                        targetValue = if (shouldShowBottomNav) NavigationBarHeight else 0.dp,
                         animationSpec = NavigationBarAnimationSpec,
                         label = "",
                     )
@@ -970,7 +975,7 @@ class MainActivity : ComponentActivity() {
                     val playerBottomSheetState =
                         rememberBottomSheetState(
                             dismissedBound = 0.dp,
-                            collapsedBound = bottomInset + (if (shouldShowNavigationBar) NavigationBarHeight else 0.dp) + MiniPlayerHeight,
+                            collapsedBound = bottomInset + (if (shouldShowBottomNav) NavigationBarHeight else 0.dp) + MiniPlayerHeight,
                             expandedBound = maxHeight,
                         )
                         
@@ -978,11 +983,11 @@ class MainActivity : ComponentActivity() {
                     val playerAwareWindowInsets =
                         remember(
                             bottomInset,
-                            shouldShowNavigationBar,
+                            shouldShowBottomNav,
                             playerBottomSheetState.isDismissed
                         ) {
                             var bottom = bottomInset
-                            if (shouldShowNavigationBar) bottom += NavigationBarHeight
+                            if (shouldShowBottomNav) bottom += NavigationBarHeight
                             if (!playerBottomSheetState.isDismissed) bottom += MiniPlayerHeight
                             windowsInsets
                                 .only(WindowInsetsSides.Horizontal + WindowInsetsSides.Top)
@@ -1238,6 +1243,7 @@ class MainActivity : ComponentActivity() {
                             topBar = {
                                 if (shouldShowTopBar) {
                                     TopAppBar(
+                                        modifier = Modifier.padding(start = if (shouldShowNavigationRail) 84.dp else 0.dp),
                                         title = {
                                             Row(
                                                 verticalAlignment = Alignment.CenterVertically,
@@ -1514,6 +1520,7 @@ class MainActivity : ComponentActivity() {
                                             }
                                         },
                                         modifier = Modifier
+                                            .padding(start = if (shouldShowNavigationRail) 84.dp else 0.dp)
                                             .focusRequester(searchBarFocusRequester)
                                             .align(Alignment.TopCenter)
                                             .fillMaxWidth(),
@@ -2016,15 +2023,18 @@ class MainActivity : ComponentActivity() {
                                     }
                                 },
 
-                                modifier = Modifier.nestedScroll(
-                                    if (navigationItems.fastAny { it.route == navBackStackEntry?.destination?.route } ||
-                                        navBackStackEntry?.destination?.route?.startsWith("search/") == true
-                                    ) {
-                                        searchBarScrollBehavior.nestedScrollConnection
-                                    } else {
-                                        topAppBarScrollBehavior.nestedScrollConnection
-                                    }
-                                )
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .padding(start = if (shouldShowNavigationRail) 84.dp else 0.dp)
+                                    .nestedScroll(
+                                        if (navigationItems.fastAny { it.route == navBackStackEntry?.destination?.route } ||
+                                            navBackStackEntry?.destination?.route?.startsWith("search/") == true
+                                        ) {
+                                            searchBarScrollBehavior.nestedScrollConnection
+                                        } else {
+                                            topAppBarScrollBehavior.nestedScrollConnection
+                                        }
+                                    )
                             ) {
                                 navigationBuilder(
                                     navController,

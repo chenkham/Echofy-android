@@ -1999,7 +1999,7 @@ fun PlayerProgressSection(
         )
 
         Text(
-            text = if (duration != C.TIME_UNSET) makeTimeString(duration) else "",
+            text = if (duration != C.TIME_UNSET && duration > 0) makeTimeString(duration) else "LIVE",
             style = MaterialTheme.typography.labelMedium,
             color = color,
             maxLines = 1,

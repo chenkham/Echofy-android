@@ -56,6 +56,7 @@ fun EchofyInsightDialog(
         val pagerState = rememberPagerState(pageCount = { totalPages })
         val coroutineScope = rememberCoroutineScope()
         val currentYear = LocalDateTime.now().year
+        var showStatsShareDialog by remember { mutableStateOf(false) }
 
         val progress = remember { Animatable(0f) }
 
@@ -134,7 +135,7 @@ fun EchofyInsightDialog(
                     }
                 }
 
-                // Top Bar: Back | Echofy Insight | Year Pill (Matching media_1787641439230.png)
+                // Top Bar: Back | Echofy Logo & Insight | Year Pill | Share Image Card
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -153,19 +154,31 @@ fun EchofyInsightDialog(
                         )
                     }
 
-                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Text(
-                            text = "Echofy",
-                            fontSize = 12.sp,
-                            fontWeight = FontWeight.Medium,
-                            color = Color.White.copy(alpha = 0.65f)
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        androidx.compose.foundation.Image(
+                            painter = painterResource(R.drawable.echofy),
+                            contentDescription = "Echofy",
+                            modifier = Modifier
+                                .size(28.dp)
+                                .clip(CircleShape)
                         )
-                        Text(
-                            text = "Insight",
-                            fontSize = 17.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = Color.White
-                        )
+                        Column(horizontalAlignment = Alignment.Start) {
+                            Text(
+                                text = "Echofy",
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.Medium,
+                                color = Color.White.copy(alpha = 0.65f)
+                            )
+                            Text(
+                                text = "Insight",
+                                fontSize = 17.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = Color.White
+                            )
+                        }
                     }
 
                     Row(
@@ -187,27 +200,16 @@ fun EchofyInsightDialog(
                             )
                         }
 
-                        // Share Button
-                        val context = androidx.compose.ui.platform.LocalContext.current
+                        // Share Image Card Button
                         IconButton(
                             onClick = {
-                                val topArtist = topArtists.firstOrNull()?.artist?.name ?: "Echofy Artist"
-                                val topSong = topSongs.firstOrNull()?.title ?: "Echofy Track"
-                                val totalMin = (totalListenTimeMs / 60000L)
-                                val shareText = "🎵 My Echofy Insight $currentYear 🎵\n\n👑 Top Artist: $topArtist\n🎧 Top Song: $topSong\n⏱️ Total Listening Time: $totalMin minutes\n\nListen and explore with Echofy Music!"
-                                val sendIntent = Intent().apply {
-                                    action = Intent.ACTION_SEND
-                                    putExtra(Intent.EXTRA_TEXT, shareText)
-                                    type = "text/plain"
-                                }
-                                val shareIntent = Intent.createChooser(sendIntent, "Share Insight")
-                                context.startActivity(shareIntent)
+                                showStatsShareDialog = true
                             },
                             modifier = Modifier.size(36.dp)
                         ) {
                             Icon(
                                 painter = painterResource(R.drawable.share),
-                                contentDescription = "Share Insight",
+                                contentDescription = "Share Insight Card",
                                 tint = Color.White,
                                 modifier = Modifier.size(20.dp)
                             )
@@ -439,25 +441,58 @@ fun EchofyInsightDialog(
                                     textAlign = TextAlign.Center
                                 )
 
-                                Spacer(modifier = Modifier.height(36.dp))
+                                Spacer(modifier = Modifier.height(28.dp))
 
-                                Button(
-                                    onClick = onDismiss,
-                                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFFF2A85)),
-                                    shape = RoundedCornerShape(24.dp),
-                                    modifier = Modifier.padding(horizontal = 24.dp)
+                                Row(
+                                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                                    verticalAlignment = Alignment.CenterVertically
                                 ) {
-                                    Text(
-                                        text = "Done",
-                                        fontWeight = FontWeight.Bold,
-                                        fontSize = 16.sp,
-                                        color = Color.White
-                                    )
+                                    OutlinedButton(
+                                        onClick = { showStatsShareDialog = true },
+                                        shape = RoundedCornerShape(24.dp),
+                                        colors = ButtonDefaults.outlinedButtonColors(contentColor = Color.White),
+                                        border = androidx.compose.foundation.BorderStroke(1.5.dp, Color.White.copy(alpha = 0.6f)),
+                                    ) {
+                                        Icon(
+                                            painter = painterResource(R.drawable.share),
+                                            contentDescription = null,
+                                            modifier = Modifier.size(18.dp)
+                                        )
+                                        Spacer(Modifier.width(8.dp))
+                                        Text(
+                                            text = "Share Card",
+                                            fontWeight = FontWeight.Bold,
+                                            fontSize = 15.sp,
+                                        )
+                                    }
+
+                                    Button(
+                                        onClick = onDismiss,
+                                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFFF2A85)),
+                                        shape = RoundedCornerShape(24.dp),
+                                    ) {
+                                        Text(
+                                            text = "Done",
+                                            fontWeight = FontWeight.Bold,
+                                            fontSize = 15.sp,
+                                            color = Color.White
+                                        )
+                                    }
                                 }
                             }
                         }
                     }
                 }
+            }
+
+            if (showStatsShareDialog) {
+                com.Chenkham.Echofy.ui.component.StatsShareDialog(
+                    topSongs = topSongs,
+                    topArtists = topArtists,
+                    totalListenTime = totalListenTimeMs,
+                    periodText = "$currentYear Music Highlights",
+                    onDismiss = { showStatsShareDialog = false }
+                )
             }
         }
     }

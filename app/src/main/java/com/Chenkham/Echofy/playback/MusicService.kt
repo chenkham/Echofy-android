@@ -8,6 +8,7 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
+import android.net.Uri
 import androidx.core.content.ContextCompat
 import android.database.SQLException
 import android.media.AudioFocusRequest
@@ -599,7 +600,13 @@ class MusicService :
     }
 
     fun prefetchPlaybackData(mediaId: String, preloadToCache: Boolean = false) {
-        if (mediaId.startsWith(RADIO_MEDIA_ID_PREFIX) || mediaId.startsWith(AMBIENT_MEDIA_ID_PREFIX)) return
+        if (mediaId.startsWith(RADIO_MEDIA_ID_PREFIX) ||
+            mediaId.startsWith(AMBIENT_MEDIA_ID_PREFIX) ||
+            mediaId.startsWith("LM") ||
+            mediaId.startsWith("local:") ||
+            mediaId.startsWith("content:") ||
+            mediaId.startsWith("file:")
+        ) return
 
         if (playbackUrlCache.containsKey(mediaId)) {
             if (preloadToCache) {
@@ -1447,6 +1454,13 @@ class MusicService :
         mediaId: String,
         playbackData: YTPlayerUtils.PlaybackData? = null
     ) {
+        if (mediaId.startsWith(RADIO_MEDIA_ID_PREFIX) ||
+            mediaId.startsWith(AMBIENT_MEDIA_ID_PREFIX) ||
+            mediaId.startsWith("LM") ||
+            mediaId.startsWith("local:") ||
+            mediaId.startsWith("content:") ||
+            mediaId.startsWith("file:")
+        ) return
         val song = database.song(mediaId).first()
         val mediaMetadata = withContext(Dispatchers.Main) {
             player.findNextMediaItemById(mediaId)?.metadata
@@ -2577,6 +2591,30 @@ class MusicService :
             ).setCacheWriteDataSinkFactory(null)
             .setFlags(FLAG_IGNORE_CACHE_ON_ERROR)
 
+    private fun isDirectPlayable(rawKey: String, uri: Uri): Boolean {
+        val scheme = uri.scheme?.lowercase()
+        if (scheme == "content" || scheme == "file" || scheme == "android.resource") return true
+        if (rawKey.startsWith(RADIO_MEDIA_ID_PREFIX) ||
+            rawKey.startsWith(AMBIENT_MEDIA_ID_PREFIX) ||
+            rawKey.startsWith("LM") ||
+            rawKey.startsWith("local:") ||
+            rawKey.startsWith("content:") ||
+            rawKey.startsWith("file:")
+        ) return true
+
+        if (uri.isAbsolute && (scheme == "http" || scheme == "https")) {
+            val host = uri.host?.lowercase().orEmpty()
+            if (host.isNotEmpty() &&
+                !host.contains("youtube") &&
+                !host.contains("googlevideo") &&
+                !host.contains("youtu.be")
+            ) {
+                return true
+            }
+        }
+        return false
+    }
+
     private fun createDataSourceFactory(): DataSource.Factory {
         val videoCacheEnabled = dataStore.get(VideoCacheEnabledKey, true)
         val cacheFactory = if (!videoCacheEnabled && videoMode) {
@@ -2585,14 +2623,9 @@ class MusicService :
             createCacheDataSource()
         }
         return ResolvingDataSource.Factory(cacheFactory) { dataSpec ->
-            val rawKey = dataSpec.key ?: error("No media id")
+            val rawKey = dataSpec.key ?: dataSpec.uri.toString()
 
-            // Internet radio and ambient items already carry a real, playable stream URL in
-            // their DataSpec because MediaItemExt sets it via setUri(). Sending them through
-            // the YouTube resolution path below made ExoPlayer ask YouTube for a video whose
-            // id is "radio:<uuid>", which always fails with "This video is unavailable" and
-            // then retries until playback gives up. Return the spec untouched instead.
-            if (rawKey.startsWith(RADIO_MEDIA_ID_PREFIX) || rawKey.startsWith(AMBIENT_MEDIA_ID_PREFIX)) {
+            if (isDirectPlayable(rawKey, dataSpec.uri)) {
                 return@Factory dataSpec
             }
 

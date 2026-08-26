@@ -87,6 +87,7 @@ fun StatsScreen(
     val selectedOption by viewModel.selectedOption.collectAsState()
 
     var showInsightDialog by remember { mutableStateOf(false) }
+    var showStatsShareDialog by remember { mutableStateOf(false) }
 
     val weeklyDates =
         if (currentDate != null && firstEvent != null) {
@@ -177,6 +178,16 @@ fun StatsScreen(
         )
     }
 
+    if (showStatsShareDialog) {
+        com.Chenkham.Echofy.ui.component.StatsShareDialog(
+            topSongs = mostPlayedSongsStats,
+            topArtists = mostPlayedArtists,
+            totalListenTime = totalTimeListenedMs,
+            periodText = "My Echofy Stats",
+            onDismiss = { showStatsShareDialog = false }
+        )
+    }
+
     Scaffold(
         containerColor = Color.Transparent,
         topBar = {
@@ -206,6 +217,15 @@ fun StatsScreen(
                     }
                 },
                 actions = {
+                    // Share Card Action Button
+                    IconButton(onClick = { showStatsShareDialog = true }) {
+                        Icon(
+                            painter = painterResource(R.drawable.share),
+                            contentDescription = "Share Stats Card",
+                            tint = MaterialTheme.colorScheme.onSurface
+                        )
+                    }
+
                     // OpenTune Note-Type Insight Action Button
                     IconButton(onClick = { showInsightDialog = true }) {
                         Icon(

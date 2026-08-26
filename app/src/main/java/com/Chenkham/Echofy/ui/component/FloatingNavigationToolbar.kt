@@ -299,7 +299,7 @@ private fun FloatingToolbarOverflowAction(
                     ) {
                         Box(contentAlignment = Alignment.Center) {
                             Icon(
-                                painter = painterResource(R.drawable.mic),
+                                painter = painterResource(R.drawable.ic_shazam),
                                 contentDescription =
                                     musicRecognitionContentDescription.ifEmpty {
                                         stringResource(R.string.music_recognition)

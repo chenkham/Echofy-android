@@ -33,17 +33,28 @@ object SpotifyPlaybackResolver {
                 cache[track.id]?.let { return@withContext it }
             }
 
-            val searchResult =
+            var searchResult =
                 YouTube
                     .search(
                         query = SpotifyMapper.buildSearchQuery(track),
                         filter = YouTube.SearchFilter.FILTER_SONG,
-                    ).getOrNull() ?: return@withContext null
+                    ).getOrNull()
 
-            val candidates =
-                searchResult.items
-                    .filterIsInstance<SongItem>()
-                    .distinctBy { it.id }
+            var candidates =
+                searchResult?.items
+                    ?.filterIsInstance<SongItem>()
+                    ?.distinctBy { it.id }
+                    .orEmpty()
+
+            if (candidates.isEmpty()) {
+                val fallbackQuery = "${track.name} ${track.artists.joinToString(" ") { it.name }}".trim()
+                searchResult = YouTube.search(query = fallbackQuery, filter = YouTube.SearchFilter.FILTER_SONG).getOrNull()
+                candidates =
+                    searchResult?.items
+                        ?.filterIsInstance<SongItem>()
+                        ?.distinctBy { it.id }
+                        .orEmpty()
+            }
             if (candidates.isEmpty()) return@withContext null
 
             val precomputed =

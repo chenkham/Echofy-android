@@ -6,6 +6,7 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.withContext
+import com.Chenkham.Echofy.extensions.toMediaItem
 import com.Chenkham.Echofy.models.MediaMetadata
 import com.Chenkham.Echofy.playback.queues.Queue
 import com.arturo254.opentune.spotify.Spotify
@@ -48,11 +49,22 @@ class SpotifyPlaylistQueue(
             }
 
             val targetIndex = startIndex.coerceIn(allTracks.indices)
-            val resolvedEntries = resolveTrackEntries(allTracks)
-            val resolvedItems = resolvedEntries.map { it.second }
+            val windowStart = targetIndex
+            val windowEnd = (targetIndex + 5).coerceAtMost(allTracks.size)
+            val windowTracks = allTracks.subList(windowStart, windowEnd)
 
-            resolveOffset = allTracks.size
-            if (resolvedItems.isEmpty()) {
+            val windowResolved = mutableListOf<MediaItem>()
+            if (preloadItem != null) {
+                windowResolved.add(preloadItem.toMediaItem())
+                if (windowTracks.size > 1) {
+                    windowResolved.addAll(resolveTracks(windowTracks.drop(1)))
+                }
+            } else {
+                windowResolved.addAll(resolveTracks(windowTracks))
+            }
+
+            resolveOffset = windowEnd
+            if (windowResolved.isEmpty()) {
                 return@withContext Queue.Status(
                     title = title,
                     items = emptyList(),
@@ -62,12 +74,8 @@ class SpotifyPlaylistQueue(
 
             Queue.Status(
                 title = title,
-                items = resolvedItems,
-                mediaItemIndex =
-                    resolvedEntries
-                        .indexOfFirst { it.first >= targetIndex }
-                        .takeIf { it >= 0 }
-                        ?: resolvedItems.lastIndex,
+                items = windowResolved,
+                mediaItemIndex = 0,
             )
         }
 

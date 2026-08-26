@@ -344,17 +344,28 @@ object YTPlayerUtils {
 
         val streamClients =
             buildList {
-                add(VISIONOS)
-                add(preferredYouTubeClient)
-                add(ANDROID_VR_1_61_48)
-                add(ANDROID_VR_NO_AUTH)
-                add(ANDROID_VR_1_43_32)
-                add(ANDROID_CREATOR)
-                add(IPADOS)
-                add(MOBILE)
-                add(ANDROID_MUSIC)
-                add(IOS_MUSIC)
-                add(IOS)
+                if (isVideo) {
+                    add(MOBILE)
+                    add(WEB)
+                    add(IOS)
+                    add(TVHTML5)
+                    add(IPADOS)
+                    add(ANDROID_VR_1_61_48)
+                    add(VISIONOS)
+                    add(preferredYouTubeClient)
+                } else {
+                    add(VISIONOS)
+                    add(preferredYouTubeClient)
+                    add(ANDROID_VR_1_61_48)
+                    add(ANDROID_VR_NO_AUTH)
+                    add(ANDROID_VR_1_43_32)
+                    add(ANDROID_CREATOR)
+                    add(IPADOS)
+                    add(MOBILE)
+                    add(ANDROID_MUSIC)
+                    add(IOS_MUSIC)
+                    add(IOS)
+                }
                 add(activeMetadataClient)
                 add(MAIN_CLIENT)
                 addAll(orderedFallbackClients)
@@ -604,7 +615,17 @@ object YTPlayerUtils {
     ): List<PlayerResponse.StreamingData.Format> {
         val streamingData = playerResponse.streamingData ?: return emptyList()
 
-        // 1. Adaptive video streams (video-only) provide true HD/4K resolutions (1080p, 1440p, 2160p, 720p, 480p, etc.)
+        // 1. Progressive formats (video+audio) have both picture and sound muxed together
+        val progressiveFormats = streamingData.formats
+            ?.filter { it.url != null || it.signatureCipher != null || it.cipher != null }
+            ?.filter { format ->
+                val codec = extractCodec(format.mimeType)?.lowercase()
+                codec == null || codec !in avoidCodecs
+            }
+            ?.sortedByDescending { it.height ?: (it.bitrate / 1000) }
+            .orEmpty()
+
+        // 2. Adaptive video streams
         val adaptiveVideoFormats = streamingData.adaptiveFormats
             ?.filter { (it.mimeType.startsWith("video/") || !it.isAudio) && (it.url != null || it.signatureCipher != null || it.cipher != null) }
             ?.filter { format ->
@@ -614,17 +635,7 @@ object YTPlayerUtils {
             ?.sortedByDescending { it.height ?: (it.bitrate / 1000) }
             .orEmpty()
 
-        // 2. Progressive formats (video+audio) as fallback
-        val fallbackFormats = streamingData.formats
-            ?.filter { it.url != null || it.signatureCipher != null || it.cipher != null }
-            ?.filter { format ->
-                val codec = extractCodec(format.mimeType)?.lowercase()
-                codec == null || codec !in avoidCodecs
-            }
-            ?.sortedByDescending { it.height ?: (it.bitrate / 1000) }
-            .orEmpty()
-
-        val allVideo = if (adaptiveVideoFormats.isNotEmpty()) (adaptiveVideoFormats + fallbackFormats).distinctBy { it.itag } else fallbackFormats
+        val allVideo = (progressiveFormats + adaptiveVideoFormats).distinctBy { it.itag }
 
         // Update available qualities flow for UI quality picker
         val heights = allVideo
@@ -646,16 +657,8 @@ object YTPlayerUtils {
             }
         }
 
-        // In Auto mode: on metered network cap default to 720p, on unmetered prioritize 1080p/720p
-        if (networkMetered) {
-            val meteredFiltered = allVideo.filter { (it.height ?: 0) <= 720 }
-            if (meteredFiltered.isNotEmpty()) return meteredFiltered
-        } else {
-            val autoPreferred = allVideo.filter { (it.height ?: 0) <= 1080 }
-            if (autoPreferred.isNotEmpty()) return autoPreferred
-        }
-
-        return allVideo
+        // In Auto mode: prioritize progressive streams (720p/360p with audio) first, then adaptive
+        return if (progressiveFormats.isNotEmpty()) progressiveFormats + adaptiveVideoFormats else allVideo
     }
 
     private fun selectAudioFormatCandidates(

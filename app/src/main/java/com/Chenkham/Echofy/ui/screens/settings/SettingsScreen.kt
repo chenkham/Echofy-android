@@ -853,7 +853,7 @@ fun SettingsScreen(
             title = stringResource(R.string.community),
             items = listOf(
                 SettingsCategoryItem(
-                    icon = painterResource(R.drawable.group),
+                    icon = painterResource(R.drawable.telegram),
                     title = {
                         Column {
                             Text(

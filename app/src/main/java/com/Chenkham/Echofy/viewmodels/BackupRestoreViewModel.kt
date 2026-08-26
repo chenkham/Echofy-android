@@ -9,6 +9,7 @@ package com.Chenkham.Echofy.viewmodels
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
+import androidx.core.net.toUri
 import android.widget.Toast
 import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.floatPreferencesKey
@@ -838,14 +839,10 @@ class BackupRestoreViewModel @Inject constructor(
                 }
             }
 
-            val multipartBody = MultipartBody.Builder()
-                .setType(MultipartBody.FORM)
-                .addFormDataPart("file", fileName, requestBody)
-                .build()
-
             val request = Request.Builder()
                 .url("https://filebin.net/$binName/$fileName")
-                .post(multipartBody)
+                .post(requestBody)
+                .addHeader("Content-Type", "application/octet-stream")
                 .addHeader("Accept", "application/json")
                 .build()
 
@@ -858,17 +855,17 @@ class BackupRestoreViewModel @Inject constructor(
             }
 
             response.body?.string()?.let { responseBody ->
-                // Intentar parsear la respuesta JSON
                 try {
                     val json = JSONObject(responseBody)
-                    val url = json.optString("url")
-                    if (url.isNotEmpty()) {
-                        Result.success(url)
+                    val binId = json.optJSONObject("bin")?.optString("id")
+                    val fileObj = json.optJSONObject("file")
+                    val fileFilename = fileObj?.optString("filename")
+                    if (!binId.isNullOrBlank() && !fileFilename.isNullOrBlank()) {
+                        Result.success("https://filebin.net/$binId/$fileFilename")
                     } else {
                         Result.success("https://filebin.net/$binName/$fileName")
                     }
                 } catch (e: Exception) {
-                    // Si no es JSON, construir URL manualmente
                     Result.success("https://filebin.net/$binName/$fileName")
                 }
             } ?: Result.failure(Exception("Empty response from Filebin"))
@@ -879,6 +876,44 @@ class BackupRestoreViewModel @Inject constructor(
         } finally {
             client.dispatcher.executorService.shutdown()
             client.connectionPool.evictAll()
+        }
+    }
+
+    fun restoreFromCloudUrl(context: Context, url: String) {
+        viewModelScope.launch(Dispatchers.IO) {
+            val title = context.getString(R.string.restore_in_progress)
+            try {
+                emitProgress(
+                    title = title,
+                    step = "Downloading backup from cloud...",
+                    percent = 0,
+                    indeterminate = true,
+                )
+                val cleanUrl = url.trim()
+                val client = OkHttpClient.Builder()
+                    .connectTimeout(30, TimeUnit.SECONDS)
+                    .readTimeout(60, TimeUnit.SECONDS)
+                    .build()
+                val request = Request.Builder().url(cleanUrl).build()
+                val response = client.newCall(request).execute()
+                if (!response.isSuccessful) {
+                    throw IllegalStateException("Failed to download cloud backup: HTTP ${response.code}")
+                }
+                val tempFile = File(context.cacheDir, "cloud_restore_${System.currentTimeMillis()}.backup")
+                response.body?.byteStream()?.use { input ->
+                    FileOutputStream(tempFile).use { output ->
+                        input.copyTo(output)
+                    }
+                } ?: throw IllegalStateException("Empty body from cloud download")
+
+                restore(context, tempFile.toUri())
+            } catch (e: Exception) {
+                reportException(e)
+                withContext(Dispatchers.Main) {
+                    Toast.makeText(context, e.message ?: context.getString(R.string.restore_failed), Toast.LENGTH_LONG).show()
+                }
+                _backupRestoreProgress.value = null
+            }
         }
     }
 

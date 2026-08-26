@@ -208,7 +208,9 @@ fun ExploreScreen(
             }
 
             Indicator(
-                modifier = Modifier.align(Alignment.TopCenter),
+                modifier = Modifier
+                    .align(Alignment.TopCenter)
+                    .padding(LocalPlayerAwareWindowInsets.current.asPaddingValues()),
                 isRefreshing = isRefreshing,
                 state = pullRefreshState
             )
@@ -442,6 +444,7 @@ private fun ChartsTab(
                                 text = sectionTitle,
                                 style = MaterialTheme.typography.titleLarge,
                                 fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.onBackground,
                                 modifier = Modifier.padding(vertical = 8.dp)
                             )
                         }
@@ -889,23 +892,47 @@ fun GenreCard(
     }
 }
 
-private fun com.Chenkham.radiobrowser.models.RadioStation.toMediaItem(): androidx.media3.common.MediaItem =
-    androidx.media3.common.MediaItem.Builder()
-        .setMediaId(stationuuid)
-        .setUri(urlResolved ?: url)
+private fun com.Chenkham.radiobrowser.models.RadioStation.toMediaItem(): androidx.media3.common.MediaItem {
+    val streamUri = (urlResolved?.takeIf { it.isNotBlank() } ?: url).trim()
+    val radioMediaId = "${com.Chenkham.Echofy.playback.MusicService.RADIO_MEDIA_ID_PREFIX}$stationuuid"
+    val artistName = country.ifBlank { tags?.split(",")?.firstOrNull()?.trim() ?: "Live Radio" }
+    val thumb = favicon?.takeIf { it.isNotBlank() }
+    val metadata = com.Chenkham.Echofy.models.MediaMetadata(
+        id = radioMediaId,
+        title = name.ifBlank { "Radio Station" },
+        artists = listOf(com.Chenkham.Echofy.models.MediaMetadata.Artist(id = null, name = artistName)),
+        duration = -1,
+        thumbnailUrl = thumb,
+    )
+    return androidx.media3.common.MediaItem.Builder()
+        .setMediaId(radioMediaId)
+        .setUri(streamUri)
+        .setCustomCacheKey(radioMediaId)
+        .setTag(metadata)
         .setMediaMetadata(
             androidx.media3.common.MediaMetadata.Builder()
                 .setTitle(name)
-                .setArtist(country)
-                .setArtworkUri(favicon?.let { android.net.Uri.parse(it) })
+                .setArtist(artistName)
+                .setArtworkUri(thumb?.let { android.net.Uri.parse(it) })
                 .build()
         )
         .build()
+}
 
-private fun com.Chenkham.freesound.models.AmbientSound.toMediaItem(): androidx.media3.common.MediaItem =
-    androidx.media3.common.MediaItem.Builder()
-        .setMediaId(id.toString())
+private fun com.Chenkham.freesound.models.AmbientSound.toMediaItem(): androidx.media3.common.MediaItem {
+    val ambientMediaId = "${com.Chenkham.Echofy.playback.MusicService.AMBIENT_MEDIA_ID_PREFIX}$id"
+    val metadata = com.Chenkham.Echofy.models.MediaMetadata(
+        id = ambientMediaId,
+        title = name.ifBlank { "Ambient Sound" },
+        artists = listOf(com.Chenkham.Echofy.models.MediaMetadata.Artist(id = null, name = author.ifBlank { "Ambient" })),
+        duration = -1,
+        thumbnailUrl = null,
+    )
+    return androidx.media3.common.MediaItem.Builder()
+        .setMediaId(ambientMediaId)
         .setUri(streamUrl)
+        .setCustomCacheKey(ambientMediaId)
+        .setTag(metadata)
         .setMediaMetadata(
             androidx.media3.common.MediaMetadata.Builder()
                 .setTitle(name)
@@ -913,4 +940,5 @@ private fun com.Chenkham.freesound.models.AmbientSound.toMediaItem(): androidx.m
                 .build()
         )
         .build()
+}
 

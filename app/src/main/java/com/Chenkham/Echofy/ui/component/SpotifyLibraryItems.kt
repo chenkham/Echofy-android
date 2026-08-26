@@ -55,10 +55,7 @@ fun SpotifyLibraryPlaylistListItem(
         navController.navigate("spotify_playlist/${playlist.id}")
     }
 
-    LibraryPlaylistListItem(
-        navController = navController,
-        menuState = LocalMenuState.current,
-        coroutineScope = rememberCoroutineScope(),
+    PlaylistListItem(
         playlist = libraryPlaylist,
         modifier = modifier
             .fillMaxWidth()
