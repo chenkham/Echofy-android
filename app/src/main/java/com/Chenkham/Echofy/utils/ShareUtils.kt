@@ -34,16 +34,12 @@ object ShareUtils {
         artist: String? = null
     ): String {
         val base = getBaseShareUrl(context)
-        val builder = StringBuilder("$base/track/$songId")
-        val params = mutableListOf<String>()
+        val builder = StringBuilder("$base/?track=$songId")
         if (!title.isNullOrBlank()) {
-            params.add("title=${urlEncode(title)}")
+            builder.append("&title=${urlEncode(title)}")
         }
         if (!artist.isNullOrBlank()) {
-            params.add("artist=${urlEncode(artist)}")
-        }
-        if (params.isNotEmpty()) {
-            builder.append("?").append(params.joinToString("&"))
+            builder.append("&artist=${urlEncode(artist)}")
         }
         return builder.toString()
     }
@@ -63,7 +59,7 @@ object ShareUtils {
         roomCode: String
     ): String {
         val base = getBaseShareUrl(context)
-        return "$base/jam/${roomCode.trim().uppercase()}"
+        return "$base/?jam=${roomCode.trim().uppercase()}"
     }
 
     fun buildJamShareText(
@@ -80,9 +76,9 @@ object ShareUtils {
         title: String? = null
     ): String {
         val base = getBaseShareUrl(context)
-        val builder = StringBuilder("$base/playlist/$playlistId")
+        val builder = StringBuilder("$base/?playlist=$playlistId")
         if (!title.isNullOrBlank()) {
-            builder.append("?title=").append(urlEncode(title))
+            builder.append("&title=").append(urlEncode(title))
         }
         return builder.toString()
     }
@@ -102,9 +98,9 @@ object ShareUtils {
         title: String? = null
     ): String {
         val base = getBaseShareUrl(context)
-        val builder = StringBuilder("$base/album/$albumId")
+        val builder = StringBuilder("$base/?album=$albumId")
         if (!title.isNullOrBlank()) {
-            builder.append("?title=").append(urlEncode(title))
+            builder.append("&title=").append(urlEncode(title))
         }
         return builder.toString()
     }
@@ -126,9 +122,9 @@ object ShareUtils {
         name: String? = null
     ): String {
         val base = getBaseShareUrl(context)
-        val builder = StringBuilder("$base/artist/$artistId")
+        val builder = StringBuilder("$base/?artist=$artistId")
         if (!name.isNullOrBlank()) {
-            builder.append("?name=").append(urlEncode(name))
+            builder.append("&name=").append(urlEncode(name))
         }
         return builder.toString()
     }
