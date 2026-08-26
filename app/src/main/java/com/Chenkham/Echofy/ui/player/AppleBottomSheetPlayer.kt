@@ -373,7 +373,13 @@ fun AppleBottomSheetPlayer(
             playerConnection.player.stop()
             playerConnection.player.clearMediaItems()
         },
-        collapsedContent = { MiniPlayer() },
+        collapsedContent = {
+            val config = androidx.compose.ui.platform.LocalConfiguration.current
+            val isLand = config.orientation == android.content.res.Configuration.ORIENTATION_LANDSCAPE || config.screenWidthDp > config.screenHeightDp
+            MiniPlayer(
+                modifier = Modifier.padding(start = if (isLand) 80.dp else 0.dp)
+            )
+        },
     ) {
         val meta = mediaMetadata ?: return@BottomSheet
 

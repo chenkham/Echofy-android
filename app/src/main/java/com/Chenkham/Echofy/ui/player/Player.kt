@@ -816,7 +816,11 @@ fun BottomSheetPlayer(
             playerConnection.player.clearMediaItems()
         },
         collapsedContent = {
-            MiniPlayer()
+            val config = LocalConfiguration.current
+            val isLand = config.orientation == Configuration.ORIENTATION_LANDSCAPE || config.screenWidthDp > config.screenHeightDp
+            MiniPlayer(
+                modifier = Modifier.padding(start = if (isLand) 80.dp else 0.dp)
+            )
         },
     ) {
         val controlsContent: @Composable ColumnScope.(MediaMetadata) -> Unit = { mediaMetadata ->
@@ -1346,184 +1350,143 @@ fun BottomSheetPlayer(
                         )
                 )
             }
-        }
-        when (LocalConfiguration.current.orientation) {
-            Configuration.ORIENTATION_LANDSCAPE -> {
-                Column(
-                    modifier = Modifier.fillMaxSize()
+        }        val playerConfig = LocalConfiguration.current
+        val isLandscape = playerConfig.orientation == Configuration.ORIENTATION_LANDSCAPE || playerConfig.screenWidthDp > playerConfig.screenHeightDp
+
+        if (isLandscape) {
+            val (playbackMode, onPlaybackModeChange) = rememberEnumPreference(
+                key = PlaybackModeKey,
+                defaultValue = PlaybackMode.AUDIO
+            )
+            val isVideoAvailable = remember(mediaMetadata, currentSong) {
+                isVideoAvailableFor(mediaMetadata, currentSong?.song?.id)
+            }
+
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .windowInsetsPadding(WindowInsets.systemBars.only(WindowInsetsSides.Horizontal))
+                    .padding(horizontal = 16.dp, vertical = 6.dp)
+            ) {
+                // Top header: Minimize chevron + Song/Video Switch + Options
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 8.dp, vertical = 2.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    // Fixed top bar
-                    Row(
+                    Box(
+                        contentAlignment = Alignment.Center,
                         modifier = Modifier
-                            .fillMaxWidth()
-                            .windowInsetsPadding(WindowInsets.systemBars.only(WindowInsetsSides.Horizontal))
-                            .padding(start = 16.dp, end = 16.dp, top = 32.dp, bottom = 16.dp),
-                        horizontalArrangement = Arrangement.SpaceBetween,
+                            .size(38.dp)
+                            .clip(CircleShape)
+                            .clickable { state.collapseSoft() },
+                    ) {
+                        Image(
+                            painter = painterResource(R.drawable.expand_more),
+                            contentDescription = stringResource(R.string.acc_minimize),
+                            colorFilter = ColorFilter.tint(onBackgroundColor),
+                            modifier = Modifier.size(26.dp),
+                        )
+                    }
+
+                    SongVideoSwitch(
+                        selectedMode = playbackMode,
+                        onModeChange = onPlaybackModeChange,
+                        isVideoAvailable = isVideoAvailable
+                    )
+
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
-                        // Minimize button (chevron down)
-                        Box(
-                            contentAlignment = Alignment.Center,
-                            modifier = Modifier
-                                .size(44.dp)
-                                .clip(CircleShape)
-                                .clickable { state.collapseSoft() },
-                        ) {
-                            Image(
-                                painter = painterResource(R.drawable.expand_more),
-                                contentDescription = stringResource(R.string.acc_minimize),
-                                colorFilter = ColorFilter.tint(onBackgroundColor),
-                                modifier = Modifier.size(28.dp),
-                            )
-                        }
-
-                        Row(
-                            horizontalArrangement = Arrangement.spacedBy(10.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                        ) {
-                            if (enableListenTogether) {
-                                Box(
-                                    contentAlignment = Alignment.Center,
-                                    modifier = Modifier
-                                        .size(44.dp)
-                                        .clip(CircleShape)
-                                        .clickable { showEchofyJamSheet = true },
-                                ) {
-                                    Image(
-                                        painter = painterResource(R.drawable.group),
-                                        contentDescription = "Start Together",
-                                        colorFilter = ColorFilter.tint(onBackgroundColor),
-                                        modifier = Modifier.size(24.dp),
-                                    )
-                                }
-                            }
-
-                            // More options (3-dot menu)
+                        if (enableListenTogether) {
                             Box(
                                 contentAlignment = Alignment.Center,
                                 modifier = Modifier
-                                    .size(44.dp)
+                                    .size(38.dp)
                                     .clip(CircleShape)
-                                    .clickable {
-                                        menuState.show {
-                                            PlayerMenu(
-                                                mediaMetadata = mediaMetadata ?: return@show,
-                                                navController = navController,
-                                                onShowDetailsDialog = { showDetailsDialog = true },
-                                                onDismiss = menuState::dismiss,
-                                                onNavigateAway = { state.collapseSoft() },
-                                            )
-                                        }
-                                    },
+                                    .clickable { showEchofyJamSheet = true },
                             ) {
                                 Image(
-                                    painter = painterResource(R.drawable.more_vert),
-                                    contentDescription = stringResource(R.string.acc_more_options),
+                                    painter = painterResource(R.drawable.group),
+                                    contentDescription = "Start Together",
                                     colorFilter = ColorFilter.tint(onBackgroundColor),
-                                    modifier = Modifier.size(24.dp),
+                                    modifier = Modifier.size(22.dp),
                                 )
                             }
                         }
-                    }
 
-                    Row(
-                        modifier = Modifier
-                            .windowInsetsPadding(WindowInsets.systemBars.only(WindowInsetsSides.Horizontal))
-                            .weight(1f)
-                    ) {
                         Box(
                             contentAlignment = Alignment.Center,
-                            modifier = Modifier.weight(1f),
-                        ) {
-                            val screenWidth = LocalConfiguration.current.screenWidthDp
-                            val thumbnailSize = (screenWidth * 0.40).dp
-
-                            Column(
-                                horizontalAlignment = Alignment.CenterHorizontally
-                            ) {
-                                // Song/Video Switch
-                                val isVideoAvailable = remember(mediaMetadata, currentSong) {
-                                    isVideoAvailableFor(mediaMetadata, currentSong?.song?.id)
-                                }
-                                val (playbackMode, onPlaybackModeChange) = rememberEnumPreference(
-                                    key = PlaybackModeKey,
-                                    defaultValue = PlaybackMode.AUDIO
-                                )
-                                
-                                SongVideoSwitch(
-                                    selectedMode = playbackMode,
-                                    onModeChange = onPlaybackModeChange,
-                                    isVideoAvailable = isVideoAvailable
-                                )
-                                
-                                Spacer(modifier = Modifier.height(16.dp))
-
-                                val queueTitle by playerConnection.queueTitle.collectAsState()
-                                AnimatedVisibility(
-                                    visible = !queueTitle.isNullOrEmpty(),
-                                    enter = fadeIn() + expandVertically(),
-                                    exit = fadeOut() + shrinkVertically()
-                                ) {
-                                    Column(
-                                        horizontalAlignment = Alignment.CenterHorizontally,
-                                        modifier = Modifier.padding(bottom = 8.dp)
-                                    ) {
-                                        Text(
-                                            text = stringResource(R.string.playing_from),
-                                            style = MaterialTheme.typography.labelMedium,
-                                            color = onBackgroundColor.copy(alpha = 0.7f),
-                                            fontSize = 12.sp
-                                        )
-
-                                        Text(
-                                            text = queueTitle.orEmpty(),
-                                            style = MaterialTheme.typography.titleMedium,
-                                            color = onBackgroundColor,
-                                            fontWeight = FontWeight.SemiBold,
-                                            maxLines = 1,
-                                            overflow = TextOverflow.Ellipsis,
-                                            modifier = Modifier
-                                                .padding(horizontal = 16.dp)
-                                                .basicMarquee()
+                            modifier = Modifier
+                                .size(38.dp)
+                                .clip(CircleShape)
+                                .clickable {
+                                    menuState.show {
+                                        PlayerMenu(
+                                            mediaMetadata = mediaMetadata ?: return@show,
+                                            navController = navController,
+                                            onShowDetailsDialog = { showDetailsDialog = true },
+                                            onDismiss = menuState::dismiss,
+                                            onNavigateAway = { state.collapseSoft() },
                                         )
                                     }
-                                }
-
-                                Thumbnail(
-                                    onOpenFullscreenLyrics = onOpenFullscreenLyrics,
-                                    modifier = Modifier
-                                        .size(thumbnailSize)
-                                )
-
-
-                                adManager?.let { manager ->
-                                    Spacer(Modifier.height(12.dp))
-                                    MediumRectangleAdView(
-                                        adManager = manager
-                                    )
-                                }
-                            }
-                        }
-                        Column(
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                            modifier =
-                                Modifier
-                                    .weight(1f)
-                                    .windowInsetsPadding(WindowInsets.systemBars.only(WindowInsetsSides.Top)),
+                                },
                         ) {
-                            Spacer(Modifier.weight(1f))
+                            Image(
+                                painter = painterResource(R.drawable.more_vert),
+                                contentDescription = stringResource(R.string.acc_more_options),
+                                colorFilter = ColorFilter.tint(onBackgroundColor),
+                                modifier = Modifier.size(22.dp),
+                            )
+                        }
+                    }
+                }
 
-                            mediaMetadata?.let {
-                                controlsContent(it)
-                            }
+                // 2-Column Split: Left = Video/Artwork, Right = Full Playback Controls
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .weight(1f)
+                        .padding(top = 4.dp),
+                    horizontalArrangement = Arrangement.spacedBy(16.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    // Left Column: Artwork / Video Container
+                    Box(
+                        contentAlignment = Alignment.Center,
+                        modifier = Modifier
+                            .weight(1f)
+                            .fillMaxHeight()
+                            .padding(8.dp),
+                    ) {
+                        Thumbnail(
+                            onOpenFullscreenLyrics = onOpenFullscreenLyrics,
+                            modifier = Modifier
+                                .fillMaxHeight(0.9f)
+                                .align(Alignment.Center)
+                        )
+                    }
 
-                            Spacer(Modifier.weight(1f))
+                    // Right Column: Controls with vertical scrolling support to avoid overlap
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.Center,
+                        modifier = Modifier
+                            .weight(1.2f)
+                            .fillMaxHeight()
+                            .verticalScroll(rememberScrollState())
+                            .padding(vertical = 4.dp),
+                    ) {
+                        mediaMetadata?.let {
+                            controlsContent(it)
                         }
                     }
                 }
             }
-
-            else -> {
+        } else {
                 val configuration = LocalConfiguration.current
                 val isSmallScreen = configuration.screenHeightDp < 750
                 // Pull top bar down (original was 24.dp)
@@ -1685,7 +1648,6 @@ fun BottomSheetPlayer(
 
                     Spacer(Modifier.height(24.dp))
                 }
-            }
         }
 
         Queue(

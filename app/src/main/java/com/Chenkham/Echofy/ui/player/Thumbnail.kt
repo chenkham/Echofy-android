@@ -9,6 +9,7 @@ import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -106,6 +107,9 @@ fun Thumbnail(
     }
     val isWideThumbnail = thumbnailAspectRatio > 1.18f
 
+    val config = androidx.compose.ui.platform.LocalConfiguration.current
+    val isLand = config.orientation == android.content.res.Configuration.ORIENTATION_LANDSCAPE || config.screenWidthDp > config.screenHeightDp
+
     Box(modifier = modifier) {
         AnimatedVisibility(
             visible = !showLyrics && error == null,
@@ -117,11 +121,12 @@ fun Thumbnail(
                 contentAlignment = Alignment.Center,
                 modifier =
                     Modifier
-                        .fillMaxWidth() // SOLO ancho completo, no altura
                         .then(
-                            // Wide video-style covers should use the available width so no artwork is cropped.
-                            if (playbackMode == PlaybackMode.VIDEO || isWideThumbnail) Modifier
-                            else Modifier.padding(horizontal = PlayerHorizontalPadding)
+                            if (isLand) Modifier.fillMaxHeight()
+                            else Modifier.fillMaxWidth().then(
+                                if (playbackMode == PlaybackMode.VIDEO || isWideThumbnail) Modifier
+                                else Modifier.padding(horizontal = PlayerHorizontalPadding)
+                            )
                         )
                         .pointerInput(Unit) {
                             detectHorizontalDragGestures(
@@ -174,23 +179,30 @@ fun Thumbnail(
                     cornerRadius = AppConfig.getThumbnailCornerRadius(context)
                 }
 
+                val configuration = androidx.compose.ui.platform.LocalConfiguration.current
+                val isLandscape = configuration.orientation == android.content.res.Configuration.ORIENTATION_LANDSCAPE || configuration.screenWidthDp > configuration.screenHeightDp
+
                 // Show Video or Thumbnail based on playback mode
                 if (playbackMode == PlaybackMode.VIDEO) {
                     VideoPlayerView(
                         exoPlayer = playerConnection.player,
                         modifier = Modifier
                             .offset { IntOffset(offsetX.roundToInt(), 0) }
-                            .fillMaxWidth()
-                            .aspectRatio(16f / 9f), // Standard video aspect ratio
-                        cornerRadius = 0f // Edge-to-edge, no rounded corners
+                            .then(
+                                if (isLandscape) Modifier.fillMaxHeight().aspectRatio(16f / 9f, matchHeightConstraintsFirst = true)
+                                else Modifier.fillMaxWidth().aspectRatio(16f / 9f)
+                            ),
+                        cornerRadius = if (isLandscape) 12f else 0f
                     )
                 } else if (mediaMetadata?.thumbnailUrl.isNullOrBlank()) {
                     val isRadio = mediaMetadata?.id?.startsWith(com.Chenkham.Echofy.playback.MusicService.RADIO_MEDIA_ID_PREFIX) == true
                     Box(
                         modifier = Modifier
                             .offset { IntOffset(offsetX.roundToInt(), 0) }
-                            .fillMaxWidth()
-                            .aspectRatio(1f)
+                            .then(
+                                if (isLandscape) Modifier.fillMaxHeight().aspectRatio(1f, matchHeightConstraintsFirst = true)
+                                else Modifier.fillMaxWidth().aspectRatio(1f)
+                            )
                             .clip(RoundedCornerShape(cornerRadius * 2))
                             .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.6f)),
                         contentAlignment = Alignment.Center,
@@ -198,7 +210,7 @@ fun Thumbnail(
                         Icon(
                             painter = painterResource(if (isRadio) R.drawable.radio else R.drawable.music_note),
                             contentDescription = null,
-                            modifier = Modifier.size(72.dp),
+                            modifier = Modifier.size(if (isLandscape) 48.dp else 72.dp),
                             tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
                         )
                     }
@@ -217,8 +229,10 @@ fun Thumbnail(
                         },
                         modifier = Modifier
                             .offset { IntOffset(offsetX.roundToInt(), 0) }
-                            .fillMaxWidth()
-                            .aspectRatio(thumbnailAspectRatio)
+                            .then(
+                                if (isLandscape) Modifier.fillMaxHeight().aspectRatio(thumbnailAspectRatio, matchHeightConstraintsFirst = true)
+                                else Modifier.fillMaxWidth().aspectRatio(thumbnailAspectRatio)
+                            )
                             .clip(RoundedCornerShape(cornerRadius * 2))
                             .background(Color.Black.copy(alpha = 0.10f))
                             .pointerInput(Unit) {

@@ -962,7 +962,7 @@ class MainActivity : ComponentActivity() {
                         }
 
                     val configuration = LocalConfiguration.current
-                    val isLandscape = configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
+                    val isLandscape = configuration.orientation == Configuration.ORIENTATION_LANDSCAPE || configuration.screenWidthDp > configuration.screenHeightDp
                     val shouldShowBottomNav = !isLandscape && shouldShowNavigationBar
                     val shouldShowNavigationRail = isLandscape && shouldShowNavigationBar
 
@@ -1238,12 +1238,13 @@ class MainActivity : ComponentActivity() {
                         LocalPlayerAwareWindowInsets provides playerAwareWindowInsets,
                         LocalMenuState provides menuState,
                     ) {
-                        Scaffold(
+                        Box(modifier = Modifier.fillMaxSize()) {
+                            Scaffold(
                             containerColor = Color.Transparent,
                             topBar = {
                                 if (shouldShowTopBar) {
                                     TopAppBar(
-                                        modifier = Modifier.padding(start = if (shouldShowNavigationRail) 84.dp else 0.dp),
+                                        modifier = Modifier.padding(start = if (shouldShowNavigationRail) 80.dp else 0.dp),
                                         title = {
                                             Row(
                                                 verticalAlignment = Alignment.CenterVertically,
@@ -1520,7 +1521,7 @@ class MainActivity : ComponentActivity() {
                                             }
                                         },
                                         modifier = Modifier
-                                            .padding(start = if (shouldShowNavigationRail) 84.dp else 0.dp)
+                                            .padding(start = if (shouldShowNavigationRail) 80.dp else 0.dp)
                                             .focusRequester(searchBarFocusRequester)
                                             .align(Alignment.TopCenter)
                                             .fillMaxWidth(),
@@ -1625,103 +1626,9 @@ class MainActivity : ComponentActivity() {
                                     }
 
                                     val configuration = LocalConfiguration.current
-                                    val isLandscape = configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
+                                    val isLandscape = configuration.orientation == Configuration.ORIENTATION_LANDSCAPE || configuration.screenWidthDp > configuration.screenHeightDp
                                     val shouldShowBottomNav = !isLandscape && shouldShowNavigationBar
                                     val shouldShowNavigationRail = isLandscape && shouldShowNavigationBar
-
-                                    
-                                    if (shouldShowNavigationRail) {
-                                        NavigationRail(
-                                            modifier = Modifier
-                                                .align(Alignment.CenterStart)
-                                                .fillMaxHeight()
-                                                .width(84.dp)
-                                                .windowInsetsPadding(WindowInsets.systemBars.only(WindowInsetsSides.Vertical + WindowInsetsSides.Start))
-                                                .background(
-                                                    androidx.compose.ui.graphics.Brush.horizontalGradient(
-                                                        colors = listOf(
-                                                            if (pureBlack) Color.Black else MaterialTheme.colorScheme.surface.copy(alpha = 0.7f),
-                                                            Color.Transparent
-                                                        )
-                                                    )
-                                                ),
-                                            containerColor = Color.Transparent,
-                                            contentColor = if (pureBlack) Color.White else MaterialTheme.colorScheme.onSurfaceVariant,
-                                            header = {
-                                                Spacer(Modifier.height(8.dp))
-                                                Image(
-                                                    painter = painterResource(R.drawable.echofy),
-                                                    contentDescription = "Echofy",
-                                                    modifier = Modifier
-                                                        .size(36.dp)
-                                                        .clip(CircleShape)
-                                                )
-                                                Spacer(Modifier.height(12.dp))
-                                            }
-                                        ) {
-                                            navigationItems.fastForEach { screen ->
-                                                val isSelected =
-                                                    navBackStackEntry?.destination?.hierarchy?.any {
-                                                        it.route == screen.route
-                                                    } == true
-
-                                                NavigationRailItem(
-                                                    selected = isSelected,
-                                                    icon = {
-                                                        Icon(
-                                                            painter = painterResource(
-                                                                id = if (isSelected) {
-                                                                    screen.iconIdActive
-                                                                } else {
-                                                                    screen.iconIdInactive
-                                                                }
-                                                            ),
-                                                            contentDescription = stringResource(screen.titleId),
-                                                            modifier = Modifier.size(24.dp)
-                                                        )
-                                                    },
-                                                    label = {
-                                                        if (!slimNav) {
-                                                            Text(
-                                                                text = stringResource(screen.titleId),
-                                                                maxLines = 1,
-                                                                overflow = TextOverflow.Ellipsis,
-                                                                style = MaterialTheme.typography.labelSmall
-                                                            )
-                                                        }
-                                                    },
-                                                    colors = NavigationRailItemDefaults.colors(
-                                                        selectedIconColor = MaterialTheme.colorScheme.onPrimaryContainer,
-                                                        selectedTextColor = MaterialTheme.colorScheme.onSurface,
-                                                        unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                                                        unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                                                        indicatorColor = MaterialTheme.colorScheme.primaryContainer,
-                                                    ),
-                                                    onClick = {
-                                                        if (isSelected) {
-                                                            navController.currentBackStackEntry?.savedStateHandle?.set(
-                                                                "scrollToTop",
-                                                                true
-                                                            )
-                                                        } else {
-                                                            try {
-                                                                navigateToScreen(
-                                                                    navController,
-                                                                    screen
-                                                                )
-                                                            } catch (e: Exception) {
-                                                                Log.e(
-                                                                    "Navigation",
-                                                                    "Error navigating to screen",
-                                                                    e
-                                                                )
-                                                            }
-                                                        }
-                                                    }
-                                                )
-                                            }
-                                        }
-                                    }
 
                                     if (shouldShowBottomNav) {
                                         NavigationBar(
@@ -1875,15 +1782,6 @@ class MainActivity : ComponentActivity() {
                                                 .align(Alignment.BottomCenter)
                                                 .height(bottomInsetDp)
                                         )
-                                    } else {
-                                        // En tablets en landscape, solo mostrar el BottomSheetPlayer y el Box del inset
-                                        Box(
-                                            modifier = Modifier
-                                                .background(insetBg)
-                                                .fillMaxWidth()
-                                                .align(Alignment.BottomCenter)
-                                                .height(bottomInsetDp)
-                                        )
                                     }
 
                                     // Global Google Assistant style voice visual overlay
@@ -2025,7 +1923,7 @@ class MainActivity : ComponentActivity() {
 
                                 modifier = Modifier
                                     .fillMaxSize()
-                                    .padding(start = if (shouldShowNavigationRail) 84.dp else 0.dp)
+                                    .padding(start = if (shouldShowNavigationRail) 80.dp else 0.dp)
                                     .nestedScroll(
                                         if (navigationItems.fastAny { it.route == navBackStackEntry?.destination?.route } ||
                                             navBackStackEntry?.destination?.route?.startsWith("search/") == true
@@ -2082,6 +1980,99 @@ class MainActivity : ComponentActivity() {
                                 initialRoomCode = roomCode,
                             )
                         }
+
+                        if (shouldShowNavigationRail) {
+                            NavigationRail(
+                                modifier = Modifier
+                                    .align(Alignment.CenterStart)
+                                    .fillMaxHeight()
+                                    .width(80.dp)
+                                    .windowInsetsPadding(WindowInsets.systemBars.only(WindowInsetsSides.Vertical + WindowInsetsSides.Start))
+                                    .background(
+                                        Brush.horizontalGradient(
+                                            colors = listOf(
+                                                if (pureBlack) Color.Black else MaterialTheme.colorScheme.surface.copy(alpha = 0.95f),
+                                                if (pureBlack) Color.Black else MaterialTheme.colorScheme.surface.copy(alpha = 0.75f)
+                                            )
+                                        )
+                                    ),
+                                containerColor = Color.Transparent,
+                                contentColor = if (pureBlack) Color.White else MaterialTheme.colorScheme.onSurfaceVariant,
+                                header = {
+                                    Spacer(Modifier.height(8.dp))
+                                    Image(
+                                        painter = painterResource(R.drawable.echofy),
+                                        contentDescription = "Echofy",
+                                        modifier = Modifier
+                                            .size(36.dp)
+                                            .clip(CircleShape)
+                                    )
+                                    Spacer(Modifier.height(12.dp))
+                                }
+                            ) {
+                                navigationItems.fastForEach { screen ->
+                                    val isSelected =
+                                        navBackStackEntry?.destination?.hierarchy?.any {
+                                            it.route == screen.route
+                                        } == true
+
+                                    NavigationRailItem(
+                                        selected = isSelected,
+                                        icon = {
+                                            Icon(
+                                                painter = painterResource(
+                                                    id = if (isSelected) {
+                                                        screen.iconIdActive
+                                                    } else {
+                                                        screen.iconIdInactive
+                                                    }
+                                                ),
+                                                contentDescription = stringResource(screen.titleId),
+                                                modifier = Modifier.size(24.dp)
+                                            )
+                                        },
+                                        label = {
+                                            if (!slimNav) {
+                                                Text(
+                                                    text = stringResource(screen.titleId),
+                                                    maxLines = 1,
+                                                    overflow = TextOverflow.Ellipsis,
+                                                    style = MaterialTheme.typography.labelSmall
+                                                )
+                                            }
+                                        },
+                                        colors = NavigationRailItemDefaults.colors(
+                                            selectedIconColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                                            selectedTextColor = MaterialTheme.colorScheme.onSurface,
+                                            unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                                            unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                                            indicatorColor = MaterialTheme.colorScheme.primaryContainer,
+                                        ),
+                                        onClick = {
+                                            if (isSelected) {
+                                                navController.currentBackStackEntry?.savedStateHandle?.set(
+                                                    "scrollToTop",
+                                                    true
+                                                )
+                                            } else {
+                                                try {
+                                                    navigateToScreen(
+                                                        navController,
+                                                        screen
+                                                    )
+                                                } catch (e: Exception) {
+                                                    Log.e(
+                                                        "Navigation",
+                                                        "Error navigating to screen",
+                                                        e
+                                                    )
+                                                }
+                                            }
+                                        }
+                                    )
+                                }
+                            }
+                        }
                     }
 
                     LaunchedEffect(shouldShowSearchBar, openSearchImmediately) {
@@ -2099,6 +2090,7 @@ class MainActivity : ComponentActivity() {
             }
         }
     }
+}
 }
 
     private fun navigateToScreen(
