@@ -10,9 +10,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.pulltorefresh.PullToRefreshDefaults.Indicator
-import androidx.compose.material3.pulltorefresh.pullToRefresh
-import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
+import com.Chenkham.Echofy.ui.component.ExpressivePullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -56,7 +54,6 @@ fun LibraryScreen(
     val libraryArtistsViewModel: LibraryArtistsViewModel = hiltViewModel()
     val coroutineScope = rememberCoroutineScope()
     var isRefreshing by rememberSaveable { mutableStateOf(false) }
-    val pullRefreshState = rememberPullToRefreshState()
 
     val filterContent = @Composable {
         Row {
@@ -107,15 +104,10 @@ fun LibraryScreen(
     }
 
     BackpaperBackground(screen = BackpaperScreen.LIBRARY) {
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .pullToRefresh(
-                    state = pullRefreshState,
-                    isRefreshing = isRefreshing,
-                    onRefresh = onRefresh,
-                ),
-            contentAlignment = Alignment.TopStart,
+        ExpressivePullToRefreshBox(
+            isRefreshing = isRefreshing,
+            onRefresh = onRefresh,
+            modifier = Modifier.fillMaxSize(),
         ) {
             Column(
                 modifier = Modifier.fillMaxSize(),
@@ -165,14 +157,6 @@ fun LibraryScreen(
                     )
                 }
             }
-
-            Indicator(
-                isRefreshing = isRefreshing,
-                state = pullRefreshState,
-                modifier = Modifier
-                    .align(Alignment.TopCenter)
-                    .padding(LocalPlayerAwareWindowInsets.current.asPaddingValues()),
-            )
         }
     }
 }

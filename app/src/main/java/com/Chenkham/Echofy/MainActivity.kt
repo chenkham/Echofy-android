@@ -1238,14 +1238,106 @@ class MainActivity : ComponentActivity() {
                         LocalPlayerAwareWindowInsets provides playerAwareWindowInsets,
                         LocalMenuState provides menuState,
                     ) {
-                        Box(modifier = Modifier.fillMaxSize()) {
-                            Scaffold(
-                            containerColor = Color.Transparent,
-                            topBar = {
-                                if (shouldShowTopBar) {
-                                    TopAppBar(
-                                        modifier = Modifier.padding(start = if (shouldShowNavigationRail) 80.dp else 0.dp),
-                                        title = {
+                        Row(modifier = Modifier.fillMaxSize()) {
+                            if (shouldShowNavigationRail) {
+                                NavigationRail(
+                                    modifier = Modifier
+                                        .fillMaxHeight()
+                                        .width(80.dp)
+                                        .windowInsetsPadding(WindowInsets.systemBars.only(WindowInsetsSides.Vertical + WindowInsetsSides.Start))
+                                        .background(
+                                            Brush.horizontalGradient(
+                                                colors = listOf(
+                                                    if (pureBlack) Color.Black else MaterialTheme.colorScheme.surface.copy(alpha = 0.95f),
+                                                    if (pureBlack) Color.Black else MaterialTheme.colorScheme.surface.copy(alpha = 0.75f)
+                                                )
+                                            )
+                                        ),
+                                    containerColor = Color.Transparent,
+                                    contentColor = if (pureBlack) Color.White else MaterialTheme.colorScheme.onSurfaceVariant,
+                                    header = {
+                                        Spacer(Modifier.height(8.dp))
+                                        Image(
+                                            painter = painterResource(R.drawable.echofy),
+                                            contentDescription = "Echofy",
+                                            modifier = Modifier
+                                                .size(36.dp)
+                                                .clip(CircleShape)
+                                        )
+                                        Spacer(Modifier.height(12.dp))
+                                    }
+                                ) {
+                                    navigationItems.fastForEach { screen ->
+                                        val isSelected =
+                                            navBackStackEntry?.destination?.hierarchy?.any {
+                                                it.route == screen.route
+                                            } == true
+
+                                        NavigationRailItem(
+                                            selected = isSelected,
+                                            icon = {
+                                                Icon(
+                                                    painter = painterResource(
+                                                        id = if (isSelected) {
+                                                            screen.iconIdActive
+                                                        } else {
+                                                            screen.iconIdInactive
+                                                        }
+                                                    ),
+                                                    contentDescription = stringResource(screen.titleId),
+                                                    modifier = Modifier.size(24.dp)
+                                                )
+                                            },
+                                            label = {
+                                                if (!slimNav) {
+                                                    Text(
+                                                        text = stringResource(screen.titleId),
+                                                        maxLines = 1,
+                                                        overflow = TextOverflow.Ellipsis,
+                                                        style = MaterialTheme.typography.labelSmall
+                                                    )
+                                                }
+                                            },
+                                            colors = NavigationRailItemDefaults.colors(
+                                                selectedIconColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                                                selectedTextColor = MaterialTheme.colorScheme.onSurface,
+                                                unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                                                unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                                                indicatorColor = MaterialTheme.colorScheme.primaryContainer,
+                                            ),
+                                            onClick = {
+                                                if (isSelected) {
+                                                    navController.currentBackStackEntry?.savedStateHandle?.set(
+                                                        "scrollToTop",
+                                                        true
+                                                    )
+                                                } else {
+                                                    try {
+                                                        navigateToScreen(
+                                                            navController,
+                                                            screen
+                                                        )
+                                                    } catch (e: Exception) {
+                                                        Log.e(
+                                                            "Navigation",
+                                                            "Error navigating to screen",
+                                                            e
+                                                        )
+                                                    }
+                                                }
+                                            },
+                                        )
+                                    }
+                                }
+                            }
+
+                            Box(modifier = Modifier.weight(1f).fillMaxHeight()) {
+                                Scaffold(
+                                containerColor = Color.Transparent,
+                                topBar = {
+                                    if (shouldShowTopBar) {
+                                        TopAppBar(
+                                            title = {
                                             Row(
                                                 verticalAlignment = Alignment.CenterVertically,
                                                 modifier = Modifier.fillMaxWidth()
@@ -1521,7 +1613,6 @@ class MainActivity : ComponentActivity() {
                                             }
                                         },
                                         modifier = Modifier
-                                            .padding(start = if (shouldShowNavigationRail) 80.dp else 0.dp)
                                             .focusRequester(searchBarFocusRequester)
                                             .align(Alignment.TopCenter)
                                             .fillMaxWidth(),
@@ -1606,7 +1697,7 @@ class MainActivity : ComponentActivity() {
                                         )
                                     }
 
-                                    AnimatedVisibility(
+                                    androidx.compose.animation.AnimatedVisibility(
                                         visible = showFullscreenLyrics,
                                         enter = slideInVertically(
                                             initialOffsetY = { it },
@@ -1923,7 +2014,6 @@ class MainActivity : ComponentActivity() {
 
                                 modifier = Modifier
                                     .fillMaxSize()
-                                    .padding(start = if (shouldShowNavigationRail) 80.dp else 0.dp)
                                     .nestedScroll(
                                         if (navigationItems.fastAny { it.route == navBackStackEntry?.destination?.route } ||
                                             navBackStackEntry?.destination?.route?.startsWith("search/") == true
@@ -1941,8 +2031,6 @@ class MainActivity : ComponentActivity() {
                                     adManager = adManager
                                 )
                             }
-
-                        }
 
                         BottomSheetMenu(
                             state = menuState,
@@ -1980,100 +2068,9 @@ class MainActivity : ComponentActivity() {
                                 initialRoomCode = roomCode,
                             )
                         }
-
-                        if (shouldShowNavigationRail) {
-                            NavigationRail(
-                                modifier = Modifier
-                                    .align(Alignment.CenterStart)
-                                    .fillMaxHeight()
-                                    .width(80.dp)
-                                    .windowInsetsPadding(WindowInsets.systemBars.only(WindowInsetsSides.Vertical + WindowInsetsSides.Start))
-                                    .background(
-                                        Brush.horizontalGradient(
-                                            colors = listOf(
-                                                if (pureBlack) Color.Black else MaterialTheme.colorScheme.surface.copy(alpha = 0.95f),
-                                                if (pureBlack) Color.Black else MaterialTheme.colorScheme.surface.copy(alpha = 0.75f)
-                                            )
-                                        )
-                                    ),
-                                containerColor = Color.Transparent,
-                                contentColor = if (pureBlack) Color.White else MaterialTheme.colorScheme.onSurfaceVariant,
-                                header = {
-                                    Spacer(Modifier.height(8.dp))
-                                    Image(
-                                        painter = painterResource(R.drawable.echofy),
-                                        contentDescription = "Echofy",
-                                        modifier = Modifier
-                                            .size(36.dp)
-                                            .clip(CircleShape)
-                                    )
-                                    Spacer(Modifier.height(12.dp))
-                                }
-                            ) {
-                                navigationItems.fastForEach { screen ->
-                                    val isSelected =
-                                        navBackStackEntry?.destination?.hierarchy?.any {
-                                            it.route == screen.route
-                                        } == true
-
-                                    NavigationRailItem(
-                                        selected = isSelected,
-                                        icon = {
-                                            Icon(
-                                                painter = painterResource(
-                                                    id = if (isSelected) {
-                                                        screen.iconIdActive
-                                                    } else {
-                                                        screen.iconIdInactive
-                                                    }
-                                                ),
-                                                contentDescription = stringResource(screen.titleId),
-                                                modifier = Modifier.size(24.dp)
-                                            )
-                                        },
-                                        label = {
-                                            if (!slimNav) {
-                                                Text(
-                                                    text = stringResource(screen.titleId),
-                                                    maxLines = 1,
-                                                    overflow = TextOverflow.Ellipsis,
-                                                    style = MaterialTheme.typography.labelSmall
-                                                )
-                                            }
-                                        },
-                                        colors = NavigationRailItemDefaults.colors(
-                                            selectedIconColor = MaterialTheme.colorScheme.onPrimaryContainer,
-                                            selectedTextColor = MaterialTheme.colorScheme.onSurface,
-                                            unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                                            unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                                            indicatorColor = MaterialTheme.colorScheme.primaryContainer,
-                                        ),
-                                        onClick = {
-                                            if (isSelected) {
-                                                navController.currentBackStackEntry?.savedStateHandle?.set(
-                                                    "scrollToTop",
-                                                    true
-                                                )
-                                            } else {
-                                                try {
-                                                    navigateToScreen(
-                                                        navController,
-                                                        screen
-                                                    )
-                                                } catch (e: Exception) {
-                                                    Log.e(
-                                                        "Navigation",
-                                                        "Error navigating to screen",
-                                                        e
-                                                    )
-                                                }
-                                            }
-                                        }
-                                    )
-                                }
-                            }
-                        }
                     }
+                }
+            }
 
                     LaunchedEffect(shouldShowSearchBar, openSearchImmediately) {
                         if (shouldShowSearchBar && openSearchImmediately) {

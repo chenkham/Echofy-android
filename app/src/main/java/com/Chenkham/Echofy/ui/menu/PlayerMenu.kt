@@ -925,8 +925,7 @@ fun VideoQualityDialog(onDismiss: () -> Unit) {
     }.collectAsState(initial = "Auto")
         
     val availableQualities by YTPlayerUtils.availableQualities.collectAsState()
-    // Only show dynamic qualities - no fallback
-    val qualityOptions = listOf("Auto") + availableQualities
+    val qualityOptions = (listOf("Auto") + availableQualities).distinct()
 
     AlertDialog(
         onDismissRequest = onDismiss,

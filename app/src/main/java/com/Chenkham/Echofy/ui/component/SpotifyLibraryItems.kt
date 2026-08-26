@@ -64,6 +64,35 @@ fun SpotifyLibraryPlaylistListItem(
 }
 
 @Composable
+fun SpotifyLibraryPlaylistGridItem(
+    playlist: SpotifyPlaylist,
+    navController: NavController,
+    modifier: Modifier = Modifier,
+    fillMaxWidth: Boolean = false,
+) {
+    val openPlaylist = {
+        navController.navigate("spotify_playlist/${playlist.id}")
+    }
+
+    GridItem(
+        modifier = modifier.clickable(onClick = openPlaylist),
+        title = playlist.name,
+        subtitle = playlist.tracks?.total?.let { "${it} songs" } ?: "Spotify",
+        thumbnailShape = RoundedCornerShape(ThumbnailCornerRadius),
+        thumbnailContent = {
+            AsyncImage(
+                model = SpotifyMapper.getPlaylistThumbnail(playlist)?.resize(400, 400),
+                contentDescription = null,
+                modifier = Modifier
+                    .fillMaxSize()
+                    .clip(RoundedCornerShape(ThumbnailCornerRadius)),
+            )
+        },
+        fillMaxWidth = fillMaxWidth,
+    )
+}
+
+@Composable
 fun SpotifyTrackListItem(
     track: SpotifyTrack,
     modifier: Modifier = Modifier,

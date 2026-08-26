@@ -302,21 +302,37 @@ object YTPlayerUtils {
             }
 
         // Attempt to fetch valid metadata from primary or robust fallback clients
-        val candidateMetadataClients = listOf(
-            VISIONOS,
-            preferredYouTubeClient,
-            ANDROID_VR_1_61_48,
-            ANDROID_VR_NO_AUTH,
-            MAIN_CLIENT,
-            ANDROID_VR_1_43_32,
-            ANDROID_CREATOR,
-            IPADOS,
-            MOBILE,
-            IOS,
-            WEB,
-        ).distinct()
+        val candidateMetadataClients = if (isVideo) {
+            listOf(
+                ANDROID_VR_1_61_48,
+                ANDROID_VR_NO_AUTH,
+                ANDROID_VR_1_43_32,
+                IOS,
+                IPADOS,
+                TVHTML5,
+                preferredYouTubeClient,
+                VISIONOS,
+                MAIN_CLIENT,
+                MOBILE,
+                WEB,
+            ).distinct()
+        } else {
+            listOf(
+                VISIONOS,
+                preferredYouTubeClient,
+                ANDROID_VR_1_61_48,
+                ANDROID_VR_NO_AUTH,
+                MAIN_CLIENT,
+                ANDROID_VR_1_43_32,
+                ANDROID_CREATOR,
+                IPADOS,
+                MOBILE,
+                IOS,
+                WEB,
+            ).distinct()
+        }
         var metadataPlayerResponse: PlayerResponse? = null
-        var activeMetadataClient: YouTubeClient = preferredYouTubeClient
+        var activeMetadataClient: YouTubeClient = candidateMetadataClients.first()
 
         for (mClient in candidateMetadataClients) {
             val resp = YouTube.player(videoId, playlistId, mClient, signatureTimestamp).getOrNull()
@@ -330,11 +346,11 @@ object YTPlayerUtils {
 
         if (metadataPlayerResponse == null) {
             Timber.tag(logTag).w("Falling back to initial metadata fetch for $videoId")
-            metadataPlayerResponse = YouTube.player(videoId, playlistId, VISIONOS, signatureTimestamp).getOrNull()
+            metadataPlayerResponse = YouTube.player(videoId, playlistId, ANDROID_VR_1_61_48, signatureTimestamp).getOrNull()
                 ?: YouTube.player(videoId, playlistId, preferredYouTubeClient, signatureTimestamp).getOrNull()
-                ?: YouTube.player(videoId, playlistId, ANDROID_VR_1_61_48, signatureTimestamp).getOrNull()
+                ?: YouTube.player(videoId, playlistId, VISIONOS, signatureTimestamp).getOrNull()
                 ?: YouTube.player(videoId, playlistId, MAIN_CLIENT, signatureTimestamp).getOrThrow()
-            activeMetadataClient = VISIONOS
+            activeMetadataClient = ANDROID_VR_1_61_48
         }
 
         val audioConfig = metadataPlayerResponse.playerConfig?.audioConfig
@@ -345,12 +361,14 @@ object YTPlayerUtils {
         val streamClients =
             buildList {
                 if (isVideo) {
+                    add(ANDROID_VR_1_61_48)
+                    add(ANDROID_VR_NO_AUTH)
+                    add(ANDROID_VR_1_43_32)
+                    add(IOS)
+                    add(IPADOS)
+                    add(TVHTML5)
                     add(MOBILE)
                     add(WEB)
-                    add(IOS)
-                    add(TVHTML5)
-                    add(IPADOS)
-                    add(ANDROID_VR_1_61_48)
                     add(VISIONOS)
                     add(preferredYouTubeClient)
                 } else {
@@ -615,19 +633,22 @@ object YTPlayerUtils {
     ): List<PlayerResponse.StreamingData.Format> {
         val streamingData = playerResponse.streamingData ?: return emptyList()
 
-        // 1. Progressive formats (video+audio) have both picture and sound muxed together
-        val progressiveFormats = streamingData.formats
-            ?.filter { it.url != null || it.signatureCipher != null || it.cipher != null }
-            ?.filter { format ->
-                val codec = extractCodec(format.mimeType)?.lowercase()
-                codec == null || codec !in avoidCodecs
-            }
-            ?.sortedByDescending { it.height ?: (it.bitrate / 1000) }
-            .orEmpty()
-
-        // 2. Adaptive video streams
+        // 1. Adaptive video streams (pure video-only high quality streams: 1080p, 1440p, 720p HD, etc.)
         val adaptiveVideoFormats = streamingData.adaptiveFormats
-            ?.filter { (it.mimeType.startsWith("video/") || !it.isAudio) && (it.url != null || it.signatureCipher != null || it.cipher != null) }
+            ?.filter { it.mimeType.startsWith("video/") && (it.url != null || it.signatureCipher != null || it.cipher != null) }
+            ?.filter { format ->
+                val codec = extractCodec(format.mimeType)?.lowercase()
+                codec == null || codec !in avoidCodecs
+            }
+            ?.sortedWith(
+                compareByDescending<PlayerResponse.StreamingData.Format> { it.height ?: 0 }
+                    .thenByDescending { it.bitrate }
+            )
+            .orEmpty()
+
+        // Progressive formats (muxed video+audio) kept only as last-resort fallback if adaptive formats are unavailable
+        val progressiveFormats = streamingData.formats
+            ?.filter { it.mimeType.startsWith("video/") && (it.url != null || it.signatureCipher != null || it.cipher != null) }
             ?.filter { format ->
                 val codec = extractCodec(format.mimeType)?.lowercase()
                 codec == null || codec !in avoidCodecs
@@ -635,30 +656,34 @@ object YTPlayerUtils {
             ?.sortedByDescending { it.height ?: (it.bitrate / 1000) }
             .orEmpty()
 
-        val allVideo = (progressiveFormats + adaptiveVideoFormats).distinctBy { it.itag }
+        val candidateList = if (adaptiveVideoFormats.isNotEmpty()) adaptiveVideoFormats else progressiveFormats
 
         // Update available qualities flow for UI quality picker
-        val heights = allVideo
+        val heights = candidateList
             .mapNotNull { it.height }
             .distinct()
             .sortedDescending()
+        val standardQualities = listOf("1080p", "720p", "480p", "360p", "240p", "144p")
         if (heights.isNotEmpty()) {
-            availableQualities.value = heights.map { "${it}p" }
+            val detected = heights.map { "${it}p" }
+            availableQualities.value = (detected + standardQualities).distinct()
+        } else {
+            availableQualities.value = standardQualities
         }
 
         if (videoQuality != null && videoQuality != "Auto" && videoQuality.isNotBlank()) {
             val targetHeight = videoQuality.replace("p", "").toIntOrNull()
             if (targetHeight != null) {
-                val exact = allVideo.filter { it.height == targetHeight }
+                val exact = candidateList.filter { it.height == targetHeight }
                 if (exact.isNotEmpty()) return exact
 
-                val exactOrLower = allVideo.filter { (it.height ?: 0) <= targetHeight }
+                val exactOrLower = candidateList.filter { (it.height ?: 0) <= targetHeight }
                 if (exactOrLower.isNotEmpty()) return exactOrLower
             }
         }
 
-        // In Auto mode: prioritize progressive streams (720p/360p with audio) first, then adaptive
-        return if (progressiveFormats.isNotEmpty()) progressiveFormats + adaptiveVideoFormats else allVideo
+        // Return pure adaptive video-only formats merged by ExoPlayer with high-bitrate audio
+        return candidateList
     }
 
     private fun selectAudioFormatCandidates(

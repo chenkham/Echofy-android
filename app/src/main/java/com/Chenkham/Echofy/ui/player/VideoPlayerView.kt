@@ -113,27 +113,34 @@ fun VideoPlayerView(
         onDispose { playerView.player = null }
     }
 
-    // Nothing in the app ever touched requestedOrientation, which is exactly why
-    // fullscreen never rotated: the screen kept whatever orientation the system rotation
-    // lock allowed. SENSOR_LANDSCAPE overrides the user's rotation lock.
+    // When entering fullscreen video, rotate to sensor landscape.
+    // When leaving fullscreen or disposing, reset to SCREEN_ORIENTATION_PORTRAIT.
+    var wasFullscreen by remember { mutableStateOf(false) }
     LaunchedEffect(isFullscreen) {
         if (isFullscreen) {
+            wasFullscreen = true
             activity?.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE
-        } else {
+        } else if (wasFullscreen) {
+            wasFullscreen = false
             activity?.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
         }
     }
 
     DisposableEffect(activity) {
         onDispose {
-            activity?.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
+            if (wasFullscreen) {
+                activity?.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
+            }
         }
     }
 
     val exitFullscreen: () -> Unit = {
         isFullscreen = false
-        pinnedPortrait = true
-        activity?.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
+        pinnedPortrait = false
+        if (wasFullscreen) {
+            wasFullscreen = false
+            activity?.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
+        }
     }
 
     Box(
@@ -486,7 +493,7 @@ private fun FullscreenContent(
             val available by YTPlayerUtils.availableQualities.collectAsState()
             OptionSheet(
                 title = "Quality",
-                options = listOf("Auto") + available,
+                options = (listOf("Auto") + available).distinct(),
                 selected = quality,
                 onSelect = { value ->
                     CoroutineScope(Dispatchers.IO).launch {

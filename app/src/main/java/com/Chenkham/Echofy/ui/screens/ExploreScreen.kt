@@ -35,9 +35,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarScrollBehavior
-import androidx.compose.material3.pulltorefresh.PullToRefreshDefaults.Indicator
-import androidx.compose.material3.pulltorefresh.pullToRefresh
-import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
+import com.Chenkham.Echofy.ui.component.ExpressivePullToRefreshBox
 import kotlinx.coroutines.delay
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -135,7 +133,6 @@ fun ExploreScreen(
     val coroutineScope = rememberCoroutineScope()
 
     var isRefreshing by remember { mutableStateOf(false) }
-    val pullRefreshState = rememberPullToRefreshState()
 
     val onRefresh: () -> Unit = {
         coroutineScope.launch {
@@ -154,19 +151,16 @@ fun ExploreScreen(
     }
 
     BackpaperBackground(screen = BackpaperScreen.EXPLORE) {
-        Box(
+        ExpressivePullToRefreshBox(
+            isRefreshing = isRefreshing,
+            onRefresh = onRefresh,
             modifier = Modifier
                 .fillMaxSize()
                 .padding(
                     top = LocalPlayerAwareWindowInsets.current
                         .asPaddingValues()
                         .calculateTopPadding()
-                )
-                .pullToRefresh(
-                    state = pullRefreshState,
-                    isRefreshing = isRefreshing,
-                    onRefresh = onRefresh
-                )
+                ),
         ) {
             Column(modifier = Modifier.fillMaxSize()) {
                 ExploreTabSelector(
@@ -206,14 +200,6 @@ fun ExploreScreen(
                     )
                 }
             }
-
-            Indicator(
-                modifier = Modifier
-                    .align(Alignment.TopCenter)
-                    .padding(LocalPlayerAwareWindowInsets.current.asPaddingValues()),
-                isRefreshing = isRefreshing,
-                state = pullRefreshState
-            )
         }
     }
 }

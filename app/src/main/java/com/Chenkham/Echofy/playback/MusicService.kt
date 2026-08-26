@@ -786,6 +786,7 @@ class MusicService :
     @RequiresApi(Build.VERSION_CODES.O)
     override fun onCreate() {
         super.onCreate()
+        instance = this
         EchofyMediaNotificationProvider.createNotificationChannel(this, CHANNEL_ID, R.string.music_player)
         setMediaNotificationProvider(
             EchofyMediaNotificationProvider(this),
@@ -1241,10 +1242,18 @@ class MusicService :
             .distinctUntilChanged()
             .drop(1)
             .collect(scope) { newQuality ->
+                val targetQuality = newQuality ?: "Auto"
+                currentVideoQuality = targetQuality
                 if (videoMode) {
                     currentSong.value?.let { song ->
-                        val targetQuality = newQuality ?: "Auto"
-                        currentVideoQuality = targetQuality
+                        val videoCacheKey = "${song.id}_video"
+                        playbackUrlCache.remove(videoCacheKey)
+                        songUrlUserAgentCache.remove(videoCacheKey)
+                        try {
+                            if (::playerCache.isInitialized) {
+                                playerCache.removeResource(videoCacheKey)
+                            }
+                        } catch (_: Exception) {}
 
                         // Resolve new quality stream in background while existing video continues playing
                         scope.launch(Dispatchers.IO) {
@@ -1260,15 +1269,8 @@ class MusicService :
 
                             if (newPlaybackData != null) {
                                 val expiresAt = System.currentTimeMillis() + (newPlaybackData.streamExpiresInSeconds * 1000L)
-                                val videoCacheKey = "${song.id}_video"
                                 playbackUrlCache[videoCacheKey] = newPlaybackData.streamUrl to expiresAt
                                 songUrlUserAgentCache[videoCacheKey] = StreamClientUtils.resolveUserAgent(newPlaybackData.streamUrl)
-
-                                try {
-                                    if (::playerCache.isInitialized) {
-                                        playerCache.removeResource(videoCacheKey)
-                                    }
-                                } catch (_: Exception) {}
 
                                 withContext(Dispatchers.Main) {
                                     // Atomically transition to new quality at exact timestamp with zero black flicker
@@ -2630,10 +2632,11 @@ class MusicService :
             }
 
             val wantsAudioCompanion = rawKey.endsWith(AUDIO_COMPANION_SUFFIX)
-            val mediaId = if (wantsAudioCompanion) rawKey.removeSuffix(AUDIO_COMPANION_SUFFIX) else rawKey
+            val isVideoRequest = rawKey.endsWith("_video") || (videoMode && !wantsAudioCompanion)
+            val mediaId = rawKey.removeSuffix(AUDIO_COMPANION_SUFFIX).removeSuffix("_video")
             val cacheKey = when {
-                wantsAudioCompanion -> rawKey
-                videoMode -> "${mediaId}_video"
+                wantsAudioCompanion -> "${mediaId}$AUDIO_COMPANION_SUFFIX"
+                isVideoRequest -> "${mediaId}_video"
                 else -> mediaId
             }
             
@@ -2684,7 +2687,7 @@ class MusicService :
                         connectivityManager = connectivityManager,
                         preferredStreamClient = preferredStreamClient,
                         avoidCodecs = avoidStreamCodecs,
-                        isVideo = videoMode && !wantsAudioCompanion,
+                        isVideo = isVideoRequest,
                         videoQuality = currentVideoQuality,
                     )
                 }.getOrElse { throwable ->
@@ -2725,25 +2728,27 @@ class MusicService :
                 }
 
                 val format = playbackData.format
-                val loudnessDb = playbackData.audioConfig?.loudnessDb
-                val perceptualLoudnessDb = playbackData.audioConfig?.perceptualLoudnessDb
+                if (!isVideoRequest) {
+                    val loudnessDb = playbackData.audioConfig?.loudnessDb
+                    val perceptualLoudnessDb = playbackData.audioConfig?.perceptualLoudnessDb
 
-                database.query {
-                    upsert(
-                        FormatEntity(
-                            id = mediaId,
-                            itag = format.itag,
-                            mimeType = format.mimeType.split(";")[0],
-                            codecs = format.mimeType.split("codecs=").getOrNull(1)?.removeSurrounding("\"") ?: "unknown",
-                            bitrate = format.bitrate,
-                            sampleRate = format.audioSampleRate ?: 0,
-                            contentLength = format.contentLength ?: 0L,
-                            loudnessDb = loudnessDb,
-                            playbackUrl = playbackData.streamUrl
+                    database.query {
+                        upsert(
+                            FormatEntity(
+                                id = mediaId,
+                                itag = format.itag,
+                                mimeType = format.mimeType.split(";")[0],
+                                codecs = format.mimeType.split("codecs=").getOrNull(1)?.removeSurrounding("\"") ?: "unknown",
+                                bitrate = format.bitrate,
+                                sampleRate = format.audioSampleRate ?: 0,
+                                contentLength = format.contentLength ?: 0L,
+                                loudnessDb = loudnessDb,
+                                playbackUrl = playbackData.streamUrl
+                            )
                         )
-                    )
+                    }
+                    scope.launch(Dispatchers.IO) { recoverSong(mediaId, playbackData) }
                 }
-                scope.launch(Dispatchers.IO) { recoverSong(mediaId, playbackData) }
 
                 val expiresAt = System.currentTimeMillis() + (playbackData.streamExpiresInSeconds * 1000L)
                 val streamUrl = playbackData.streamUrl
@@ -2876,22 +2881,22 @@ class MusicService :
 
             override fun createMediaSource(mediaItem: MediaItem): MediaSource {
                 if (videoMode) {
-                    // Video source: resolver maps mediaId → "${mediaId}_video" cache key
-                    val videoSource = baseFactory.createMediaSource(mediaItem)
+                    // Video source: resolver maps mediaId → "${mediaId}_video"
+                    val videoItem = mediaItem.buildUpon()
+                        .setUri("${mediaItem.mediaId}_video")
+                        .setCustomCacheKey("${mediaItem.mediaId}_video")
+                        .build()
+                    val videoSource = baseFactory.createMediaSource(videoItem)
 
-                    // Companion audio source: key suffix tells the resolver to
-                    // return the audio stream URL instead of the video one.
+                    // Companion audio source: resolver maps mediaId → "${mediaId}$AUDIO_COMPANION_SUFFIX"
                     val audioItem = mediaItem.buildUpon()
+                        .setUri("${mediaItem.mediaId}$AUDIO_COMPANION_SUFFIX")
                         .setCustomCacheKey("${mediaItem.mediaId}$AUDIO_COMPANION_SUFFIX")
                         .build()
                     val audioSource = baseFactory.createMediaSource(audioItem)
 
-                    Log.d(TAG, "Video mode: merging video + companion audio for ${mediaItem.mediaId}")
+                    Log.d(TAG, "Video mode: merging adaptive video + companion audio for ${mediaItem.mediaId}")
 
-                    // adjustPeriodTimeOffsets and clipDurations must both be true. The two
-                    // streams are fetched separately and rarely share an identical duration or
-                    // start timestamp, and with the defaults (both false) the audio period is
-                    // left unaligned with the video period, so playback renders video silently.
                     return MergingMediaSource(
                         /* adjustPeriodTimeOffsets = */ true,
                         /* clipDurations = */ true,
@@ -3479,6 +3484,9 @@ class MusicService :
         }
         jamPlaybackHeartbeatJob?.cancel()
         player.release()
+        if (instance === this) {
+            instance = null
+        }
         super.onDestroy()
     }
 
@@ -3565,5 +3573,9 @@ class MusicService :
 
         private const val JAM_PLAYBACK_HEARTBEAT_MS = 3_000L
         private const val TAG = "MusicService"
+
+        @Volatile
+        var instance: MusicService? = null
+            private set
     }
 }

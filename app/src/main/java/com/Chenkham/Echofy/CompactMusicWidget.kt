@@ -34,13 +34,31 @@ class CompactMusicWidget : AppWidgetProvider() {
 
     override fun onReceive(context: Context, intent: Intent) {
         super.onReceive(context, intent)
+        val action = intent.action ?: return
 
-        val playerConnection = PlayerConnection.instance
-        if (playerConnection != null) {
-            when (intent.action) {
-                MusicWidget.ACTION_PLAY_PAUSE -> playerConnection.togglePlayPause()
-                MusicWidget.ACTION_PREV -> playerConnection.seekToPrevious()
-                MusicWidget.ACTION_NEXT -> playerConnection.seekToNext()
+        val player = PlayerConnection.instance?.player ?: com.Chenkham.Echofy.playback.MusicService.instance?.player
+        if (player != null) {
+            when (action) {
+                MusicWidget.ACTION_PLAY_PAUSE -> {
+                    if (player.isPlaying) {
+                        player.pause()
+                    } else {
+                        if (player.playbackState == Player.STATE_IDLE || player.playbackState == Player.STATE_ENDED) {
+                            player.prepare()
+                        }
+                        player.play()
+                    }
+                }
+                MusicWidget.ACTION_PREV -> {
+                    if (player.hasPreviousMediaItem() || player.currentPosition > 3000) {
+                        player.seekToPrevious()
+                    }
+                }
+                MusicWidget.ACTION_NEXT -> {
+                    if (player.hasNextMediaItem()) {
+                        player.seekToNext()
+                    }
+                }
                 MusicWidget.ACTION_OPEN_APP -> openApp(context)
             }
             updateAllWidgets(context)
@@ -48,7 +66,7 @@ class CompactMusicWidget : AppWidgetProvider() {
             return
         }
 
-        if (intent.action == MusicWidget.ACTION_OPEN_APP) {
+        if (action == MusicWidget.ACTION_OPEN_APP) {
             openApp(context)
             return
         }
@@ -62,7 +80,7 @@ class CompactMusicWidget : AppWidgetProvider() {
             val controllerFuture = MediaController.Builder(context.applicationContext, sessionToken).buildAsync()
             try {
                 val controller = withContext(Dispatchers.IO) { controllerFuture.get() }
-                when (intent.action) {
+                when (action) {
                     MusicWidget.ACTION_PLAY_PAUSE -> {
                         if (controller.playWhenReady) controller.pause() else {
                             if (controller.playbackState == Player.STATE_IDLE || controller.playbackState == Player.STATE_ENDED) {
@@ -102,31 +120,9 @@ class CompactMusicWidget : AppWidgetProvider() {
                 ComponentName(appContext, CompactMusicWidget::class.java)
             )
             if (widgetIds.isNotEmpty()) {
-                val playerConnection = PlayerConnection.instance
-                if (playerConnection != null) {
-                    widgetIds.forEach {
-                        updateWidgetWithPlayer(appContext, appWidgetManager, it, playerConnection.player)
-                    }
-                } else {
-                    CoroutineScope(Dispatchers.Main).launch {
-                        val sessionToken = SessionToken(
-                            appContext,
-                            ComponentName(appContext, com.Chenkham.Echofy.playback.MusicService::class.java)
-                        )
-                        val controllerFuture = MediaController.Builder(appContext, sessionToken).buildAsync()
-                        try {
-                            val controller = withContext(Dispatchers.IO) { controllerFuture.get() }
-                            widgetIds.forEach {
-                                updateWidgetWithPlayer(appContext, appWidgetManager, it, controller)
-                            }
-                        } catch (_: Exception) {
-                            widgetIds.forEach {
-                                updateWidgetWithPlayer(appContext, appWidgetManager, it, null)
-                            }
-                        } finally {
-                            MediaController.releaseFuture(controllerFuture)
-                        }
-                    }
+                val activePlayer = PlayerConnection.instance?.player ?: com.Chenkham.Echofy.playback.MusicService.instance?.player
+                widgetIds.forEach {
+                    updateWidgetWithPlayer(appContext, appWidgetManager, it, activePlayer)
                 }
             }
         }
@@ -136,8 +132,8 @@ class CompactMusicWidget : AppWidgetProvider() {
             appWidgetManager: AppWidgetManager,
             appWidgetId: Int,
         ) {
-            val playerConnection = PlayerConnection.instance
-            updateWidgetWithPlayer(context, appWidgetManager, appWidgetId, playerConnection?.player)
+            val activePlayer = PlayerConnection.instance?.player ?: com.Chenkham.Echofy.playback.MusicService.instance?.player
+            updateWidgetWithPlayer(context, appWidgetManager, appWidgetId, activePlayer)
         }
 
         private fun updateWidgetWithPlayer(
@@ -236,7 +232,7 @@ class CompactMusicWidget : AppWidgetProvider() {
                 getBroadcastPendingIntent(context, MusicWidget.ACTION_NEXT)
             )
 
-            val openAppIntent = getBroadcastPendingIntent(context, MusicWidget.ACTION_OPEN_APP)
+            val openAppIntent = getActivityPendingIntent(context)
             views.setOnClickPendingIntent(R.id.widget_compact_root, openAppIntent)
             views.setOnClickPendingIntent(R.id.widget_compact_waveform_icon, openAppIntent)
             views.setOnClickPendingIntent(R.id.widget_compact_info_container, openAppIntent)
@@ -254,6 +250,20 @@ class CompactMusicWidget : AppWidgetProvider() {
                 PendingIntent.FLAG_UPDATE_CURRENT
             }
             return PendingIntent.getBroadcast(context, action.hashCode(), intent, flags)
+        }
+
+        private fun getActivityPendingIntent(context: Context): PendingIntent {
+            val launchIntent = context.packageManager.getLaunchIntentForPackage(context.packageName)
+                ?: Intent(context, MainActivity::class.java)
+            launchIntent.apply {
+                flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
+            }
+            val flags = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+            } else {
+                PendingIntent.FLAG_UPDATE_CURRENT
+            }
+            return PendingIntent.getActivity(context, 0, launchIntent, flags)
         }
 
         private fun openApp(context: Context) {

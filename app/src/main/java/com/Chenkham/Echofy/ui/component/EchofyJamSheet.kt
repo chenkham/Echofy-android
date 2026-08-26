@@ -136,6 +136,8 @@ fun EchofyJamSheet(
     val canSkipPrevious by playerConnection.canSkipPrevious.collectAsState()
     val canSkipNext by playerConnection.canSkipNext.collectAsState()
     val playlists by database.playlistsByCreateDateAsc().collectAsState(initial = emptyList())
+    val spotifyViewModel: com.Chenkham.Echofy.spotify.SpotifyLibraryViewModel = androidx.hilt.navigation.compose.hiltViewModel()
+    val spotifyPlaylists by spotifyViewModel.playlists.collectAsState()
     val remotePlayback by jamSessionManager.remotePlayback.collectAsState()
 
     var screen by rememberSaveable { mutableStateOf(JamSheetScreen.HOME) }
@@ -222,7 +224,7 @@ fun EchofyJamSheet(
                     hostDisplayName = hostDisplayName,
                     selectedSeedOption = selectedSeedOption,
                     isWorking = isWorking,
-                    playlistsAvailable = playlists.isNotEmpty(),
+                    playlistsAvailable = playlists.isNotEmpty() || spotifyPlaylists.isNotEmpty(),
                     onBack = { screen = JamSheetScreen.HOME },
                     onHostNameChange = { hostDisplayName = it },
                     onSeedOptionChange = { selectedSeedOption = it },
@@ -261,7 +263,7 @@ fun EchofyJamSheet(
                             }
 
                             JamSeedOption.PLAYLIST -> {
-                                if (playlists.isEmpty()) {
+                                if (playlists.isEmpty() && spotifyPlaylists.isEmpty()) {
                                     transientError = "Add or bookmark a playlist first, then start the Jam from it."
                                 } else {
                                     screen = JamSheetScreen.PLAYLISTS
@@ -273,6 +275,7 @@ fun EchofyJamSheet(
 
                     JamSheetScreen.PLAYLISTS -> PlaylistPickerScreen(
                     playlists = playlists,
+                    spotifyPlaylists = spotifyPlaylists,
                     isWorking = isWorking,
                     onBack = { screen = JamSheetScreen.START },
                     onPickPlaylist = { playlist ->
@@ -288,6 +291,44 @@ fun EchofyJamSheet(
                                 isWorking = false
                                 workingMessage = null
                                 return@launch
+                            }
+                            jamSessionManager.createHostedSession(hostDisplayName.ifBlank { "Host" })
+                                .onSuccess { activeSession ->
+                                    playerConnection.service.replacePlayerQueueForJam(songs)
+                                    playerConnection.service.seedJamQueue(songs.drop(1))
+                                    playerConnection.service.syncJamStateNow()
+                                    screen = JamSheetScreen.ACTIVE
+                                    Toast.makeText(
+                                        context,
+                                        "Room ${activeSession.roomCode.roomCode} is live",
+                                        Toast.LENGTH_SHORT,
+                                    ).show()
+                                }
+                                .onFailure { error ->
+                                    transientError = error.message ?: "Unable to start this Jam"
+                                }
+                            isWorking = false
+                            workingMessage = null
+                        }
+                    },
+                    onPickSpotifyPlaylist = { spotifyPlaylist ->
+                        lifecycleOwner.lifecycleScope.launch {
+                            isWorking = true
+                            workingMessage = "Fetching Spotify tracks..."
+                            transientError = null
+                            val paging = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+                                com.arturo254.opentune.spotify.Spotify.playlistTracks(spotifyPlaylist.id).getOrNull()
+                            }
+                            val tracks = paging?.items?.mapNotNull { it.track } ?: emptyList()
+                            if (tracks.isEmpty()) {
+                                transientError = "That playlist is empty or could not be loaded."
+                                isWorking = false
+                                workingMessage = null
+                                return@launch
+                            }
+                            workingMessage = "Resolving music..."
+                            val songs = tracks.take(50).mapNotNull { track ->
+                                com.Chenkham.Echofy.spotify.SpotifyPlaybackResolver.resolveToMetadata(track)
                             }
                             jamSessionManager.createHostedSession(hostDisplayName.ifBlank { "Host" })
                                 .onSuccess { activeSession ->
@@ -681,9 +722,11 @@ private fun JamStartSetupScreen(
 @Composable
 private fun PlaylistPickerScreen(
     playlists: List<Playlist>,
+    spotifyPlaylists: List<com.arturo254.opentune.spotify.models.SpotifyPlaylist> = emptyList(),
     isWorking: Boolean,
     onBack: () -> Unit,
     onPickPlaylist: (Playlist) -> Unit,
+    onPickSpotifyPlaylist: (com.arturo254.opentune.spotify.models.SpotifyPlaylist) -> Unit = {},
 ) {
     Column(
         modifier = Modifier
@@ -698,7 +741,7 @@ private fun PlaylistPickerScreen(
 
         Spacer(modifier = Modifier.height(18.dp))
 
-        if (playlists.isEmpty()) {
+        if (playlists.isEmpty() && spotifyPlaylists.isEmpty()) {
             Text(
                 text = "No playlists are available yet.",
                 style = MaterialTheme.typography.bodyLarge,
@@ -752,6 +795,54 @@ private fun PlaylistPickerScreen(
                                 text = "${playlist.songCount} songs",
                                 style = MaterialTheme.typography.bodyMedium,
                                 color = Color.White.copy(alpha = 0.66f),
+                            )
+                        }
+                    }
+                }
+            }
+
+            items(spotifyPlaylists, key = { "spotify_${it.id}" }) { spotifyPlaylist ->
+                Card(
+                    shape = RoundedCornerShape(22.dp),
+                    colors = CardDefaults.cardColors(containerColor = Color(0xFF181818)),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable(enabled = !isWorking) { onPickSpotifyPlaylist(spotifyPlaylist) },
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(16.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .size(52.dp)
+                                .clip(RoundedCornerShape(16.dp))
+                                .background(Color(0xFF1DB954).copy(alpha = 0.25f)),
+                            contentAlignment = Alignment.Center,
+                        ) {
+                            Icon(
+                                painter = painterResource(R.drawable.spotify_icon),
+                                contentDescription = null,
+                                tint = Color(0xFF1DB954),
+                                modifier = Modifier.size(28.dp)
+                            )
+                        }
+                        Spacer(modifier = Modifier.width(14.dp))
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                text = spotifyPlaylist.name,
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.SemiBold,
+                                color = Color.White,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
+                            )
+                            Text(
+                                text = spotifyPlaylist.tracks?.total?.let { "$it songs • Spotify" } ?: "Spotify Playlist",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = Color(0xFF1DB954).copy(alpha = 0.85f),
                             )
                         }
                     }

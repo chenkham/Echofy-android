@@ -33,11 +33,14 @@ import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.layout.width
@@ -374,111 +377,208 @@ fun AppleBottomSheetPlayer(
             playerConnection.player.clearMediaItems()
         },
         collapsedContent = {
-            val config = androidx.compose.ui.platform.LocalConfiguration.current
-            val isLand = config.orientation == android.content.res.Configuration.ORIENTATION_LANDSCAPE || config.screenWidthDp > config.screenHeightDp
-            MiniPlayer(
-                modifier = Modifier.padding(start = if (isLand) 80.dp else 0.dp)
-            )
+            MiniPlayer()
         },
     ) {
         val meta = mediaMetadata ?: return@BottomSheet
+        val config = androidx.compose.ui.platform.LocalConfiguration.current
+        val isLand = config.orientation == android.content.res.Configuration.ORIENTATION_LANDSCAPE || config.screenWidthDp > config.screenHeightDp
 
-        // ── Single-screen fixed layout (SpaceBetween ensures NO scoll and pins bottom) ─────────────────
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .windowInsetsPadding(WindowInsets.systemBars.only(WindowInsetsSides.Horizontal))
-                .padding(bottom = WindowInsets.systemBars.asPaddingValues().calculateBottomPadding())
-                .padding(horizontal = 24.dp),
-            verticalArrangement = Arrangement.SpaceBetween
-        ) {
-
-            // ── TOP DYNAMIC SECTION (Expands to fill) ─────────────────────────
-            Column(modifier = Modifier.weight(1f).fillMaxWidth()) {
-
-                // Top drag indicator
-                Row(
-                    modifier = Modifier.fillMaxWidth().padding(top = 8.dp, bottom = 12.dp)
-                        .clickable(indication = null, interactionSource = remember { MutableInteractionSource() }) { state.collapseSoft() },
-                    horizontalArrangement = Arrangement.Center
+        if (isLand) {
+            Row(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .windowInsetsPadding(WindowInsets.systemBars.only(WindowInsetsSides.Horizontal))
+                    .padding(horizontal = 16.dp, vertical = 6.dp),
+                horizontalArrangement = Arrangement.spacedBy(16.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                // Left Column: Artwork / Lyrics / Queue
+                Box(
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxHeight(),
+                    contentAlignment = Alignment.Center,
                 ) {
-                    Box(modifier = Modifier.width(36.dp).height(5.dp).clip(CircleShape).background(Color.Gray.copy(alpha = 0.5f)))
-                }
-
-                // Sub-views based on active state
-                AnimatedContent(
-                    targetState = appleState,
-                    transitionSpec = { fadeIn(tween(300)).togetherWith(fadeOut(tween(300))) },
-                    label = "ApplePlayerState"
-                ) { activeState ->
-                    when (activeState) {
-                        ApplePlayerState.MAIN -> AppleMainView(
-                            meta = meta,
-                            playerConnection = playerConnection,
-                            currentSong = currentSong,
-                            onBackgroundColor = safeTextColor,
-                            navController = navController,
-                            onCollapse = { state.collapseSoft() }
-                        )
-                        ApplePlayerState.LYRICS -> AppleLyricsView(
-                            meta = meta,
-                            playerConnection = playerConnection,
-                            currentSong = currentSong,
-                            onBackgroundColor = safeTextColor,
-                            navController = navController,
-                            onCollapse = { state.collapseSoft() }
-                        )
-                        ApplePlayerState.QUEUE -> AppleQueueView(
-                            meta = meta,
-                            playerConnection = playerConnection,
-                            currentSong = currentSong,
-                            onBackgroundColor = safeTextColor,
-                            navController = navController,
-                            onCollapse = { state.collapseSoft() }
-                        )
+                    AnimatedContent(
+                        targetState = appleState,
+                        transitionSpec = { fadeIn(tween(300)).togetherWith(fadeOut(tween(300))) },
+                        label = "ApplePlayerStateLand"
+                    ) { activeState ->
+                        when (activeState) {
+                            ApplePlayerState.MAIN -> AppleMainView(
+                                meta = meta,
+                                playerConnection = playerConnection,
+                                currentSong = currentSong,
+                                onBackgroundColor = safeTextColor,
+                                navController = navController,
+                                onCollapse = { state.collapseSoft() }
+                            )
+                            ApplePlayerState.LYRICS -> AppleLyricsView(
+                                meta = meta,
+                                playerConnection = playerConnection,
+                                currentSong = currentSong,
+                                onBackgroundColor = safeTextColor,
+                                navController = navController,
+                                onCollapse = { state.collapseSoft() }
+                            )
+                            ApplePlayerState.QUEUE -> AppleQueueView(
+                                meta = meta,
+                                playerConnection = playerConnection,
+                                currentSong = currentSong,
+                                onBackgroundColor = safeTextColor,
+                                navController = navController,
+                                onCollapse = { state.collapseSoft() }
+                            )
+                        }
                     }
                 }
-            }
 
-            // ── FIXED BOTTOM CONTROLS (Always on screen) ──────────────────────
-            Column(
-                modifier = Modifier.fillMaxWidth().padding(bottom = 20.dp, top = 8.dp)
-            ) {
-                if (realTimeVisualizer) {
-                    RealTimeAudioVisualizer(
-                        audioSessionId = playerConnection.player.audioSessionId,
+                // Right Column: Controls, Progress, Actions with vertical scrolling to prevent overflow
+                Column(
+                    modifier = Modifier
+                        .weight(1.2f)
+                        .fillMaxHeight()
+                        .verticalScroll(rememberScrollState())
+                        .padding(vertical = 4.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Center
+                ) {
+                    if (realTimeVisualizer) {
+                        RealTimeAudioVisualizer(
+                            audioSessionId = playerConnection.player.audioSessionId,
+                            color = safeTextColor,
+                            isActive = isPlaying
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                    }
+
+                    AppleProgressSection(
+                        playerConnection = playerConnection,
                         color = safeTextColor,
-                        isActive = isPlaying
+                        isPlaying = isPlaying
                     )
-                    Spacer(modifier = Modifier.height(12.dp))
+
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    ApplePlaybackControls(
+                        playerConnection = playerConnection,
+                        isPlaying = isPlaying,
+                        playbackState = playbackState,
+                        canSkipPrevious = canSkipPrevious,
+                        canSkipNext = canSkipNext,
+                        color = safeTextColor,
+                        playPauseShape = androidx.compose.foundation.shape.CircleShape
+                    )
+
+                    Spacer(modifier = Modifier.height(10.dp))
+
+                    AppleFooter(
+                        currentState = appleState,
+                        color = safeTextColor,
+                        onLyricsClick = { appleState = if (appleState == ApplePlayerState.LYRICS) ApplePlayerState.MAIN else ApplePlayerState.LYRICS },
+                        onQueueClick = { appleState = if (appleState == ApplePlayerState.QUEUE) ApplePlayerState.MAIN else ApplePlayerState.QUEUE }
+                    )
+                }
+            }
+        } else {
+            // ── Portrait Single-screen fixed layout ─────────────────
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .windowInsetsPadding(WindowInsets.systemBars.only(WindowInsetsSides.Horizontal))
+                    .padding(bottom = WindowInsets.systemBars.asPaddingValues().calculateBottomPadding())
+                    .padding(horizontal = 24.dp),
+                verticalArrangement = Arrangement.SpaceBetween
+            ) {
+
+                // ── TOP DYNAMIC SECTION (Expands to fill) ─────────────────────────
+                Column(modifier = Modifier.weight(1f).fillMaxWidth()) {
+
+                    // Top drag indicator
+                    Row(
+                        modifier = Modifier.fillMaxWidth().padding(top = 8.dp, bottom = 12.dp)
+                            .clickable(indication = null, interactionSource = remember { MutableInteractionSource() }) { state.collapseSoft() },
+                        horizontalArrangement = Arrangement.Center
+                    ) {
+                        Box(modifier = Modifier.width(36.dp).height(5.dp).clip(CircleShape).background(Color.Gray.copy(alpha = 0.5f)))
+                    }
+
+                    // Sub-views based on active state
+                    AnimatedContent(
+                        targetState = appleState,
+                        transitionSpec = { fadeIn(tween(300)).togetherWith(fadeOut(tween(300))) },
+                        label = "ApplePlayerState"
+                    ) { activeState ->
+                        when (activeState) {
+                            ApplePlayerState.MAIN -> AppleMainView(
+                                meta = meta,
+                                playerConnection = playerConnection,
+                                currentSong = currentSong,
+                                onBackgroundColor = safeTextColor,
+                                navController = navController,
+                                onCollapse = { state.collapseSoft() }
+                            )
+                            ApplePlayerState.LYRICS -> AppleLyricsView(
+                                meta = meta,
+                                playerConnection = playerConnection,
+                                currentSong = currentSong,
+                                onBackgroundColor = safeTextColor,
+                                navController = navController,
+                                onCollapse = { state.collapseSoft() }
+                            )
+                            ApplePlayerState.QUEUE -> AppleQueueView(
+                                meta = meta,
+                                playerConnection = playerConnection,
+                                currentSong = currentSong,
+                                onBackgroundColor = safeTextColor,
+                                navController = navController,
+                                onCollapse = { state.collapseSoft() }
+                            )
+                        }
+                    }
                 }
 
-                AppleProgressSection(
-                    playerConnection = playerConnection,
-                    color = safeTextColor,
-                    isPlaying = isPlaying
-                )
+                // ── FIXED BOTTOM CONTROLS (Always on screen) ──────────────────────
+                Column(
+                    modifier = Modifier.fillMaxWidth().padding(bottom = 20.dp, top = 8.dp)
+                ) {
+                    if (realTimeVisualizer) {
+                        RealTimeAudioVisualizer(
+                            audioSessionId = playerConnection.player.audioSessionId,
+                            color = safeTextColor,
+                            isActive = isPlaying
+                        )
+                        Spacer(modifier = Modifier.height(12.dp))
+                    }
 
-                Spacer(modifier = Modifier.height(12.dp))
+                    AppleProgressSection(
+                        playerConnection = playerConnection,
+                        color = safeTextColor,
+                        isPlaying = isPlaying
+                    )
 
-                ApplePlaybackControls(
-                    playerConnection = playerConnection,
-                    isPlaying = isPlaying,
-                    playbackState = playbackState,
-                    canSkipPrevious = canSkipPrevious,
-                    canSkipNext = canSkipNext,
-                    color = safeTextColor,
-                    playPauseShape = androidx.compose.foundation.shape.CircleShape
-                )
+                    Spacer(modifier = Modifier.height(12.dp))
 
-                Spacer(modifier = Modifier.height(24.dp))
+                    ApplePlaybackControls(
+                        playerConnection = playerConnection,
+                        isPlaying = isPlaying,
+                        playbackState = playbackState,
+                        canSkipPrevious = canSkipPrevious,
+                        canSkipNext = canSkipNext,
+                        color = safeTextColor,
+                        playPauseShape = androidx.compose.foundation.shape.CircleShape
+                    )
 
-                AppleFooter(
-                    currentState = appleState,
-                    color = safeTextColor,
-                    onLyricsClick = { appleState = if (appleState == ApplePlayerState.LYRICS) ApplePlayerState.MAIN else ApplePlayerState.LYRICS },
-                    onQueueClick = { appleState = if (appleState == ApplePlayerState.QUEUE) ApplePlayerState.MAIN else ApplePlayerState.QUEUE }
-                )
+                    Spacer(modifier = Modifier.height(24.dp))
+
+                    AppleFooter(
+                        currentState = appleState,
+                        color = safeTextColor,
+                        onLyricsClick = { appleState = if (appleState == ApplePlayerState.LYRICS) ApplePlayerState.MAIN else ApplePlayerState.LYRICS },
+                        onQueueClick = { appleState = if (appleState == ApplePlayerState.QUEUE) ApplePlayerState.MAIN else ApplePlayerState.QUEUE }
+                    )
+                }
             }
         }
     }

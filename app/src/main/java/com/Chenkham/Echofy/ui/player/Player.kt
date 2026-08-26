@@ -816,11 +816,7 @@ fun BottomSheetPlayer(
             playerConnection.player.clearMediaItems()
         },
         collapsedContent = {
-            val config = LocalConfiguration.current
-            val isLand = config.orientation == Configuration.ORIENTATION_LANDSCAPE || config.screenWidthDp > config.screenHeightDp
-            MiniPlayer(
-                modifier = Modifier.padding(start = if (isLand) 80.dp else 0.dp)
-            )
+            MiniPlayer()
         },
     ) {
         val controlsContent: @Composable ColumnScope.(MediaMetadata) -> Unit = { mediaMetadata ->

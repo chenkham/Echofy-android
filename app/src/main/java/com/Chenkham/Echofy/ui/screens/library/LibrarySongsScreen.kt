@@ -26,9 +26,7 @@ import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.pulltorefresh.PullToRefreshDefaults
-import androidx.compose.material3.pulltorefresh.pullToRefresh
-import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
+import com.Chenkham.Echofy.ui.component.ExpressivePullToRefreshBox
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -121,7 +119,6 @@ fun LibrarySongsScreen(
     }
 
     val lazyListState = rememberLazyListState()
-    val pullRefreshState = rememberPullToRefreshState()
 
     val backStackEntry by navController.currentBackStackEntryAsState()
     val scrollToTop =
@@ -134,14 +131,10 @@ fun LibrarySongsScreen(
         }
     }
 
-    Box(
-        modifier =
-            Modifier.fillMaxSize()
-                .pullToRefresh(
-                    state = pullRefreshState,
-                    isRefreshing = isRefreshing,
-                    onRefresh = { if (ytmSync) viewModel.refresh(filter) }
-                ),
+    ExpressivePullToRefreshBox(
+        isRefreshing = isRefreshing,
+        onRefresh = { if (ytmSync) viewModel.refresh(filter) },
+        modifier = Modifier.fillMaxSize(),
     ) {
         LazyColumn(
             state = lazyListState,
@@ -351,14 +344,6 @@ fun LibrarySongsScreen(
                     ),
                 )
             },
-        )
-
-        PullToRefreshDefaults.Indicator(
-            isRefreshing = isRefreshing,
-            state = pullRefreshState,
-            modifier = Modifier
-                .align(Alignment.TopCenter)
-                .padding(LocalPlayerAwareWindowInsets.current.asPaddingValues()),
         )
     }
 }

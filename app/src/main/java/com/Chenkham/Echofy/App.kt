@@ -184,6 +184,26 @@ class App : Application(), ImageLoaderFactory {
                 ReleaseRadarWorker.schedule(this@App)
             }
         }
+
+        // Keep WidgetPreferences in-memory cache synchronized with DataStore
+        GlobalScope.launch(Dispatchers.IO) {
+            dataStore.data.collect { prefs ->
+                prefs[com.Chenkham.Echofy.constants.WidgetBackgroundModeKey]?.let { raw ->
+                    runCatching { com.Chenkham.Echofy.constants.WidgetBackgroundMode.valueOf(raw) }.getOrNull()?.let {
+                        com.Chenkham.Echofy.widget.WidgetPreferences.cachedBackgroundMode = it
+                    }
+                }
+                prefs[com.Chenkham.Echofy.constants.WidgetScrimOpacityKey]?.let {
+                    com.Chenkham.Echofy.widget.WidgetPreferences.cachedScrimOpacity = it
+                }
+                prefs[com.Chenkham.Echofy.constants.WidgetCornerRadiusKey]?.let {
+                    com.Chenkham.Echofy.widget.WidgetPreferences.cachedCornerRadius = it
+                }
+                prefs[com.Chenkham.Echofy.constants.WidgetShowProgressBarKey]?.let {
+                    com.Chenkham.Echofy.widget.WidgetPreferences.cachedShowProgressBar = it
+                }
+            }
+        }
     }
 
     /**

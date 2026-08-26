@@ -15,10 +15,13 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -30,12 +33,13 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Slider
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
-import androidx.compose.ui.graphics.Color
 import androidx.compose.material3.TopAppBarScrollBehavior
+import androidx.compose.ui.graphics.Color
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
@@ -46,6 +50,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -53,13 +58,18 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
 import com.Chenkham.Echofy.LocalPlayerAwareWindowInsets
 import com.Chenkham.Echofy.R
 import com.Chenkham.Echofy.constants.WidgetBackgroundMode
+import com.Chenkham.Echofy.constants.WidgetBackgroundModeKey
+import com.Chenkham.Echofy.constants.WidgetCornerRadiusKey
+import com.Chenkham.Echofy.constants.WidgetScrimOpacityKey
+import com.Chenkham.Echofy.constants.WidgetShowProgressBarKey
 import com.Chenkham.Echofy.ui.utils.backToMain
+import com.Chenkham.Echofy.utils.rememberPreference
 import com.Chenkham.Echofy.widget.WidgetPreferences
+import com.Chenkham.Echofy.widget.WidgetPreferencesSync
 import kotlin.math.roundToInt
 import kotlinx.coroutines.launch
 
@@ -72,128 +82,166 @@ fun WidgetSettings(
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
 
-    val backgroundMode by WidgetPreferences.backgroundModeFlow(context)
-        .collectAsStateWithLifecycle(initialValue = WidgetBackgroundMode.BLUR)
-    val scrimOpacity by WidgetPreferences.scrimOpacityFlow(context)
-        .collectAsStateWithLifecycle(initialValue = 0.32f)
-    val cornerRadius by WidgetPreferences.cornerRadiusFlow(context)
-        .collectAsStateWithLifecycle(initialValue = 24f)
-    val showProgressBar by WidgetPreferences.showProgressBarFlow(context)
-        .collectAsStateWithLifecycle(initialValue = true)
+    val (rawBackgroundMode, onBackgroundModeChangeRaw) = rememberPreference(
+        WidgetBackgroundModeKey,
+        defaultValue = WidgetBackgroundMode.BLUR.name,
+    )
+    val (scrimOpacity, onScrimOpacityChange) = rememberPreference(
+        WidgetScrimOpacityKey,
+        defaultValue = 0.32f,
+    )
+    val (cornerRadius, onCornerRadiusChange) = rememberPreference(
+        WidgetCornerRadiusKey,
+        defaultValue = 24f,
+    )
+    val (showProgressBar, onShowProgressBarChange) = rememberPreference(
+        WidgetShowProgressBarKey,
+        defaultValue = true,
+    )
+
+    val backgroundMode = remember(rawBackgroundMode) {
+        runCatching { WidgetBackgroundMode.valueOf(rawBackgroundMode) }.getOrDefault(WidgetBackgroundMode.BLUR)
+    }
 
     val onBackgroundModeChange: (WidgetBackgroundMode) -> Unit = { mode ->
-        scope.launch { WidgetPreferences.setBackgroundMode(context, mode) }
+        onBackgroundModeChangeRaw(mode.name)
+        WidgetPreferences.cachedBackgroundMode = mode
+        scope.launch { WidgetPreferencesSync.notifyChanged(context) }
     }
-    val onScrimOpacityChange: (Float) -> Unit = { value ->
-        scope.launch { WidgetPreferences.setScrimOpacity(context, value) }
+    val updateScrim: (Float) -> Unit = { value ->
+        onScrimOpacityChange(value)
+        WidgetPreferences.cachedScrimOpacity = value
+        scope.launch { WidgetPreferencesSync.notifyChanged(context) }
     }
-    val onCornerRadiusChange: (Float) -> Unit = { value ->
-        scope.launch { WidgetPreferences.setCornerRadius(context, value) }
+    val updateCornerRadius: (Float) -> Unit = { value ->
+        onCornerRadiusChange(value)
+        WidgetPreferences.cachedCornerRadius = value
+        scope.launch { WidgetPreferencesSync.notifyChanged(context) }
     }
-    val onShowProgressBarChange: (Boolean) -> Unit = { value ->
-        scope.launch { WidgetPreferences.setShowProgressBar(context, value) }
+    val updateShowProgressBar: (Boolean) -> Unit = { value ->
+        onShowProgressBarChange(value)
+        WidgetPreferences.cachedShowProgressBar = value
+        scope.launch { WidgetPreferencesSync.notifyChanged(context) }
     }
 
     val availableBackgroundModes = WidgetBackgroundMode.entries.filter {
         it != WidgetBackgroundMode.BLUR || Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
     }
 
-    Column(
-        Modifier
-            .windowInsetsPadding(LocalPlayerAwareWindowInsets.current)
-            .verticalScroll(rememberScrollState()),
-    ) {
-        PreferenceGroupTitle(
-            title = stringResource(R.string.widget_preview),
-        )
-
-        WidgetLivePreview(
-            backgroundMode = backgroundMode,
-            scrimOpacity = scrimOpacity,
-            cornerRadius = cornerRadius.dp,
-            showProgressBar = showProgressBar,
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 8.dp),
-        )
-
-        PreferenceGroupTitle(
-            title = stringResource(R.string.widget_background),
-        )
-
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 8.dp),
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
+    Scaffold(
+        modifier = Modifier
+            .fillMaxSize()
+            .nestedScroll(scrollBehavior.nestedScrollConnection),
+        containerColor = MaterialTheme.colorScheme.surfaceContainerLowest,
+        contentWindowInsets = WindowInsets(0, 0, 0, 0),
+        topBar = {
+            TopAppBar(
+                title = { Text(stringResource(R.string.widget_settings_title)) },
+                navigationIcon = {
+                    IconButton(
+                        onClick = navController::navigateUp,
+                        onLongClick = navController::backToMain,
+                    ) {
+                        Icon(
+                            painterResource(R.drawable.arrow_back),
+                            contentDescription = null,
+                        )
+                    }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = Color.Transparent,
+                    scrolledContainerColor = Color.Transparent,
+                ),
+                scrollBehavior = scrollBehavior,
+            )
+        },
+    ) { paddingValues ->
+        Column(
+            Modifier
+                .fillMaxSize()
+                .padding(top = paddingValues.calculateTopPadding())
+                .windowInsetsPadding(
+                    LocalPlayerAwareWindowInsets.current.only(WindowInsetsSides.Horizontal + WindowInsetsSides.Bottom)
+                )
+                .verticalScroll(rememberScrollState())
+                .padding(bottom = 24.dp),
         ) {
-            for (mode in availableBackgroundModes) {
-                WidgetBackgroundModeCard(
-                    mode = mode,
-                    selected = backgroundMode == mode,
-                    onClick = { onBackgroundModeChange(mode) },
-                    modifier = Modifier.weight(1f),
+            PreferenceGroupTitle(
+                title = stringResource(R.string.widget_preview),
+            )
+
+            WidgetLivePreview(
+                backgroundMode = backgroundMode,
+                scrimOpacity = scrimOpacity,
+                cornerRadius = cornerRadius.dp,
+                showProgressBar = showProgressBar,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 8.dp),
+            )
+
+            PreferenceGroupTitle(
+                title = stringResource(R.string.widget_background),
+            )
+
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 8.dp),
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+            ) {
+                for (mode in availableBackgroundModes) {
+                    WidgetBackgroundModeCard(
+                        mode = mode,
+                        selected = backgroundMode == mode,
+                        onClick = { onBackgroundModeChange(mode) },
+                        modifier = Modifier.weight(1f),
+                    )
+                }
+            }
+
+            if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S) {
+                Text(
+                    text = stringResource(R.string.widget_blur_unavailable_notice),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp),
                 )
             }
-        }
 
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S) {
-            Text(
-                text = stringResource(R.string.widget_blur_unavailable_notice),
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp),
+            WidgetSliderRow(
+                title = stringResource(R.string.widget_scrim_intensity),
+                value = scrimOpacity,
+                valueRange = 0f..0.7f,
+                valueText = { "${(it * 100).roundToInt()}%" },
+                onValueChange = updateScrim,
+            )
+
+            PreferenceGroupTitle(
+                title = stringResource(R.string.widget_shape),
+            )
+
+            WidgetSliderRow(
+                title = stringResource(R.string.widget_corner_radius),
+                value = cornerRadius,
+                valueRange = 0f..32f,
+                valueText = { "${it.roundToInt()}dp" },
+                onValueChange = updateCornerRadius,
+            )
+
+            PreferenceGroupTitle(
+                title = stringResource(R.string.widget_content),
+            )
+
+            SwitchPreference(
+                title = { Text(stringResource(R.string.widget_show_progress_bar)) },
+                description = stringResource(R.string.widget_show_progress_bar_desc),
+                icon = { Icon(painterResource(R.drawable.buttons), null) },
+                checked = showProgressBar,
+                onCheckedChange = updateShowProgressBar,
             )
         }
-
-        WidgetSliderRow(
-            title = stringResource(R.string.widget_scrim_intensity),
-            value = scrimOpacity,
-            valueRange = 0f..0.7f,
-            valueText = { "${(it * 100).roundToInt()}%" },
-            onValueChangeFinished = onScrimOpacityChange,
-        )
-
-        PreferenceGroupTitle(
-            title = stringResource(R.string.widget_shape),
-        )
-
-        WidgetSliderRow(
-            title = stringResource(R.string.widget_corner_radius),
-            value = cornerRadius,
-            valueRange = 0f..32f,
-            valueText = { "${it.roundToInt()}dp" },
-            onValueChangeFinished = onCornerRadiusChange,
-        )
-
-        PreferenceGroupTitle(
-            title = stringResource(R.string.widget_content),
-        )
-
-        SwitchPreference(
-            title = { Text(stringResource(R.string.widget_show_progress_bar)) },
-            description = stringResource(R.string.widget_show_progress_bar_desc),
-            icon = { Icon(painterResource(R.drawable.buttons), null) },
-            checked = showProgressBar,
-            onCheckedChange = onShowProgressBarChange,
-        )
     }
-
-    TopAppBar(
-            colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent, scrolledContainerColor = Color.Transparent),
-        title = { Text(stringResource(R.string.widget_settings_title)) },
-        navigationIcon = {
-            IconButton(
-                onClick = navController::navigateUp,
-                onLongClick = navController::backToMain,
-            ) {
-                Icon(
-                    painterResource(R.drawable.arrow_back),
-                    contentDescription = null,
-                )
-            }
-        },
-    )
 }
 
 /**
@@ -401,7 +449,7 @@ private fun WidgetSliderRow(
     value: Float,
     valueRange: ClosedFloatingPointRange<Float>,
     valueText: (Float) -> String,
-    onValueChangeFinished: (Float) -> Unit,
+    onValueChange: (Float) -> Unit,
 ) {
     var sliderValue by remember(value) { mutableFloatStateOf(value) }
 
@@ -429,8 +477,10 @@ private fun WidgetSliderRow(
         }
         Slider(
             value = sliderValue,
-            onValueChange = { sliderValue = it },
-            onValueChangeFinished = { onValueChangeFinished(sliderValue) },
+            onValueChange = {
+                sliderValue = it
+                onValueChange(it)
+            },
             valueRange = valueRange,
         )
     }

@@ -11,6 +11,8 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:scaleType="centerCrop"
+        android:clickable="false"
+        android:focusable="false"
         android:contentDescription="@null" />
 
     <!-- Dark gradient / scrim overlay using ImageView for RemoteViews support -->
@@ -19,6 +21,8 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:scaleType="fitXY"
+        android:clickable="false"
+        android:focusable="false"
         android:background="#66000000"
         android:contentDescription="@null" />
 
@@ -68,10 +72,6 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:ellipsize="marquee"
-                android:focusable="true"
-                android:focusableInTouchMode="true"
-                android:marqueeRepeatLimit="marquee_forever"
-                android:scrollHorizontally="true"
                 android:singleLine="true"
                 android:text="@string/song_title"
                 android:textColor="#FFFFFFFF"
@@ -84,10 +84,6 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="2dp"
                 android:ellipsize="marquee"
-                android:focusable="true"
-                android:focusableInTouchMode="true"
-                android:marqueeRepeatLimit="marquee_forever"
-                android:scrollHorizontally="true"
                 android:singleLine="true"
                 android:text="@string/artist_name"
                 android:textColor="#B3FFFFFF"

@@ -83,6 +83,7 @@ fun LibraryPlaylistsScreen(
     navController: NavController,
     filterContent: @Composable () -> Unit,
     viewModel: LibraryPlaylistsViewModel = hiltViewModel(),
+    spotifyViewModel: com.Chenkham.Echofy.spotify.SpotifyLibraryViewModel = hiltViewModel(),
     initialTextFieldValue: String? = null,
     allowSyncing: Boolean = true,
 
@@ -104,6 +105,7 @@ fun LibraryPlaylistsScreen(
     val gridItemSize by rememberEnumPreference(GridItemsSizeKey, GridItemSize.SMALL)
 
     val playlists by viewModel.allPlaylists.collectAsState()
+    val spotifyPlaylists by spotifyViewModel.playlists.collectAsState()
 
     val topSize by viewModel.topValue.collectAsState(initial = 50)
 
@@ -358,7 +360,7 @@ fun LibraryPlaylistsScreen(
                     }
 
                     playlists.let { playlists ->
-                        if (playlists.isEmpty()) {
+                        if (playlists.isEmpty() && spotifyPlaylists.isEmpty()) {
                             item {
                             }
                         }
@@ -375,6 +377,20 @@ fun LibraryPlaylistsScreen(
                                 playlist = playlist,
                                 modifier = Modifier.animateItem()
                             )
+                        }
+
+                        if (spotifyPlaylists.isNotEmpty()) {
+                            items(
+                                items = spotifyPlaylists,
+                                key = { "spotify_${it.id}" },
+                                contentType = { CONTENT_TYPE_PLAYLIST },
+                            ) { playlist ->
+                                com.Chenkham.Echofy.ui.component.SpotifyLibraryPlaylistListItem(
+                                    playlist = playlist,
+                                    navController = navController,
+                                    modifier = Modifier.animateItem(),
+                                )
+                            }
                         }
                     }
                 }
@@ -512,7 +528,7 @@ fun LibraryPlaylistsScreen(
                     }
 
                     playlists.let { playlists ->
-                        if (playlists.isEmpty()) {
+                        if (playlists.isEmpty() && spotifyPlaylists.isEmpty()) {
                             item(span = { GridItemSpan(maxLineSpan) }) {
                             }
                         }
@@ -530,6 +546,21 @@ fun LibraryPlaylistsScreen(
                                 modifier = Modifier.animateItem(),
                                 context = LocalContext.current // Pasamos el contexto actual para obtener la URI de la miniatura
                             )
+                        }
+
+                        if (spotifyPlaylists.isNotEmpty()) {
+                            items(
+                                items = spotifyPlaylists,
+                                key = { "spotify_${it.id}" },
+                                contentType = { CONTENT_TYPE_PLAYLIST },
+                            ) { playlist ->
+                                com.Chenkham.Echofy.ui.component.SpotifyLibraryPlaylistGridItem(
+                                    playlist = playlist,
+                                    navController = navController,
+                                    fillMaxWidth = true,
+                                    modifier = Modifier.animateItem()
+                                )
+                            }
                         }
                     }
                 }
