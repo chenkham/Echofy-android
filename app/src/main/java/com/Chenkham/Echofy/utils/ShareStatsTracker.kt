@@ -104,6 +104,27 @@ object ShareStatsTracker {
                 // Ignore sync failures silently
             }
         }
+        recalculateTotal(context)
+    }
+
+    private val totalSharesFlow = MutableStateFlow(0)
+
+    fun observeTotalShares(): StateFlow<Int> = totalSharesFlow.asStateFlow()
+
+    fun loadTotalShares(context: Context) {
+        recalculateTotal(context)
+    }
+
+    private fun recalculateTotal(context: Context) {
+        val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        val allEntries = prefs.all
+        var sum = 0
+        for ((key, value) in allEntries) {
+            if (value is Int && key != "__total__") {
+                sum += value
+            }
+        }
+        totalSharesFlow.value = sum
     }
 
     fun formatCount(count: Int): String {
@@ -143,6 +164,39 @@ fun ShareCountBadge(
                     style = MaterialTheme.typography.labelSmall,
                     fontWeight = FontWeight.SemiBold,
                     color = MaterialTheme.colorScheme.primary
+                )
+            }
+        }
+    }
+}
+
+@Composable
+fun EchofyHomeSharePill(
+    modifier: Modifier = Modifier
+) {
+    val total by ShareStatsTracker.observeTotalShares().collectAsState()
+    if (total > 0) {
+        Surface(
+            shape = RoundedCornerShape(20.dp),
+            color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.45f),
+            modifier = modifier.padding(horizontal = 16.dp, vertical = 6.dp)
+        ) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.padding(horizontal = 14.dp, vertical = 6.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                Icon(
+                    painter = painterResource(R.drawable.share),
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.size(14.dp)
+                )
+                Text(
+                    text = "🔥 ${ShareStatsTracker.formatCount(total)} Echofy Community Shares",
+                    style = MaterialTheme.typography.labelMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onPrimaryContainer
                 )
             }
         }

@@ -132,11 +132,21 @@ data class YouTubeDataPage(
                             val owner: Owner? = null,
                             @SerialName("attributedDescription")
                             val attributedDescription: AttributedDescription? = null,
+                            @SerialName("description")
+                            val description: Description? = null,
                         ) {
                             @Serializable
                             data class AttributedDescription(
                                 @SerialName("content")
                                 val content: String? = null,
+                            )
+
+                            @Serializable
+                            data class Description(
+                                @SerialName("runs")
+                                val runs: List<Title.Run>? = null,
+                                @SerialName("simpleText")
+                                val simpleText: String? = null,
                             )
 
                             @Serializable

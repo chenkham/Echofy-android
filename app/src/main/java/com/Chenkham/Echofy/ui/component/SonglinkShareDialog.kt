@@ -110,7 +110,24 @@ fun SonglinkShareDialog(
                 )
             }
 
-            Spacer(Modifier.height(16.dp))
+            val echofyShareText = remember(videoId, songTitle, artistName) {
+                com.Chenkham.Echofy.utils.ShareUtils.buildTrackShareText(context, videoId, songTitle, artistName)
+            }
+            ShareOptionRow(
+                label = "Share Echofy Universal Link",
+                icon = R.drawable.share,
+            ) {
+                val intent = Intent(Intent.ACTION_SEND).apply {
+                    type = "text/plain"
+                    putExtra(Intent.EXTRA_TEXT, echofyShareText)
+                }
+                context.startActivity(Intent.createChooser(intent, null))
+                onDismiss()
+            }
+
+            Spacer(Modifier.height(8.dp))
+            HorizontalDivider()
+            Spacer(Modifier.height(8.dp))
 
             when {
                 isLoading -> Row(

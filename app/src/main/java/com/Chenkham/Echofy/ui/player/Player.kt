@@ -675,6 +675,7 @@ fun BottomSheetPlayer(
     val actionButtonColor = MaterialTheme.colorScheme.surfaceVariant
     val downloadUtil = LocalDownloadUtil.current
     val enableListenTogether by rememberPreference(EnableListenTogetherKey, defaultValue = false)
+    val (songlinkEnabled) = rememberPreference(com.Chenkham.Echofy.constants.SonglinkEnabledKey, defaultValue = false)
 
     var showDetailsDialog by rememberSaveable {
         mutableStateOf(false)
@@ -682,10 +683,22 @@ fun BottomSheetPlayer(
     var showEchofyJamSheet by rememberSaveable {
         mutableStateOf(false)
     }
+    var showSonglinkDialog by rememberSaveable {
+        mutableStateOf(false)
+    }
 
     if (showEchofyJamSheet) {
         com.Chenkham.Echofy.ui.component.EchofyJamSheet(
             onDismiss = { showEchofyJamSheet = false }
+        )
+    }
+
+    if (showSonglinkDialog) {
+        com.Chenkham.Echofy.ui.component.SonglinkShareDialog(
+            videoId = mediaMetadata.id,
+            songTitle = mediaMetadata.title,
+            artistName = mediaMetadata.artists.joinToString { it.name },
+            onDismiss = { showSonglinkDialog = false }
         )
     }
 
@@ -987,18 +1000,22 @@ fun BottomSheetPlayer(
                         .clip(smallButtonShape.toShape())
                         .background(actionButtonColor)
                         .clickable {
-                            val shareText = com.Chenkham.Echofy.utils.ShareUtils.buildTrackShareText(
-                                context = context,
-                                songId = mediaMetadata.id,
-                                title = mediaMetadata.title,
-                                artist = mediaMetadata.artists.joinToString { it.name }
-                            )
-                            val intent = Intent().apply {
-                                action = Intent.ACTION_SEND
-                                type = "text/plain"
-                                putExtra(Intent.EXTRA_TEXT, shareText)
+                            if (songlinkEnabled) {
+                                showSonglinkDialog = true
+                            } else {
+                                val shareText = com.Chenkham.Echofy.utils.ShareUtils.buildTrackShareText(
+                                    context = context,
+                                    songId = mediaMetadata.id,
+                                    title = mediaMetadata.title,
+                                    artist = mediaMetadata.artists.joinToString { it.name }
+                                )
+                                val intent = Intent().apply {
+                                    action = Intent.ACTION_SEND
+                                    type = "text/plain"
+                                    putExtra(Intent.EXTRA_TEXT, shareText)
+                                }
+                                context.startActivity(Intent.createChooser(intent, null))
                             }
-                            context.startActivity(Intent.createChooser(intent, null))
                         },
                 ) {
                     Image(

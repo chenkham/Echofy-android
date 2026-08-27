@@ -502,6 +502,12 @@ fun HomeScreen(
                         },
                         containerColor = MaterialTheme.colorScheme.surfaceContainer
                     )
+
+                    com.Chenkham.Echofy.utils.EchofyHomeSharePill()
+                }
+
+                androidx.compose.runtime.LaunchedEffect(Unit) {
+                    com.Chenkham.Echofy.utils.ShareStatsTracker.loadTotalShares(context)
                 }
             }
 

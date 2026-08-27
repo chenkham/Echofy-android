@@ -105,6 +105,19 @@ fun ShowMediaInfo(
             }.onSuccess {
                 mediaInfo = it
             }
+            if (mediaInfo?.description.isNullOrBlank()) {
+                val shortDesc = runCatching {
+                    YouTube.player(id).getOrNull()?.videoDetails?.shortDescription
+                }.getOrNull()
+                if (!shortDesc.isNullOrBlank()) {
+                    mediaInfo = mediaInfo?.copy(description = shortDesc) ?: MediaInfo(
+                        videoId = id,
+                        title = currentMediaMetadata?.title,
+                        author = currentMediaMetadata?.artists?.joinToString { a -> a.name },
+                        description = shortDesc
+                    )
+                }
+            }
         }
         isLoadingInfo = false
     }

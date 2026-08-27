@@ -156,6 +156,8 @@ fun PlayerMenu(
     var showVideoQualityDialog by rememberSaveable { mutableStateOf(false) }
     var showAudioQualityDialog by rememberSaveable { mutableStateOf(false) }
     var showAbLoopDialog by rememberSaveable { mutableStateOf(false) }
+    var showSonglinkDialog by rememberSaveable { mutableStateOf(false) }
+    val (songlinkEnabled) = rememberPreference(com.Chenkham.Echofy.constants.SonglinkEnabledKey, defaultValue = false)
     val (abLoopEnabled) = rememberPreference(AbLoopEnabledKey, defaultValue = false)
     
     // Check playback mode to conditionally show video quality option
@@ -267,8 +269,13 @@ fun PlayerMenu(
         AudioQualityDialog(onDismiss = { showAudioQualityDialog = false })
     }
 
-    if (showAudioQualityDialog) {
-        AudioQualityDialog(onDismiss = { showAudioQualityDialog = false })
+    if (showSonglinkDialog) {
+        com.Chenkham.Echofy.ui.component.SonglinkShareDialog(
+            videoId = mediaMetadata.id,
+            songTitle = mediaMetadata.title,
+            artistName = mediaMetadata.artists.joinToString { it.name },
+            onDismiss = { showSonglinkDialog = false }
+        )
     }
 
     // LazyListState to track scroll position
@@ -421,21 +428,25 @@ fun PlayerMenu(
                     label = stringResource(R.string.share),
                     modifier = Modifier.weight(1f)
                 ) {
-                    val intent = Intent().apply {
-                        action = Intent.ACTION_SEND
-                        type = "text/plain"
-                        putExtra(
-                            Intent.EXTRA_TEXT,
-                            com.Chenkham.Echofy.utils.ShareUtils.buildTrackShareText(
-                                context = context,
-                                songId = mediaMetadata.id,
-                                title = mediaMetadata.title,
-                                artist = mediaMetadata.artists.joinToString { it.name }
+                    if (songlinkEnabled) {
+                        showSonglinkDialog = true
+                    } else {
+                        val intent = Intent().apply {
+                            action = Intent.ACTION_SEND
+                            type = "text/plain"
+                            putExtra(
+                                Intent.EXTRA_TEXT,
+                                com.Chenkham.Echofy.utils.ShareUtils.buildTrackShareText(
+                                    context = context,
+                                    songId = mediaMetadata.id,
+                                    title = mediaMetadata.title,
+                                    artist = mediaMetadata.artists.joinToString { it.name }
+                                )
                             )
-                        )
+                        }
+                        context.startActivity(Intent.createChooser(intent, null))
+                        onDismiss()
                     }
-                    context.startActivity(Intent.createChooser(intent, null))
-                    onDismiss()
                 }
             }
         }
