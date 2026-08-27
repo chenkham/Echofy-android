@@ -144,7 +144,7 @@ data class YouTubeDataPage(
                             @Serializable
                             data class Description(
                                 @SerialName("runs")
-                                val runs: List<Title.Run>? = null,
+                                val runs: List<Owner.VideoOwnerRenderer.Title.Run>? = null,
                                 @SerialName("simpleText")
                                 val simpleText: String? = null,
                             )

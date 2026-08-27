@@ -954,30 +954,51 @@ fun TempoPitchDialog(onDismiss: () -> Unit) {
                         .padding(top = 12.dp),
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    AssistChip(
-                        onClick = {
+                    Surface(
+                        shape = RoundedCornerShape(8.dp),
+                        color = MaterialTheme.colorScheme.surfaceVariant,
+                        modifier = Modifier.clickable {
                             tempo = 0.85f
                             transposeValue = -2
                             updatePlaybackParameters()
-                        },
-                        label = { Text("🌙 Slowed", fontSize = 12.sp) }
-                    )
-                    AssistChip(
-                        onClick = {
+                        }
+                    ) {
+                        Text(
+                            text = "🌙 Slowed",
+                            fontSize = 12.sp,
+                            modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp)
+                        )
+                    }
+                    Surface(
+                        shape = RoundedCornerShape(8.dp),
+                        color = MaterialTheme.colorScheme.surfaceVariant,
+                        modifier = Modifier.clickable {
                             tempo = 1.25f
                             transposeValue = 2
                             updatePlaybackParameters()
-                        },
-                        label = { Text("⚡ Nightcore", fontSize = 12.sp) }
-                    )
-                    AssistChip(
-                        onClick = {
+                        }
+                    ) {
+                        Text(
+                            text = "⚡ Nightcore",
+                            fontSize = 12.sp,
+                            modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp)
+                        )
+                    }
+                    Surface(
+                        shape = RoundedCornerShape(8.dp),
+                        color = MaterialTheme.colorScheme.surfaceVariant,
+                        modifier = Modifier.clickable {
                             tempo = 1.15f
                             transposeValue = 0
                             updatePlaybackParameters()
-                        },
-                        label = { Text("🏎️ Sped Up", fontSize = 12.sp) }
-                    )
+                        }
+                    ) {
+                        Text(
+                            text = "🏎️ Sped Up",
+                            fontSize = 12.sp,
+                            modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp)
+                        )
+                    }
                 }
 
                 Row(

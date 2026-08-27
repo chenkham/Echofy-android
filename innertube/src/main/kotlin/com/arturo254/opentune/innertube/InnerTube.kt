@@ -767,18 +767,9 @@ class InnerTube {
                 returnYouTubeDislike(videoId).body<ReturnYouTubeDislikeResponse>()
             }.getOrNull()
 
-            var description = baseForInfo?.attributedDescription?.content
-                ?: baseForInfo?.description?.runs?.joinToString("") { it.text }
+            val description = baseForInfo?.attributedDescription?.content
+                ?: baseForInfo?.description?.runs?.mapNotNull { it.text }?.joinToString("")
                 ?: baseForInfo?.description?.simpleText
-
-            if (description.isNullOrBlank()) {
-                val playerResp = runCatching {
-                    player(client = YouTubeClient.ANDROID, videoId = videoId, playlistId = null, signatureTimestamp = null).body<PlayerResponse>()
-                }.getOrNull() ?: runCatching {
-                    player(client = YouTubeClient.WEB_REMIX, videoId = videoId, playlistId = null, signatureTimestamp = null).body<PlayerResponse>()
-                }.getOrNull()
-                description = playerResp?.videoDetails?.shortDescription
-            }
 
             val author = baseForInfo
                 ?.owner

@@ -186,7 +186,7 @@ fun ContentSettings(
                 {
                     SwitchPreference(
                         title = { Text("Echofy Viral 50 on Home") },
-                        description = { Text("Display viral & trending songs feed on Home screen") },
+                        description = "Display viral & trending songs feed on Home screen",
                         icon = { Icon(painterResource(R.drawable.trending_up), null) },
                         checked = showViral50,
                         onCheckedChange = onShowViral50Change,
@@ -195,8 +195,8 @@ fun ContentSettings(
                 {
                     SwitchPreference(
                         title = { Text("Top 10 Charts on Home") },
-                        description = { Text("Display official Top 10 Charts on Home screen") },
-                        icon = { Icon(painterResource(R.drawable.leaderboard), null) },
+                        description = "Display official Top 10 Charts on Home screen",
+                        icon = { Icon(painterResource(R.drawable.trending_up), null) },
                         checked = showTopCharts,
                         onCheckedChange = onShowTopChartsChange,
                     )
@@ -204,7 +204,6 @@ fun ContentSettings(
                 {
                     ListPreference(
                         title = { Text("Charts Region") },
-                        description = { Text("Select Global or specific country for Charts") },
                         icon = { Icon(painterResource(R.drawable.language), null) },
                         selectedValue = chartsCountry,
                         values = listOf("GLOBAL") + CountryCodeToName.keys.toList(),
@@ -225,7 +224,7 @@ fun ContentSettings(
                     )
                     SwitchPreference(
                         title = { Text("SponsorBlock Auto-Skip") },
-                        description = { Text("Automatically skip non-music video intros, skits, dialogue, and outro credits") },
+                        description = "Automatically skip non-music video intros, skits, dialogue, and outro credits",
                         icon = { Icon(painterResource(R.drawable.skip_next), null) },
                         checked = sponsorBlockEnabled,
                         onCheckedChange = onSponsorBlockChange,

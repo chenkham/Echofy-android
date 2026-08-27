@@ -55,6 +55,7 @@ import com.Chenkham.Echofy.constants.SmartResumeMinMinutesKey
 import com.Chenkham.Echofy.constants.ResumeOnHeadphonesKey
 import com.Chenkham.Echofy.constants.StopMusicOnTaskClearKey
 import com.Chenkham.Echofy.ui.component.EnumListPreference
+import com.Chenkham.Echofy.ui.component.ListPreference
 import com.Chenkham.Echofy.ui.component.IconButton
 import com.Chenkham.Echofy.ui.component.PreferenceGroupTitle
 import com.Chenkham.Echofy.ui.component.SettingsGeneralCategory
@@ -292,7 +293,7 @@ fun PlayerSettings(
                     SwitchPreference(
                         title = { Text("Looping Video Canvas") },
                         description = "Stream animated canvas video backgrounds when available",
-                        icon = { Icon(painterResource(R.drawable.movie), null) },
+                        icon = { Icon(painterResource(R.drawable.play), null) },
                         checked = streamCanvas,
                         onCheckedChange = onStreamCanvasChange
                     )
@@ -331,7 +332,7 @@ fun PlayerSettings(
                     SwitchPreference(
                         title = { Text("Flip Phone to Pause") },
                         description = "Automatically pause playback when placing phone face-down on a surface",
-                        icon = { Icon(painterResource(R.drawable.screen_rotation), null) },
+                        icon = { Icon(painterResource(R.drawable.tune), null) },
                         checked = flipToPause,
                         onCheckedChange = onFlipToPauseChange
                     )
@@ -369,12 +370,11 @@ fun PlayerSettings(
                     )
                     ListPreference(
                         title = { Text("Retro Widget Style") },
-                        description = { Text("Choose between Standard, Spinning Vinyl, and Vintage Cassette widget art") },
                         icon = { Icon(painterResource(R.drawable.album), null) },
                         selectedValue = retroWidgetStyle,
                         values = listOf("Default", "SpinningVinyl", "VintageCassette"),
-                        valueText = {
-                            when (it) {
+                        valueText = { styleValue ->
+                            when (styleValue) {
                                 "SpinningVinyl" -> "💿 Spinning Vinyl Record"
                                 "VintageCassette" -> "📼 Vintage Cassette Tape"
                                 else -> "Standard Card"

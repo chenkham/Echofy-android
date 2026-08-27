@@ -70,6 +70,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Slider
 import androidx.compose.material3.SliderDefaults
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.ui.graphics.RectangleShape
@@ -693,18 +694,19 @@ fun BottomSheetPlayer(
         )
     }
 
-    if (showSonglinkDialog) {
+    val currentMedia = mediaMetadata
+    if (showSonglinkDialog && currentMedia != null) {
         com.Chenkham.Echofy.ui.component.SonglinkShareDialog(
-            videoId = mediaMetadata.id,
-            songTitle = mediaMetadata.title,
-            artistName = mediaMetadata.artists.joinToString { it.name },
+            videoId = currentMedia.id,
+            songTitle = currentMedia.title,
+            artistName = currentMedia.artists.joinToString { it.name },
             onDismiss = { showSonglinkDialog = false }
         )
     }
 
-    if (showDetailsDialog) {
+    if (showDetailsDialog && currentMedia != null) {
         com.Chenkham.Echofy.ui.utils.ShowMediaInfo(
-            mediaMetadata = mediaMetadata,
+            mediaMetadata = currentMedia,
             onDismiss = { showDetailsDialog = false }
         )
     }
@@ -935,7 +937,7 @@ fun BottomSheetPlayer(
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(6.dp)
                     ) {
-                        val codec = currentFormat?.sampleMimeType?.substringAfter("/")?.uppercase() ?: "AUDIO"
+                        val codec = currentFormat?.mimeType?.substringAfter("/")?.uppercase() ?: "AUDIO"
                         val bitrate = currentFormat?.bitrate?.let { if (it > 0) "${it / 1000} kbps" else null } ?: "HQ"
                         val sampleRate = currentFormat?.sampleRate?.let { if (it > 0) "${it / 1000} kHz" else null } ?: "48 kHz"
                         Text(

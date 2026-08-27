@@ -307,6 +307,7 @@ class HomeViewModel @Inject constructor(
             }
 
             // 4. Charts and Viral 50 Page
+            val prefs = appContext.dataStore.data.first()
             val chartsDeferred = if ((prefs[com.Chenkham.Echofy.constants.ShowTopChartsHomeKey] ?: true) ||
                 (prefs[com.Chenkham.Echofy.constants.ShowViral50HomeKey] ?: true)) {
                 async(Dispatchers.IO) {
