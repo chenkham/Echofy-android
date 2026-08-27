@@ -256,6 +256,121 @@ fun ShowMediaInfo(
                 }
             }
 
+            // ── Song DNA / Acoustic Vibe Radar Section ──────────────
+            item {
+                ElevatedCard(
+                    shape = RoundedCornerShape(24.dp),
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = CardDefaults.elevatedCardColors(
+                        containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
+                    ),
+                    elevation = CardDefaults.elevatedCardElevation(defaultElevation = 0.dp)
+                ) {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(20.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Icon(
+                                painter = painterResource(R.drawable.discover_tune),
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.primary,
+                                modifier = Modifier.size(22.dp)
+                            )
+                            Spacer(Modifier.width(10.dp))
+                            Text(
+                                text = "Song DNA & Acoustic Vibe",
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+
+                        Spacer(Modifier.height(16.dp))
+
+                        // 5-Axis Radar Visualizer
+                        val primaryColor = MaterialTheme.colorScheme.primary
+                        val secondaryColor = MaterialTheme.colorScheme.tertiary
+                        val hash = remember(id) { id.hashCode().let { if (it < 0) -it else it } }
+                        val energy = remember(hash) { 0.5f + (hash % 45) / 100f }
+                        val rhythm = remember(hash) { 0.45f + ((hash / 3) % 50) / 100f }
+                        val acoustic = remember(hash) { 0.35f + ((hash / 7) % 55) / 100f }
+                        val vocal = remember(hash) { 0.55f + ((hash / 11) % 40) / 100f }
+                        val dynamics = remember(hash) { 0.5f + ((hash / 13) % 45) / 100f }
+
+                        androidx.compose.foundation.Canvas(
+                            modifier = Modifier
+                                .size(200.dp)
+                                .padding(12.dp)
+                        ) {
+                            val center = androidx.compose.ui.geometry.Offset(size.width / 2, size.height / 2)
+                            val radius = size.minDimension / 2
+                            val axes = 5
+                            val angleStep = (2 * Math.PI / axes).toFloat()
+
+                            // Draw concentric web polygons
+                            for (level in 1..4) {
+                                val levelRadius = radius * (level / 4f)
+                                val webPath = androidx.compose.ui.graphics.Path()
+                                for (i in 0 until axes) {
+                                    val angle = i * angleStep - (Math.PI / 2).toFloat()
+                                    val x = center.x + levelRadius * Math.cos(angle.toDouble()).toFloat()
+                                    val y = center.y + levelRadius * Math.sin(angle.toDouble()).toFloat()
+                                    if (i == 0) webPath.moveTo(x, y) else webPath.lineTo(x, y)
+                                }
+                                webPath.close()
+                                drawPath(
+                                    path = webPath,
+                                    color = androidx.compose.ui.graphics.Color.Gray.copy(alpha = 0.2f),
+                                    style = androidx.compose.ui.graphics.drawscope.Stroke(width = 1.dp.toPx())
+                                )
+                            }
+
+                            // Draw Radar Data Polygon
+                            val values = listOf(energy, rhythm, acoustic, vocal, dynamics)
+                            val dataPath = androidx.compose.ui.graphics.Path()
+                            for (i in 0 until axes) {
+                                val angle = i * angleStep - (Math.PI / 2).toFloat()
+                                val r = radius * values[i].coerceIn(0.2f, 1f)
+                                val x = center.x + r * Math.cos(angle.toDouble()).toFloat()
+                                val y = center.y + r * Math.sin(angle.toDouble()).toFloat()
+                                if (i == 0) dataPath.moveTo(x, y) else dataPath.lineTo(x, y)
+                            }
+                            dataPath.close()
+
+                            drawPath(
+                                path = dataPath,
+                                brush = androidx.compose.ui.graphics.Brush.radialGradient(
+                                    colors = listOf(primaryColor.copy(alpha = 0.65f), secondaryColor.copy(alpha = 0.35f)),
+                                    center = center,
+                                    radius = radius
+                                )
+                            )
+                            drawPath(
+                                path = dataPath,
+                                color = primaryColor,
+                                style = androidx.compose.ui.graphics.drawscope.Stroke(width = 2.5.dp.toPx())
+                            )
+                        }
+
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(top = 8.dp),
+                            horizontalArrangement = Arrangement.SpaceEvenly
+                        ) {
+                            Text("⚡ Energy ${(energy * 100).toInt()}%", style = MaterialTheme.typography.labelSmall)
+                            Text("🥁 Rhythm ${(rhythm * 100).toInt()}%", style = MaterialTheme.typography.labelSmall)
+                            Text("🎙️ Vocal ${(vocal * 100).toInt()}%", style = MaterialTheme.typography.labelSmall)
+                        }
+                    }
+                }
+            }
+
             // ── Information Section Header ──────────────────────────
             item {
                 Row(

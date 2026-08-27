@@ -2429,16 +2429,14 @@ class MusicService :
     override fun onShuffleModeEnabledChanged(shuffleModeEnabled: Boolean) {
         updateNotification()
         if (shuffleModeEnabled) {
-            // Si la cola estÃ¡ vacÃ­a, no mezclar
             if (player.mediaItemCount == 0) return
 
-            // Siempre poner el item que se estÃ¡ reproduciendo primero
-            val shuffledIndices = IntArray(player.mediaItemCount) { it }
-            shuffledIndices.shuffle()
-            shuffledIndices[shuffledIndices.indexOf(player.currentMediaItemIndex)] =
-                shuffledIndices[0]
-            shuffledIndices[0] = player.currentMediaItemIndex
-            player.setShuffleOrder(DefaultShuffleOrder(shuffledIndices, System.currentTimeMillis()))
+            val items = (0 until player.mediaItemCount).map { player.getMediaItemAt(it) }
+            val smartIndices = com.Chenkham.Echofy.utils.SmartShuffleManager.generateSmartShuffleOrder(
+                items = items,
+                currentIndex = player.currentMediaItemIndex
+            )
+            player.setShuffleOrder(DefaultShuffleOrder(smartIndices, System.currentTimeMillis()))
         }
 
         // Save state when shuffle mode changes

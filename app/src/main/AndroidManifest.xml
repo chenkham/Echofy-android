@@ -89,6 +89,10 @@
         </receiver>
 
         <receiver
+            android:name=".utils.SmartAlarmReceiver"
+            android:exported="false" />
+
+        <receiver
             android:name=".CompactMusicWidget"
             android:exported="true">
             <intent-filter>

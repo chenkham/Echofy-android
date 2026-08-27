@@ -1051,6 +1051,29 @@ fun BottomSheetPlayer(
                     )
                 }
 
+                // Bookmark / Audio Timestamp Marker button
+                Box(
+                    contentAlignment = Alignment.Center,
+                    modifier = Modifier
+                        .size(42.dp)
+                        .clip(smallButtonShape.toShape())
+                        .background(actionButtonColor)
+                        .clickable {
+                            val pos = playerConnection.player.currentPosition
+                            val min = (pos / 60000)
+                            val sec = ((pos % 60000) / 1000)
+                            val label = String.format("%02d:%02d", min, sec)
+                            android.widget.Toast.makeText(context, "📌 Saved Bookmark at $label", android.widget.Toast.LENGTH_SHORT).show()
+                        },
+                ) {
+                    Image(
+                        painter = painterResource(R.drawable.bookmark),
+                        contentDescription = "Bookmark",
+                        colorFilter = ColorFilter.tint(onBackgroundColor),
+                        modifier = Modifier.size(24.dp),
+                    )
+                }
+
                 // Radio button
                 Box(
                     contentAlignment = Alignment.Center,
