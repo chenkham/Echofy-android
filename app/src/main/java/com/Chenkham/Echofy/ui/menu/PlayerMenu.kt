@@ -863,6 +863,39 @@ fun TempoPitchDialog(onDismiss: () -> Unit) {
                     valueText = { "${if (it > 0) "+" else ""}$it" },
                 )
 
+                // 1-Tap Audio Mod Presets (Slowed, Nightcore, Sped up)
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 12.dp),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    AssistChip(
+                        onClick = {
+                            tempo = 0.85f
+                            transposeValue = -2
+                            updatePlaybackParameters()
+                        },
+                        label = { Text("🌙 Slowed", fontSize = 12.sp) }
+                    )
+                    AssistChip(
+                        onClick = {
+                            tempo = 1.25f
+                            transposeValue = 2
+                            updatePlaybackParameters()
+                        },
+                        label = { Text("⚡ Nightcore", fontSize = 12.sp) }
+                    )
+                    AssistChip(
+                        onClick = {
+                            tempo = 1.15f
+                            transposeValue = 0
+                            updatePlaybackParameters()
+                        },
+                        label = { Text("🏎️ Sped Up", fontSize = 12.sp) }
+                    )
+                }
+
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
                     modifier = Modifier

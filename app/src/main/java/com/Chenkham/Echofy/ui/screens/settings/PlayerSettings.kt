@@ -271,6 +271,32 @@ fun PlayerSettings(
                     checked = autoSkipNextOnError,
                     onCheckedChange = onAutoSkipNextOnErrorChange
                 )},
+                {
+                    val (showAudioQualityBadge, onShowAudioQualityBadgeChange) = rememberPreference(
+                        key = com.Chenkham.Echofy.constants.ShowAudioQualityBadgeKey,
+                        defaultValue = false
+                    )
+                    SwitchPreference(
+                        title = { Text("Stream Quality Diagnostics Badge") },
+                        description = "Display live Codec, Bitrate, and Sample Rate badge on the player",
+                        icon = { Icon(painterResource(R.drawable.info), null) },
+                        checked = showAudioQualityBadge,
+                        onCheckedChange = onShowAudioQualityBadgeChange
+                    )
+                },
+                {
+                    val (streamCanvas, onStreamCanvasChange) = rememberPreference(
+                        key = com.Chenkham.Echofy.constants.StreamCanvasEnabledKey,
+                        defaultValue = true
+                    )
+                    SwitchPreference(
+                        title = { Text("Looping Video Canvas") },
+                        description = "Stream animated canvas video backgrounds when available",
+                        icon = { Icon(painterResource(R.drawable.movie), null) },
+                        checked = streamCanvas,
+                        onCheckedChange = onStreamCanvasChange
+                    )
+                },
             )
         )
 

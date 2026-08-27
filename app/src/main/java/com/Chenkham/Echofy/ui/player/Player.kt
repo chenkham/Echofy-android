@@ -923,7 +923,32 @@ fun BottomSheetPlayer(
         }
     }
 
-            Spacer(Modifier.height(12.dp))
+            val showAudioQualityBadge by rememberPreference(com.Chenkham.Echofy.constants.ShowAudioQualityBadgeKey, defaultValue = false)
+            if (showAudioQualityBadge && currentFormat != null) {
+                Surface(
+                    shape = RoundedCornerShape(8.dp),
+                    color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
+                    modifier = Modifier.padding(horizontal = PlayerHorizontalPadding, vertical = 2.dp)
+                ) {
+                    Row(
+                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(6.dp)
+                    ) {
+                        val codec = currentFormat?.sampleMimeType?.substringAfter("/")?.uppercase() ?: "AUDIO"
+                        val bitrate = currentFormat?.bitrate?.let { if (it > 0) "${it / 1000} kbps" else null } ?: "HQ"
+                        val sampleRate = currentFormat?.sampleRate?.let { if (it > 0) "${it / 1000} kHz" else null } ?: "48 kHz"
+                        Text(
+                            text = "⚡ $codec • $bitrate • $sampleRate",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = onBackgroundColor.copy(alpha = 0.85f),
+                            fontWeight = FontWeight.SemiBold
+                        )
+                    }
+                }
+            }
+
+            Spacer(Modifier.height(8.dp))
 
             // Unified action bar with round icon buttons (YTM-style)
             Row(

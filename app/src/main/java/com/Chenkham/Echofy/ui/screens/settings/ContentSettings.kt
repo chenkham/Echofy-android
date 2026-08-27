@@ -214,6 +214,25 @@ fun ContentSettings(
                 }
             )
         )
+        // SponsorBlock Category
+        SettingsGeneralCategory(
+            title = "SponsorBlock for Music",
+            items = listOf(
+                {
+                    val (sponsorBlockEnabled, onSponsorBlockChange) = rememberPreference(
+                        key = com.Chenkham.Echofy.constants.SponsorBlockEnabledKey,
+                        defaultValue = true
+                    )
+                    SwitchPreference(
+                        title = { Text("SponsorBlock Auto-Skip") },
+                        description = { Text("Automatically skip non-music video intros, skits, dialogue, and outro credits") },
+                        icon = { Icon(painterResource(R.drawable.skip_next), null) },
+                        checked = sponsorBlockEnabled,
+                        onCheckedChange = onSponsorBlockChange,
+                    )
+                }
+            )
+        )
         // General settings
         SettingsGeneralCategory(
             title = stringResource(R.string.general),

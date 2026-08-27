@@ -207,6 +207,12 @@ val ShowViral50HomeKey = booleanPreferencesKey("showViral50Home")
 val ShowTopChartsHomeKey = booleanPreferencesKey("showTopChartsHome")
 val ChartsCountryKey = stringPreferencesKey("chartsCountry")
 
+// SponsorBlock & Canvas & Audio Diagnostics
+val SponsorBlockEnabledKey = booleanPreferencesKey("sponsorBlockEnabled")
+val StreamCanvasEnabledKey = booleanPreferencesKey("streamCanvasEnabled")
+val ShowAudioQualityBadgeKey = booleanPreferencesKey("showAudioQualityBadge")
+val QuickAudioModPresetsKey = booleanPreferencesKey("quickAudioModPresets")
+
 // Video Quality setting for video playback
 val VideoQualityKey = stringPreferencesKey("videoQuality") // "Auto", "1080p", "720p", "480p", "360p", "144p"
 

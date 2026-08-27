@@ -1815,6 +1815,29 @@ class MusicService :
         }
     }
 
+    private var sponsorBlockJob: Job? = null
+
+    private fun startSponsorBlockTracker() {
+        sponsorBlockJob?.cancel()
+        sponsorBlockJob = scope.launch {
+            while (isActive) {
+                val mediaId = player.currentMediaItem?.mediaId
+                val prefs = dataStore.data.first()
+                if (prefs[com.Chenkham.Echofy.constants.SponsorBlockEnabledKey] != false && mediaId != null && player.isPlaying) {
+                    val currentPos = player.currentPosition
+                    val targetPos = com.Chenkham.Echofy.utils.SponsorBlockManager.getSkipTarget(mediaId, currentPos)
+                    if (targetPos != null && targetPos > currentPos) {
+                        Timber.d("SponsorBlock auto-skipping non-music section from $currentPos to $targetPos")
+                        withContext(Dispatchers.Main) {
+                            player.seekTo(targetPos)
+                        }
+                    }
+                }
+                delay(350)
+            }
+        }
+    }
+
     /**
      * Saves the position of long-form content (DJ mixes, live sets, podcasts) so it can be
      * picked up where the user left off instead of restarting from zero. Short songs are
@@ -2177,6 +2200,13 @@ class MusicService :
         publishFirebaseJamQueueSnapshot()
 
         setupLoudnessEnhancer()
+
+        if (mediaItem != null) {
+            scope.launch(Dispatchers.IO) {
+                com.Chenkham.Echofy.utils.SponsorBlockManager.fetchSegments(mediaItem.mediaId)
+            }
+            startSponsorBlockTracker()
+        }
 
         discordUpdateJob?.cancel()
 
