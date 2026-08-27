@@ -111,7 +111,7 @@ fun AndroidAutoSettings(
         contentWindowInsets = WindowInsets(0, 0, 0, 0),
         topBar = {
             androidx.compose.material3.TopAppBar(
-                title = { Text(stringResource(R.string.android_auto)) },
+                title = { Text(stringResource(R.string.android_auto), color = MaterialTheme.colorScheme.onSurface) },
                 navigationIcon = {
                     com.Chenkham.Echofy.ui.component.IconButton(
                         onClick = navController::navigateUp,
@@ -120,10 +120,16 @@ fun AndroidAutoSettings(
                         Icon(
                             painter = painterResource(R.drawable.arrow_back),
                             contentDescription = null,
+                            tint = MaterialTheme.colorScheme.onSurface,
                         )
                     }
                 },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent, scrolledContainerColor = Color.Transparent),
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = Color.Transparent,
+                    scrolledContainerColor = Color.Transparent,
+                    titleContentColor = MaterialTheme.colorScheme.onSurface,
+                    navigationIconContentColor = MaterialTheme.colorScheme.onSurface,
+                ),
                 windowInsets = WindowInsets.systemBars.only(WindowInsetsSides.Top),
             )
         },
@@ -474,6 +480,7 @@ private fun SettingsSectionHeader(
                 text = title,
                 style = MaterialTheme.typography.titleLarge,
                 fontWeight = FontWeight.SemiBold,
+                color = MaterialTheme.colorScheme.onSurface,
             )
             Text(
                 text = description,

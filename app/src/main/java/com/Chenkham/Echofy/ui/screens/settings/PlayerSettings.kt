@@ -116,7 +116,7 @@ fun PlayerSettings(
     )
     val (pipEnabled, onPipEnabledChange) = rememberPreference(
         PipEnabledKey,
-        defaultValue = true
+        defaultValue = false
     )
     val (monoAudio, onMonoAudioChange) = rememberPreference(
         MonoAudioKey,
@@ -692,7 +692,7 @@ fun PlayerSettings(
                     SwitchPreference(
                         title = { Text("Real-Time Guitar & Ukulele Chords") },
                         description = "Display synchronized chord progressions above player timeline & lyrics",
-                        icon = { Text("🎸", fontSize = 20.sp) },
+                        icon = { Icon(painterResource(R.drawable.queue_music), null) },
                         checked = realtimeChordsEnabled,
                         onCheckedChange = onRealtimeChordsEnabledChange
                     )

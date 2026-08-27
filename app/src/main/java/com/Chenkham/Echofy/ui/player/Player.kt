@@ -972,10 +972,20 @@ fun BottomSheetPlayer(
     }
 
             val showAudioQualityBadge by rememberPreference(com.Chenkham.Echofy.constants.ShowAudioQualityBadgeKey, defaultValue = false)
-            if (showAudioQualityBadge && currentFormat != null) {
+            if (showAudioQualityBadge && (currentSong != null || mediaMetadata != null)) {
+                val liveAudioFormat = playerConnection.player.audioFormat
+                val rawCodec = currentFormat?.mimeType ?: liveAudioFormat?.sampleMimeType ?: "audio/opus"
+                val codec = rawCodec.substringAfter("/").substringBefore(";").uppercase()
+                val bitrate = currentFormat?.bitrate?.takeIf { it > 0 }?.let { "${it / 1000} kbps" }
+                    ?: liveAudioFormat?.bitrate?.takeIf { it > 0 }?.let { "${it / 1000} kbps" }
+                    ?: "160 kbps"
+                val sampleRate = currentFormat?.sampleRate?.takeIf { it > 0 }?.let { "${it / 1000} kHz" }
+                    ?: liveAudioFormat?.sampleRate?.takeIf { it > 0 }?.let { "${it / 1000} kHz" }
+                    ?: "48 kHz"
+
                 Surface(
                     shape = RoundedCornerShape(8.dp),
-                    color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
+                    color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.6f),
                     modifier = Modifier.padding(horizontal = PlayerHorizontalPadding, vertical = 2.dp)
                 ) {
                     Row(
@@ -983,11 +993,14 @@ fun BottomSheetPlayer(
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(6.dp)
                     ) {
-                        val codec = currentFormat?.mimeType?.substringAfter("/")?.uppercase() ?: "AUDIO"
-                        val bitrate = currentFormat?.bitrate?.let { if (it > 0) "${it / 1000} kbps" else null } ?: "HQ"
-                        val sampleRate = currentFormat?.sampleRate?.let { if (it > 0) "${it / 1000} kHz" else null } ?: "48 kHz"
+                        Icon(
+                            painter = painterResource(R.drawable.info),
+                            contentDescription = null,
+                            modifier = Modifier.size(12.dp),
+                            tint = onBackgroundColor.copy(alpha = 0.85f)
+                        )
                         Text(
-                            text = "⚡ $codec • $bitrate • $sampleRate",
+                            text = "$codec • $bitrate • $sampleRate",
                             style = MaterialTheme.typography.labelSmall,
                             color = onBackgroundColor.copy(alpha = 0.85f),
                             fontWeight = FontWeight.SemiBold
@@ -1267,7 +1280,12 @@ fun BottomSheetPlayer(
                                 verticalAlignment = Alignment.CenterVertically,
                                 horizontalArrangement = Arrangement.spacedBy(6.dp)
                             ) {
-                                Text(text = "🎸", fontSize = 12.sp)
+                                Icon(
+                                    painter = painterResource(R.drawable.queue_music),
+                                    contentDescription = null,
+                                    modifier = Modifier.size(14.dp),
+                                    tint = MaterialTheme.colorScheme.onPrimaryContainer
+                                )
                                 Text(
                                     text = "${activeChord.section}:",
                                     style = MaterialTheme.typography.labelSmall,

@@ -732,10 +732,13 @@ fun EqualizerScreen(
                             verticalAlignment = Alignment.CenterVertically,
                             modifier = Modifier.weight(1f)
                         ) {
-                            Text(
-                                text = "🎸",
-                                fontSize = 22.sp,
-                                modifier = Modifier.padding(end = 10.dp)
+                            Icon(
+                                painter = painterResource(R.drawable.queue_music),
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.primary,
+                                modifier = Modifier
+                                    .size(24.dp)
+                                    .padding(end = 6.dp)
                             )
                             Column {
                                 Text(

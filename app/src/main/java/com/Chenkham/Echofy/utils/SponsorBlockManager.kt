@@ -1,4 +1,4 @@
-﻿package com.Chenkham.Echofy.utils
+package com.Chenkham.Echofy.utils
 
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -22,7 +22,9 @@ object SponsorBlockManager {
         segmentCache[videoId]?.let { return@withContext it }
 
         try {
-            val urlString = "$API_BASE?videoID=$videoId&categories=%5B%22music_offtopic%22%2C%22intro%22%2C%22outro%22%2C%22preview%22%5D"
+            val categoriesJson = "[\"sponsor\",\"selfpromo\",\"interaction\",\"intro\",\"outro\",\"preview\",\"music_offtopic\",\"filler\"]"
+            val encodedCategories = java.net.URLEncoder.encode(categoriesJson, "UTF-8")
+            val urlString = "$API_BASE?videoID=$videoId&categories=$encodedCategories"
             val url = URL(urlString)
             val conn = (url.openConnection() as HttpURLConnection).apply {
                 requestMethod = "GET"
@@ -38,7 +40,7 @@ object SponsorBlockManager {
 
                 for (i in 0 until jsonArray.length()) {
                     val obj = jsonArray.getJSONObject(i)
-                    val category = obj.optString("category", "music_offtopic")
+                    val category = obj.optString("category", "sponsor")
                     val segmentPair = obj.optJSONArray("segment")
                     if (segmentPair != null && segmentPair.length() >= 2) {
                         val startSec = segmentPair.getDouble(0)
@@ -68,7 +70,7 @@ object SponsorBlockManager {
     fun getSkipTarget(videoId: String, currentPositionMs: Long): Long? {
         val segments = segmentCache[videoId] ?: return null
         for (seg in segments) {
-            if (currentPositionMs >= (seg.startMs - 200L) && currentPositionMs < (seg.endMs - 300L)) {
+            if (currentPositionMs in (seg.startMs - 250L)..(seg.endMs - 250L)) {
                 return seg.endMs
             }
         }

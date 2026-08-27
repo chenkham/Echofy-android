@@ -25,7 +25,7 @@ android {
         applicationId = "com.Chenkham.Echofy"
         minSdk = 26
         targetSdk = 36
-        versionCode = 26
+        versionCode = 27
         versionName = "4.9.0"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         multiDexEnabled = true

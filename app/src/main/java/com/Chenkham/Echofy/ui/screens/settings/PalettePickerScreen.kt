@@ -1,4 +1,4 @@
-﻿/*
+/*
  * Echofy Project Original (2026)
  * Arturo254 (github.com/Arturo254)
  * Licensed Under GPL-3.0 | see git history for contributors
@@ -947,18 +947,6 @@ fun PalettePickerScreen(
                     LocalPlayerAwareWindowInsets.current.only(WindowInsetsSides.Bottom + WindowInsetsSides.Horizontal)
                 )
             ) {
-                ExtendedFloatingActionButton(
-                    text = { Text(stringResource(R.string.custom_theme)) },
-                    icon = {
-                        Icon(
-                            painter = painterResource(R.drawable.palette),
-                            contentDescription = null
-                        )
-                    },
-                    onClick = { navController.navigate("settings/appearance/theme_creator") },
-                    containerColor = MaterialTheme.colorScheme.primary,
-                    contentColor = MaterialTheme.colorScheme.onPrimary,
-                )
                 ExtendedFloatingActionButton(
                     text = { Text(stringResource(R.string.import_theme)) },
                     icon = {

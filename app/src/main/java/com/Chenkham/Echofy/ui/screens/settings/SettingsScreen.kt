@@ -738,11 +738,6 @@ fun SettingsScreen(
                     onClick = { navController.navigate("settings/appearance") }
                 ),
                 SettingsCategoryItem(
-                    icon = painterResource(R.drawable.palette),
-                    title = { Text("Theme & Palette Creator") },
-                    onClick = { navController.navigate("settings/theme_creator") }
-                ),
-                SettingsCategoryItem(
                     icon = painterResource(R.drawable.wallpaper),
                     title = { Text("Player Background & Glass") },
                     onClick = { navController.navigate("settings/backpaper") }
@@ -804,11 +799,6 @@ fun SettingsScreen(
                     icon = painterResource(R.drawable.language),
                     title = { Text(stringResource(R.string.content)) },
                     onClick = { navController.navigate("settings/content") }
-                ),
-                SettingsCategoryItem(
-                    icon = painterResource(R.drawable.security),
-                    title = { Text("PoToken Authentication") },
-                    onClick = { navController.navigate("settings/potoken") }
                 ),
                 SettingsCategoryItem(
                     icon = painterResource(R.drawable.security),

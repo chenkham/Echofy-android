@@ -204,6 +204,7 @@ import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.distinctUntilChangedBy
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.drop
@@ -244,7 +245,7 @@ class MusicService :
     @Inject
     lateinit var mediaLibrarySessionCallback: MediaLibrarySessionCallback
 
-
+    private val audioManager by lazy { getSystemService(Context.AUDIO_SERVICE) as AudioManager }
     
     private var wakeLock: PowerManager.WakeLock? = null
 
@@ -480,11 +481,15 @@ class MusicService :
             scope.launch {
                 val enabled = dataStore.data.first()[ResumeOnHeadphonesKey] ?: false
                 if (enabled && player.mediaItemCount > 0 && !player.isPlaying) {
-                    player.play()
+                    withContext(Dispatchers.Main) {
+                        player.play()
+                    }
                 }
             }
         }
     }
+
+    private var audioDeviceCallback: android.media.AudioDeviceCallback? = null
 
     lateinit var sleepTimer: SleepTimer
 
@@ -542,6 +547,7 @@ class MusicService :
     private var spatialAudioEnabled = false
     private var spatialAudioStrength = 500
     private var spatialAudio8DOrbit = false
+    @Volatile private var sponsorBlockEnabled = true
 
     private var discordRpc: DiscordRPC? = null
     private var lastPlaybackSpeed = 1.0f
@@ -872,8 +878,34 @@ class MusicService :
             this,
             headphoneConnectReceiver,
             headphoneFilter,
-            ContextCompat.RECEIVER_NOT_EXPORTED,
+            ContextCompat.RECEIVER_EXPORTED,
         )
+
+        // Hardware audio device callback for instant wired, USB, and BT headphone detection
+        audioDeviceCallback = object : android.media.AudioDeviceCallback() {
+            override fun onAudioDevicesAdded(addedDevices: Array<out android.media.AudioDeviceInfo>?) {
+                val hasHeadphones = addedDevices?.any {
+                    it.type == android.media.AudioDeviceInfo.TYPE_WIRED_HEADPHONES ||
+                    it.type == android.media.AudioDeviceInfo.TYPE_WIRED_HEADSET ||
+                    it.type == android.media.AudioDeviceInfo.TYPE_BLUETOOTH_A2DP ||
+                    it.type == android.media.AudioDeviceInfo.TYPE_BLUETOOTH_SCO ||
+                    it.type == android.media.AudioDeviceInfo.TYPE_USB_HEADSET ||
+                    it.type == android.media.AudioDeviceInfo.TYPE_USB_DEVICE ||
+                    it.type == android.media.AudioDeviceInfo.TYPE_HEARING_AID
+                } ?: false
+                if (hasHeadphones) {
+                    scope.launch {
+                        val enabled = dataStore.data.first()[ResumeOnHeadphonesKey] ?: false
+                        if (enabled && player.mediaItemCount > 0 && !player.isPlaying) {
+                            withContext(Dispatchers.Main) {
+                                player.play()
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        audioManager.registerAudioDeviceCallback(audioDeviceCallback, null)
 
         // Initialize WakeLock
         val powerManager = getSystemService(Context.POWER_SERVICE) as PowerManager
@@ -992,6 +1024,9 @@ class MusicService :
         }
         scope.launch {
             dataStore.data.map { it[com.Chenkham.Echofy.constants.HapticBassBeatsKey] ?: false }.distinctUntilChanged().collect { hapticBassEnabled = it }
+        }
+        scope.launch {
+            dataStore.data.map { it[com.Chenkham.Echofy.constants.SponsorBlockEnabledKey] ?: true }.distinctUntilChanged().collect { sponsorBlockEnabled = it }
         }
         
         // Async volume init
@@ -1872,18 +1907,19 @@ class MusicService :
         sponsorBlockJob = scope.launch {
             while (isActive) {
                 val mediaId = player.currentMediaItem?.mediaId
-                val prefs = dataStore.data.first()
-                if (prefs[com.Chenkham.Echofy.constants.SponsorBlockEnabledKey] != false && mediaId != null && player.isPlaying) {
+                if (sponsorBlockEnabled && mediaId != null && player.isPlaying) {
                     val currentPos = player.currentPosition
                     val targetPos = com.Chenkham.Echofy.utils.SponsorBlockManager.getSkipTarget(mediaId, currentPos)
                     if (targetPos != null && targetPos > currentPos) {
-                        Timber.d("SponsorBlock auto-skipping non-music section from $currentPos to $targetPos")
+                        Timber.d("SponsorBlock auto-skipping sponsor/voice section from $currentPos to $targetPos")
                         withContext(Dispatchers.Main) {
-                            player.seekTo(targetPos)
+                            if (player.isPlaying) {
+                                player.seekTo(targetPos)
+                            }
                         }
                     }
                 }
-                delay(350)
+                delay(200)
             }
         }
     }
@@ -1949,16 +1985,18 @@ class MusicService :
             if (!perTrack && !perContentType) return@launch
 
             val savedTempo = if (perTrack) prefs[playbackTempoKey(mediaId)] else null
-            val contentTypeSpeed = if (perContentType) longFormSpeedFor(prefs) else null
+            val contentTypeSpeed = if (perContentType) longFormSpeedFor(prefs, mediaId) else null
 
             // A tempo saved for this exact song always wins over the content-type default.
             val tempo = savedTempo ?: contentTypeSpeed ?: 1f
             val pitch = (if (perTrack) prefs[playbackPitchKey(mediaId)] else null) ?: 1f
 
-            if (player.playbackParameters.speed != tempo ||
-                player.playbackParameters.pitch != pitch
-            ) {
-                player.playbackParameters = PlaybackParameters(tempo, pitch)
+            withContext(Dispatchers.Main) {
+                if (player.playbackParameters.speed != tempo ||
+                    player.playbackParameters.pitch != pitch
+                ) {
+                    player.playbackParameters = PlaybackParameters(tempo, pitch)
+                }
             }
         }
     }
@@ -1969,9 +2007,15 @@ class MusicService :
      * stay at normal speed. Returns null while the duration is still unknown so the
      * current speed is left untouched.
      */
-    private fun longFormSpeedFor(prefs: Preferences): Float? {
-        val durationMs = player.duration
-        if (durationMs == C.TIME_UNSET || durationMs <= 0L) return null
+    private suspend fun longFormSpeedFor(prefs: Preferences, mediaId: String?): Float? {
+        var durationMs = player.duration
+        if (durationMs == C.TIME_UNSET || durationMs <= 0L) {
+            if (mediaId != null) {
+                val song = database.song(mediaId).firstOrNull()
+                durationMs = (song?.song?.duration ?: 0) * 1000L
+            }
+        }
+        if (durationMs <= 0L) return null
 
         val minMinutes = prefs[LongFormMinMinutesKey] ?: 20
         val isLongForm = durationMs >= minMinutes * 60_000L
@@ -2382,6 +2426,9 @@ class MusicService :
         @Player.State playbackState: Int,
     ) {
         notifyWidgetsPlaybackChanged()
+        if (playbackState == Player.STATE_READY) {
+            restorePlaybackSettingsForCurrentSong(player.currentMediaItem)
+        }
         // Save state when playback state changes
         if (dataStore.get(PersistentQueueKey, true) && playbackState != Player.STATE_BUFFERING) {
             scope.launch {
@@ -3618,6 +3665,7 @@ class MusicService :
         discordRpc = null
         releaseLoudnessEnhancer()
         runCatching { unregisterReceiver(headphoneConnectReceiver) }
+        audioDeviceCallback?.let { runCatching { audioManager.unregisterAudioDeviceCallback(it) } }
         shakeDetector?.let { com.Chenkham.Echofy.utils.ShakeDetector.unregister(this, it) }
         shakeDetector = null
         mediaSession.release()

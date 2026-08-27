@@ -52,9 +52,13 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
+import androidx.activity.compose.BackHandler
+import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Text
@@ -195,6 +199,10 @@ fun AlwaysOnDisplayScreen(navController: NavController) {
     val playerConnection = LocalPlayerConnection.current ?: run {
         LaunchedEffect(Unit) { navController.navigateUp() }
         return
+    }
+
+    BackHandler {
+        navController.navigateUp()
     }
 
     val view = LocalView.current
@@ -366,9 +374,16 @@ fun AlwaysOnDisplayScreen(navController: NavController) {
         contentModifier = contentModifier,
     )
 
-    Box(modifier = Modifier
-        .fillMaxSize()
-        .background(Color.Black)) {
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Color.Black)
+            .pointerInput(Unit) {
+                detectTapGestures(
+                    onDoubleTap = { navController.navigateUp() }
+                )
+            }
+    ) {
         when (aodStyle) {
             AodStyle.BACKGROUND -> BackgroundAodLayout(
                 params = commonParams,
@@ -394,6 +409,24 @@ fun AlwaysOnDisplayScreen(navController: NavController) {
                 params = commonParams,
                 artSizeDp = artSizeDp,
                 artShape = artShape,
+            )
+        }
+
+        // Sleek top-left exit button for instant one-touch exit
+        IconButton(
+            onClick = { navController.navigateUp() },
+            modifier = Modifier
+                .statusBarsPadding()
+                .padding(16.dp)
+                .align(Alignment.TopStart)
+                .size(40.dp)
+                .background(Color.Black.copy(alpha = 0.45f), CircleShape)
+        ) {
+            Icon(
+                painter = painterResource(R.drawable.arrow_back),
+                contentDescription = "Exit Always On Display",
+                tint = Color.White.copy(alpha = 0.85f),
+                modifier = Modifier.size(20.dp)
             )
         }
     }

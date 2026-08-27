@@ -51,9 +51,15 @@ class MonoBalanceAudioProcessor : BaseAudioProcessor() {
         return inputAudioFormat
     }
 
-    override fun isActive(): Boolean = super.isActive() && !isNoOp
+    override fun isActive(): Boolean = super.isActive()
 
     override fun queueInput(inputBuffer: ByteBuffer) {
+        if (isNoOp) {
+            val outputBuffer = replaceOutputBuffer(inputBuffer.remaining())
+            outputBuffer.put(inputBuffer)
+            return
+        }
+
         val position = inputBuffer.position()
         val limit = inputBuffer.limit()
         val frameCount = (limit - position) / 4
@@ -61,8 +67,8 @@ class MonoBalanceAudioProcessor : BaseAudioProcessor() {
 
         // Constant-gain panning: one side is attenuated rather than the other boosted, so
         // the output can never clip.
-        val leftGain = if (balance > 0f) 1f - balance else 1f
-        val rightGain = if (balance < 0f) 1f + balance else 1f
+        val leftGain = if (balance > 0f) (1f - balance).coerceIn(0f, 1f) else 1f
+        val rightGain = if (balance < 0f) (1f + balance).coerceIn(0f, 1f) else 1f
 
         var index = position
         while (index < limit) {

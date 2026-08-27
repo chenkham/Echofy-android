@@ -60,10 +60,13 @@ fun ChordDiagramDialog(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        Text(
-                            text = "🎸",
-                            fontSize = 24.sp,
-                            modifier = Modifier.padding(end = 8.dp)
+                        Icon(
+                            painter = painterResource(R.drawable.queue_music),
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier
+                                .size(28.dp)
+                                .padding(end = 8.dp)
                         )
                         Column {
                             Text(

@@ -421,8 +421,8 @@ fun ContentSettings(
                     values = listOf(QuickPicks.QUICK_PICKS, QuickPicks.LAST_LISTEN),
                     valueText = {
                         when (it) {
-                            QuickPicks.QUICK_PICKS -> "🎲 Random Quick Picks (Shuffle all tracks)"
-                            QuickPicks.LAST_LISTEN -> "🎧 Based on Last Listened Song"
+                            QuickPicks.QUICK_PICKS -> "Random Quick Picks (Shuffle all tracks)"
+                            QuickPicks.LAST_LISTEN -> "Based on Last Listened Song"
                         }
                     },
                     onValueSelected = onQuickPicksChange,

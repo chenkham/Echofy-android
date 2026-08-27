@@ -633,7 +633,7 @@ object YTPlayerUtils {
     ): List<PlayerResponse.StreamingData.Format> {
         val streamingData = playerResponse.streamingData ?: return emptyList()
 
-        // 1. Adaptive video streams (pure video-only high quality streams: 1080p, 1440p, 720p HD, etc.)
+        // Pure separated adaptive video-only streams (ExoPlayer MergingMediaSource combines this with separated high-bitrate audio)
         val adaptiveVideoFormats = streamingData.adaptiveFormats
             ?.filter { it.mimeType.startsWith("video/") && (it.url != null || it.signatureCipher != null || it.cipher != null) }
             ?.filter { format ->
@@ -646,17 +646,7 @@ object YTPlayerUtils {
             )
             .orEmpty()
 
-        // Progressive formats (muxed video+audio) kept only as last-resort fallback if adaptive formats are unavailable
-        val progressiveFormats = streamingData.formats
-            ?.filter { it.mimeType.startsWith("video/") && (it.url != null || it.signatureCipher != null || it.cipher != null) }
-            ?.filter { format ->
-                val codec = extractCodec(format.mimeType)?.lowercase()
-                codec == null || codec !in avoidCodecs
-            }
-            ?.sortedByDescending { it.height ?: (it.bitrate / 1000) }
-            .orEmpty()
-
-        val candidateList = if (adaptiveVideoFormats.isNotEmpty()) adaptiveVideoFormats else progressiveFormats
+        val candidateList = adaptiveVideoFormats
 
         // Update available qualities flow for UI quality picker
         val heights = candidateList

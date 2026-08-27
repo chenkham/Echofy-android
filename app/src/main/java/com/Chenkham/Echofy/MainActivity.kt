@@ -744,7 +744,7 @@ class MainActivity : ComponentActivity() {
             // Cache settings to avoid blocking on lifecycle events
             LaunchedEffect(Unit) {
                 launch(Dispatchers.IO) {
-                    dataStore.data.map { it[com.Chenkham.Echofy.constants.PipEnabledKey] ?: true }
+                    dataStore.data.map { it[com.Chenkham.Echofy.constants.PipEnabledKey] ?: false }
                         .distinctUntilChanged()
                         .collect { pipEnabled = it }
                 }
@@ -1110,9 +1110,12 @@ class MainActivity : ComponentActivity() {
                             kotlinx.coroutines.delay(1000L)
                             val currentRoute = navBackStackEntry?.destination?.route
                             val isAodScreen = currentRoute == "always_on_display"
-                            if (!isAodScreen && aodIsPlaying) {
+                            if (isAodScreen) {
+                                lastUserInteractionTime = System.currentTimeMillis()
+                            } else if (aodIsPlaying) {
                                 val idleMs = System.currentTimeMillis() - lastUserInteractionTime
                                 if (idleMs >= aodTimeoutSecs * 1000L) {
+                                    lastUserInteractionTime = System.currentTimeMillis()
                                     navController.navigate("always_on_display")
                                 }
                             }
@@ -1122,6 +1125,7 @@ class MainActivity : ComponentActivity() {
                     var shouldShowTopBar by rememberSaveable { mutableStateOf(false) }
 
                     LaunchedEffect(navBackStackEntry) {
+                        lastUserInteractionTime = System.currentTimeMillis()
                         shouldShowTopBar =
                             !active && navBackStackEntry?.destination?.route in topLevelScreens && navBackStackEntry?.destination?.route != "settings"
                     }
