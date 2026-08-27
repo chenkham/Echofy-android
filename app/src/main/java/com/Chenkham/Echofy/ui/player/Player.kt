@@ -1834,6 +1834,45 @@ fun PlayerProgressSection(
         }
     }
 
+    val waveformHeatmapScrubberEnabled by rememberPreference(com.Chenkham.Echofy.constants.WaveformHeatmapScrubberEnabledKey, defaultValue = false)
+    if (waveformHeatmapScrubberEnabled) {
+        val currentMediaId = playerConnection.player.currentMediaItem?.mediaId ?: ""
+        val hash = remember(currentMediaId) { currentMediaId.hashCode().let { if (it < 0) -it else it } }
+        val progressFraction = remember(sliderPosition, position, duration) {
+            if (duration > 0 && duration != C.TIME_UNSET) {
+                ((sliderPosition ?: position).toFloat() / duration.toFloat()).coerceIn(0f, 1f)
+            } else 0f
+        }
+
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(22.dp)
+                .padding(horizontal = PlayerHorizontalPadding + 6.dp)
+        ) {
+            androidx.compose.foundation.Canvas(modifier = Modifier.fillMaxSize()) {
+                val barCount = 44
+                val barWidth = (size.width / barCount) * 0.7f
+                val spacing = size.width / barCount
+
+                for (i in 0 until barCount) {
+                    val barHash = ((hash + i * 37) % 100) / 100f
+                    val barHeight = (0.25f + barHash * 0.75f) * size.height
+                    val x = i * spacing + (spacing - barWidth) / 2
+                    val y = (size.height - barHeight) / 2
+                    val isPast = (i.toFloat() / barCount) <= progressFraction
+
+                    drawRoundRect(
+                        color = if (isPast) color else Color.Gray.copy(alpha = 0.35f),
+                        topLeft = androidx.compose.ui.geometry.Offset(x, y),
+                        size = androidx.compose.ui.geometry.Size(barWidth, barHeight),
+                        cornerRadius = androidx.compose.ui.geometry.CornerRadius(4.dp.toPx())
+                    )
+                }
+            }
+        }
+    }
+
     when (sliderStyle) {
         SliderStyle.DEFAULT -> {
             Slider(

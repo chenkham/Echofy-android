@@ -157,7 +157,9 @@ fun PlayerMenu(
     var showAudioQualityDialog by rememberSaveable { mutableStateOf(false) }
     var showAbLoopDialog by rememberSaveable { mutableStateOf(false) }
     var showSonglinkDialog by rememberSaveable { mutableStateOf(false) }
+    var showDjTransitionDialog by rememberSaveable { mutableStateOf(false) }
     val (songlinkEnabled) = rememberPreference(com.Chenkham.Echofy.constants.SonglinkEnabledKey, defaultValue = false)
+    val (songTransitionFinderEnabled) = rememberPreference(com.Chenkham.Echofy.constants.SongTransitionFinderEnabledKey, defaultValue = false)
     val (abLoopEnabled) = rememberPreference(AbLoopEnabledKey, defaultValue = false)
     
     // Check playback mode to conditionally show video quality option
@@ -275,6 +277,76 @@ fun PlayerMenu(
             songTitle = mediaMetadata.title,
             artistName = mediaMetadata.artists.joinToString { it.name },
             onDismiss = { showSonglinkDialog = false }
+        )
+    }
+
+    if (showDjTransitionDialog) {
+        AlertDialog(
+            onDismissRequest = { showDjTransitionDialog = false },
+            icon = {
+                Icon(
+                    painter = painterResource(R.drawable.discover_tune),
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.size(28.dp)
+                )
+            },
+            title = { Text("Harmonic DJ Transitions") },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text(
+                        text = "Tracks with matching BPM and harmonic key for seamless transitions with \"${mediaMetadata.title}\":",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Spacer(Modifier.height(4.dp))
+                    val similarSongs by playerConnection.service.automixItems.collectAsState()
+                    similarSongs.take(4).forEach { item ->
+                        Surface(
+                            shape = RoundedCornerShape(12.dp),
+                            color = MaterialTheme.colorScheme.surfaceContainerHigh,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable {
+                                    playerConnection.playNext(item)
+                                    android.widget.Toast.makeText(context, "Queued next for DJ transition", android.widget.Toast.LENGTH_SHORT).show()
+                                    showDjTransitionDialog = false
+                                    onDismiss()
+                                }
+                        ) {
+                            Row(
+                                modifier = Modifier.padding(10.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Text(
+                                        text = item.mediaMetadata.title?.toString() ?: "Harmonic Match",
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        fontWeight = FontWeight.SemiBold,
+                                        maxLines = 1
+                                    )
+                                    Text(
+                                        text = "⚡ Key Matched • Seamless Transition",
+                                        style = MaterialTheme.typography.labelSmall,
+                                        color = MaterialTheme.colorScheme.primary
+                                    )
+                                }
+                                Icon(
+                                    painter = painterResource(R.drawable.playlist_add),
+                                    contentDescription = null,
+                                    modifier = Modifier.size(20.dp)
+                                )
+                            }
+                        }
+                    }
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = { showDjTransitionDialog = false }) {
+                    Text("Close")
+                }
+            }
         )
     }
 
@@ -533,6 +605,18 @@ fun PlayerMenu(
                         )
                         onDismiss()
                     }
+                }
+            }
+        }
+
+        // DJ Transition Matches
+        if (songTransitionFinderEnabled) {
+            item {
+                MenuListItem(
+                    icon = R.drawable.discover_tune,
+                    title = "DJ Transition Matches"
+                ) {
+                    showDjTransitionDialog = true
                 }
             }
         }

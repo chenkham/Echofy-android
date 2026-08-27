@@ -515,6 +515,7 @@ class MusicService :
     @Volatile private var hapticBassEnabled = false
 
     private var shakeDetector: com.Chenkham.Echofy.utils.ShakeDetector? = null
+    private var flipToPauseDetector: com.Chenkham.Echofy.utils.FlipToPauseDetector? = null
 
     private val PauseRemoteListenHistoryKey = booleanPreferencesKey("pauseRemoteListenHistory")
 
@@ -876,6 +877,28 @@ class MusicService :
             }
         }
         shakeDetector?.let { com.Chenkham.Echofy.utils.ShakeDetector.register(this, it) }
+
+        // Flip to Pause / Resume gesture
+        flipToPauseDetector = com.Chenkham.Echofy.utils.FlipToPauseDetector(
+            context = this,
+            onFaceDown = {
+                scope.launch {
+                    val prefs = dataStore.data.first()
+                    if (prefs[com.Chenkham.Echofy.constants.FlipToPauseEnabledKey] == true && player.isPlaying) {
+                        player.pause()
+                    }
+                }
+            },
+            onFaceUp = {
+                scope.launch {
+                    val prefs = dataStore.data.first()
+                    if (prefs[com.Chenkham.Echofy.constants.FlipToPauseEnabledKey] == true && !player.isPlaying) {
+                        player.play()
+                    }
+                }
+            }
+        )
+        flipToPauseDetector?.start()
 
         mediaLibrarySessionCallback.apply {
             toggleLike = ::toggleLike

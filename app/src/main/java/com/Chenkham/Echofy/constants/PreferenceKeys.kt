@@ -213,6 +213,11 @@ val StreamCanvasEnabledKey = booleanPreferencesKey("streamCanvasEnabled")
 val ShowAudioQualityBadgeKey = booleanPreferencesKey("showAudioQualityBadge")
 val QuickAudioModPresetsKey = booleanPreferencesKey("quickAudioModPresets")
 
+// DJ Transitions, Waveform Heatmap, and Flip-to-Pause
+val SongTransitionFinderEnabledKey = booleanPreferencesKey("songTransitionFinderEnabled")
+val WaveformHeatmapScrubberEnabledKey = booleanPreferencesKey("waveformHeatmapScrubberEnabled")
+val FlipToPauseEnabledKey = booleanPreferencesKey("flipToPauseEnabled")
+
 // Video Quality setting for video playback
 val VideoQualityKey = stringPreferencesKey("videoQuality") // "Auto", "1080p", "720p", "480p", "360p", "144p"
 

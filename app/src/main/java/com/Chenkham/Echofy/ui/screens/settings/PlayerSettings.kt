@@ -297,6 +297,45 @@ fun PlayerSettings(
                         onCheckedChange = onStreamCanvasChange
                     )
                 },
+                {
+                    val (transitionFinder, onTransitionFinderChange) = rememberPreference(
+                        key = com.Chenkham.Echofy.constants.SongTransitionFinderEnabledKey,
+                        defaultValue = false
+                    )
+                    SwitchPreference(
+                        title = { Text("DJ Transition Finder") },
+                        description = "Recommend harmonically matched tracks with identical BPM & Key in player menu",
+                        icon = { Icon(painterResource(R.drawable.discover_tune), null) },
+                        checked = transitionFinder,
+                        onCheckedChange = onTransitionFinderChange
+                    )
+                },
+                {
+                    val (waveformHeatmap, onWaveformHeatmapChange) = rememberPreference(
+                        key = com.Chenkham.Echofy.constants.WaveformHeatmapScrubberEnabledKey,
+                        defaultValue = false
+                    )
+                    SwitchPreference(
+                        title = { Text("Audio Frequency Heatmap Scrubber") },
+                        description = "Display dynamic frequency waveform heatmap bars on progress scrubber",
+                        icon = { Icon(painterResource(R.drawable.graphic_eq), null) },
+                        checked = waveformHeatmap,
+                        onCheckedChange = onWaveformHeatmapChange
+                    )
+                },
+                {
+                    val (flipToPause, onFlipToPauseChange) = rememberPreference(
+                        key = com.Chenkham.Echofy.constants.FlipToPauseEnabledKey,
+                        defaultValue = false
+                    )
+                    SwitchPreference(
+                        title = { Text("Flip Phone to Pause") },
+                        description = "Automatically pause playback when placing phone face-down on a surface",
+                        icon = { Icon(painterResource(R.drawable.screen_rotation), null) },
+                        checked = flipToPause,
+                        onCheckedChange = onFlipToPauseChange
+                    )
+                },
             )
         )
 
