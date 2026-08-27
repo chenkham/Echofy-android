@@ -231,7 +231,12 @@
                 <data android:host="chenkham.github.io" />
                 <data android:host="echofy.app" />
                 <data android:host="www.echofy.app" />
+                <data android:host="echofy.redirectting.workers.dev" />
+                <data android:host="*.workers.dev" />
+                <data android:host="echofy.pages.dev" />
+                <data android:host="*.pages.dev" />
 
+                <data android:pathPrefix="/" />
                 <data android:pathPrefix="/track/" />
                 <data android:pathPrefix="/song/" />
                 <data android:pathPrefix="/jam/" />

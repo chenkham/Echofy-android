@@ -1415,9 +1415,15 @@ private fun CurrentJamTrackRow(
                         text = { Text("Share song") },
                         onClick = {
                             showMenu = false
+                            val shareText = com.Chenkham.Echofy.utils.ShareUtils.buildTrackShareText(
+                                context = context,
+                                songId = currentSong.id,
+                                title = currentSong.title,
+                                artist = currentSong.artists.joinToString { it.name }
+                            )
                             val shareIntent = Intent(Intent.ACTION_SEND).apply {
                                 type = "text/plain"
-                                putExtra(Intent.EXTRA_TEXT, "https://music.youtube.com/watch?v=${currentSong.id}")
+                                putExtra(Intent.EXTRA_TEXT, shareText)
                             }
                             context.startActivity(Intent.createChooser(shareIntent, "Share"))
                         },
@@ -1657,6 +1663,9 @@ private fun InviteJamSheetContent(
             color = Color.White.copy(alpha = 0.68f),
         )
 
+        val targetInviteUrl = inviteLink?.takeIf { it.isNotBlank() }
+            ?: "${com.Chenkham.Echofy.utils.ShareUtils.DEFAULT_SHARE_DOMAIN}/?jam=${roomCode.trim().uppercase()}"
+
         Card(
             shape = RoundedCornerShape(24.dp),
             colors = CardDefaults.cardColors(containerColor = Color(0xFF181818)),
@@ -1665,26 +1674,39 @@ private fun InviteJamSheetContent(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(18.dp),
-                verticalArrangement = Arrangement.spacedBy(10.dp),
+                verticalArrangement = Arrangement.spacedBy(14.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                Text(
-                    text = "Room code",
-                    style = MaterialTheme.typography.labelLarge,
-                    color = Color.White.copy(alpha = 0.68f),
-                )
-                Text(
-                    text = roomCode,
-                    style = MaterialTheme.typography.headlineSmall,
-                    fontWeight = FontWeight.Bold,
-                    color = Color.White,
-                )
-                if (!inviteLink.isNullOrBlank()) {
+                Column(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
                     Text(
-                        text = inviteLink,
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = Color(0xFF8CE3AE),
+                        text = "Room code",
+                        style = MaterialTheme.typography.labelLarge,
+                        color = Color.White.copy(alpha = 0.68f),
+                    )
+                    Text(
+                        text = roomCode,
+                        style = MaterialTheme.typography.headlineSmall,
+                        fontWeight = FontWeight.Bold,
+                        color = Color.White,
                     )
                 }
+
+                // QR Code for instant scanning
+                QrCodeView(
+                    content = targetInviteUrl,
+                    sizeDp = 180.dp,
+                    modifier = Modifier.padding(vertical = 4.dp)
+                )
+
+                Text(
+                    text = "Scan with camera to join immediately",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = Color.White.copy(alpha = 0.60f),
+                    textAlign = TextAlign.Center
+                )
             }
         }
 
@@ -2092,10 +2114,10 @@ private fun buildInviteLink(
         if (base.endsWith("/r") || base.endsWith("/jam")) {
             "$base/$roomCode"
         } else {
-            "$base/jam/$roomCode"
+            "$base/?jam=${roomCode.trim().uppercase()}"
         }
     } else {
-        "${com.Chenkham.Echofy.utils.ShareUtils.DEFAULT_SHARE_DOMAIN}/jam/$roomCode"
+        "${com.Chenkham.Echofy.utils.ShareUtils.DEFAULT_SHARE_DOMAIN}/?jam=${roomCode.trim().uppercase()}"
     }
 }
 

@@ -287,6 +287,7 @@ dependencies {
     implementation(libs.room.ktx)
 
     implementation(libs.apache.lang3)
+    implementation("com.google.zxing:core:3.5.3")
 
     implementation(libs.hilt)
     implementation("org.jsoup:jsoup:1.18.1")

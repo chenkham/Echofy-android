@@ -30,9 +30,10 @@ object MusicBrainz {
             }
 
             defaultRequest {
-                url("https://musicbrainz.org/ws/2")
+                url("https://musicbrainz.org/ws/2/")
                 // MusicBrainz requires a User-Agent identifying the app
-                headers.append("User-Agent", "Echofy/1.0 (https://github.com/yourusername/echofy)")
+                headers.append("User-Agent", "Echofy/4.9.0 (https://chenkham.github.io; chenkhamchowlu@gmail.com)")
+                headers.append("Accept", "application/json")
             }
 
             expectSuccess = false
@@ -60,7 +61,7 @@ object MusicBrainz {
     ) = runCatching {
         rateLimit()
         client
-            .get("/artist") {
+            .get("artist") {
                 parameter("query", "artist:\"$name\"")
                 parameter("limit", limit)
                 parameter("fmt", "json")
@@ -75,7 +76,7 @@ object MusicBrainz {
     suspend fun getArtist(mbid: String) = runCatching {
         rateLimit()
         val response = client
-            .get("/artist/$mbid") {
+            .get("artist/$mbid") {
                 parameter("inc", "tags+url-rels")
                 parameter("fmt", "json")
             }.body<MusicBrainzArtist>()

@@ -217,7 +217,9 @@ fun ShareLyricsDialog(
                             val shareIntent = Intent().apply {
                                 action = Intent.ACTION_SEND
                                 type = "text/plain"
-                                val songLink = "https://music.youtube.com/watch?v=${mediaMetadata?.id}"
+                                val songLink = mediaMetadata?.id?.let {
+                                    com.Chenkham.Echofy.utils.ShareUtils.buildTrackShareUrl(context, it, songTitle, artists)
+                                } ?: ""
                                 putExtra(
                                     Intent.EXTRA_TEXT,
                                     "\"$lyricsText\"\n\n$songTitle - $artists\n$songLink"

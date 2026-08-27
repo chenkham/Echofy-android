@@ -107,17 +107,21 @@ fun SettingsGeneralCategory(
             ),
             modifier = Modifier.fillMaxWidth()
         ) {
-            Column {
-                items.forEachIndexed { index, item ->
-                    item()
-                    if (index < items.lastIndex) {
-                        Spacer(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(1.dp)
-                                .padding(horizontal = 16.dp)
-                                .background(MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.12f))
-                        )
+            androidx.compose.runtime.CompositionLocalProvider(
+                com.Chenkham.Echofy.ui.component.LocalPreferenceInGroup provides true
+            ) {
+                Column {
+                    items.forEachIndexed { index, item ->
+                        item()
+                        if (index < items.lastIndex) {
+                            Spacer(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(1.dp)
+                                    .padding(horizontal = 16.dp)
+                                    .background(MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.12f))
+                            )
+                        }
                     }
                 }
             }

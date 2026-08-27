@@ -227,6 +227,7 @@ import com.Chenkham.Echofy.ui.component.rememberBottomSheetState
 import com.Chenkham.Echofy.ui.component.shimmer.ShimmerTheme
 import com.Chenkham.Echofy.ui.menu.YouTubeSongMenu
 import com.Chenkham.Echofy.ui.player.AppleBottomSheetPlayer
+import com.Chenkham.Echofy.constants.AodAutoActivationKey
 import com.Chenkham.Echofy.ui.player.BottomSheetPlayer
 import com.Chenkham.Echofy.constants.PlayerLayoutStyleKey
 import com.Chenkham.Echofy.constants.PlayerLayoutStyle
@@ -307,6 +308,12 @@ class MainActivity : ComponentActivity() {
     private var autoClearCache = false
     private var stopMusicOnTaskClear = false
     private var hardwareVolumeSkipEnabled = false
+    var lastUserInteractionTime = System.currentTimeMillis()
+
+    override fun onUserInteraction() {
+        super.onUserInteraction()
+        lastUserInteractionTime = System.currentTimeMillis()
+    }
 
     companion object {
         private const val ACTION_PIP_CONTROL = "com.Chenkham.Echofy.PIP_CONTROL"
@@ -1091,6 +1098,24 @@ class MainActivity : ComponentActivity() {
                         player.addListener(listener)
                         onDispose {
                             player.removeListener(listener)
+                        }
+                    }
+
+                    val (aodTimeoutSecs) = rememberPreference(AodAutoActivationKey, 0)
+                    val aodIsPlaying by playerConnection?.isPlaying?.collectAsState() ?: remember { mutableStateOf(false) }
+
+                    LaunchedEffect(aodTimeoutSecs, aodIsPlaying, navBackStackEntry) {
+                        if (aodTimeoutSecs <= 0) return@LaunchedEffect
+                        while (true) {
+                            kotlinx.coroutines.delay(1000L)
+                            val currentRoute = navBackStackEntry?.destination?.route
+                            val isAodScreen = currentRoute == "always_on_display"
+                            if (!isAodScreen && aodIsPlaying) {
+                                val idleMs = System.currentTimeMillis() - lastUserInteractionTime
+                                if (idleMs >= aodTimeoutSecs * 1000L) {
+                                    navController.navigate("always_on_display")
+                                }
+                            }
                         }
                     }
 

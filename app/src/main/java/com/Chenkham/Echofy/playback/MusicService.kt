@@ -454,9 +454,17 @@ class MusicService :
      */
     private val headphoneConnectReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context?, intent: Intent?) {
-            if (intent?.action != AudioManager.ACTION_HEADSET_PLUG) return
-            // state 1 means plugged in; 0 is a disconnect, already handled by ExoPlayer.
-            if (intent.getIntExtra("state", 0) != 1) return
+            val action = intent?.action ?: return
+            val isConnected = when (action) {
+                AudioManager.ACTION_HEADSET_PLUG -> intent.getIntExtra("state", 0) == 1
+                android.bluetooth.BluetoothDevice.ACTION_ACL_CONNECTED -> true
+                android.bluetooth.BluetoothA2dp.ACTION_CONNECTION_STATE_CHANGED -> {
+                    val state = intent.getIntExtra(android.bluetooth.BluetoothA2dp.EXTRA_STATE, android.bluetooth.BluetoothA2dp.STATE_DISCONNECTED)
+                    state == android.bluetooth.BluetoothA2dp.STATE_CONNECTED
+                }
+                else -> false
+            }
+            if (!isConnected) return
 
             scope.launch {
                 val enabled = dataStore.data.first()[ResumeOnHeadphonesKey] ?: false
@@ -834,11 +842,16 @@ class MusicService :
                     addAnalyticsListener(PlaybackStatsListener(false, this@MusicService))
                 }
 
-        // Resume playback when headphones are reconnected, if the user opted in.
+        // Resume playback when headphones are reconnected (wired or Bluetooth), if the user opted in.
+        val headphoneFilter = IntentFilter().apply {
+            addAction(AudioManager.ACTION_HEADSET_PLUG)
+            addAction(android.bluetooth.BluetoothDevice.ACTION_ACL_CONNECTED)
+            addAction(android.bluetooth.BluetoothA2dp.ACTION_CONNECTION_STATE_CHANGED)
+        }
         ContextCompat.registerReceiver(
             this,
             headphoneConnectReceiver,
-            IntentFilter(AudioManager.ACTION_HEADSET_PLUG),
+            headphoneFilter,
             ContextCompat.RECEIVER_NOT_EXPORTED,
         )
 
@@ -2289,6 +2302,7 @@ class MusicService :
         } else {
             listeningReminderJob?.cancel()
             silentOutroJob?.cancel()
+            saveResumePositionForCurrentSong()
         }
 
         // WiFi Jam Broadcast

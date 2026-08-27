@@ -987,10 +987,16 @@ fun BottomSheetPlayer(
                         .clip(smallButtonShape.toShape())
                         .background(actionButtonColor)
                         .clickable {
+                            val shareText = com.Chenkham.Echofy.utils.ShareUtils.buildTrackShareText(
+                                context = context,
+                                songId = mediaMetadata.id,
+                                title = mediaMetadata.title,
+                                artist = mediaMetadata.artists.joinToString { it.name }
+                            )
                             val intent = Intent().apply {
                                 action = Intent.ACTION_SEND
                                 type = "text/plain"
-                                putExtra(Intent.EXTRA_TEXT, "https://music.youtube.com/watch?v=${mediaMetadata.id}")
+                                putExtra(Intent.EXTRA_TEXT, shareText)
                             }
                             context.startActivity(Intent.createChooser(intent, null))
                         },

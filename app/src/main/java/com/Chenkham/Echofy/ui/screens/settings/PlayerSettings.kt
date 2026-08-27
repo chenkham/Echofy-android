@@ -365,18 +365,18 @@ fun PlayerSettings(
             )
         )
 
-        SettingsGeneralCategory(
-            title = stringResource(R.string.smart_resume),
-            items = listOf(
-                {SwitchPreference(
+        val smartResumeItems = buildList<@Composable () -> Unit> {
+            add {
+                SwitchPreference(
                     title = { Text(stringResource(R.string.smart_resume)) },
                     description = stringResource(R.string.smart_resume_desc),
                     icon = { Icon(painterResource(R.drawable.play), null) },
                     checked = smartResume,
                     onCheckedChange = onSmartResumeChange
-                )},
-
-                {if (smartResume) {
+                )
+            }
+            if (smartResume) {
+                add {
                     Column(modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)) {
                         Text(
                             text = "${stringResource(R.string.smart_resume_length)} " +
@@ -389,25 +389,28 @@ fun PlayerSettings(
                             valueRange = 5f..60f,
                         )
                     }
-                }},
-
-                {SwitchPreference(
+                }
+            }
+            add {
+                SwitchPreference(
                     title = { Text(stringResource(R.string.resume_on_headphones)) },
                     description = stringResource(R.string.resume_on_headphones_desc),
                     icon = { Icon(painterResource(R.drawable.volume_up), null) },
                     checked = resumeOnHeadphones,
                     onCheckedChange = onResumeOnHeadphonesChange
-                )},
-
-                {SwitchPreference(
+                )
+            }
+            add {
+                SwitchPreference(
                     title = { Text(stringResource(R.string.speed_per_content_type)) },
                     description = stringResource(R.string.speed_per_content_type_desc),
                     icon = { Icon(painterResource(R.drawable.fast_forward), null) },
                     checked = speedPerContentType,
                     onCheckedChange = onSpeedPerContentTypeChange
-                )},
-
-                {if (speedPerContentType) {
+                )
+            }
+            if (speedPerContentType) {
+                add {
                     Column(modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)) {
                         Text(
                             text = "${stringResource(R.string.long_form_speed)}: ${"%.2f".format(longFormSpeed)}x",
@@ -429,17 +432,19 @@ fun PlayerSettings(
                             valueRange = 5f..90f,
                         )
                     }
-                }},
-
-                {SwitchPreference(
+                }
+            }
+            add {
+                SwitchPreference(
                     title = { Text(stringResource(R.string.skip_silent_outro)) },
                     description = stringResource(R.string.skip_silent_outro_desc),
                     icon = { Icon(painterResource(R.drawable.skip_next), null) },
                     checked = skipSilentOutro,
                     onCheckedChange = onSkipSilentOutroChange
-                )},
-
-                {if (skipSilentOutro) {
+                )
+            }
+            if (skipSilentOutro) {
+                add {
                     Column(modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)) {
                         Text(
                             text = "${stringResource(R.string.silent_outro_length)}: ${silentOutroSeconds}s",
@@ -451,8 +456,13 @@ fun PlayerSettings(
                             valueRange = 1f..30f,
                         )
                     }
-                }},
-            )
+                }
+            }
+        }
+
+        SettingsGeneralCategory(
+            title = stringResource(R.string.smart_resume),
+            items = smartResumeItems
         )
 
         SettingsGeneralCategory(

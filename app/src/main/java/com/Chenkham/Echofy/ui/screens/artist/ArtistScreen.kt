@@ -118,6 +118,7 @@ fun ArtistScreen(
     val isPlaying by playerConnection.isPlaying.collectAsState()
     val mediaMetadata by playerConnection.mediaMetadata.collectAsState()
     val artistPage = viewModel.artistPage
+    val enrichment by viewModel.enrichment.collectAsState()
     val libraryArtist by viewModel.libraryArtist.collectAsState()
     val librarySongs by viewModel.librarySongs.collectAsState()
 
@@ -593,6 +594,13 @@ fun ArtistScreen(
                             }
                         }
                     }
+                }
+
+                item(key = "artist_enrichment_card") {
+                    com.Chenkham.Echofy.ui.component.ArtistInfoCard(
+                        enrichment = enrichment,
+                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp)
+                    )
                 }
             } else {
                 // Estado de carga

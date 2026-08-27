@@ -8,7 +8,7 @@ import java.net.URLEncoder
 import java.nio.charset.StandardCharsets
 
 object ShareUtils {
-    const val DEFAULT_SHARE_DOMAIN = "https://chenkham.github.io"
+    const val DEFAULT_SHARE_DOMAIN = "https://echofy.redirectting.workers.dev"
 
     private fun urlEncode(value: String): String {
         return try {

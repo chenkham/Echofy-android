@@ -534,6 +534,9 @@ private fun RadioTab(
     val tags by viewModel.tags.collectAsState()
     val selectedTag by viewModel.selectedTag.collectAsState()
 
+    val selectedCountry by viewModel.selectedCountry.collectAsState()
+    var showRadioCountryMenu by remember { mutableStateOf(false) }
+
     val playerConnection = LocalPlayerConnection.current ?: return
 
     Box(modifier = Modifier.fillMaxSize()) {
@@ -556,23 +559,70 @@ private fun RadioTab(
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
                 item(span = { GridItemSpan(maxLineSpan) }) {
-                    LazyRow(
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        contentPadding = PaddingValues(vertical = 8.dp)
+                    Row(
+                        modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
                     ) {
-                        item {
-                            FilterChip(
-                                selected = selectedTag == null,
-                                onClick = { viewModel.loadTopStations() },
-                                label = { Text(stringResource(R.string.radio_popular)) }
-                            )
+                        LazyRow(
+                            modifier = Modifier.weight(1f),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            contentPadding = PaddingValues(end = 8.dp)
+                        ) {
+                            item {
+                                FilterChip(
+                                    selected = selectedTag == null,
+                                    onClick = { viewModel.loadTopStations() },
+                                    label = { Text(stringResource(R.string.radio_popular)) }
+                                )
+                            }
+                            items(tags) { tag ->
+                                FilterChip(
+                                    selected = selectedTag == tag,
+                                    onClick = { viewModel.selectTag(tag) },
+                                    label = { Text(tag.replaceFirstChar { it.uppercase() }) }
+                                )
+                            }
                         }
-                        items(tags) { tag ->
+
+                        Box {
                             FilterChip(
-                                selected = selectedTag == tag,
-                                onClick = { viewModel.selectTag(tag) },
-                                label = { Text(tag.replaceFirstChar { it.uppercase() }) }
+                                selected = selectedCountry != "all",
+                                onClick = { showRadioCountryMenu = true },
+                                label = {
+                                    val displayName = if (selectedCountry == "all") "All" else (com.Chenkham.Echofy.constants.CountryCodeToName[selectedCountry] ?: selectedCountry)
+                                    Text(displayName)
+                                },
+                                leadingIcon = { Icon(painterResource(R.drawable.location_on), contentDescription = null) }
                             )
+
+                            androidx.compose.material3.DropdownMenu(
+                                expanded = showRadioCountryMenu,
+                                onDismissRequest = { showRadioCountryMenu = false }
+                            ) {
+                                androidx.compose.material3.DropdownMenuItem(
+                                    text = { Text("All Countries") },
+                                    onClick = {
+                                        viewModel.selectCountry("all")
+                                        showRadioCountryMenu = false
+                                    },
+                                    leadingIcon = if (selectedCountry == "all") {
+                                        { Icon(painterResource(R.drawable.check), contentDescription = null) }
+                                    } else null
+                                )
+                                com.Chenkham.Echofy.constants.CountryCodeToName.forEach { (code, name) ->
+                                    androidx.compose.material3.DropdownMenuItem(
+                                        text = { Text(name) },
+                                        onClick = {
+                                            viewModel.selectCountry(code)
+                                            showRadioCountryMenu = false
+                                        },
+                                        leadingIcon = if (code == selectedCountry) {
+                                            { Icon(painterResource(R.drawable.check), contentDescription = null) }
+                                        } else null
+                                    )
+                                }
+                            }
                         }
                     }
                 }
