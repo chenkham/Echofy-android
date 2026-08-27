@@ -336,6 +336,53 @@ fun PlayerSettings(
                         onCheckedChange = onFlipToPauseChange
                     )
                 },
+                {
+                    val (queueCleaner, onQueueCleanerChange) = rememberPreference(
+                        key = com.Chenkham.Echofy.constants.QueueDeduplicatorEnabledKey,
+                        defaultValue = false
+                    )
+                    SwitchPreference(
+                        title = { Text("Queue Deduplicator & Cleaner") },
+                        description = "Show 1-tap button in queue header to remove duplicate and remastered tracks",
+                        icon = { Icon(painterResource(R.drawable.clear_all), null) },
+                        checked = queueCleaner,
+                        onCheckedChange = onQueueCleanerChange
+                    )
+                },
+                {
+                    val (subwayPreCache, onSubwayPreCacheChange) = rememberPreference(
+                        key = com.Chenkham.Echofy.constants.SubwayPreCacheEnabledKey,
+                        defaultValue = false
+                    )
+                    SwitchPreference(
+                        title = { Text("Subway & Elevator Pre-Cache") },
+                        description = "Automatically buffer upcoming songs in queue to prevent pauses in dead zones",
+                        icon = { Icon(painterResource(R.drawable.download), null) },
+                        checked = subwayPreCache,
+                        onCheckedChange = onSubwayPreCacheChange
+                    )
+                },
+                {
+                    val (retroWidgetStyle, onRetroWidgetStyleChange) = rememberPreference(
+                        key = com.Chenkham.Echofy.constants.RetroWidgetStyleKey,
+                        defaultValue = "Default"
+                    )
+                    ListPreference(
+                        title = { Text("Retro Widget Style") },
+                        description = { Text("Choose between Standard, Spinning Vinyl, and Vintage Cassette widget art") },
+                        icon = { Icon(painterResource(R.drawable.album), null) },
+                        selectedValue = retroWidgetStyle,
+                        values = listOf("Default", "SpinningVinyl", "VintageCassette"),
+                        valueText = {
+                            when (it) {
+                                "SpinningVinyl" -> "💿 Spinning Vinyl Record"
+                                "VintageCassette" -> "📼 Vintage Cassette Tape"
+                                else -> "Standard Card"
+                            }
+                        },
+                        onValueSelected = onRetroWidgetStyleChange
+                    )
+                },
             )
         )
 

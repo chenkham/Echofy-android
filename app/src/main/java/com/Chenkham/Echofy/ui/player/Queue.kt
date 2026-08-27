@@ -610,6 +610,39 @@ fun Queue(
                     exit = fadeOut() + slideOutVertically { it },
                 ) {
                     Row {
+                        val queueDeduplicatorEnabled by rememberPreference(com.Chenkham.Echofy.constants.QueueDeduplicatorEnabledKey, defaultValue = false)
+                        if (queueDeduplicatorEnabled) {
+                            IconButton(
+                                onClick = {
+                                    val seenIds = mutableSetOf<String>()
+                                    val seenTitles = mutableSetOf<String>()
+                                    var removedCount = 0
+                                    val count = playerConnection.player.mediaItemCount
+                                    for (i in (count - 1) downTo 0) {
+                                        if (i == playerConnection.player.currentMediaItemIndex) continue
+                                        val item = playerConnection.player.getMediaItemAt(i)
+                                        val id = item.mediaId
+                                        val title = item.mediaMetadata.title?.toString()?.lowercase()?.replace("(remastered)", "")?.trim() ?: ""
+                                        if (seenIds.contains(id) || (title.isNotBlank() && seenTitles.contains(title))) {
+                                            playerConnection.player.removeMediaItem(i)
+                                            removedCount++
+                                        } else {
+                                            seenIds.add(id)
+                                            if (title.isNotBlank()) seenTitles.add(title)
+                                        }
+                                    }
+                                    android.widget.Toast.makeText(context, if (removedCount > 0) "🧹 Removed $removedCount duplicate tracks" else "✨ No duplicate tracks in queue", android.widget.Toast.LENGTH_SHORT).show()
+                                },
+                                modifier = Modifier.padding(horizontal = 2.dp)
+                            ) {
+                                Icon(
+                                    painter = painterResource(R.drawable.clear_all),
+                                    tint = onBackgroundColor,
+                                    contentDescription = "Clean Queue",
+                                )
+                            }
+                        }
+
                         IconButton(
                             onClick = { locked = !locked },
                             modifier = Modifier.padding(horizontal = 6.dp),

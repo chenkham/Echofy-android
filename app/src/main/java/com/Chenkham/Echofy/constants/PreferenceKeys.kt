@@ -218,6 +218,13 @@ val SongTransitionFinderEnabledKey = booleanPreferencesKey("songTransitionFinder
 val WaveformHeatmapScrubberEnabledKey = booleanPreferencesKey("waveformHeatmapScrubberEnabled")
 val FlipToPauseEnabledKey = booleanPreferencesKey("flipToPauseEnabled")
 
+// Spatial Audio, Retro Widget, Queue Cleaner, and Subway Pre-Cache
+val SpatialAudioVirtualizerEnabledKey = booleanPreferencesKey("spatialAudioVirtualizerEnabled")
+val SpatialAudioStrengthKey = intPreferencesKey("spatialAudioStrength")
+val RetroWidgetStyleKey = stringPreferencesKey("retroWidgetStyle")
+val QueueDeduplicatorEnabledKey = booleanPreferencesKey("queueDeduplicatorEnabled")
+val SubwayPreCacheEnabledKey = booleanPreferencesKey("subwayPreCacheEnabled")
+
 // Video Quality setting for video playback
 val VideoQualityKey = stringPreferencesKey("videoQuality") // "Auto", "1080p", "720p", "480p", "360p", "144p"
 
