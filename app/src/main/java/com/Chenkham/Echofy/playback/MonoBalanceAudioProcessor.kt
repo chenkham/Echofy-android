@@ -51,7 +51,7 @@ class MonoBalanceAudioProcessor : BaseAudioProcessor() {
         return inputAudioFormat
     }
 
-    override fun isActive(): Boolean = super.isActive()
+    override fun isActive(): Boolean = super.isActive() && !isNoOp
 
     override fun queueInput(inputBuffer: ByteBuffer) {
         if (isNoOp) {
