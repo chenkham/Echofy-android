@@ -269,6 +269,9 @@ fun YouTubeSongMenu(
                         song.artists.joinToString { it.name },
                         song.duration?.let { makeTimeString(it * 1000L) },
                     ),
+                    badges = {
+                        com.Chenkham.Echofy.utils.ShareCountBadge(songId = song.id)
+                    },
                     thumbnailContent = {
                         AsyncImage(
                             model = song.thumbnail,
@@ -301,6 +304,10 @@ fun YouTubeSongMenu(
                         }
                     },
                 )
+
+                androidx.compose.runtime.LaunchedEffect(song.id) {
+                    com.Chenkham.Echofy.utils.ShareStatsTracker.loadCount(context, song.id)
+                }
 
                 HorizontalDivider()
 

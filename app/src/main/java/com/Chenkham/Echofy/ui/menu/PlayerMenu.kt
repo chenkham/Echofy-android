@@ -341,6 +341,11 @@ fun PlayerMenu(
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
+                    com.Chenkham.Echofy.utils.ShareCountBadge(songId = mediaMetadata.id)
+                }
+
+                androidx.compose.runtime.LaunchedEffect(mediaMetadata.id) {
+                    com.Chenkham.Echofy.utils.ShareStatsTracker.loadCount(context, mediaMetadata.id)
                 }
 
                 // Like button

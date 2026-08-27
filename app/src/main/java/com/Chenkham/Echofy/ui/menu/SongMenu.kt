@@ -322,7 +322,9 @@ fun SongMenu(
             item {
                 SongListItem(
                     song = song,
-                    badges = {},
+                    badges = {
+                        com.Chenkham.Echofy.utils.ShareCountBadge(songId = song.id)
+                    },
                     trailingContent = {
                         IconButton(
                             onClick = {
@@ -339,6 +341,9 @@ fun SongMenu(
                         }
                     },
                 )
+                androidx.compose.runtime.LaunchedEffect(song.id) {
+                    com.Chenkham.Echofy.utils.ShareStatsTracker.loadCount(context, song.id)
+                }
             }
 
             item {

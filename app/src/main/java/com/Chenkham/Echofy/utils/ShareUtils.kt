@@ -50,6 +50,7 @@ object ShareUtils {
         title: String,
         artist: String
     ): String {
+        ShareStatsTracker.increment(context, songId)
         val url = buildTrackShareUrl(context, songId, title, artist)
         return "Check out \"$title\" by $artist on Echofy!\n$url"
     }
