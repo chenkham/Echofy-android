@@ -107,7 +107,7 @@ fun ShowMediaInfo(
             }
             if (mediaInfo?.description.isNullOrBlank()) {
                 val shortDesc = runCatching {
-                    YouTube.player(videoId = id, client = com.arturo254.opentune.innertube.models.YouTubeClient.WEB_REMIX).getOrNull()?.videoDetails?.shortDescription
+                    YouTube.player(videoId = id, client = com.arturo254.opentune.innertube.models.YouTubeClient.WEB).getOrNull()?.videoDetails?.shortDescription
                 }.getOrNull()
                 if (!shortDesc.isNullOrBlank()) {
                     mediaInfo = mediaInfo?.copy(description = shortDesc) ?: MediaInfo(

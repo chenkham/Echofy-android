@@ -37,17 +37,22 @@ class LocalAlbumRadio(
 
     override suspend fun nextPage(): List<MediaItem> = withContext(IO) {
         if (!firstTimeLoaded) {
-            playlistId = YouTube.album(albumWithSongs.album.id).getOrThrow().album.playlistId
-            val nextResult = YouTube.next(endpoint, continuation).getOrThrow()
-            continuation = nextResult.continuation
+            val albumResult = YouTube.album(albumWithSongs.album.id).getOrNull()
+            playlistId = albumResult?.album?.playlistId ?: albumWithSongs.album.playlistId ?: albumWithSongs.album.id
+            val nextResult = YouTube.next(endpoint, continuation).getOrNull()
             firstTimeLoaded = true
+            if (nextResult == null) {
+                return@withContext emptyList()
+            }
+            continuation = nextResult.continuation
+            val fromIndex = minOf(albumWithSongs.songs.size, nextResult.items.size)
             return@withContext nextResult.items.subList(
-                albumWithSongs.songs.size,
+                fromIndex,
                 nextResult.items.size
             ).map { it.toMediaItem() }
         }
-        val nextResult = YouTube.next(endpoint, continuation).getOrThrow()
-        continuation = nextResult.continuation
-        nextResult.items.map { it.toMediaItem() }
+        val nextResult = YouTube.next(endpoint, continuation).getOrNull()
+        continuation = nextResult?.continuation
+        nextResult?.items?.map { it.toMediaItem() } ?: emptyList()
     }
 }

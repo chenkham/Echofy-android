@@ -189,8 +189,8 @@ fun HomeScreen(
     val explorePage by viewModel.explorePage.collectAsState()
     val topCharts by viewModel.topCharts.collectAsState()
     val viral50 by viewModel.viral50.collectAsState()
-    val showTopChartsHome by rememberPreference(com.Chenkham.Echofy.constants.ShowTopChartsHomeKey, defaultValue = true)
-    val showViral50Home by rememberPreference(com.Chenkham.Echofy.constants.ShowViral50HomeKey, defaultValue = true)
+    val showTopChartsHome by rememberPreference(com.Chenkham.Echofy.constants.ShowTopChartsHomeKey, defaultValue = false)
+    val showViral50Home by rememberPreference(com.Chenkham.Echofy.constants.ShowViral50HomeKey, defaultValue = false)
 
     val allLocalItems by viewModel.allLocalItems.collectAsState()
     val allYtItems by viewModel.allYtItems.collectAsState()
@@ -457,12 +457,11 @@ fun HomeScreen(
             state = lazylistState,
             contentPadding = LocalPlayerAwareWindowInsets.current.asPaddingValues(),
         ) {
-            item {
-                Row(
+            item(key = "chips_row") {
+                Column(
                     modifier = Modifier
                         .windowInsetsPadding(WindowInsets.systemBars.only(WindowInsetsSides.Horizontal))
                         .fillMaxWidth()
-                        .animateItem()
                 ) {
                     val staticChips = remember(isLoggedIn) {
                         listOfNotNull(
@@ -736,7 +735,7 @@ fun HomeScreen(
                 topCharts?.takeIf { it.isNotEmpty() }?.let { charts ->
                     item(key = "top_charts_title") {
                         NavigationTitle(
-                            title = "🏆 Top 10 Charts",
+                            title = "🏆 Echofy Top 10 Charts (Beta)",
                             onClick = {
                                 navController.navigate("explore")
                             },
@@ -766,7 +765,7 @@ fun HomeScreen(
                 viral50?.takeIf { it.isNotEmpty() }?.let { viral ->
                     item(key = "viral_50_title") {
                         NavigationTitle(
-                            title = "🔥 Echofy Viral 50",
+                            title = "🔥 Echofy Viral 50 (Beta)",
                             onClick = {
                                 navController.navigate("explore")
                             },
@@ -792,36 +791,7 @@ fun HomeScreen(
                 }
             }
 
-            keepListening?.takeIf { it.isNotEmpty() }?.let { keepListening ->
-                item(key = "keep_listening_title") {
-                    NavigationTitle(
-                        title = stringResource(R.string.keep_listening),
-                        modifier = Modifier.animateItem()
-                    )
-                }
 
-                item(key = "keep_listening_grid") {
-                    val rows = if (keepListening.size > 6) 2 else 1
-                    LazyHorizontalGrid(
-                        state = rememberLazyGridState(),
-                        rows = GridCells.Fixed(rows),
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height((GridThumbnailHeight + with(LocalDensity.current) {
-                                MaterialTheme.typography.bodyLarge.lineHeight.toDp() * 2 +
-                                        MaterialTheme.typography.bodyMedium.lineHeight.toDp() * 2
-                            }) * rows)
-                            .animateItem()
-                    ) {
-                        itemsIndexed(
-                            items = keepListening,
-                            key = { index, item -> "keep_listening_${item.id}" }
-                        ) { index, it ->
-                            localGridItem(it)
-                        }
-                    }
-                }
-            }
 
 
 
@@ -1007,186 +977,216 @@ fun HomeScreen(
                 }
             }
 
-            forgottenFavorites?.takeIf { it.isNotEmpty() }?.let { forgottenFavorites ->
-                item(key = "forgotten_favorites_title") {
-                    NavigationTitle(
-                        title = stringResource(R.string.forgotten_favorites),
-                        modifier = Modifier.animateItem()
-                    )
-                }
+            // Discovery rows are emitted in the user's configured order. Each entry is a
+            // lambda so the LazyListScope calls stay lazy and keep their stable item keys.
+            val discoveryRows = mapOf<HomeRow, () -> Unit>(
+                HomeRow.KEEP_LISTENING to {
+                    keepListening?.takeIf { it.isNotEmpty() }?.let { list ->
+                        item(key = "keep_listening_title") {
+                            NavigationTitle(
+                                title = stringResource(R.string.keep_listening),
+                                modifier = Modifier.animateItem()
+                            )
+                        }
 
-                item(key = "forgotten_favorites_grid") {
-                    // PERFORMANCE: Pre-cache for comparison to avoid repeat queries
-                    val currentMediaId = playbackInfo.currentMediaId
-                    val currentIsPlaying = playbackInfo.isPlaying
-
-                    // take min in case list size is less than 4
-                    val rows = min(4, forgottenFavorites.size)
-                    LazyHorizontalGrid(
-                        state = forgottenFavoritesLazyGridState,
-                        rows = GridCells.Fixed(rows),
-                        flingBehavior = rememberSnapFlingBehavior(
-                            forgottenFavoritesSnapLayoutInfoProvider
-                        ),
-                        contentPadding = WindowInsets.systemBars
-                            .only(WindowInsetsSides.Horizontal)
-                            .asPaddingValues(),
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(64.dp * rows)
-                            .animateItem()
-                    ) {
-                        items(
-                            items = forgottenFavorites,
-                            key = { it.id }
-                        ) { song ->
-                            val isActive = song.id == currentMediaId
-
-                            Box(
+                        item(key = "keep_listening_grid") {
+                            val rows = if (list.size > 6) 2 else 1
+                            LazyHorizontalGrid(
+                                state = rememberLazyGridState(),
+                                rows = GridCells.Fixed(rows),
                                 modifier = Modifier
-                                    .width(horizontalLazyGridItemWidth)
-                                    .height(64.dp)
-                                    .padding(horizontal = 6.dp, vertical = 3.dp)
-                                    .clip(RoundedCornerShape(12.dp))
-                                    .background(
-                                        if (isActive) MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.35f)
-                                        else Color.Transparent
-                                    )
-                                    .border(
-                                        width = if (isActive) 1.dp else 0.dp,
-                                        color = if (isActive) MaterialTheme.colorScheme.primary.copy(alpha = 0.4f) else Color.Transparent,
-                                        shape = RoundedCornerShape(12.dp)
-                                    )
-                                    .combinedClickable(
-                                        onClick = {
-                                            if (isActive) {
-                                                playerConnection.togglePlayPause()
-                                            } else {
-                                                playerConnection.playQueue(YouTubeQueue.radio(song.toMediaMetadata()))
-                                            }
-                                        },
-                                        onLongClick = {
-                                            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                                            menuState.show {
-                                                SongMenu(
-                                                    originalSong = song,
-                                                    navController = navController,
-                                                    onDismiss = menuState::dismiss
-                                                )
-                                            }
-                                        }
-                                    )
-                                    .padding(start = 6.dp, end = 4.dp),
-                                contentAlignment = Alignment.CenterStart
+                                    .fillMaxWidth()
+                                    .height((GridThumbnailHeight + with(LocalDensity.current) {
+                                        MaterialTheme.typography.bodyLarge.lineHeight.toDp() * 2 +
+                                                MaterialTheme.typography.bodyMedium.lineHeight.toDp() * 2
+                                    }) * rows)
+                                    .animateItem()
                             ) {
-                                Row(
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    modifier = Modifier.fillMaxWidth()
-                                ) {
+                                itemsIndexed(
+                                    items = list,
+                                    key = { index, item -> "keep_listening_${item.id}" }
+                                ) { index, it ->
+                                    localGridItem(it)
+                                }
+                            }
+                        }
+                    }
+                },
+
+                HomeRow.FORGOTTEN_FAVORITES to {
+                    forgottenFavorites?.takeIf { it.isNotEmpty() }?.let { list ->
+                        item(key = "forgotten_favorites_title") {
+                            NavigationTitle(
+                                title = stringResource(R.string.forgotten_favorites),
+                                modifier = Modifier.animateItem()
+                            )
+                        }
+
+                        item(key = "forgotten_favorites_grid") {
+                            val currentMediaId = playbackInfo.currentMediaId
+                            val rows = min(4, list.size)
+                            LazyHorizontalGrid(
+                                state = forgottenFavoritesLazyGridState,
+                                rows = GridCells.Fixed(rows),
+                                flingBehavior = rememberSnapFlingBehavior(
+                                    forgottenFavoritesSnapLayoutInfoProvider
+                                ),
+                                contentPadding = WindowInsets.systemBars
+                                    .only(WindowInsetsSides.Horizontal)
+                                    .asPaddingValues(),
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(64.dp * rows)
+                                    .animateItem()
+                            ) {
+                                items(
+                                    items = list,
+                                    key = { it.id }
+                                ) { song ->
+                                    val isActive = song.id == currentMediaId
+
                                     Box(
                                         modifier = Modifier
-                                            .size(48.dp)
-                                            .clip(RoundedCornerShape(10.dp)),
-                                        contentAlignment = Alignment.Center
+                                            .width(horizontalLazyGridItemWidth)
+                                            .height(64.dp)
+                                            .padding(horizontal = 6.dp, vertical = 3.dp)
+                                            .clip(RoundedCornerShape(12.dp))
+                                            .background(
+                                                if (isActive) MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.35f)
+                                                else Color.Transparent
+                                            )
+                                            .border(
+                                                width = if (isActive) 1.dp else 0.dp,
+                                                color = if (isActive) MaterialTheme.colorScheme.primary.copy(alpha = 0.4f) else Color.Transparent,
+                                                shape = RoundedCornerShape(12.dp)
+                                            )
+                                            .combinedClickable(
+                                                onClick = {
+                                                    if (isActive) {
+                                                        playerConnection.togglePlayPause()
+                                                    } else {
+                                                        playerConnection.playQueue(YouTubeQueue.radio(song.toMediaMetadata()))
+                                                    }
+                                                },
+                                                onLongClick = {
+                                                    haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                                    menuState.show {
+                                                        SongMenu(
+                                                            originalSong = song,
+                                                            navController = navController,
+                                                            onDismiss = menuState::dismiss
+                                                        )
+                                                    }
+                                                }
+                                            )
+                                            .padding(start = 6.dp, end = 4.dp),
+                                        contentAlignment = Alignment.CenterStart
                                     ) {
-                                        AsyncImage(
-                                            model = ImageRequest.Builder(LocalContext.current)
-                                                .data(song.song.thumbnailUrl)
-                                                .crossfade(true)
-                                                .build(),
-                                            contentDescription = null,
-                                            contentScale = ContentScale.Crop,
-                                            modifier = Modifier.fillMaxSize()
-                                        )
-                                        if (isActive) {
+                                        Row(
+                                            verticalAlignment = Alignment.CenterVertically,
+                                            modifier = Modifier.fillMaxWidth()
+                                        ) {
                                             Box(
                                                 modifier = Modifier
-                                                    .fillMaxSize()
-                                                    .background(Color.Black.copy(alpha = 0.45f)),
+                                                    .size(48.dp)
+                                                    .clip(RoundedCornerShape(10.dp)),
                                                 contentAlignment = Alignment.Center
                                             ) {
-                                                if (currentIsPlaying) {
-                                                    PlayingIndicator(
-                                                        color = MaterialTheme.colorScheme.primary,
-                                                        modifier = Modifier.height(20.dp)
-                                                    )
-                                                } else {
-                                                    Icon(
-                                                        painter = painterResource(R.drawable.play),
-                                                        contentDescription = null,
-                                                        tint = Color.White,
-                                                        modifier = Modifier.size(20.dp)
+                                                AsyncImage(
+                                                    model = ImageRequest.Builder(LocalContext.current)
+                                                        .data(song.song.thumbnailUrl)
+                                                        .crossfade(true)
+                                                        .build(),
+                                                    contentDescription = null,
+                                                    contentScale = ContentScale.Crop,
+                                                    modifier = Modifier.fillMaxSize()
+                                                )
+                                                if (isActive) {
+                                                    Box(
+                                                        modifier = Modifier
+                                                            .fillMaxSize()
+                                                            .background(Color.Black.copy(alpha = 0.45f)),
+                                                        contentAlignment = Alignment.Center
+                                                    ) {
+                                                        if (playbackInfo.isPlaying) {
+                                                            PlayingIndicator(
+                                                                color = MaterialTheme.colorScheme.primary,
+                                                                modifier = Modifier.height(20.dp)
+                                                            )
+                                                        } else {
+                                                            Icon(
+                                                                painter = painterResource(R.drawable.play),
+                                                                contentDescription = null,
+                                                                tint = Color.White,
+                                                                modifier = Modifier.size(20.dp)
+                                                            )
+                                                        }
+                                                    }
+                                                }
+                                            }
+
+                                            Spacer(modifier = Modifier.width(12.dp))
+
+                                            Column(
+                                                modifier = Modifier.weight(1f),
+                                                verticalArrangement = Arrangement.Center
+                                            ) {
+                                                Text(
+                                                    text = song.song.title,
+                                                    style = MaterialTheme.typography.bodyMedium,
+                                                    fontWeight = FontWeight.Bold,
+                                                    color = if (isActive) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface,
+                                                    maxLines = 1,
+                                                    overflow = TextOverflow.Ellipsis
+                                                )
+                                                Spacer(modifier = Modifier.height(2.dp))
+                                                Row(
+                                                    verticalAlignment = Alignment.CenterVertically
+                                                ) {
+                                                    if (song.song.explicit) {
+                                                        Icon(
+                                                            painter = painterResource(R.drawable.explicit),
+                                                            contentDescription = "Explicit",
+                                                            tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
+                                                            modifier = Modifier
+                                                                .size(14.dp)
+                                                                .padding(end = 4.dp)
+                                                        )
+                                                    }
+                                                    Text(
+                                                        text = song.artists.joinToString { it.name } + if (song.song.albumName != null) " • ${song.song.albumName}" else "",
+                                                        style = MaterialTheme.typography.bodySmall,
+                                                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.85f),
+                                                        maxLines = 1,
+                                                        overflow = TextOverflow.Ellipsis
                                                     )
                                                 }
                                             }
-                                        }
-                                    }
 
-                                    Spacer(modifier = Modifier.width(12.dp))
-
-                                    Column(
-                                        modifier = Modifier.weight(1f),
-                                        verticalArrangement = Arrangement.Center
-                                    ) {
-                                        Text(
-                                            text = song.song.title,
-                                            style = MaterialTheme.typography.bodyMedium,
-                                            fontWeight = FontWeight.Bold,
-                                            color = if (isActive) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface,
-                                            maxLines = 1,
-                                            overflow = TextOverflow.Ellipsis
-                                        )
-                                        Spacer(modifier = Modifier.height(2.dp))
-                                        Row(
-                                            verticalAlignment = Alignment.CenterVertically
-                                        ) {
-                                            if (song.song.explicit) {
+                                            IconButton(
+                                                onClick = {
+                                                    menuState.show {
+                                                        SongMenu(
+                                                            originalSong = song,
+                                                            navController = navController,
+                                                            onDismiss = menuState::dismiss
+                                                        )
+                                                    }
+                                                }
+                                            ) {
                                                 Icon(
-                                                    painter = painterResource(R.drawable.explicit),
-                                                    contentDescription = "Explicit",
-                                                    tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
-                                                    modifier = Modifier
-                                                        .size(14.dp)
-                                                        .padding(end = 4.dp)
-                                                )
-                                            }
-                                            Text(
-                                                text = song.artists.joinToString { it.name } + if (song.song.albumName != null) " • ${song.song.albumName}" else "",
-                                                style = MaterialTheme.typography.bodySmall,
-                                                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.85f),
-                                                maxLines = 1,
-                                                overflow = TextOverflow.Ellipsis
-                                            )
-                                        }
-                                    }
-
-                                    IconButton(
-                                        onClick = {
-                                            menuState.show {
-                                                SongMenu(
-                                                    originalSong = song,
-                                                    navController = navController,
-                                                    onDismiss = menuState::dismiss
+                                                    painter = painterResource(R.drawable.more_vert),
+                                                    contentDescription = "Options",
+                                                    tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f)
                                                 )
                                             }
                                         }
-                                    ) {
-                                        Icon(
-                                            painter = painterResource(R.drawable.more_vert),
-                                            contentDescription = "Options",
-                                            tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f)
-                                        )
                                     }
                                 }
                             }
                         }
                     }
-                }
-            }
-
-            // Discovery rows are emitted in the user's configured order. Each entry is a
-            // lambda so the LazyListScope calls stay lazy and keep their stable item keys.
-            val discoveryRows = mapOf<HomeRow, () -> Unit>(
+                },
                 HomeRow.HIDDEN_GEMS to {
                     hiddenGems?.takeIf { it.isNotEmpty() }?.let { gems ->
                         item(key = "hidden_gems_title") {

@@ -26,6 +26,7 @@ import com.arturo254.opentune.innertube.models.body.PlaylistDeleteBody
 import com.arturo254.opentune.innertube.models.body.SearchBody
 import com.arturo254.opentune.innertube.models.body.SubscribeBody
 import com.arturo254.opentune.innertube.models.response.NextResponse
+import com.arturo254.opentune.innertube.models.response.PlayerResponse
 import com.arturo254.opentune.innertube.proxy.RotatingProxySelector
 import com.arturo254.opentune.innertube.utils.parseCookieString
 import com.arturo254.opentune.innertube.utils.sha1
@@ -763,13 +764,23 @@ class InnerTube {
                         it?.videoPrimaryInfoRenderer != null
                     }?.videoPrimaryInfoRenderer
 
-            val returnYouTubeDislikeResponse = runCatching {
-                returnYouTubeDislike(videoId).body<ReturnYouTubeDislikeResponse>()
-            }.getOrNull()
-
-            val description = baseForInfo?.attributedDescription?.content
+            var description = baseForInfo?.attributedDescription?.content
                 ?: baseForInfo?.description?.runs?.mapNotNull { it.text }?.joinToString("")
                 ?: baseForInfo?.description?.simpleText
+
+            if (description.isNullOrBlank()) {
+                val playerDesc = runCatching {
+                    player(
+                        client = YouTubeClient.WEB,
+                        videoId = videoId,
+                        playlistId = null,
+                        signatureTimestamp = null
+                    ).body<PlayerResponse>().videoDetails?.shortDescription
+                }.getOrNull()
+                if (!playerDesc.isNullOrBlank()) {
+                    description = playerDesc
+                }
+            }
 
             val author = baseForInfo
                 ?.owner
@@ -778,6 +789,10 @@ class InnerTube {
                 ?.runs
                 ?.firstOrNull()
                 ?.text
+
+            val returnYouTubeDislikeResponse = runCatching {
+                returnYouTubeDislike(videoId).body<ReturnYouTubeDislikeResponse>()
+            }.getOrNull()
 
             MediaInfo(
                 videoId = videoId,

@@ -655,8 +655,8 @@ fun AlbumScreen(
                     onClick = {
                         menuState.show {
                             SelectionSongMenu(
-                                songSelection = wrappedSongs?.filter { it.isSelected }!!
-                                    .map { it.item },
+                                songSelection = wrappedSongs?.filter { it.isSelected }
+                                    ?.map { it.item } ?: emptyList(),
                                 onDismiss = menuState::dismiss,
                                 clearAction = { selection = false }
                             )

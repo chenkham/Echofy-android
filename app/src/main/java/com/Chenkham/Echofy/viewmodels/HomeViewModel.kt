@@ -168,12 +168,13 @@ class HomeViewModel @Inject constructor(
                 val quickPicksDeferred = async(Dispatchers.IO) {
                     val pref = appContext.dataStore.data.map { it[com.Chenkham.Echofy.constants.QuickPicksKey] ?: com.Chenkham.Echofy.constants.QuickPicks.QUICK_PICKS.name }.first()
                     if (pref == com.Chenkham.Echofy.constants.QuickPicks.LAST_LISTEN.name) {
+                        // History/seed-based recommendations
                         database.quickPicks().first().filterNot { it.song.isLocal }.shuffled().take(20)
                             .ifEmpty { database.allSongs().first().filterNot { it.song.isLocal }.shuffled().take(20) }
                     } else {
-                        // Quick Picks default: API recommendations
-                        val ytQuickPicks = database.quickPicks().first().filterNot { it.song.isLocal }.shuffled().take(20)
-                        ytQuickPicks.ifEmpty { database.allSongs().first().filterNot { it.song.isLocal }.shuffled().take(20) }
+                        // Truly random quick picks across entire music library
+                        database.allSongs().first().filterNot { it.song.isLocal }.shuffled().take(20)
+                            .ifEmpty { database.quickPicks().first().filterNot { it.song.isLocal }.shuffled().take(20) }
                     }
                 }
 
@@ -308,8 +309,8 @@ class HomeViewModel @Inject constructor(
 
             // 4. Charts and Viral 50 Page
             val prefs = appContext.dataStore.data.first()
-            val chartsDeferred = if ((prefs[com.Chenkham.Echofy.constants.ShowTopChartsHomeKey] ?: true) ||
-                (prefs[com.Chenkham.Echofy.constants.ShowViral50HomeKey] ?: true)) {
+            val chartsDeferred = if ((prefs[com.Chenkham.Echofy.constants.ShowTopChartsHomeKey] ?: false) ||
+                (prefs[com.Chenkham.Echofy.constants.ShowViral50HomeKey] ?: false)) {
                 async(Dispatchers.IO) {
                     YouTube.getChartsPage().getOrNull()
                 }

@@ -711,6 +711,22 @@ fun BottomSheetPlayer(
         )
     }
 
+    var showAudioBookmarksDialog by rememberSaveable {
+        mutableStateOf(false)
+    }
+
+    if (showAudioBookmarksDialog && currentMedia != null) {
+        com.Chenkham.Echofy.ui.component.AudioBookmarksDialog(
+            songId = currentMedia.id,
+            songTitle = currentMedia.title,
+            currentPositionMs = playerConnection.player.currentPosition,
+            onSeekTo = { pos ->
+                playerConnection.player.seekTo(pos)
+            },
+            onDismiss = { showAudioBookmarksDialog = false }
+        )
+    }
+
     val queueSheetState =
         rememberBottomSheetState(
             dismissedBound = QueuePeekHeight + WindowInsets.systemBars.asPaddingValues()
@@ -1062,10 +1078,10 @@ fun BottomSheetPlayer(
                         .background(actionButtonColor)
                         .clickable {
                             val pos = playerConnection.player.currentPosition
-                            val min = (pos / 60000)
-                            val sec = ((pos % 60000) / 1000)
-                            val label = String.format("%02d:%02d", min, sec)
-                            android.widget.Toast.makeText(context, "📌 Saved Bookmark at $label", android.widget.Toast.LENGTH_SHORT).show()
+                            if (currentMedia != null) {
+                                com.Chenkham.Echofy.utils.AudioBookmarkManager.addBookmark(context, currentMedia.id, pos)
+                            }
+                            showAudioBookmarksDialog = true
                         },
                 ) {
                     Image(

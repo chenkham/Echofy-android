@@ -163,11 +163,11 @@ fun ContentSettings(
     )
     val (showViral50, onShowViral50Change) = rememberPreference(
         key = com.Chenkham.Echofy.constants.ShowViral50HomeKey,
-        defaultValue = true
+        defaultValue = false
     )
     val (showTopCharts, onShowTopChartsChange) = rememberPreference(
         key = com.Chenkham.Echofy.constants.ShowTopChartsHomeKey,
-        defaultValue = true
+        defaultValue = false
     )
     val (chartsCountry, onChartsCountryChange) = rememberPreference(
         key = com.Chenkham.Echofy.constants.ChartsCountryKey,
@@ -181,12 +181,12 @@ fun ContentSettings(
     ) {
         // Charts & Trending Feed Category
         SettingsGeneralCategory(
-            title = "Charts & Trending Feed",
+            title = "Echofy Charts & Trending Feed (Beta)",
             items = listOf(
                 {
                     SwitchPreference(
-                        title = { Text("Echofy Viral 50 on Home") },
-                        description = "Display viral & trending songs feed on Home screen",
+                        title = { Text("Echofy Viral 50 on Home (Beta)") },
+                        description = "Display trending viral tracks for Echofy users (Beta feature with growing trend data)",
                         icon = { Icon(painterResource(R.drawable.trending_up), null) },
                         checked = showViral50,
                         onCheckedChange = onShowViral50Change,
@@ -194,8 +194,8 @@ fun ContentSettings(
                 },
                 {
                     SwitchPreference(
-                        title = { Text("Top 10 Charts on Home") },
-                        description = "Display official Top 10 Charts on Home screen",
+                        title = { Text("Echofy Top 10 Charts on Home (Beta)") },
+                        description = "Display official Top 10 Charts for Echofy users",
                         icon = { Icon(painterResource(R.drawable.trending_up), null) },
                         checked = showTopCharts,
                         onCheckedChange = onShowTopChartsChange,
@@ -421,8 +421,8 @@ fun ContentSettings(
                     values = listOf(QuickPicks.QUICK_PICKS, QuickPicks.LAST_LISTEN),
                     valueText = {
                         when (it) {
-                            QuickPicks.QUICK_PICKS -> stringResource(R.string.quick_picks)
-                            QuickPicks.LAST_LISTEN -> stringResource(R.string.last_song_listened)
+                            QuickPicks.QUICK_PICKS -> "🎲 Random Quick Picks (Shuffle all tracks)"
+                            QuickPicks.LAST_LISTEN -> "🎧 Based on Last Listened Song"
                         }
                     },
                     onValueSelected = onQuickPicksChange,

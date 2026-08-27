@@ -422,13 +422,12 @@ object YouTube {
     suspend fun album(browseId: String, withSongs: Boolean = true): Result<AlbumPage> = runCatching {
         val response = innerTube.browse(WEB_REMIX, browseId).body<BrowseResponse>()
         val playlistId = AlbumPage.getPlaylistId(response)
-            ?: throw IllegalStateException("Missing album playlist id for $browseId")
-        val albumTitle = AlbumPage.getTitle(response)
-            ?: throw IllegalStateException("Missing album title for $browseId")
+            ?: browseId.removePrefix("VL")
+            ?: browseId
+        val albumTitle = AlbumPage.getTitle(response) ?: "Album"
         val albumArtists = AlbumPage.getArtists(response).takeIf { it.isNotEmpty() }
         val albumYear = AlbumPage.getYear(response)
-        val albumThumbnail = AlbumPage.getThumbnail(response)
-            ?: throw IllegalStateException("Missing album thumbnail url for $browseId")
+        val albumThumbnail = AlbumPage.getThumbnail(response) ?: ""
         val albumItem = AlbumItem(
             browseId = browseId,
             playlistId = playlistId,
