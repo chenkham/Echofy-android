@@ -690,7 +690,7 @@ fun PlayerSettings(
                 },
                 {
                     SwitchPreference(
-                        title = { Text("Real-Time Guitar & Ukulele Chords") },
+                        title = { Text("🎸 Real-Time Guitar & Ukulele Chords") },
                         description = "Display synchronized chord progressions above player timeline & lyrics",
                         icon = { Icon(painterResource(R.drawable.queue_music), null) },
                         checked = realtimeChordsEnabled,

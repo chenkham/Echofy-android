@@ -55,8 +55,10 @@ class MonoBalanceAudioProcessor : BaseAudioProcessor() {
 
     override fun queueInput(inputBuffer: ByteBuffer) {
         if (isNoOp) {
-            val outputBuffer = replaceOutputBuffer(inputBuffer.remaining())
+            val count = inputBuffer.remaining()
+            val outputBuffer = replaceOutputBuffer(count)
             outputBuffer.put(inputBuffer)
+            outputBuffer.flip()
             return
         }
 

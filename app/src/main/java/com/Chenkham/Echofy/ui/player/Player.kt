@@ -1280,11 +1280,9 @@ fun BottomSheetPlayer(
                                 verticalAlignment = Alignment.CenterVertically,
                                 horizontalArrangement = Arrangement.spacedBy(6.dp)
                             ) {
-                                Icon(
-                                    painter = painterResource(R.drawable.queue_music),
-                                    contentDescription = null,
-                                    modifier = Modifier.size(14.dp),
-                                    tint = MaterialTheme.colorScheme.onPrimaryContainer
+                                Text(
+                                    text = "🎸",
+                                    fontSize = 14.sp
                                 )
                                 Text(
                                     text = "${activeChord.section}:",

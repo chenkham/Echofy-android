@@ -742,7 +742,7 @@ fun EqualizerScreen(
                             )
                             Column {
                                 Text(
-                                    text = "Guitar & Ukulele Chords Studio",
+                                    text = "🎸 Guitar & Ukulele Chords Studio",
                                     style = MaterialTheme.typography.titleMedium,
                                     fontWeight = FontWeight.Bold
                                 )

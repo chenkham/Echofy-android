@@ -870,10 +870,9 @@ fun Lyrics(
                                 containerColor = Color.Transparent
                             )
                         ) {
-                            Icon(
-                                painter = painterResource(R.drawable.queue_music),
-                                contentDescription = "Chords",
-                                tint = MaterialTheme.colorScheme.onSurface
+                            Text(
+                                text = "🎸",
+                                fontSize = 18.sp
                             )
                         }
 

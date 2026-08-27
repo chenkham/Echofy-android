@@ -70,7 +70,7 @@ fun ChordDiagramDialog(
                         )
                         Column {
                             Text(
-                                text = "Chord Diagram",
+                                text = "🎸 Chord Diagram",
                                 style = MaterialTheme.typography.titleMedium,
                                 fontWeight = FontWeight.Bold
                             )
