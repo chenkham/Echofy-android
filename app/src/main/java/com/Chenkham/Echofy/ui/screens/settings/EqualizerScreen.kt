@@ -98,6 +98,35 @@ val reverbPresets = listOf(
     "None", "Small Room", "Medium Room", "Large Room", "Medium Hall", "Large Hall", "Plate"
 )
 
+data class AutoEqProfile(
+    val brand: String,
+    val model: String,
+    val levels: List<Float>
+)
+
+val autoEqProfiles = listOf(
+    AutoEqProfile("Apple", "AirPods Pro 2", listOf(0.52f, 0.48f, 0.54f, 0.62f, 0.58f)),
+    AutoEqProfile("Apple", "AirPods Max", listOf(0.48f, 0.52f, 0.56f, 0.60f, 0.55f)),
+    AutoEqProfile("Sony", "WH-1000XM5", listOf(0.42f, 0.48f, 0.58f, 0.64f, 0.60f)),
+    AutoEqProfile("Sony", "WH-1000XM4", listOf(0.40f, 0.46f, 0.60f, 0.65f, 0.58f)),
+    AutoEqProfile("Sony", "WF-1000XM5", listOf(0.46f, 0.50f, 0.55f, 0.62f, 0.58f)),
+    AutoEqProfile("Samsung", "Galaxy Buds 2 Pro", listOf(0.50f, 0.52f, 0.54f, 0.58f, 0.56f)),
+    AutoEqProfile("Sennheiser", "HD 600", listOf(0.60f, 0.55f, 0.50f, 0.52f, 0.55f)),
+    AutoEqProfile("Sennheiser", "HD 650", listOf(0.58f, 0.54f, 0.50f, 0.54f, 0.56f)),
+    AutoEqProfile("Sennheiser", "Momentum 4", listOf(0.44f, 0.48f, 0.56f, 0.60f, 0.58f)),
+    AutoEqProfile("Bose", "QuietComfort Ultra", listOf(0.46f, 0.50f, 0.58f, 0.60f, 0.56f)),
+    AutoEqProfile("Bose", "QC45", listOf(0.48f, 0.52f, 0.56f, 0.58f, 0.54f)),
+    AutoEqProfile("Audio-Technica", "ATH-M50x", listOf(0.48f, 0.52f, 0.55f, 0.58f, 0.52f)),
+    AutoEqProfile("Moondrop", "Chu II", listOf(0.52f, 0.50f, 0.54f, 0.56f, 0.55f)),
+    AutoEqProfile("Moondrop", "Aria", listOf(0.50f, 0.52f, 0.52f, 0.56f, 0.54f)),
+    AutoEqProfile("Beyerdynamic", "DT 770 Pro (80Ω)", listOf(0.46f, 0.52f, 0.50f, 0.52f, 0.46f)),
+    AutoEqProfile("Beyerdynamic", "DT 990 Pro (250Ω)", listOf(0.48f, 0.54f, 0.52f, 0.50f, 0.44f)),
+    AutoEqProfile("Shure", "SE215", listOf(0.45f, 0.50f, 0.58f, 0.62f, 0.60f)),
+    AutoEqProfile("JBL", "Tune 760NC", listOf(0.46f, 0.50f, 0.56f, 0.60f, 0.58f)),
+    AutoEqProfile("OnePlus", "Buds Pro 2", listOf(0.48f, 0.52f, 0.55f, 0.60f, 0.56f)),
+    AutoEqProfile("Nothing", "Ear (2)", listOf(0.50f, 0.52f, 0.56f, 0.58f, 0.55f))
+)
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun EqualizerScreen(
@@ -117,6 +146,10 @@ fun EqualizerScreen(
     var outputGain by rememberPreference(intPreferencesKey("eqOutputGainMb"), 0)
     var audioBalance by rememberPreference(floatPreferencesKey("audioBalance"), 0f)
     var selectedReverb by rememberPreference(stringPreferencesKey("reverbPreset"), "None")
+    var selectedAutoEqModel by rememberPreference(AutoEqHeadphoneModelKey, "None")
+    var parametricEnabled by rememberPreference(ParametricEqEnabledKey, false)
+    var bitPerfectEnabled by rememberPreference(BitPerfectOutputKey, false)
+    var antiClippingEnabled by rememberPreference(AntiClippingLimiterKey, true)
 
     // Band levels (5 bands) - normalized 0 to 1
     var bandLevels by remember { mutableStateOf(customPresets.getOrElse(presetIndex) { customPresets.first() }.levels) }
@@ -520,6 +553,152 @@ fun EqualizerScreen(
                             onValueChange = { audioBalance = it },
                             valueRange = -1f..1f,
                             modifier = Modifier.fillMaxWidth()
+                        )
+                    }
+                }
+            }
+
+            // ── AutoEq Headphone Profile Section ──
+            Card(
+                shape = RoundedCornerShape(20.dp),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Column(
+                    modifier = Modifier.padding(18.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(10.dp)
+                    ) {
+                        Icon(
+                            painter = painterResource(R.drawable.headphones),
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.size(22.dp)
+                        )
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                text = "AutoEq Headphone Matching",
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold
+                            )
+                            Text(
+                                text = "Calibrate EQ curve for your specific earbuds/headphones (Harman Target)",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    }
+
+                    LazyRow(
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        item {
+                            FilterChip(
+                                selected = selectedAutoEqModel == "None",
+                                onClick = {
+                                    selectedAutoEqModel = "None"
+                                },
+                                label = { Text("None (Manual)") }
+                            )
+                        }
+                        itemsIndexed(autoEqProfiles) { _, profile ->
+                            val fullName = "${profile.brand} ${profile.model}"
+                            FilterChip(
+                                selected = selectedAutoEqModel == fullName,
+                                onClick = {
+                                    selectedAutoEqModel = fullName
+                                    bandLevels = profile.levels
+                                    presetIndex = -1
+                                },
+                                label = { Text(fullName) }
+                            )
+                        }
+                    }
+                }
+            }
+
+            // ── Audiophile Pro & Hi-Res Output Controls ──
+            Card(
+                shape = RoundedCornerShape(20.dp),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Column(
+                    modifier = Modifier.padding(18.dp),
+                    verticalArrangement = Arrangement.spacedBy(14.dp)
+                ) {
+                    Text(
+                        text = "Audiophile Pro Controls",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+
+                    // Parametric EQ Curve
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(text = "Parametric EQ Mode", style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.SemiBold)
+                            Text(
+                                text = "Higher precision frequency band interpolation with smooth Q-curves",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                        Switch(
+                            checked = parametricEnabled,
+                            onCheckedChange = { parametricEnabled = it }
+                        )
+                    }
+
+                    HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f))
+
+                    // Bit-Perfect Output
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(text = "Bit-Perfect USB DAC Output", style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.SemiBold)
+                            Text(
+                                text = "Bypass Android 48kHz system mixer for external Hi-Res DACs",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                        Switch(
+                            checked = bitPerfectEnabled,
+                            onCheckedChange = { bitPerfectEnabled = it }
+                        )
+                    }
+
+                    HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f))
+
+                    // Anti-Clipping Soft Limiter
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(text = "Anti-Clipping Soft Limiter", style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.SemiBold)
+                            Text(
+                                text = "Prevents audio distortion and harsh peaks on high gain",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                        Switch(
+                            checked = antiClippingEnabled,
+                            onCheckedChange = { antiClippingEnabled = it }
                         )
                     }
                 }

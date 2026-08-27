@@ -90,7 +90,9 @@ class HomeViewModel @Inject constructor(
     val selectedChip = MutableStateFlow<HomePage.Chip?>(null)
     val explorePage = MutableStateFlow<ExplorePage?>(null)
     val recentActivity = MutableStateFlow<List<YTItem>?>(null)
-    val recentPlaylistsDb = MutableStateFlow<List<Playlist>?>(null)
+    val topCharts = MutableStateFlow<List<YTItem>?>(null)
+    val viral50 = MutableStateFlow<List<YTItem>?>(null)
+    val chartsCountryName = MutableStateFlow<String>("Global")
 
     val allLocalItems = MutableStateFlow<List<LocalItem>>(emptyList())
     val allYtItems = MutableStateFlow<List<YTItem>>(emptyList())
@@ -304,14 +306,22 @@ class HomeViewModel @Inject constructor(
                 YouTube.explore().onFailure { reportException(it) }.getOrNull()
             }
 
-            // 4. Get artists for similar recommendations (parallel fetch)
+            // 4. Charts and Viral 50 Page
+            val chartsDeferred = if ((prefs[com.Chenkham.Echofy.constants.ShowTopChartsHomeKey] ?: true) ||
+                (prefs[com.Chenkham.Echofy.constants.ShowViral50HomeKey] ?: true)) {
+                async(Dispatchers.IO) {
+                    YouTube.getChartsPage().getOrNull()
+                }
+            } else null
+
+            // 5. Get artists for similar recommendations (parallel fetch)
             val mostPlayedArtistsDeferred = async(Dispatchers.IO) {
                 database.mostPlayedArtists(fromTimeStamp, limit = 10).first()
                     .filter { it.artist.isYouTubeArtist }
                     .shuffled().take(3)
             }
 
-            // 5. Get songs for similar recommendations (parallel fetch)
+            // 6. Get songs for similar recommendations (parallel fetch)
             val mostPlayedSongsDeferred = async(Dispatchers.IO) {
                 database.mostPlayedSongs(fromTimeStamp, limit = 10).first()
                     .filter { it.album != null }
@@ -325,6 +335,25 @@ class HomeViewModel @Inject constructor(
             }
             homePage.value = homePageDeferred.await()
             
+            // Process charts page
+            val rawChartsPage = chartsDeferred?.await()
+            if (rawChartsPage != null) {
+                val chartSections = rawChartsPage.sections
+                chartSections.forEach { section ->
+                    if (section.title.contains("Top", ignoreCase = true) || section.title.contains("Chart", ignoreCase = true)) {
+                        if (topCharts.value == null) topCharts.value = section.items
+                    } else if (section.title.contains("Trending", ignoreCase = true) || section.title.contains("Viral", ignoreCase = true)) {
+                        if (viral50.value == null) viral50.value = section.items
+                    }
+                }
+                if (topCharts.value == null && chartSections.isNotEmpty()) {
+                    topCharts.value = chartSections.firstOrNull()?.items
+                }
+                if (viral50.value == null && chartSections.size > 1) {
+                    viral50.value = chartSections.getOrNull(1)?.items
+                }
+            }
+
             // Process explore page
             val rawExplorePage = explorePageDeferred.await()
             if (rawExplorePage != null) {

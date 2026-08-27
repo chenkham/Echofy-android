@@ -161,14 +161,59 @@ fun ContentSettings(
         key = MoodPlaylistsEnabledKey,
         defaultValue = true
     )
-
-
+    val (showViral50, onShowViral50Change) = rememberPreference(
+        key = com.Chenkham.Echofy.constants.ShowViral50HomeKey,
+        defaultValue = true
+    )
+    val (showTopCharts, onShowTopChartsChange) = rememberPreference(
+        key = com.Chenkham.Echofy.constants.ShowTopChartsHomeKey,
+        defaultValue = true
+    )
+    val (chartsCountry, onChartsCountryChange) = rememberPreference(
+        key = com.Chenkham.Echofy.constants.ChartsCountryKey,
+        defaultValue = "GLOBAL"
+    )
 
     SettingsPage(
         title = stringResource(R.string.content),
         navController = navController,
         scrollBehavior = scrollBehavior
     ) {
+        // Charts & Trending Feed Category
+        SettingsGeneralCategory(
+            title = "Charts & Trending Feed",
+            items = listOf(
+                {
+                    SwitchPreference(
+                        title = { Text("Echofy Viral 50 on Home") },
+                        description = { Text("Display viral & trending songs feed on Home screen") },
+                        icon = { Icon(painterResource(R.drawable.trending_up), null) },
+                        checked = showViral50,
+                        onCheckedChange = onShowViral50Change,
+                    )
+                },
+                {
+                    SwitchPreference(
+                        title = { Text("Top 10 Charts on Home") },
+                        description = { Text("Display official Top 10 Charts on Home screen") },
+                        icon = { Icon(painterResource(R.drawable.leaderboard), null) },
+                        checked = showTopCharts,
+                        onCheckedChange = onShowTopChartsChange,
+                    )
+                },
+                {
+                    ListPreference(
+                        title = { Text("Charts Region") },
+                        description = { Text("Select Global or specific country for Charts") },
+                        icon = { Icon(painterResource(R.drawable.language), null) },
+                        selectedValue = chartsCountry,
+                        values = listOf("GLOBAL") + CountryCodeToName.keys.toList(),
+                        valueText = { if (it == "GLOBAL") "Global (Worldwide)" else (CountryCodeToName[it] ?: it) },
+                        onValueSelected = onChartsCountryChange,
+                    )
+                }
+            )
+        )
         // General settings
         SettingsGeneralCategory(
             title = stringResource(R.string.general),

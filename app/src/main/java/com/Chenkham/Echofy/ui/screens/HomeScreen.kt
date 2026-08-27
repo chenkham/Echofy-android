@@ -187,6 +187,10 @@ fun HomeScreen(
     val accountPlaylists by viewModel.accountPlaylists.collectAsState()
     val homePage by viewModel.homePage.collectAsState()
     val explorePage by viewModel.explorePage.collectAsState()
+    val topCharts by viewModel.topCharts.collectAsState()
+    val viral50 by viewModel.viral50.collectAsState()
+    val showTopChartsHome by rememberPreference(com.Chenkham.Echofy.constants.ShowTopChartsHomeKey, defaultValue = true)
+    val showViral50Home by rememberPreference(com.Chenkham.Echofy.constants.ShowViral50HomeKey, defaultValue = true)
 
     val allLocalItems by viewModel.allLocalItems.collectAsState()
     val allYtItems by viewModel.allYtItems.collectAsState()
@@ -723,6 +727,66 @@ fun HomeScreen(
                             key = { index, item -> "new_release_${item.id}" }
                         ) { index, item ->
                             ytGridItem(item)
+                        }
+                    }
+                }
+            }
+
+            if (showTopChartsHome) {
+                topCharts?.takeIf { it.isNotEmpty() }?.let { charts ->
+                    item(key = "top_charts_title") {
+                        NavigationTitle(
+                            title = "🏆 Top 10 Charts",
+                            onClick = {
+                                navController.navigate("explore")
+                            },
+                            modifier = Modifier.animateItem()
+                        )
+                    }
+
+                    item(key = "top_charts_row") {
+                        LazyRow(
+                            contentPadding = WindowInsets.systemBars
+                                .only(WindowInsetsSides.Horizontal)
+                                .asPaddingValues(),
+                            modifier = Modifier.animateItem()
+                        ) {
+                            itemsIndexed(
+                                items = charts.take(10),
+                                key = { index, item -> "top_chart_${item.id}" }
+                            ) { index, item ->
+                                ytGridItem(item)
+                            }
+                        }
+                    }
+                }
+            }
+
+            if (showViral50Home) {
+                viral50?.takeIf { it.isNotEmpty() }?.let { viral ->
+                    item(key = "viral_50_title") {
+                        NavigationTitle(
+                            title = "🔥 Echofy Viral 50",
+                            onClick = {
+                                navController.navigate("explore")
+                            },
+                            modifier = Modifier.animateItem()
+                        )
+                    }
+
+                    item(key = "viral_50_row") {
+                        LazyRow(
+                            contentPadding = WindowInsets.systemBars
+                                .only(WindowInsetsSides.Horizontal)
+                                .asPaddingValues(),
+                            modifier = Modifier.animateItem()
+                        ) {
+                            itemsIndexed(
+                                items = viral.take(50),
+                                key = { index, item -> "viral_50_${item.id}" }
+                            ) { index, item ->
+                                ytGridItem(item)
+                            }
                         }
                     }
                 }

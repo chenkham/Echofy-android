@@ -197,6 +197,15 @@ val EqualizerPresetKey = intPreferencesKey("equalizerPreset") // -1 = Custom, 0+
 val EqualizerBandLevelsKey = stringPreferencesKey("equalizerBandLevels") // JSON array
 val BassBoostEnabledKey = booleanPreferencesKey("bassBoostEnabled")
 val BassBoostStrengthKey = intPreferencesKey("bassBoostStrength") // 0-1000
+val ParametricEqEnabledKey = booleanPreferencesKey("parametricEqEnabled")
+val BitPerfectOutputKey = booleanPreferencesKey("bitPerfectOutput")
+val AntiClippingLimiterKey = booleanPreferencesKey("antiClippingLimiter")
+val AutoEqHeadphoneModelKey = stringPreferencesKey("autoEqHeadphoneModel")
+
+// Charts & Viral 50 Home toggles
+val ShowViral50HomeKey = booleanPreferencesKey("showViral50Home")
+val ShowTopChartsHomeKey = booleanPreferencesKey("showTopChartsHome")
+val ChartsCountryKey = stringPreferencesKey("chartsCountry")
 
 // Video Quality setting for video playback
 val VideoQualityKey = stringPreferencesKey("videoQuality") // "Auto", "1080p", "720p", "480p", "360p", "144p"
