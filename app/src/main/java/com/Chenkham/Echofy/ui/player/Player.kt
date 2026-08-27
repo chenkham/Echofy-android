@@ -7,6 +7,10 @@ import android.text.format.Formatter
 import android.widget.Toast
 import com.Chenkham.Echofy.utils.makeTimeString
 import com.Chenkham.Echofy.utils.toShape
+import com.Chenkham.Echofy.constants.RealtimeChordsEnabledKey
+import com.Chenkham.Echofy.constants.RealtimeChordsInstrumentKey
+import com.Chenkham.Echofy.audio.ChordsManager
+import com.Chenkham.Echofy.ui.component.ChordDiagramDialog
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
@@ -727,6 +731,32 @@ fun BottomSheetPlayer(
         )
     }
 
+    val realtimeChordsEnabled by rememberPreference(RealtimeChordsEnabledKey, false)
+    val chordTimeline = remember(currentMedia?.id) {
+        if (currentMedia != null) {
+            ChordsManager.generateTimeline(currentMedia.id, currentMedia.title, currentMedia.artists.joinToString(), currentMedia.duration.toLong() * 1000)
+        } else null
+    }
+    var showChordDiagramDialog by rememberSaveable { mutableStateOf(false) }
+
+    if (showChordDiagramDialog && chordTimeline != null) {
+        val currentPos = playerConnection.player.currentPosition
+        val activeChord = chordTimeline.chords.find { currentPos in it.startMs..it.endMs }?.chord ?: chordTimeline.key
+        ChordDiagramDialog(
+            initialChord = activeChord,
+            progression = chordTimeline.chords.map { it.chord },
+            onDismiss = { showChordDiagramDialog = false }
+        )
+    }
+
+    var livePlaybackPos by remember { mutableLongStateOf(0L) }
+    LaunchedEffect(isPlaying, currentMedia?.id) {
+        while (isActive) {
+            livePlaybackPos = playerConnection.player.currentPosition
+            delay(500)
+        }
+    }
+
     val queueSheetState =
         rememberBottomSheetState(
             dismissedBound = QueuePeekHeight + WindowInsets.systemBars.asPaddingValues()
@@ -1216,6 +1246,52 @@ fun BottomSheetPlayer(
                     }
             }
 
+            // Real-Time Synchronized Guitar & Ukulele Chords Chip
+            if (realtimeChordsEnabled && chordTimeline != null && currentMedia != null) {
+                val activeChord = chordTimeline.chords.find { livePlaybackPos in it.startMs..it.endMs }
+                if (activeChord != null) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = PlayerHorizontalPadding, vertical = 2.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Surface(
+                            shape = RoundedCornerShape(12.dp),
+                            color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.85f),
+                            border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.4f)),
+                            modifier = Modifier.clickable { showChordDiagramDialog = true }
+                        ) {
+                            Row(
+                                modifier = Modifier.padding(horizontal = 10.dp, vertical = 3.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(6.dp)
+                            ) {
+                                Text(text = "🎸", fontSize = 12.sp)
+                                Text(
+                                    text = "${activeChord.section}:",
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.75f)
+                                )
+                                Text(
+                                    text = activeChord.chord,
+                                    style = MaterialTheme.typography.labelMedium,
+                                    fontWeight = FontWeight.Black,
+                                    color = MaterialTheme.colorScheme.onPrimaryContainer
+                                )
+                                val nextChords = chordTimeline.chords.filter { it.startMs > activeChord.endMs }.take(2).map { it.chord }
+                                if (nextChords.isNotEmpty()) {
+                                    Text(
+                                        text = "→ ${nextChords.joinToString(" → ")}",
+                                        style = MaterialTheme.typography.labelSmall,
+                                        color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+            }
 
             PlayerProgressSection(
                 playerConnection = playerConnection,

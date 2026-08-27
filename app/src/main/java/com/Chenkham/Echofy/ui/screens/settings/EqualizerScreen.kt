@@ -8,6 +8,7 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -53,8 +54,15 @@ import androidx.datastore.preferences.core.stringPreferencesKey
 
 import com.Chenkham.Echofy.ui.component.IconButton
 import com.Chenkham.Echofy.ui.component.PreferenceGroupTitle
+import com.Chenkham.Echofy.ui.component.ChordDiagramDialog
 import com.Chenkham.Echofy.ui.utils.backToMain
 import com.Chenkham.Echofy.utils.rememberPreference
+import com.Chenkham.Echofy.audio.AutoEqManager
+import com.Chenkham.Echofy.audio.AutoEqProfile
+import com.Chenkham.Echofy.audio.HarmonicBassManager
+import com.Chenkham.Echofy.audio.HarmonicBassMode
+import com.Chenkham.Echofy.audio.SpatialAudioManager
+import com.Chenkham.Echofy.audio.ChordsManager
 
 // Frequency bands for 5-band EQ
 data class FrequencyBand(
@@ -98,35 +106,6 @@ val reverbPresets = listOf(
     "None", "Small Room", "Medium Room", "Large Room", "Medium Hall", "Large Hall", "Plate"
 )
 
-data class AutoEqProfile(
-    val brand: String,
-    val model: String,
-    val levels: List<Float>
-)
-
-val autoEqProfiles = listOf(
-    AutoEqProfile("Apple", "AirPods Pro 2", listOf(0.52f, 0.48f, 0.54f, 0.62f, 0.58f)),
-    AutoEqProfile("Apple", "AirPods Max", listOf(0.48f, 0.52f, 0.56f, 0.60f, 0.55f)),
-    AutoEqProfile("Sony", "WH-1000XM5", listOf(0.42f, 0.48f, 0.58f, 0.64f, 0.60f)),
-    AutoEqProfile("Sony", "WH-1000XM4", listOf(0.40f, 0.46f, 0.60f, 0.65f, 0.58f)),
-    AutoEqProfile("Sony", "WF-1000XM5", listOf(0.46f, 0.50f, 0.55f, 0.62f, 0.58f)),
-    AutoEqProfile("Samsung", "Galaxy Buds 2 Pro", listOf(0.50f, 0.52f, 0.54f, 0.58f, 0.56f)),
-    AutoEqProfile("Sennheiser", "HD 600", listOf(0.60f, 0.55f, 0.50f, 0.52f, 0.55f)),
-    AutoEqProfile("Sennheiser", "HD 650", listOf(0.58f, 0.54f, 0.50f, 0.54f, 0.56f)),
-    AutoEqProfile("Sennheiser", "Momentum 4", listOf(0.44f, 0.48f, 0.56f, 0.60f, 0.58f)),
-    AutoEqProfile("Bose", "QuietComfort Ultra", listOf(0.46f, 0.50f, 0.58f, 0.60f, 0.56f)),
-    AutoEqProfile("Bose", "QC45", listOf(0.48f, 0.52f, 0.56f, 0.58f, 0.54f)),
-    AutoEqProfile("Audio-Technica", "ATH-M50x", listOf(0.48f, 0.52f, 0.55f, 0.58f, 0.52f)),
-    AutoEqProfile("Moondrop", "Chu II", listOf(0.52f, 0.50f, 0.54f, 0.56f, 0.55f)),
-    AutoEqProfile("Moondrop", "Aria", listOf(0.50f, 0.52f, 0.52f, 0.56f, 0.54f)),
-    AutoEqProfile("Beyerdynamic", "DT 770 Pro (80Ω)", listOf(0.46f, 0.52f, 0.50f, 0.52f, 0.46f)),
-    AutoEqProfile("Beyerdynamic", "DT 990 Pro (250Ω)", listOf(0.48f, 0.54f, 0.52f, 0.50f, 0.44f)),
-    AutoEqProfile("Shure", "SE215", listOf(0.45f, 0.50f, 0.58f, 0.62f, 0.60f)),
-    AutoEqProfile("JBL", "Tune 760NC", listOf(0.46f, 0.50f, 0.56f, 0.60f, 0.58f)),
-    AutoEqProfile("OnePlus", "Buds Pro 2", listOf(0.48f, 0.52f, 0.55f, 0.60f, 0.56f)),
-    AutoEqProfile("Nothing", "Ear (2)", listOf(0.50f, 0.52f, 0.56f, 0.58f, 0.55f))
-)
-
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun EqualizerScreen(
@@ -141,15 +120,23 @@ fun EqualizerScreen(
     var presetIndex by rememberPreference(EqualizerPresetKey, 0)
     var bassEnabled by rememberPreference(BassBoostEnabledKey, false)
     var bassStrength by rememberPreference(BassBoostStrengthKey, 500)
-    var virtualizerEnabled by rememberPreference(booleanPreferencesKey("virtualizerEnabled"), false)
-    var virtualizerStrength by rememberPreference(intPreferencesKey("virtualizerStrength"), 500)
+    var virtualizerEnabled by rememberPreference(SpatialAudioVirtualizerEnabledKey, false)
+    var virtualizerStrength by rememberPreference(SpatialAudioStrengthKey, 500)
+    var spatialAudio8DOrbit by rememberPreference(SpatialAudio8DOrbitEnabledKey, false)
     var outputGain by rememberPreference(intPreferencesKey("eqOutputGainMb"), 0)
     var audioBalance by rememberPreference(floatPreferencesKey("audioBalance"), 0f)
     var selectedReverb by rememberPreference(stringPreferencesKey("reverbPreset"), "None")
+    var autoEqEnabled by rememberPreference(AutoEqEnabledKey, false)
     var selectedAutoEqModel by rememberPreference(AutoEqHeadphoneModelKey, "None")
+    var harmonicBassEnabled by rememberPreference(HarmonicBassSynthesizerKey, false)
+    var harmonicBassMode by rememberPreference(HarmonicBassModeKey, "PUNCHY")
+    var harmonicBassIntensity by rememberPreference(HarmonicBassIntensityKey, 50)
     var parametricEnabled by rememberPreference(ParametricEqEnabledKey, false)
     var bitPerfectEnabled by rememberPreference(BitPerfectOutputKey, false)
     var antiClippingEnabled by rememberPreference(AntiClippingLimiterKey, true)
+    var selectedBrand by remember { mutableStateOf("All") }
+    var autoEqSearchQuery by remember { mutableStateOf("") }
+    var showChordTestDialog by remember { mutableStateOf(false) }
 
     // Band levels (5 bands) - normalized 0 to 1
     var bandLevels by remember { mutableStateOf(customPresets.getOrElse(presetIndex) { customPresets.first() }.levels) }
@@ -384,183 +371,10 @@ fun EqualizerScreen(
             }
 
             // ═══════════════════════════════════════════════════════════════════════════
-            // Advanced Audio Enhancements (Bass Boost, Virtualizer, Gain, Balance)
+            // 1. AutoEq Headphone Calibration (Harman Target)
             // ═══════════════════════════════════════════════════════════════════════════
             Card(
                 shape = RoundedCornerShape(24.dp),
-                colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.surfaceContainer
-                ),
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Column(
-                    modifier = Modifier.padding(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(16.dp)
-                ) {
-                    Text(
-                        text = "Sound Enhancements",
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onSurface
-                    )
-
-                    // Bass Boost
-                    Column {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            modifier = Modifier.fillMaxWidth()
-                        ) {
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                Icon(
-                                    painter = painterResource(R.drawable.graphic_eq),
-                                    contentDescription = null,
-                                    tint = MaterialTheme.colorScheme.primary,
-                                    modifier = Modifier.size(20.dp)
-                                )
-                                Spacer(Modifier.width(8.dp))
-                                Text(
-                                    text = stringResource(R.string.bass_boost),
-                                    style = MaterialTheme.typography.bodyLarge,
-                                    fontWeight = FontWeight.Medium
-                                )
-                            }
-                            Switch(
-                                checked = bassEnabled,
-                                onCheckedChange = { bassEnabled = it }
-                            )
-                        }
-                        if (bassEnabled) {
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                Slider(
-                                    value = bassStrength.toFloat(),
-                                    onValueChange = { if (eqEnabled) bassStrength = it.toInt() },
-                    enabled = eqEnabled,
-                                    valueRange = 0f..1000f,
-                                    modifier = Modifier.weight(1f)
-                                )
-                                Text(
-                                    text = "${bassStrength / 10}%",
-                                    style = MaterialTheme.typography.labelSmall,
-                                    modifier = Modifier.width(44.dp),
-                                    textAlign = TextAlign.End
-                                )
-                            }
-                        }
-                    }
-
-                    HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f))
-
-                    // Virtualizer / 3D Surround
-                    Column {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            modifier = Modifier.fillMaxWidth()
-                        ) {
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                Icon(
-                                    painter = painterResource(R.drawable.volume_up),
-                                    contentDescription = null,
-                                    tint = MaterialTheme.colorScheme.primary,
-                                    modifier = Modifier.size(20.dp)
-                                )
-                                Spacer(Modifier.width(8.dp))
-                                Text(
-                                    text = "3D Virtualizer",
-                                    style = MaterialTheme.typography.bodyLarge,
-                                    fontWeight = FontWeight.Medium
-                                )
-                            }
-                            Switch(
-                                checked = virtualizerEnabled,
-                                onCheckedChange = { virtualizerEnabled = it }
-                            )
-                        }
-                        if (virtualizerEnabled) {
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                Slider(
-                                    value = virtualizerStrength.toFloat(),
-                                    onValueChange = { if (eqEnabled) virtualizerStrength = it.toInt() },
-                    enabled = eqEnabled,
-                                    valueRange = 0f..1000f,
-                                    modifier = Modifier.weight(1f)
-                                )
-                                Text(
-                                    text = "${virtualizerStrength / 10}%",
-                                    style = MaterialTheme.typography.labelSmall,
-                                    modifier = Modifier.width(44.dp),
-                                    textAlign = TextAlign.End
-                                )
-                            }
-                        }
-                    }
-
-                    HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f))
-
-                    // Pre-amp / Output Gain
-                    Column {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            modifier = Modifier.fillMaxWidth()
-                        ) {
-                            Text(
-                                text = "Pre-Amp Output Gain",
-                                style = MaterialTheme.typography.bodyMedium,
-                                fontWeight = FontWeight.Medium
-                            )
-                            Text(
-                                text = "${outputGain / 100} dB",
-                                style = MaterialTheme.typography.labelMedium,
-                                color = MaterialTheme.colorScheme.primary
-                            )
-                        }
-                        Slider(
-                            value = outputGain.toFloat(),
-                            onValueChange = { outputGain = it.toInt() },
-                            valueRange = -1000f..1000f,
-                            modifier = Modifier.fillMaxWidth()
-                        )
-                    }
-
-                    HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f))
-
-                    // Stereo Balance (L / R)
-                    Column {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            modifier = Modifier.fillMaxWidth()
-                        ) {
-                            Text(
-                                text = "Stereo Audio Balance",
-                                style = MaterialTheme.typography.bodyMedium,
-                                fontWeight = FontWeight.Medium
-                            )
-                            Text(
-                                text = when {
-                                    audioBalance < -0.05f -> "Left (${(audioBalance * -100).toInt()}%)"
-                                    audioBalance > 0.05f -> "Right (${(audioBalance * 100).toInt()}%)"
-                                    else -> "Center"
-                                },
-                                style = MaterialTheme.typography.labelMedium,
-                                color = MaterialTheme.colorScheme.primary
-                            )
-                        }
-                        Slider(
-                            value = audioBalance,
-                            onValueChange = { audioBalance = it },
-                            valueRange = -1f..1f,
-                            modifier = Modifier.fillMaxWidth()
-                        )
-                    }
-                }
-            }
-
-            // ── AutoEq Headphone Profile Section ──
-            Card(
-                shape = RoundedCornerShape(20.dp),
                 colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh),
                 modifier = Modifier.fillMaxWidth()
             ) {
@@ -570,55 +384,392 @@ fun EqualizerScreen(
                 ) {
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(10.dp)
-                    ) {
-                        Icon(
-                            painter = painterResource(R.drawable.headphones),
-                            contentDescription = null,
-                            tint = MaterialTheme.colorScheme.primary,
-                            modifier = Modifier.size(22.dp)
-                        )
-                        Column(modifier = Modifier.weight(1f)) {
-                            Text(
-                                text = "AutoEq Headphone Matching",
-                                style = MaterialTheme.typography.titleMedium,
-                                fontWeight = FontWeight.Bold
-                            )
-                            Text(
-                                text = "Calibrate EQ curve for your specific earbuds/headphones (Harman Target)",
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                        }
-                    }
-
-                    LazyRow(
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
                         modifier = Modifier.fillMaxWidth()
                     ) {
-                        item {
-                            FilterChip(
-                                selected = selectedAutoEqModel == "None",
-                                onClick = {
-                                    selectedAutoEqModel = "None"
-                                },
-                                label = { Text("None (Manual)") }
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            Icon(
+                                painter = painterResource(R.drawable.headphones),
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.primary,
+                                modifier = Modifier.size(24.dp)
                             )
+                            Spacer(Modifier.width(10.dp))
+                            Column {
+                                Text(
+                                    text = "AutoEQ Headphone Target",
+                                    style = MaterialTheme.typography.titleMedium,
+                                    fontWeight = FontWeight.Bold
+                                )
+                                Text(
+                                    text = "Harman target compensation for 50+ popular models",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
                         }
-                        itemsIndexed(autoEqProfiles) { _, profile ->
-                            val fullName = "${profile.brand} ${profile.model}"
-                            FilterChip(
-                                selected = selectedAutoEqModel == fullName,
-                                onClick = {
-                                    selectedAutoEqModel = fullName
-                                    bandLevels = profile.levels
-                                    presetIndex = -1
-                                },
-                                label = { Text(fullName) }
+                        Switch(
+                            checked = autoEqEnabled,
+                            onCheckedChange = { autoEqEnabled = it }
+                        )
+                    }
+
+                    if (autoEqEnabled) {
+                        // Brand filter chips
+                        val brands = remember { listOf("All") + AutoEqManager.getBrands() }
+                        LazyRow(
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            itemsIndexed(brands) { _, brand ->
+                                val isSelected = selectedBrand == brand
+                                FilterChip(
+                                    selected = isSelected,
+                                    onClick = { selectedBrand = brand },
+                                    label = { Text(brand) },
+                                    shape = RoundedCornerShape(12.dp)
+                                )
+                            }
+                        }
+
+                        // Filtered profiles list
+                        val filteredProfiles = remember(selectedBrand, autoEqSearchQuery) {
+                            AutoEqManager.profiles.filter { profile ->
+                                (selectedBrand == "All" || profile.brand.equals(selectedBrand, ignoreCase = true)) &&
+                                        (autoEqSearchQuery.isBlank() || "${profile.brand} ${profile.model}".contains(autoEqSearchQuery, ignoreCase = true))
+                            }
+                        }
+
+                        LazyRow(
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            item {
+                                FilterChip(
+                                    selected = selectedAutoEqModel == "None",
+                                    onClick = {
+                                        selectedAutoEqModel = "None"
+                                    },
+                                    label = { Text("None (Flat/Manual)") },
+                                    shape = RoundedCornerShape(12.dp)
+                                )
+                            }
+                            itemsIndexed(filteredProfiles) { _, profile ->
+                                val fullName = "${profile.brand} ${profile.model}"
+                                val isSelected = selectedAutoEqModel == fullName
+                                FilterChip(
+                                    selected = isSelected,
+                                    onClick = {
+                                        selectedAutoEqModel = fullName
+                                        bandLevels = profile.levels
+                                        presetIndex = -1
+                                    },
+                                    label = { Text(fullName) },
+                                    shape = RoundedCornerShape(12.dp)
+                                )
+                            }
+                        }
+
+                        // Selected profile info card
+                        val currentProfile = remember(selectedAutoEqModel) { AutoEqManager.findProfileByName(selectedAutoEqModel) }
+                        if (currentProfile != null) {
+                            Surface(
+                                shape = RoundedCornerShape(14.dp),
+                                color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f),
+                                border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.4f)),
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                Row(
+                                    modifier = Modifier.padding(12.dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Column(modifier = Modifier.weight(1f)) {
+                                        Text(
+                                            text = "🎯 ${currentProfile.brand} ${currentProfile.model} (${currentProfile.type})",
+                                            fontWeight = FontWeight.Bold,
+                                            style = MaterialTheme.typography.bodyMedium,
+                                            color = MaterialTheme.colorScheme.onPrimaryContainer
+                                        )
+                                        Text(
+                                            text = currentProfile.description,
+                                            style = MaterialTheme.typography.bodySmall,
+                                            color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f)
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            // ═══════════════════════════════════════════════════════════════════════════
+            // 2. Harmonic Bass Synthesizer (MaxxBass DSP)
+            // ═══════════════════════════════════════════════════════════════════════════
+            Card(
+                shape = RoundedCornerShape(24.dp),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Column(
+                    modifier = Modifier.padding(18.dp),
+                    verticalArrangement = Arrangement.spacedBy(14.dp)
+                ) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            Icon(
+                                painter = painterResource(R.drawable.graphic_eq),
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.primary,
+                                modifier = Modifier.size(24.dp)
+                            )
+                            Spacer(Modifier.width(10.dp))
+                            Column {
+                                Text(
+                                    text = "Harmonic Bass Synthesizer",
+                                    style = MaterialTheme.typography.titleMedium,
+                                    fontWeight = FontWeight.Bold
+                                )
+                                Text(
+                                    text = "MaxxBass psychoacoustic harmonics for deep sub-bass",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                        }
+                        Switch(
+                            checked = harmonicBassEnabled,
+                            onCheckedChange = { harmonicBassEnabled = it }
+                        )
+                    }
+
+                    if (harmonicBassEnabled) {
+                        Text(
+                            text = "Harmonic Overtones Mode",
+                            style = MaterialTheme.typography.bodyMedium,
+                            fontWeight = FontWeight.SemiBold
+                        )
+
+                        val modes = remember { HarmonicBassManager.getModes() }
+                        LazyRow(
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            itemsIndexed(modes) { _, mode ->
+                                val isSelected = harmonicBassMode == mode.name
+                                FilterChip(
+                                    selected = isSelected,
+                                    onClick = { harmonicBassMode = mode.name },
+                                    label = { Text(mode.label) },
+                                    shape = RoundedCornerShape(12.dp)
+                                )
+                            }
+                        }
+
+                        val activeMode = remember(harmonicBassMode) { HarmonicBassManager.findMode(harmonicBassMode) }
+                        Text(
+                            text = "💡 ${activeMode.description}",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.primary
+                        )
+
+                        Column {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                Text(
+                                    text = "Sub-Bass Harmonic Intensity",
+                                    style = MaterialTheme.typography.bodySmall
+                                )
+                                Text(
+                                    text = "$harmonicBassIntensity%",
+                                    style = MaterialTheme.typography.labelMedium,
+                                    color = MaterialTheme.colorScheme.primary
+                                )
+                            }
+                            Slider(
+                                value = harmonicBassIntensity.toFloat(),
+                                onValueChange = { harmonicBassIntensity = it.toInt() },
+                                valueRange = 10f..100f,
+                                modifier = Modifier.fillMaxWidth()
                             )
                         }
                     }
                 }
+            }
+
+            // ═══════════════════════════════════════════════════════════════════════════
+            // 3. Binaural 8D Spatial Audio Virtualizer
+            // ═══════════════════════════════════════════════════════════════════════════
+            Card(
+                shape = RoundedCornerShape(24.dp),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Column(
+                    modifier = Modifier.padding(18.dp),
+                    verticalArrangement = Arrangement.spacedBy(14.dp)
+                ) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            Icon(
+                                painter = painterResource(R.drawable.volume_up),
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.primary,
+                                modifier = Modifier.size(24.dp)
+                            )
+                            Spacer(Modifier.width(10.dp))
+                            Column {
+                                Text(
+                                    text = "Binaural 3D Spatial Audio",
+                                    style = MaterialTheme.typography.titleMedium,
+                                    fontWeight = FontWeight.Bold
+                                )
+                                Text(
+                                    text = "Wide concert hall acoustic soundstage",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                        }
+                        Switch(
+                            checked = virtualizerEnabled,
+                            onCheckedChange = { virtualizerEnabled = it }
+                        )
+                    }
+
+                    if (virtualizerEnabled) {
+                        Column {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                Text(
+                                    text = "Spatial Acoustic Room Width",
+                                    style = MaterialTheme.typography.bodySmall
+                                )
+                                Text(
+                                    text = "${virtualizerStrength / 10}%",
+                                    style = MaterialTheme.typography.labelMedium,
+                                    color = MaterialTheme.colorScheme.primary
+                                )
+                            }
+                            Slider(
+                                value = virtualizerStrength.toFloat(),
+                                onValueChange = { virtualizerStrength = it.toInt() },
+                                valueRange = 0f..1000f,
+                                modifier = Modifier.fillMaxWidth()
+                            )
+                        }
+
+                        HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f))
+
+                        // 8D Rotating Orbit Mode
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(
+                                    text = "🌐 8D Rotating Orbit Soundstage",
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    fontWeight = FontWeight.SemiBold
+                                )
+                                Text(
+                                    text = "Dynamic 360-degree orbital sound movement across headphones",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                            Switch(
+                                checked = spatialAudio8DOrbit,
+                                onCheckedChange = { spatialAudio8DOrbit = it }
+                            )
+                        }
+                    }
+                }
+            }
+
+            // ═══════════════════════════════════════════════════════════════════════════
+            // 4. Live Guitar & Ukulele Chords Studio
+            // ═══════════════════════════════════════════════════════════════════════════
+            Card(
+                shape = RoundedCornerShape(24.dp),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Column(
+                    modifier = Modifier.padding(18.dp),
+                    verticalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            Text(
+                                text = "🎸",
+                                fontSize = 22.sp,
+                                modifier = Modifier.padding(end = 10.dp)
+                            )
+                            Column {
+                                Text(
+                                    text = "Guitar & Ukulele Chords Studio",
+                                    style = MaterialTheme.typography.titleMedium,
+                                    fontWeight = FontWeight.Bold
+                                )
+                                Text(
+                                    text = "Interactive fretboard & live chords dictionary",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                        }
+                    }
+
+                    FilledTonalButton(
+                        onClick = { showChordTestDialog = true },
+                        shape = RoundedCornerShape(12.dp),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Icon(painter = painterResource(R.drawable.music_note), contentDescription = null, modifier = Modifier.size(18.dp))
+                        Spacer(Modifier.width(8.dp))
+                        Text("Open Interactive Chords Diagram")
+                    }
+                }
+            }
+
+            if (showChordTestDialog) {
+                ChordDiagramDialog(
+                    initialChord = "C",
+                    progression = listOf("C", "G", "Am", "F", "Em", "D", "Dm"),
+                    onDismiss = { showChordTestDialog = false }
+                )
             }
 
             // ── Audiophile Pro & Hi-Res Output Controls ──

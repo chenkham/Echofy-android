@@ -172,6 +172,8 @@ import com.Chenkham.Echofy.utils.makeTimeString
 import com.Chenkham.Echofy.utils.rememberEnumPreference
 import com.Chenkham.Echofy.utils.rememberPreference
 import dagger.hilt.android.EntryPointAccessors
+import com.Chenkham.Echofy.audio.ChordsManager
+import com.Chenkham.Echofy.ui.component.ChordDiagramDialog
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
@@ -293,6 +295,7 @@ fun Lyrics(
     var showSyncDialog by remember { mutableStateOf(false) } // Lyrics sync offset dialog
     // Per-song lyrics sync offset in ms. Positive values make lyrics appear earlier.
     var syncOffsetMs by remember(currentSongId) { mutableLongStateOf(0L) }
+    var showChordDialogInLyrics by remember { mutableStateOf(false) }
 
     LaunchedEffect(currentSongId) {
         val songId = currentSongId ?: return@LaunchedEffect
@@ -858,6 +861,16 @@ fun Lyrics(
                                     )
                                 }
                             }
+                        }
+
+                        // Guitar Chords Diagram button
+                        IconButton(
+                            onClick = { showChordDialogInLyrics = true },
+                            colors = IconButtonDefaults.iconButtonColors(
+                                containerColor = Color.Transparent
+                            )
+                        ) {
+                            Text("🎸", fontSize = 18.sp)
                         }
 
                         if (isSelectionModeActive) {
@@ -1877,6 +1890,27 @@ fun Lyrics(
             },
             onDismiss = { showSyncDialog = false }
         )
+    }
+
+    if (showChordDialogInLyrics) {
+        mediaMetadata?.let { metadata ->
+            val durationMs = playerConnection.player.duration.coerceAtLeast(60000L)
+            val timeline = remember(metadata.id) {
+                ChordsManager.generateTimeline(
+                    metadata.id,
+                    metadata.title,
+                    metadata.artists.joinToString { it.name },
+                    durationMs
+                )
+            }
+            val currentPos = playerConnection.player.currentPosition
+            val activeChord = timeline.chords.find { currentPos in it.startMs..it.endMs }?.chord ?: timeline.key
+            ChordDiagramDialog(
+                initialChord = activeChord,
+                progression = timeline.chords.map { it.chord },
+                onDismiss = { showChordDialogInLyrics = false }
+            )
+        }
     }
 
     // Compact language picker dropdown for translation

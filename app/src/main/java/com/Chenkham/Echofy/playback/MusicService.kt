@@ -170,6 +170,17 @@ import com.Chenkham.Echofy.constants.BassBoostStrengthKey
 import com.Chenkham.Echofy.constants.EqualizerBandLevelsKey
 import com.Chenkham.Echofy.constants.EqualizerEnabledKey
 import com.Chenkham.Echofy.constants.EqualizerPresetKey
+import com.Chenkham.Echofy.constants.AutoEqEnabledKey
+import com.Chenkham.Echofy.constants.AutoEqHeadphoneModelKey
+import com.Chenkham.Echofy.constants.HarmonicBassSynthesizerKey
+import com.Chenkham.Echofy.constants.HarmonicBassModeKey
+import com.Chenkham.Echofy.constants.HarmonicBassIntensityKey
+import com.Chenkham.Echofy.constants.SpatialAudioVirtualizerEnabledKey
+import com.Chenkham.Echofy.constants.SpatialAudioStrengthKey
+import com.Chenkham.Echofy.constants.SpatialAudio8DOrbitEnabledKey
+import com.Chenkham.Echofy.audio.AutoEqManager
+import com.Chenkham.Echofy.audio.HarmonicBassManager
+import com.Chenkham.Echofy.audio.SpatialAudioManager
 import com.Chenkham.Echofy.constants.VideoQualityKey
 import com.Chenkham.Echofy.constants.VisitorDataKey
 import com.Chenkham.Echofy.constants.VisitorDataTimestampKey
@@ -523,6 +534,14 @@ class MusicService :
     private var loudnessEnhancer: LoudnessEnhancer? = null
     private var equalizer: android.media.audiofx.Equalizer? = null
     private var bassBoost: android.media.audiofx.BassBoost? = null
+    private var autoEqEnabled = false
+    private var autoEqHeadphoneModel = "None"
+    private var harmonicBassEnabled = false
+    private var harmonicBassMode = "PUNCHY"
+    private var harmonicBassIntensity = 50
+    private var spatialAudioEnabled = false
+    private var spatialAudioStrength = 500
+    private var spatialAudio8DOrbit = false
 
     private var discordRpc: DiscordRPC? = null
     private var lastPlaybackSpeed = 1.0f
@@ -951,6 +970,14 @@ class MusicService :
         scope.launch { dataStore.data.map { it[BassBoostStrengthKey] ?: 500 }.distinctUntilChanged().collect { bassBoostStrength = it } }
         scope.launch { dataStore.data.map { it[EqualizerPresetKey] ?: 0 }.distinctUntilChanged().collect { equalizerPreset = it } }
         scope.launch { dataStore.data.map { it[EqualizerBandLevelsKey] ?: "" }.distinctUntilChanged().collect { equalizerBandLevels = it } }
+        scope.launch { dataStore.data.map { it[AutoEqEnabledKey] ?: false }.distinctUntilChanged().collect { autoEqEnabled = it; setupEqualizer() } }
+        scope.launch { dataStore.data.map { it[AutoEqHeadphoneModelKey] ?: "None" }.distinctUntilChanged().collect { autoEqHeadphoneModel = it; setupEqualizer() } }
+        scope.launch { dataStore.data.map { it[HarmonicBassSynthesizerKey] ?: false }.distinctUntilChanged().collect { harmonicBassEnabled = it; setupEqualizer() } }
+        scope.launch { dataStore.data.map { it[HarmonicBassModeKey] ?: "PUNCHY" }.distinctUntilChanged().collect { harmonicBassMode = it; setupEqualizer() } }
+        scope.launch { dataStore.data.map { it[HarmonicBassIntensityKey] ?: 50 }.distinctUntilChanged().collect { harmonicBassIntensity = it; setupEqualizer() } }
+        scope.launch { dataStore.data.map { it[SpatialAudioVirtualizerEnabledKey] ?: false }.distinctUntilChanged().collect { spatialAudioEnabled = it; setupEqualizer() } }
+        scope.launch { dataStore.data.map { it[SpatialAudioStrengthKey] ?: 500 }.distinctUntilChanged().collect { spatialAudioStrength = it; setupEqualizer() } }
+        scope.launch { dataStore.data.map { it[SpatialAudio8DOrbitEnabledKey] ?: false }.distinctUntilChanged().collect { spatialAudio8DOrbit = it; setupEqualizer() } }
         scope.launch {
             dataStore.data.map { it[com.Chenkham.Echofy.constants.CrossfadeEnabledKey] ?: false }.distinctUntilChanged().collect { enabled ->
                 crossfadeEnabled = enabled
@@ -2039,7 +2066,7 @@ class MusicService :
     }
 
     /**
-     * Sets up the built-in equalizer and bass boost based on saved preferences.
+     * Sets up the built-in equalizer, AutoEQ, Harmonic Bass, and 8D Spatial Audio.
      */
     private fun setupEqualizer() {
         val audioSessionId = player.audioSessionId
@@ -2057,7 +2084,7 @@ class MusicService :
                 val bandLevelsJson = equalizerBandLevels
 
                 withContext(Dispatchers.Main) {
-                    // Setup Equalizer
+                    // 1. Setup Equalizer
                     if (equalizer == null) {
                         try {
                             equalizer = android.media.audiofx.Equalizer(0, audioSessionId)
@@ -2069,33 +2096,70 @@ class MusicService :
                     }
 
                     equalizer?.let { eq ->
-                        eq.enabled = eqEnabled
-                        if (eqEnabled && presetIndex >= 0 && presetIndex < eq.numberOfPresets) {
-                            try {
-                                eq.usePreset(presetIndex)
-                                Log.d(TAG, "Equalizer preset applied: $presetIndex")
-                            } catch (e: Exception) {
-                                Log.e(TAG, "Failed to apply EQ preset: ${e.message}")
+                        val shouldEnableEq = eqEnabled || autoEqEnabled || harmonicBassEnabled
+                        eq.enabled = shouldEnableEq
+
+                        if (shouldEnableEq) {
+                            val minMb = eq.bandLevelRange[0]
+                            val maxMb = eq.bandLevelRange[1]
+                            val rangeMb = maxMb - minMb
+
+                            var targetLevels: List<Float>? = null
+
+                            // AutoEQ Headphone Profile match
+                            if (autoEqEnabled && autoEqHeadphoneModel.isNotBlank() && autoEqHeadphoneModel != "None") {
+                                val profile = AutoEqManager.findProfileByName(autoEqHeadphoneModel)
+                                if (profile != null) {
+                                    targetLevels = profile.levels
+                                }
                             }
-                        } else if (eqEnabled && bandLevelsJson.isNotEmpty()) {
-                            // Apply custom band levels from JSON
-                            try {
-                                val levels = bandLevelsJson.removeSurrounding("[", "]")
-                                    .split(",")
-                                    .mapNotNull { it.trim().toShortOrNull() }
-                                levels.forEachIndexed { band, level ->
-                                    if (band < eq.numberOfBands) {
-                                        eq.setBandLevel(band.toShort(), level)
+
+                            // If no AutoEQ, check custom band levels or preset
+                            if (targetLevels == null) {
+                                if (presetIndex >= 0 && presetIndex < eq.numberOfPresets) {
+                                    try {
+                                        eq.usePreset(presetIndex)
+                                    } catch (e: Exception) {
+                                        Log.e(TAG, "Failed to apply EQ preset: ${e.message}")
+                                    }
+                                } else if (bandLevelsJson.isNotEmpty()) {
+                                    try {
+                                        val levels = bandLevelsJson.removeSurrounding("[", "]")
+                                            .split(",")
+                                            .mapNotNull { it.trim().toShortOrNull() }
+                                        levels.forEachIndexed { band, level ->
+                                            if (band < eq.numberOfBands) {
+                                                eq.setBandLevel(band.toShort(), level)
+                                            }
+                                        }
+                                    } catch (e: Exception) {
+                                        Log.e(TAG, "Failed to apply custom EQ bands: ${e.message}")
                                     }
                                 }
-                                Log.d(TAG, "Equalizer custom bands applied")
-                            } catch (e: Exception) {
-                                Log.e(TAG, "Failed to apply custom EQ bands: ${e.message}")
+                            }
+
+                            // Apply Harmonic Bass Synthesizer overtones
+                            if (harmonicBassEnabled) {
+                                val currentLevels = targetLevels ?: (0 until eq.numberOfBands.toInt()).map { band ->
+                                    val currentMb = eq.getBandLevel(band.toShort())
+                                    ((currentMb - minMb).toFloat() / rangeMb).coerceIn(0f, 1f)
+                                }
+                                val mode = HarmonicBassManager.findMode(harmonicBassMode)
+                                targetLevels = HarmonicBassManager.applyHarmonics(currentLevels, harmonicBassIntensity, mode)
+                            }
+
+                            // Write target levels to hardware EQ bands
+                            targetLevels?.let { levels ->
+                                val numBands = minOf(levels.size, eq.numberOfBands.toInt())
+                                for (i in 0 until numBands) {
+                                    val levelMb = (minMb + (levels[i] * rangeMb)).toInt().toShort()
+                                    eq.setBandLevel(i.toShort(), levelMb)
+                                }
                             }
                         }
                     }
 
-                    // Setup Bass Boost
+                    // 2. Setup Bass Boost
                     if (bassBoost == null) {
                         try {
                             bassBoost = android.media.audiofx.BassBoost(0, audioSessionId)
@@ -2107,16 +2171,30 @@ class MusicService :
                     }
 
                     bassBoost?.let { bb ->
-                        bb.enabled = bassEnabled
-                        if (bassEnabled) {
+                        val shouldEnableBass = bassEnabled || harmonicBassEnabled
+                        bb.enabled = shouldEnableBass
+                        if (shouldEnableBass) {
+                            val strength = if (harmonicBassEnabled) {
+                                (harmonicBassIntensity * 10).coerceIn(100, 1000).toShort()
+                            } else {
+                                bassStrength
+                            }
                             try {
-                                bb.setStrength(bassStrength)
-                                Log.d(TAG, "BassBoost strength applied: $bassStrength")
+                                bb.setStrength(strength)
                             } catch (e: Exception) {
                                 Log.e(TAG, "Failed to set BassBoost strength: ${e.message}")
                             }
                         }
                     }
+
+                    // 3. Setup Spatial Audio Virtualizer & 8D Orbit
+                    SpatialAudioManager.setup(
+                        sessionId = audioSessionId,
+                        enabled = spatialAudioEnabled,
+                        strength = spatialAudioStrength,
+                        orbit8D = spatialAudio8DOrbit,
+                        scope = scope
+                    )
                 }
             } catch (e: Exception) {
                 Log.e(TAG, "setupEqualizer failed: ${e.message}")
@@ -2126,6 +2204,7 @@ class MusicService :
 
     private fun releaseEqualizer() {
         try {
+            SpatialAudioManager.release()
             equalizer?.release()
             bassBoost?.release()
             Log.d(TAG, "Equalizer and BassBoost released")

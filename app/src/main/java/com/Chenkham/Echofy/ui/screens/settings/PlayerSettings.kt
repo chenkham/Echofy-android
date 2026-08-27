@@ -52,6 +52,17 @@ import com.Chenkham.Echofy.constants.SleepTimerFadeDurationKey
 import com.Chenkham.Echofy.constants.QuickSettingsTileEnabledKey
 import com.Chenkham.Echofy.constants.SmartResumeEnabledKey
 import com.Chenkham.Echofy.constants.SmartResumeMinMinutesKey
+import com.Chenkham.Echofy.constants.AutoEqEnabledKey
+import com.Chenkham.Echofy.constants.AutoEqHeadphoneModelKey
+import com.Chenkham.Echofy.constants.HarmonicBassSynthesizerKey
+import com.Chenkham.Echofy.constants.HarmonicBassModeKey
+import com.Chenkham.Echofy.constants.HarmonicBassIntensityKey
+import com.Chenkham.Echofy.constants.RealtimeChordsEnabledKey
+import com.Chenkham.Echofy.constants.RealtimeChordsInstrumentKey
+import com.Chenkham.Echofy.constants.SpatialAudioVirtualizerEnabledKey
+import com.Chenkham.Echofy.constants.SpatialAudioStrengthKey
+import com.Chenkham.Echofy.constants.SpatialAudio8DOrbitEnabledKey
+import androidx.compose.ui.unit.sp
 import com.Chenkham.Echofy.constants.ResumeOnHeadphonesKey
 import com.Chenkham.Echofy.constants.StopMusicOnTaskClearKey
 import com.Chenkham.Echofy.ui.component.EnumListPreference
@@ -186,6 +197,43 @@ fun PlayerSettings(
     val (silentOutroSeconds, onSilentOutroSecondsChange) = rememberPreference(
         SilentOutroSecondsKey,
         defaultValue = 5
+    )
+
+    val (autoEqEnabled, onAutoEqEnabledChange) = rememberPreference(
+        AutoEqEnabledKey,
+        defaultValue = false
+    )
+    val (selectedAutoEqModel, onSelectedAutoEqModelChange) = rememberPreference(
+        AutoEqHeadphoneModelKey,
+        defaultValue = "None"
+    )
+    val (harmonicBassEnabled, onHarmonicBassEnabledChange) = rememberPreference(
+        HarmonicBassSynthesizerKey,
+        defaultValue = false
+    )
+    val (harmonicBassIntensity, onHarmonicBassIntensityChange) = rememberPreference(
+        HarmonicBassIntensityKey,
+        defaultValue = 50
+    )
+    val (realtimeChordsEnabled, onRealtimeChordsEnabledChange) = rememberPreference(
+        RealtimeChordsEnabledKey,
+        defaultValue = false
+    )
+    val (realtimeChordsInstrument, onRealtimeChordsInstrumentChange) = rememberPreference(
+        RealtimeChordsInstrumentKey,
+        defaultValue = "Guitar"
+    )
+    val (spatialAudioEnabled, onSpatialAudioEnabledChange) = rememberPreference(
+        SpatialAudioVirtualizerEnabledKey,
+        defaultValue = false
+    )
+    val (spatialAudioStrength, onSpatialAudioStrengthChange) = rememberPreference(
+        SpatialAudioStrengthKey,
+        defaultValue = 500
+    )
+    val (spatialAudio8DOrbit, onSpatialAudio8DOrbitChange) = rememberPreference(
+        SpatialAudio8DOrbitEnabledKey,
+        defaultValue = false
     )
 
     val context = androidx.compose.ui.platform.LocalContext.current
@@ -601,6 +649,95 @@ fun PlayerSettings(
                         )
                     }
                 }},
+            )
+        )
+
+        SettingsGeneralCategory(
+            title = "Acoustic Studio & Enhanced Audio",
+            items = listOf(
+                {
+                    SwitchPreference(
+                        title = { Text("AutoEQ Headphone Target") },
+                        description = if (autoEqEnabled && selectedAutoEqModel != "None") "Active: $selectedAutoEqModel" else "Calibrate EQ for 50+ headphone & earbud models (Harman Target)",
+                        icon = { Icon(painterResource(R.drawable.headphones), null) },
+                        checked = autoEqEnabled,
+                        onCheckedChange = onAutoEqEnabledChange
+                    )
+                },
+                {
+                    SwitchPreference(
+                        title = { Text("Harmonic Bass Synthesizer") },
+                        description = "MaxxBass psychoacoustic harmonics for deep sub-bass without distortion",
+                        icon = { Icon(painterResource(R.drawable.graphic_eq), null) },
+                        checked = harmonicBassEnabled,
+                        onCheckedChange = onHarmonicBassEnabledChange
+                    )
+                },
+                {
+                    if (harmonicBassEnabled) {
+                        Column(modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)) {
+                            Text(
+                                text = "Sub-Bass Harmonic Intensity: $harmonicBassIntensity%",
+                                style = MaterialTheme.typography.bodyMedium,
+                            )
+                            Slider(
+                                value = harmonicBassIntensity.toFloat(),
+                                onValueChange = { onHarmonicBassIntensityChange(it.toInt()) },
+                                valueRange = 10f..100f,
+                            )
+                        }
+                    }
+                },
+                {
+                    SwitchPreference(
+                        title = { Text("Real-Time Guitar & Ukulele Chords") },
+                        description = "Display synchronized chord progressions above player timeline & lyrics",
+                        icon = { Text("🎸", fontSize = 20.sp) },
+                        checked = realtimeChordsEnabled,
+                        onCheckedChange = onRealtimeChordsEnabledChange
+                    )
+                },
+                {
+                    if (realtimeChordsEnabled) {
+                        ListPreference(
+                            title = { Text("Default Chords Instrument") },
+                            selectedValue = realtimeChordsInstrument,
+                            values = listOf("Guitar", "Ukulele"),
+                            valueText = { it },
+                            onValueSelected = onRealtimeChordsInstrumentChange
+                        )
+                    }
+                },
+                {
+                    SwitchPreference(
+                        title = { Text("Binaural 3D Spatial Audio") },
+                        description = "Wide immersive concert hall acoustic simulation",
+                        icon = { Icon(painterResource(R.drawable.volume_up), null) },
+                        checked = spatialAudioEnabled,
+                        onCheckedChange = onSpatialAudioEnabledChange
+                    )
+                },
+                {
+                    if (spatialAudioEnabled) {
+                        Column(modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)) {
+                            Text(
+                                text = "Spatial Acoustic Room Width: ${spatialAudioStrength / 10}%",
+                                style = MaterialTheme.typography.bodyMedium,
+                            )
+                            Slider(
+                                value = spatialAudioStrength.toFloat(),
+                                onValueChange = { onSpatialAudioStrengthChange(it.toInt()) },
+                                valueRange = 0f..1000f,
+                            )
+                            SwitchPreference(
+                                title = { Text("8D Rotating Orbit Soundstage") },
+                                description = "Dynamic 360-degree orbital sound rotation in headphones",
+                                checked = spatialAudio8DOrbit,
+                                onCheckedChange = onSpatialAudio8DOrbitChange
+                            )
+                        }
+                    }
+                }
             )
         )
 
