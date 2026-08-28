@@ -40,7 +40,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.*
 import coil.compose.rememberAsyncImagePainter
 import coil.request.ImageRequest
-import com.skydoves.cloudy.cloudy
+import androidx.compose.ui.draw.blur
 import com.Chenkham.Echofy.R
 import com.Chenkham.Echofy.constants.UseSystemFontKey
 import com.Chenkham.Echofy.models.MediaMetadata
@@ -362,7 +362,7 @@ fun GlassLayout(
                 painter = artworkPainter,
                 contentDescription = null,
                 contentScale = ContentScale.Crop,
-                modifier = Modifier.fillMaxSize().cloudy(radius = intensity.cloudyRadius),
+                modifier = Modifier.fillMaxSize().blur(radius = intensity.cloudyRadius.dp),
             )
             // Gradiente oscurecedor
             Box(
@@ -389,7 +389,7 @@ fun GlassLayout(
                 Box(
                     modifier = Modifier
                         .matchParentSize()
-                        .cloudy(radius = intensity.cloudyRadius)
+                        .blur(radius = intensity.cloudyRadius.dp)
                         .drawWithContent {
                             drawContent()
                             drawRect(seed.copy(alpha = intensity.tintAlpha * 0.55f))

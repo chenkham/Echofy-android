@@ -136,7 +136,7 @@ import com.Chenkham.Echofy.extensions.togglePlayPause
 import com.Chenkham.Echofy.ui.screens.settings.toShape
 import com.Chenkham.Echofy.utils.makeTimeString
 import com.Chenkham.Echofy.utils.rememberPreference
-import com.skydoves.cloudy.cloudy
+import androidx.compose.ui.draw.blur
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import me.saket.squiggles.SquigglySlider
@@ -564,7 +564,7 @@ private fun BackgroundAodLayout(
                     model = url, contentDescription = null, contentScale = ContentScale.Crop,
                     modifier = Modifier
                         .fillMaxSize()
-                        .cloudy(radius = 100)
+                        .blur(radius = 100.dp)
                         .graphicsLayer { scaleX = 1.10f; scaleY = 1.10f }
                 )
             } else {

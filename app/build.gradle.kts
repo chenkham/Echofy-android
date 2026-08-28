@@ -250,7 +250,6 @@ dependencies {
     implementation(libs.compose.ui.tooling)
     implementation(libs.compose.animation)
     implementation(libs.compose.reorderable)
-    implementation(libs.compose.cloudy)
     implementation(libs.compose.markdown)
     implementation(libs.multiplatform.markdown)
 
