@@ -812,9 +812,18 @@ class MusicService :
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         if (!isForegroundStarted) {
             isForegroundStarted = true
-            EchofyMediaNotificationProvider.createNotificationChannel(this, CHANNEL_ID, R.string.music_player)
+            try {
+                EchofyMediaNotificationProvider.createNotificationChannel(this, CHANNEL_ID, R.string.music_player)
+            } catch (e: Throwable) {
+                Timber.tag(TAG).w(e, "Notification channel creation failed")
+            }
         }
-        return super.onStartCommand(intent, flags, startId)
+        return try {
+            super.onStartCommand(intent, flags, startId)
+        } catch (e: Exception) {
+            Timber.tag(TAG).e(e, "onStartCommand exception caught")
+            START_NOT_STICKY
+        }
     }
 
     @RequiresApi(Build.VERSION_CODES.O)

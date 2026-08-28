@@ -434,12 +434,13 @@ class InnerTube {
         index: Int?,
         params: String?,
         continuation: String? = null,
+        setLogin: Boolean = true,
     ) = withRetry {
         httpClient.post("next") {
-            ytClient(client, setLogin = true)
+            ytClient(client, setLogin = setLogin)
             setBody(
                 NextBody(
-                    context = client.toContext(queueLocale, visitorData, dataSyncId),
+                    context = client.toContext(queueLocale, visitorData, if (setLogin) dataSyncId else null),
                     videoId = videoId,
                     playlistId = playlistId,
                     playlistSetVideoId = playlistSetVideoId,

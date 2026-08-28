@@ -808,8 +808,7 @@ object YTPlayerUtils {
         expectedDurationMs: Long,
     ): Boolean {
         val approx = format.approxDurationMs?.toLongOrNull() ?: return false
-        if (expectedDurationMs < 90_000L) return false
-        return approx in 1L..(minOf(90_000L, (expectedDurationMs * 9L) / 10L))
+        return expectedDurationMs >= 90_000L && approx <= 35_000L
     }
     /**
      * Checks if the stream url returns a successful status.

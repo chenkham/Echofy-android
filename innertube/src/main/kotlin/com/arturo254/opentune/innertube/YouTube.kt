@@ -1358,42 +1358,65 @@ object YouTube {
         continuation: String? = null,
         followAutomixPreview: Boolean = true,
     ): Result<NextResult> = runCatching {
-        val response = innerTube.next(
+        var response = innerTube.next(
             WEB_REMIX,
             endpoint.videoId,
             endpoint.playlistId,
             endpoint.playlistSetVideoId,
             endpoint.index,
             endpoint.params,
-            continuation).body<NextResponse>()
-        val playlistPanelRenderer = response.continuationContents?.playlistPanelContinuation
+            continuation,
+            setLogin = true
+        ).body<NextResponse>()
+
+        var playlistPanelRenderer = response.continuationContents?.playlistPanelContinuation
             ?: response.contents.singleColumnMusicWatchNextResultsRenderer?.tabbedRenderer
-                ?.watchNextTabbedResultsRenderer?.tabs?.get(0)?.tabRenderer?.content?.musicQueueRenderer
-                ?.content?.playlistPanelRenderer!!
-        val title = response.contents.singleColumnMusicWatchNextResultsRenderer?.tabbedRenderer
-            ?.watchNextTabbedResultsRenderer?.tabs?.get(0)?.tabRenderer?.content?.musicQueueRenderer
-            ?.header?.musicQueueHeaderRenderer?.subtitle?.runs?.firstOrNull()?.text
-        val items = playlistPanelRenderer.contents.mapNotNull { content ->
+                ?.watchNextTabbedResultsRenderer?.tabs?.firstNotNullOfOrNull {
+                    it.tabRenderer?.content?.musicQueueRenderer?.content?.playlistPanelRenderer
+                }
+
+        // If authenticated next returned no queue items, fallback to unauthenticated next
+        if (playlistPanelRenderer == null && continuation == null) {
+            response = innerTube.next(
+                WEB_REMIX,
+                endpoint.videoId,
+                endpoint.playlistId,
+                endpoint.playlistSetVideoId,
+                endpoint.index,
+                endpoint.params,
+                null,
+                setLogin = false
+            ).body<NextResponse>()
+
+            playlistPanelRenderer = response.continuationContents?.playlistPanelContinuation
+                ?: response.contents.singleColumnMusicWatchNextResultsRenderer?.tabbedRenderer
+                    ?.watchNextTabbedResultsRenderer?.tabs?.firstNotNullOfOrNull {
+                        it.tabRenderer?.content?.musicQueueRenderer?.content?.playlistPanelRenderer
+                    }
+        }
+
+        val tabs = response.contents.singleColumnMusicWatchNextResultsRenderer?.tabbedRenderer
+            ?.watchNextTabbedResultsRenderer?.tabs
+        val queueTab = tabs?.firstNotNullOfOrNull { it.tabRenderer?.content?.musicQueueRenderer }
+        val title = queueTab?.header?.musicQueueHeaderRenderer?.subtitle?.runs?.firstOrNull()?.text
+
+        val items = playlistPanelRenderer?.contents?.mapNotNull { content ->
             content.playlistPanelVideoRenderer
                 ?.let(NextPage::fromPlaylistPanelVideoRenderer)
                 ?.let { it to content.playlistPanelVideoRenderer.selected }
-        }
+        }.orEmpty()
         val songs = items.map { it.first }
         val currentIndex = items.indexOfFirst { it.second }.takeIf { it != -1 }
 
-        if (followAutomixPreview) {
+        if (followAutomixPreview && playlistPanelRenderer != null) {
             // Keep automix opt-in so ordered playlist queues can page through their own continuation first.
             playlistPanelRenderer.contents.lastOrNull()?.automixPreviewVideoRenderer?.content?.automixPlaylistVideoRenderer?.navigationEndpoint?.watchPlaylistEndpoint?.let { watchPlaylistEndpoint ->
                 return@runCatching next(watchPlaylistEndpoint).getOrThrow().let { result ->
                     result.copy(
                         title = title,
                         items = songs + result.items,
-                        lyricsEndpoint = response.contents.singleColumnMusicWatchNextResultsRenderer?.tabbedRenderer?.watchNextTabbedResultsRenderer?.tabs?.getOrNull(
-                            1
-                        )?.tabRenderer?.endpoint?.browseEndpoint,
-                        relatedEndpoint = response.contents.singleColumnMusicWatchNextResultsRenderer?.tabbedRenderer?.watchNextTabbedResultsRenderer?.tabs?.getOrNull(
-                            2
-                        )?.tabRenderer?.endpoint?.browseEndpoint,
+                        lyricsEndpoint = tabs?.getOrNull(1)?.tabRenderer?.endpoint?.browseEndpoint,
+                        relatedEndpoint = tabs?.getOrNull(2)?.tabRenderer?.endpoint?.browseEndpoint,
                         currentIndex = currentIndex,
                         endpoint = watchPlaylistEndpoint
                     )
@@ -1404,9 +1427,9 @@ object YouTube {
             title = title,
             items = songs,
             currentIndex = currentIndex,
-            lyricsEndpoint = response.contents.singleColumnMusicWatchNextResultsRenderer?.tabbedRenderer?.watchNextTabbedResultsRenderer?.tabs?.getOrNull(1)?.tabRenderer?.endpoint?.browseEndpoint,
-            relatedEndpoint = response.contents.singleColumnMusicWatchNextResultsRenderer?.tabbedRenderer?.watchNextTabbedResultsRenderer?.tabs?.getOrNull(2)?.tabRenderer?.endpoint?.browseEndpoint,
-            continuation = playlistPanelRenderer.continuations?.getContinuation(),
+            lyricsEndpoint = tabs?.getOrNull(1)?.tabRenderer?.endpoint?.browseEndpoint,
+            relatedEndpoint = tabs?.getOrNull(2)?.tabRenderer?.endpoint?.browseEndpoint,
+            continuation = playlistPanelRenderer?.continuations?.getContinuation(),
             endpoint = endpoint
         )
     }
