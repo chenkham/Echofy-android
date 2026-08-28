@@ -11,6 +11,7 @@ import com.arturo254.opentune.innertube.models.MediaInfo
 import com.arturo254.opentune.innertube.models.ReturnYouTubeDislikeResponse
 import com.arturo254.opentune.innertube.models.YouTubeClient
 import com.arturo254.opentune.innertube.models.YouTubeLocale
+import kotlinx.coroutines.CancellationException
 import com.arturo254.opentune.innertube.models.body.AccountMenuBody
 import com.arturo254.opentune.innertube.models.body.Action
 import com.arturo254.opentune.innertube.models.body.BrowseBody
@@ -208,8 +209,8 @@ class InnerTube {
                 append("X-Origin", requestOrigin)
                 append("Referer", requestReferer)
                 append("Origin", requestOrigin)
+                authState.visitorData?.let { append("X-Goog-Visitor-Id", it) }
             }
-            authState.visitorData?.let { append("X-Goog-Visitor-Id", it) }
             if (setLogin && client.loginSupported) {
                 authState.cookie?.let { cookie ->
                     append("cookie", cookie)
@@ -231,22 +232,28 @@ class InnerTube {
      */
     private suspend fun <T> withRetry(
         maxAttempts: Int = 3,
-        initialDelay: Long = 500L,
+        initialDelayMs: Long = 250L,
+        maxDelayMs: Long = 2_000L,
         factor: Double = 2.0,
         block: suspend () -> T,
     ): T {
-        var currentDelay = initialDelay
-        var attempt = 0
-        while (true) {
+        var currentDelay = initialDelayMs
+        var lastException: Throwable? = null
+
+        repeat(maxAttempts) { attempt ->
             try {
                 return block()
-            } catch (e: IOException) {
-                attempt++
-                if (attempt >= maxAttempts) throw e
-                delay(currentDelay)
-                currentDelay = (currentDelay * factor).toLong()
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Throwable) {
+                lastException = e
+                if (attempt < maxAttempts - 1) {
+                    delay(currentDelay)
+                    currentDelay = (currentDelay * factor).toLong().coerceAtMost(maxDelayMs)
+                }
             }
         }
+        throw lastException ?: IOException("Request failed after $maxAttempts attempts")
     }
 
     suspend fun search(
@@ -325,7 +332,10 @@ class InnerTube {
         includeDataSyncId: Boolean,
     ) = httpClient.post(client.playerEndpoint()) {
         ytClient(client, setLogin = setLogin, authState = authState)
-        val effectiveVisitorData = authState.visitorData
+        val isWeb = client.clientName.startsWith("WEB", ignoreCase = true) ||
+                client.clientName.startsWith("MWEB", ignoreCase = true) ||
+                client.clientName.startsWith("TV", ignoreCase = true)
+        val effectiveVisitorData = if (isWeb) authState.visitorData else null
         setBody(
             PlayerBody(
                 context = client.toContext(

@@ -139,12 +139,14 @@ object YTPlayerUtils {
      * Clients used for fallback streams in case the streams of the main client do not work.
      */
     private val STREAM_FALLBACK_CLIENTS: Array<YouTubeClient> = arrayOf(
+        IOS,
+        IPADOS,
+        TVHTML5_SIMPLY_EMBEDDED_PLAYER,
         VISIONOS,
         ANDROID_VR_1_61_48,
         ANDROID_VR_NO_AUTH,
         ANDROID_VR_1_43_32,
         ANDROID_CREATOR,
-        IPADOS,
         MOBILE,
         ANDROID_MUSIC,
         IOS_MUSIC,
@@ -297,12 +299,12 @@ object YTPlayerUtils {
         // Attempt to fetch valid metadata from primary or robust fallback clients
         val candidateMetadataClients = if (isVideo) {
             listOf(
+                IOS,
+                IPADOS,
+                TVHTML5_SIMPLY_EMBEDDED_PLAYER,
                 ANDROID_VR_1_61_48,
                 ANDROID_VR_NO_AUTH,
                 ANDROID_VR_1_43_32,
-                IOS,
-                IPADOS,
-                TVHTML5,
                 preferredYouTubeClient,
                 VISIONOS,
                 MAIN_CLIENT,
@@ -311,12 +313,13 @@ object YTPlayerUtils {
             ).distinct()
         } else {
             listOf(
+                IOS,
+                IPADOS,
+                TVHTML5_SIMPLY_EMBEDDED_PLAYER,
                 ANDROID_VR_1_61_48,
                 ANDROID_VR_NO_AUTH,
                 ANDROID_VR_1_43_32,
                 VISIONOS,
-                IOS,
-                IPADOS,
                 ANDROID_CREATOR,
                 preferredYouTubeClient,
                 MAIN_CLIENT,
@@ -339,11 +342,12 @@ object YTPlayerUtils {
 
         if (metadataPlayerResponse == null) {
             Timber.tag(logTag).w("Falling back to initial metadata fetch for $videoId")
-            metadataPlayerResponse = YouTube.player(videoId, playlistId, ANDROID_VR_1_61_48, signatureTimestamp, setLogin = false).getOrNull()
+            metadataPlayerResponse = YouTube.player(videoId, playlistId, IOS, signatureTimestamp, setLogin = false).getOrNull()
+                ?: YouTube.player(videoId, playlistId, ANDROID_VR_1_61_48, signatureTimestamp, setLogin = false).getOrNull()
                 ?: YouTube.player(videoId, playlistId, preferredYouTubeClient, signatureTimestamp, setLogin = false).getOrNull()
                 ?: YouTube.player(videoId, playlistId, VISIONOS, signatureTimestamp, setLogin = false).getOrNull()
                 ?: YouTube.player(videoId, playlistId, MAIN_CLIENT, signatureTimestamp, setLogin = false).getOrThrow()
-            activeMetadataClient = ANDROID_VR_1_61_48
+            activeMetadataClient = IOS
         }
 
         val audioConfig = metadataPlayerResponse.playerConfig?.audioConfig
@@ -354,23 +358,24 @@ object YTPlayerUtils {
         val streamClients =
             buildList {
                 if (isVideo) {
+                    add(IOS)
+                    add(IPADOS)
+                    add(TVHTML5_SIMPLY_EMBEDDED_PLAYER)
                     add(ANDROID_VR_1_61_48)
                     add(ANDROID_VR_NO_AUTH)
                     add(ANDROID_VR_1_43_32)
-                    add(IOS)
-                    add(IPADOS)
-                    add(TVHTML5)
                     add(preferredYouTubeClient)
                     add(VISIONOS)
                     add(MOBILE)
                     add(WEB)
                 } else {
+                    add(IOS)
+                    add(IPADOS)
+                    add(TVHTML5_SIMPLY_EMBEDDED_PLAYER)
                     add(ANDROID_VR_1_61_48)
                     add(ANDROID_VR_NO_AUTH)
                     add(ANDROID_VR_1_43_32)
                     add(VISIONOS)
-                    add(IOS)
-                    add(IPADOS)
                     add(ANDROID_CREATOR)
                     add(preferredYouTubeClient)
                     add(MOBILE)
@@ -771,14 +776,13 @@ object YTPlayerUtils {
         client: YouTubeClient,
         format: PlayerResponse.StreamingData.Format,
     ): Boolean {
-        if (!YouTube.webClientPoTokenEnabled) return false
-        // Once a GVS PoToken is attached, ciphered web streams are served in full, so keep them.
-        if (YouTube.poTokenGvs != null) return false
         if (!StreamClientUtils.isWebClient(client.clientName)) return false
         if (!isCipheredFormat(format)) return false
+        // Once a GVS PoToken is attached, ciphered web streams are served in full, so keep them.
+        if (YouTube.poTokenGvs != null) return false
 
         Timber.tag(logTag).w(
-            "Skipping ciphered ${client.clientName} stream candidate while Web PoToken is enabled; using a direct URL or fallback client instead"
+            "Skipping ciphered ${client.clientName} stream candidate because GVS PoToken is not attached; using a direct URL client instead"
         )
         return true
     }

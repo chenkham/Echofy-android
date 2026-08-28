@@ -124,8 +124,8 @@ data class YouTubeClient(
             clientVersion = "2.0",
             clientId = "85",
             userAgent = "Mozilla/5.0 (PlayStation; PlayStation 4/12.02) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/15.4 Safari/605.1.15",
-            loginSupported = true,
-            loginRequired = true,
+            loginSupported = false,
+            loginRequired = false,
             useSignatureTimestamp = true,
             isEmbedded = true,
         )
@@ -135,7 +135,15 @@ data class YouTubeClient(
             clientVersion = "19.29.1",
             clientId = "5",
             userAgent = "com.google.ios.youtube/19.29.1 (iPhone16,2; U; CPU iOS 17_5_1 like Mac OS X;)",
+            osName = "iOS",
             osVersion = "17.5.1.21F90",
+            deviceMake = "Apple",
+            deviceModel = "iPhone16,2",
+            friendlyName = "iOS",
+            packageName = "com.google.ios.youtube",
+            loginSupported = false,
+            loginRequired = false,
+            useSignatureTimestamp = false,
         )
 
         val MOBILE = YouTubeClient(
