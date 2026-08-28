@@ -146,7 +146,7 @@ object YTPlayerUtils {
         ANDROID_VR_NO_AUTH,
         ANDROID_VR_1_43_32,
         VISIONOS,
-        TVHTML5_SIMPLY_EMBEDDED_PLAYER,
+        TVHTML5,
         IOS,
         IPADOS,
         ANDROID_CREATOR,
@@ -306,7 +306,7 @@ object YTPlayerUtils {
                 ANDROID_VR_1_61_48,
                 ANDROID_VR_NO_AUTH,
                 ANDROID_VR_1_43_32,
-                TVHTML5_SIMPLY_EMBEDDED_PLAYER,
+                TVHTML5,
                 IOS,
                 IPADOS,
                 preferredYouTubeClient,
@@ -322,7 +322,7 @@ object YTPlayerUtils {
                 ANDROID_VR_NO_AUTH,
                 ANDROID_VR_1_43_32,
                 VISIONOS,
-                TVHTML5_SIMPLY_EMBEDDED_PLAYER,
+                TVHTML5,
                 IOS,
                 IPADOS,
                 ANDROID_CREATOR,
@@ -350,7 +350,7 @@ object YTPlayerUtils {
             metadataPlayerResponse = YouTube.player(videoId, playlistId, ANDROID_EMBEDDED, signatureTimestamp, setLogin = false).getOrNull()
                 ?: YouTube.player(videoId, playlistId, ANDROID_VR_1_61_48, signatureTimestamp, setLogin = false).getOrNull()
                 ?: YouTube.player(videoId, playlistId, ANDROID_VR_NO_AUTH, signatureTimestamp, setLogin = false).getOrNull()
-                ?: YouTube.player(videoId, playlistId, TVHTML5_SIMPLY_EMBEDDED_PLAYER, signatureTimestamp, setLogin = false).getOrNull()
+                ?: YouTube.player(videoId, playlistId, TVHTML5, signatureTimestamp, setLogin = false).getOrNull()
                 ?: YouTube.player(videoId, playlistId, IOS, signatureTimestamp, setLogin = false).getOrNull()
                 ?: YouTube.player(videoId, playlistId, preferredYouTubeClient, signatureTimestamp, setLogin = false).getOrNull()
                 ?: YouTube.player(videoId, playlistId, VISIONOS, signatureTimestamp, setLogin = false).getOrNull()
@@ -370,7 +370,7 @@ object YTPlayerUtils {
                     add(ANDROID_VR_1_61_48)
                     add(ANDROID_VR_NO_AUTH)
                     add(ANDROID_VR_1_43_32)
-                    add(TVHTML5_SIMPLY_EMBEDDED_PLAYER)
+                    add(TVHTML5)
                     add(IOS)
                     add(IPADOS)
                     add(preferredYouTubeClient)
@@ -383,7 +383,7 @@ object YTPlayerUtils {
                     add(ANDROID_VR_NO_AUTH)
                     add(ANDROID_VR_1_43_32)
                     add(VISIONOS)
-                    add(TVHTML5_SIMPLY_EMBEDDED_PLAYER)
+                    add(TVHTML5)
                     add(IOS)
                     add(IPADOS)
                     add(ANDROID_CREATOR)
@@ -705,17 +705,23 @@ object YTPlayerUtils {
     ): List<PlayerResponse.StreamingData.Format> {
         Timber.tag(logTag).i("Finding format with audioQuality: $audioQuality, network metered: $networkMetered")
 
-        val audioFormats =
-            playerResponse.streamingData?.adaptiveFormats
-                ?.asSequence()
-                ?.filter { it.isAudio && it.bitrate > 0 }
-                ?.filter { it.url != null || it.signatureCipher != null || it.cipher != null }
-                ?.filter { format ->
+        val rawFormats = (playerResponse.streamingData?.adaptiveFormats.orEmpty() +
+                playerResponse.streamingData?.formats.orEmpty())
+
+        var audioFormats =
+            rawFormats
+                .asSequence()
+                .filter { (it.isAudio || it.mimeType.startsWith("audio/", ignoreCase = true) || it.width == null || it.audioQuality != null || it.audioSampleRate != null) && it.bitrate > 0 }
+                .filter { it.url != null || it.signatureCipher != null || it.cipher != null }
+                .filter { format ->
                     val codec = extractCodec(format.mimeType)?.lowercase()
                     codec == null || codec !in avoidCodecs
                 }
-                ?.toList()
-                .orEmpty()
+                .toList()
+
+        if (audioFormats.isEmpty()) {
+            audioFormats = rawFormats.filter { it.url != null || it.signatureCipher != null || it.cipher != null }
+        }
 
         if (audioFormats.isEmpty()) return emptyList()
 

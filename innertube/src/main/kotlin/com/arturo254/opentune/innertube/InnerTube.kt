@@ -200,9 +200,13 @@ class InnerTube {
         val isWeb = client.clientName.startsWith("WEB", ignoreCase = true) ||
                 client.clientName.startsWith("MWEB", ignoreCase = true) ||
                 client.clientName.startsWith("TV", ignoreCase = true)
+        val isIos = client.clientName.startsWith("IOS", ignoreCase = true) || client.clientName.startsWith("IPAD", ignoreCase = true)
+        val isCreator = client.clientName.contains("CREATOR", ignoreCase = true)
         contentType(ContentType.Application.Json)
         headers {
-            append("X-Goog-Api-Format-Version", "1")
+            if (!isIos && !isCreator) {
+                append("X-Goog-Api-Format-Version", "1")
+            }
             append("X-YouTube-Client-Name", client.clientId)
             append("X-YouTube-Client-Version", client.clientVersion)
             if (isWeb) {
