@@ -141,15 +141,14 @@ object YTPlayerUtils {
      * Clients used for fallback streams in case the streams of the main client do not work.
      */
     private val STREAM_FALLBACK_CLIENTS: Array<YouTubeClient> = arrayOf(
-        IOS,
-        IPADOS,
-        TVHTML5_SIMPLY_EMBEDDED_PLAYER,
-        ANDROID_EMBEDDED,
-        WEB_EMBEDDED,
-        VISIONOS,
         ANDROID_VR_1_61_48,
         ANDROID_VR_NO_AUTH,
         ANDROID_VR_1_43_32,
+        VISIONOS,
+        TVHTML5_SIMPLY_EMBEDDED_PLAYER,
+        ANDROID_EMBEDDED,
+        IOS,
+        IPADOS,
         ANDROID_CREATOR,
         MOBILE,
         ANDROID_MUSIC,
@@ -303,14 +302,13 @@ object YTPlayerUtils {
         // Attempt to fetch valid metadata from primary or robust fallback clients
         val candidateMetadataClients = if (isVideo) {
             listOf(
-                IOS,
-                IPADOS,
-                TVHTML5_SIMPLY_EMBEDDED_PLAYER,
-                ANDROID_EMBEDDED,
-                WEB_EMBEDDED,
                 ANDROID_VR_1_61_48,
                 ANDROID_VR_NO_AUTH,
                 ANDROID_VR_1_43_32,
+                TVHTML5_SIMPLY_EMBEDDED_PLAYER,
+                ANDROID_EMBEDDED,
+                IOS,
+                IPADOS,
                 preferredYouTubeClient,
                 VISIONOS,
                 MAIN_CLIENT,
@@ -319,15 +317,14 @@ object YTPlayerUtils {
             ).distinct()
         } else {
             listOf(
-                IOS,
-                IPADOS,
-                TVHTML5_SIMPLY_EMBEDDED_PLAYER,
-                ANDROID_EMBEDDED,
-                WEB_EMBEDDED,
                 ANDROID_VR_1_61_48,
                 ANDROID_VR_NO_AUTH,
                 ANDROID_VR_1_43_32,
                 VISIONOS,
+                TVHTML5_SIMPLY_EMBEDDED_PLAYER,
+                ANDROID_EMBEDDED,
+                IOS,
+                IPADOS,
                 ANDROID_CREATOR,
                 preferredYouTubeClient,
                 MAIN_CLIENT,
@@ -350,14 +347,14 @@ object YTPlayerUtils {
 
         if (metadataPlayerResponse == null) {
             Timber.tag(logTag).w("Falling back to initial metadata fetch for $videoId")
-            metadataPlayerResponse = YouTube.player(videoId, playlistId, IOS, signatureTimestamp, setLogin = false).getOrNull()
+            metadataPlayerResponse = YouTube.player(videoId, playlistId, ANDROID_VR_1_61_48, signatureTimestamp, setLogin = false).getOrNull()
+                ?: YouTube.player(videoId, playlistId, ANDROID_VR_NO_AUTH, signatureTimestamp, setLogin = false).getOrNull()
                 ?: YouTube.player(videoId, playlistId, TVHTML5_SIMPLY_EMBEDDED_PLAYER, signatureTimestamp, setLogin = false).getOrNull()
-                ?: YouTube.player(videoId, playlistId, ANDROID_EMBEDDED, signatureTimestamp, setLogin = false).getOrNull()
-                ?: YouTube.player(videoId, playlistId, ANDROID_VR_1_61_48, signatureTimestamp, setLogin = false).getOrNull()
+                ?: YouTube.player(videoId, playlistId, IOS, signatureTimestamp, setLogin = false).getOrNull()
                 ?: YouTube.player(videoId, playlistId, preferredYouTubeClient, signatureTimestamp, setLogin = false).getOrNull()
                 ?: YouTube.player(videoId, playlistId, VISIONOS, signatureTimestamp, setLogin = false).getOrNull()
                 ?: YouTube.player(videoId, playlistId, MAIN_CLIENT, signatureTimestamp, setLogin = false).getOrThrow()
-            activeMetadataClient = IOS
+            activeMetadataClient = ANDROID_VR_1_61_48
         }
 
         val audioConfig = metadataPlayerResponse.playerConfig?.audioConfig
@@ -368,28 +365,26 @@ object YTPlayerUtils {
         val streamClients =
             buildList {
                 if (isVideo) {
-                    add(IOS)
-                    add(IPADOS)
-                    add(TVHTML5_SIMPLY_EMBEDDED_PLAYER)
-                    add(ANDROID_EMBEDDED)
-                    add(WEB_EMBEDDED)
                     add(ANDROID_VR_1_61_48)
                     add(ANDROID_VR_NO_AUTH)
                     add(ANDROID_VR_1_43_32)
+                    add(TVHTML5_SIMPLY_EMBEDDED_PLAYER)
+                    add(ANDROID_EMBEDDED)
+                    add(IOS)
+                    add(IPADOS)
                     add(preferredYouTubeClient)
                     add(VISIONOS)
                     add(MOBILE)
                     add(WEB)
                 } else {
-                    add(IOS)
-                    add(IPADOS)
-                    add(TVHTML5_SIMPLY_EMBEDDED_PLAYER)
-                    add(ANDROID_EMBEDDED)
-                    add(WEB_EMBEDDED)
                     add(ANDROID_VR_1_61_48)
                     add(ANDROID_VR_NO_AUTH)
                     add(ANDROID_VR_1_43_32)
                     add(VISIONOS)
+                    add(TVHTML5_SIMPLY_EMBEDDED_PLAYER)
+                    add(ANDROID_EMBEDDED)
+                    add(IOS)
+                    add(IPADOS)
                     add(ANDROID_CREATOR)
                     add(preferredYouTubeClient)
                     add(MOBILE)
