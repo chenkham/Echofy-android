@@ -168,6 +168,9 @@ import androidx.lifecycle.lifecycleScope
 import androidx.media3.common.MediaItem
 import androidx.media3.common.Player
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.withTimeoutOrNull
+import androidx.compose.runtime.snapshotFlow
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
@@ -2261,25 +2264,45 @@ class MainActivity : ComponentActivity() {
             return
         }
 
-        // Handle existing YouTube URL sharing logic
-        val uri = intent.data ?: intent.extras?.getString(Intent.EXTRA_TEXT)?.toUri() ?: return
-        when {
+        // Handle shared YouTube / YouTube Music URL logic
+        val rawSharedText = intent.extras?.getString(Intent.EXTRA_TEXT)
+        val uri = intent.data ?: rawSharedText?.let { text ->
+            val match = Regex("""https?://[^\s]+""").find(text)
+            match?.value?.toUri() ?: runCatching { text.trim().toUri() }.getOrNull()
+        } ?: return
+
+        val videoId = when {
             uri.pathSegments.firstOrNull() == "watch" -> uri.getQueryParameter("v")
-            uri.host == "youtu.be" -> uri.pathSegments.firstOrNull()
+            uri.host?.contains("youtu.be", ignoreCase = true) == true -> uri.pathSegments.firstOrNull()
+            uri.pathSegments.firstOrNull() == "shorts" -> uri.pathSegments.getOrNull(1)
+            uri.pathSegments.firstOrNull() == "live" -> uri.pathSegments.getOrNull(1)
+            uri.getQueryParameter("v") != null -> uri.getQueryParameter("v")
             else -> null
-        }?.let { videoId ->
+        }
+
+        if (videoId != null) {
             lifecycleScope.launch {
-                withContext(Dispatchers.IO) {
+                val playerConn = withTimeoutOrNull(15000) {
+                    snapshotFlow { playerConnection }.filterNotNull().first()
+                } ?: playerConnection
+
+                val queueResult = withContext(Dispatchers.IO) {
                     YouTube.queue(listOf(videoId))
-                }.onSuccess {
-                    playerConnection?.playQueue(
+                }
+                queueResult.onSuccess {
+                    val song = it.firstOrNull()
+                    playerConn?.playQueue(
                         YouTubeQueue(
-                            WatchEndpoint(videoId = it.firstOrNull()?.id),
-                            it.firstOrNull()?.toMediaMetadata()
+                            WatchEndpoint(videoId = song?.id ?: videoId),
+                            song?.toMediaMetadata()
                         )
                     )
                 }.onFailure {
-                    reportException(it)
+                    playerConn?.playQueue(
+                        YouTubeQueue(
+                            WatchEndpoint(videoId = videoId)
+                        )
+                    )
                 }
             }
         }

@@ -715,21 +715,7 @@ fun BottomSheetPlayer(
         )
     }
 
-    var showAudioBookmarksDialog by rememberSaveable {
-        mutableStateOf(false)
-    }
 
-    if (showAudioBookmarksDialog && currentMedia != null) {
-        com.Chenkham.Echofy.ui.component.AudioBookmarksDialog(
-            songId = currentMedia.id,
-            songTitle = currentMedia.title,
-            currentPositionMs = playerConnection.player.currentPosition,
-            onSeekTo = { pos ->
-                playerConnection.player.seekTo(pos)
-            },
-            onDismiss = { showAudioBookmarksDialog = false }
-        )
-    }
 
     val realtimeChordsEnabled by rememberPreference(RealtimeChordsEnabledKey, false)
     val chordTimeline = remember(currentMedia?.id) {
@@ -1112,28 +1098,6 @@ fun BottomSheetPlayer(
                     )
                 }
 
-                // Bookmark / Audio Timestamp Marker button
-                Box(
-                    contentAlignment = Alignment.Center,
-                    modifier = Modifier
-                        .size(42.dp)
-                        .clip(smallButtonShape.toShape())
-                        .background(actionButtonColor)
-                        .clickable {
-                            val pos = playerConnection.player.currentPosition
-                            if (currentMedia != null) {
-                                com.Chenkham.Echofy.utils.AudioBookmarkManager.addBookmark(context, currentMedia.id, pos)
-                            }
-                            showAudioBookmarksDialog = true
-                        },
-                ) {
-                    Image(
-                        painter = painterResource(R.drawable.bookmark),
-                        contentDescription = "Bookmark",
-                        colorFilter = ColorFilter.tint(onBackgroundColor),
-                        modifier = Modifier.size(24.dp),
-                    )
-                }
 
                 // Radio button
                 Box(

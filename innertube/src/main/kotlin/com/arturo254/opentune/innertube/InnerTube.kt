@@ -202,10 +202,10 @@ class InnerTube {
                 client.clientName.startsWith("TV", ignoreCase = true)
         contentType(ContentType.Application.Json)
         headers {
-            append("X-Goog-Api-Format-Version", "1")
-            append("X-YouTube-Client-Name", client.clientId)
-            append("X-YouTube-Client-Version", client.clientVersion)
             if (isWeb) {
+                append("X-Goog-Api-Format-Version", "1")
+                append("X-YouTube-Client-Name", client.clientId)
+                append("X-YouTube-Client-Version", client.clientVersion)
                 append("X-Origin", requestOrigin)
                 append("Referer", requestReferer)
                 append("Origin", requestOrigin)

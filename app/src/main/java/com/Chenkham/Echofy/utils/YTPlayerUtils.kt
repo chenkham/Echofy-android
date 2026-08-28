@@ -16,6 +16,8 @@ import com.Chenkham.Echofy.utils.potoken.PoTokenGenerator
 import com.arturo254.opentune.innertube.NewPipeUtils
 import com.arturo254.opentune.innertube.YouTube
 import com.arturo254.opentune.innertube.models.YouTubeClient
+import com.arturo254.opentune.innertube.models.YouTubeClient.Companion.ANDROID_EMBEDDED
+import com.arturo254.opentune.innertube.models.YouTubeClient.Companion.WEB_EMBEDDED
 import com.arturo254.opentune.innertube.models.YouTubeClient.Companion.IOS
 import com.arturo254.opentune.innertube.models.YouTubeClient.Companion.TVHTML5_SIMPLY_EMBEDDED_PLAYER
 import com.arturo254.opentune.innertube.models.YouTubeClient.Companion.WEB_REMIX
@@ -142,6 +144,8 @@ object YTPlayerUtils {
         IOS,
         IPADOS,
         TVHTML5_SIMPLY_EMBEDDED_PLAYER,
+        ANDROID_EMBEDDED,
+        WEB_EMBEDDED,
         VISIONOS,
         ANDROID_VR_1_61_48,
         ANDROID_VR_NO_AUTH,
@@ -302,6 +306,8 @@ object YTPlayerUtils {
                 IOS,
                 IPADOS,
                 TVHTML5_SIMPLY_EMBEDDED_PLAYER,
+                ANDROID_EMBEDDED,
+                WEB_EMBEDDED,
                 ANDROID_VR_1_61_48,
                 ANDROID_VR_NO_AUTH,
                 ANDROID_VR_1_43_32,
@@ -316,6 +322,8 @@ object YTPlayerUtils {
                 IOS,
                 IPADOS,
                 TVHTML5_SIMPLY_EMBEDDED_PLAYER,
+                ANDROID_EMBEDDED,
+                WEB_EMBEDDED,
                 ANDROID_VR_1_61_48,
                 ANDROID_VR_NO_AUTH,
                 ANDROID_VR_1_43_32,
@@ -343,6 +351,8 @@ object YTPlayerUtils {
         if (metadataPlayerResponse == null) {
             Timber.tag(logTag).w("Falling back to initial metadata fetch for $videoId")
             metadataPlayerResponse = YouTube.player(videoId, playlistId, IOS, signatureTimestamp, setLogin = false).getOrNull()
+                ?: YouTube.player(videoId, playlistId, TVHTML5_SIMPLY_EMBEDDED_PLAYER, signatureTimestamp, setLogin = false).getOrNull()
+                ?: YouTube.player(videoId, playlistId, ANDROID_EMBEDDED, signatureTimestamp, setLogin = false).getOrNull()
                 ?: YouTube.player(videoId, playlistId, ANDROID_VR_1_61_48, signatureTimestamp, setLogin = false).getOrNull()
                 ?: YouTube.player(videoId, playlistId, preferredYouTubeClient, signatureTimestamp, setLogin = false).getOrNull()
                 ?: YouTube.player(videoId, playlistId, VISIONOS, signatureTimestamp, setLogin = false).getOrNull()
@@ -361,6 +371,8 @@ object YTPlayerUtils {
                     add(IOS)
                     add(IPADOS)
                     add(TVHTML5_SIMPLY_EMBEDDED_PLAYER)
+                    add(ANDROID_EMBEDDED)
+                    add(WEB_EMBEDDED)
                     add(ANDROID_VR_1_61_48)
                     add(ANDROID_VR_NO_AUTH)
                     add(ANDROID_VR_1_43_32)
@@ -372,6 +384,8 @@ object YTPlayerUtils {
                     add(IOS)
                     add(IPADOS)
                     add(TVHTML5_SIMPLY_EMBEDDED_PLAYER)
+                    add(ANDROID_EMBEDDED)
+                    add(WEB_EMBEDDED)
                     add(ANDROID_VR_1_61_48)
                     add(ANDROID_VR_NO_AUTH)
                     add(ANDROID_VR_1_43_32)

@@ -130,6 +130,23 @@ data class YouTubeClient(
             isEmbedded = true,
         )
 
+        val ANDROID_EMBEDDED = YouTubeClient(
+            clientName = "ANDROID",
+            clientVersion = "21.10.38",
+            clientId = "3",
+            userAgent = "com.google.android.youtube/21.10.38 (Linux; U; Android 15; en_US; Pixel 9 Pro; Build/AP4A.250205.002; Cronet/132.0.6834.79) gzip",
+            osName = "Android",
+            osVersion = "15",
+            deviceMake = "Google",
+            deviceModel = "Pixel 9 Pro",
+            androidSdkVersion = "35",
+            friendlyName = "Android Embedded",
+            loginSupported = false,
+            loginRequired = false,
+            useSignatureTimestamp = false,
+            isEmbedded = true,
+        )
+
         val IOS = YouTubeClient(
             clientName = "IOS",
             clientVersion = "19.29.1",
