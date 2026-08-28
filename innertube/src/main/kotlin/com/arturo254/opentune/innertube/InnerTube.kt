@@ -279,7 +279,7 @@ class InnerTube {
         playlistId: String?,
         signatureTimestamp: Int?,
         poToken: String? = null,
-        setLogin: Boolean = true,
+        setLogin: Boolean = false,
         authState: PlaybackAuthState = currentAuthState(),
     ) = withRetry {
         val includeDataSyncId =

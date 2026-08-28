@@ -283,14 +283,7 @@ object YTPlayerUtils {
         var streamPlayerResponse: PlayerResponse? = null
         var selectedUserAgent: String? = null
 
-        val orderedFallbackClients =
-            (
-                if (isLoggedIn) {
-                    STREAM_FALLBACK_CLIENTS.filter { it.loginSupported } + STREAM_FALLBACK_CLIENTS.filterNot { it.loginSupported }
-                } else {
-                    STREAM_FALLBACK_CLIENTS.toList()
-                }
-                ).distinct()
+        val orderedFallbackClients = STREAM_FALLBACK_CLIENTS.toList()
 
         val preferredYouTubeClient =
             when (preferredStreamClient) {
@@ -318,16 +311,16 @@ object YTPlayerUtils {
             ).distinct()
         } else {
             listOf(
-                VISIONOS,
-                preferredYouTubeClient,
                 ANDROID_VR_1_61_48,
                 ANDROID_VR_NO_AUTH,
-                MAIN_CLIENT,
                 ANDROID_VR_1_43_32,
-                ANDROID_CREATOR,
-                IPADOS,
-                MOBILE,
+                VISIONOS,
                 IOS,
+                IPADOS,
+                ANDROID_CREATOR,
+                preferredYouTubeClient,
+                MAIN_CLIENT,
+                MOBILE,
                 WEB,
             ).distinct()
         }
@@ -335,7 +328,7 @@ object YTPlayerUtils {
         var activeMetadataClient: YouTubeClient = candidateMetadataClients.first()
 
         for (mClient in candidateMetadataClients) {
-            val resp = YouTube.player(videoId, playlistId, mClient, signatureTimestamp).getOrNull()
+            val resp = YouTube.player(videoId, playlistId, mClient, signatureTimestamp, setLogin = false).getOrNull()
             if (resp != null && resp.playabilityStatus.status == "OK") {
                 metadataPlayerResponse = resp
                 activeMetadataClient = mClient
@@ -346,10 +339,10 @@ object YTPlayerUtils {
 
         if (metadataPlayerResponse == null) {
             Timber.tag(logTag).w("Falling back to initial metadata fetch for $videoId")
-            metadataPlayerResponse = YouTube.player(videoId, playlistId, ANDROID_VR_1_61_48, signatureTimestamp).getOrNull()
-                ?: YouTube.player(videoId, playlistId, preferredYouTubeClient, signatureTimestamp).getOrNull()
-                ?: YouTube.player(videoId, playlistId, VISIONOS, signatureTimestamp).getOrNull()
-                ?: YouTube.player(videoId, playlistId, MAIN_CLIENT, signatureTimestamp).getOrThrow()
+            metadataPlayerResponse = YouTube.player(videoId, playlistId, ANDROID_VR_1_61_48, signatureTimestamp, setLogin = false).getOrNull()
+                ?: YouTube.player(videoId, playlistId, preferredYouTubeClient, signatureTimestamp, setLogin = false).getOrNull()
+                ?: YouTube.player(videoId, playlistId, VISIONOS, signatureTimestamp, setLogin = false).getOrNull()
+                ?: YouTube.player(videoId, playlistId, MAIN_CLIENT, signatureTimestamp, setLogin = false).getOrThrow()
             activeMetadataClient = ANDROID_VR_1_61_48
         }
 
@@ -367,22 +360,22 @@ object YTPlayerUtils {
                     add(IOS)
                     add(IPADOS)
                     add(TVHTML5)
+                    add(preferredYouTubeClient)
+                    add(VISIONOS)
                     add(MOBILE)
                     add(WEB)
-                    add(VISIONOS)
-                    add(preferredYouTubeClient)
                 } else {
-                    add(VISIONOS)
-                    add(preferredYouTubeClient)
                     add(ANDROID_VR_1_61_48)
                     add(ANDROID_VR_NO_AUTH)
                     add(ANDROID_VR_1_43_32)
-                    add(ANDROID_CREATOR)
+                    add(VISIONOS)
+                    add(IOS)
                     add(IPADOS)
+                    add(ANDROID_CREATOR)
+                    add(preferredYouTubeClient)
                     add(MOBILE)
                     add(ANDROID_MUSIC)
                     add(IOS_MUSIC)
-                    add(IOS)
                 }
                 add(activeMetadataClient)
                 add(MAIN_CLIENT)
@@ -418,11 +411,24 @@ object YTPlayerUtils {
                     metadataPlayerResponse
                 } else {
                     Timber.tag(logTag).i("Fetching player response for fallback client: ${client.clientName}")
-                    YouTube.player(videoId, playlistId, client, signatureTimestamp)
+                    val unauthResp = YouTube.player(videoId, playlistId, client, signatureTimestamp, setLogin = false)
                         .onFailure {
                             Timber.tag(logTag).w(it, "Player request failed for client ${client.clientName}")
                         }
                         .getOrNull()
+                    if (unauthResp == null || unauthResp.playabilityStatus.status != "OK") {
+                        if (isLoggedIn && client.loginSupported) {
+                            YouTube.player(videoId, playlistId, client, signatureTimestamp, setLogin = true)
+                                .onFailure {
+                                    Timber.tag(logTag).w(it, "Authenticated player request failed for client ${client.clientName}")
+                                }
+                                .getOrNull() ?: unauthResp
+                        } else {
+                            unauthResp
+                        }
+                    } else {
+                        unauthResp
+                    }
                 }
 
             if (streamPlayerResponse == null) continue

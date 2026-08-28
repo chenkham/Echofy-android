@@ -1312,7 +1312,7 @@ object YouTube {
         client: YouTubeClient,
         signatureTimestamp: Int? = null,
         poToken: String? = null,
-        setLogin: Boolean = true,
+        setLogin: Boolean = false,
         authState: PlaybackAuthState = currentPlaybackAuthState(),
     ): Result<PlayerResponse> = runCatching {
         val resolvedPoToken = resolvePlayerPoToken(client, poToken, authState)
