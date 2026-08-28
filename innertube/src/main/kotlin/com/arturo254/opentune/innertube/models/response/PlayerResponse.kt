@@ -70,7 +70,7 @@ data class PlayerResponse(
             val cipher: String?,
         ) {
             val isAudio: Boolean
-                get() = width == null
+                get() = mimeType.startsWith("audio/", ignoreCase = true) || width == null
         }
     }
 

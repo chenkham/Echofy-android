@@ -202,15 +202,15 @@ class InnerTube {
                 client.clientName.startsWith("TV", ignoreCase = true)
         contentType(ContentType.Application.Json)
         headers {
-            append("X-Goog-Api-Format-Version", "1")
-            append("X-YouTube-Client-Name", client.clientId)
-            append("X-YouTube-Client-Version", client.clientVersion)
             if (isWeb) {
+                append("X-Goog-Api-Format-Version", "1")
                 append("X-Origin", requestOrigin)
                 append("Referer", requestReferer)
                 append("Origin", requestOrigin)
+                authState.visitorData?.let { append("X-Goog-Visitor-Id", it) }
             }
-            authState.visitorData?.let { append("X-Goog-Visitor-Id", it) }
+            append("X-YouTube-Client-Name", client.clientId)
+            append("X-YouTube-Client-Version", client.clientVersion)
             if (setLogin && client.loginSupported) {
                 authState.cookie?.let { cookie ->
                     append("cookie", cookie)
@@ -332,7 +332,10 @@ class InnerTube {
         includeDataSyncId: Boolean,
     ) = httpClient.post(client.playerEndpoint()) {
         ytClient(client, setLogin = setLogin, authState = authState)
-        val effectiveVisitorData = authState.visitorData
+        val isWeb = client.clientName.startsWith("WEB", ignoreCase = true) ||
+                client.clientName.startsWith("MWEB", ignoreCase = true) ||
+                client.clientName.startsWith("TV", ignoreCase = true)
+        val effectiveVisitorData = if (isWeb) authState.visitorData else null
         setBody(
             PlayerBody(
                 context = client.toContext(
