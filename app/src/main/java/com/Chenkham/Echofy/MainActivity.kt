@@ -677,19 +677,19 @@ class MainActivity : ComponentActivity() {
                 }
         }
 
-        intent?.let { handleIntent(it) }
-
-        // Keep the launcher long-press menu in sync with the user's preference.
-        lifecycleScope.launch {
-            runCatching { com.Chenkham.Echofy.utils.DynamicShortcuts.refresh(this@MainActivity, database) }
-        }
-
         // Bind the MusicService so it doesn't die when the app drops to the background unless the user swipes to close it
         bindService(
             Intent(this, MusicService::class.java),
             serviceConnection,
             Context.BIND_AUTO_CREATE
         )
+
+        intent?.let { handleIntent(it) }
+
+        // Keep the launcher long-press menu in sync with the user's preference.
+        lifecycleScope.launch {
+            runCatching { com.Chenkham.Echofy.utils.DynamicShortcuts.refresh(this@MainActivity, database) }
+        }
 
         // Register PiP broadcast receiver
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
@@ -2265,9 +2265,9 @@ class MainActivity : ComponentActivity() {
         }
 
         // Handle shared YouTube / YouTube Music URL logic
-        val rawSharedText = intent.extras?.getString(Intent.EXTRA_TEXT)
+        val rawSharedText = intent.getStringExtra(Intent.EXTRA_TEXT) ?: intent.extras?.getString(Intent.EXTRA_TEXT)
         val uri = intent.data ?: rawSharedText?.let { text ->
-            val match = Regex("""https?://[^\s]+""").find(text)
+            val match = Regex("""https?://[^\s<>"']+""").find(text)
             match?.value?.toUri() ?: runCatching { text.trim().toUri() }.getOrNull()
         } ?: return
 
@@ -2277,32 +2277,33 @@ class MainActivity : ComponentActivity() {
             uri.pathSegments.firstOrNull() == "shorts" -> uri.pathSegments.getOrNull(1)
             uri.pathSegments.firstOrNull() == "live" -> uri.pathSegments.getOrNull(1)
             uri.getQueryParameter("v") != null -> uri.getQueryParameter("v")
-            else -> null
-        }
+            else -> {
+                val urlString = uri.toString()
+                val idMatch = Regex("""(?:v=|youtu\.be/|shorts/|live/)([a-zA-Z0-9_-]{11})""").find(urlString)
+                idMatch?.groupValues?.getOrNull(1)
+            }
+        }?.takeIf { it.isNotBlank() }
 
         if (videoId != null) {
             lifecycleScope.launch {
-                val playerConn = withTimeoutOrNull(15000) {
+                val playerConn = withTimeoutOrNull(20000) {
                     snapshotFlow { playerConnection }.filterNotNull().first()
                 } ?: playerConnection
 
-                val queueResult = withContext(Dispatchers.IO) {
-                    YouTube.queue(listOf(videoId))
-                }
-                queueResult.onSuccess {
-                    val song = it.firstOrNull()
-                    playerConn?.playQueue(
-                        YouTubeQueue(
-                            WatchEndpoint(videoId = song?.id ?: videoId),
-                            song?.toMediaMetadata()
+                if (playerConn != null) {
+                    playerConn.playQueue(
+                        com.Chenkham.Echofy.playback.queues.YouTubeQueue.radio(
+                            com.Chenkham.Echofy.models.MediaMetadata(
+                                id = videoId,
+                                title = "Loading...",
+                                artists = emptyList<com.Chenkham.Echofy.models.MediaMetadata.Artist>(),
+                                duration = 0,
+                                thumbnailUrl = "https://i.ytimg.com/vi/$videoId/hqdefault.jpg"
+                            )
                         )
                     )
-                }.onFailure {
-                    playerConn?.playQueue(
-                        YouTubeQueue(
-                            WatchEndpoint(videoId = videoId)
-                        )
-                    )
+                } else {
+                    Timber.tag("MainActivity").e("Failed to bind playerConnection for shared link $videoId")
                 }
             }
         }

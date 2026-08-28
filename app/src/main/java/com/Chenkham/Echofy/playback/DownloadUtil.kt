@@ -82,16 +82,26 @@ constructor(
             }.getOrThrow()
             val format = playbackData.format
 
+            val mimeType = format.mimeType.substringBefore(";")
+            val codecs = if (format.mimeType.contains("codecs=")) {
+                format.mimeType.substringAfter("codecs=").removeSurrounding("\"").substringBefore("\"").substringBefore(";")
+            } else ""
+
+            val contentLength = format.contentLength ?: run {
+                val approxMs = format.approxDurationMs?.toLongOrNull() ?: 200_000L
+                (format.bitrate * (approxMs / 1000L)) / 8L
+            }
+
             database.query {
                 upsert(
                     FormatEntity(
                         id = mediaId,
                         itag = format.itag,
-                        mimeType = format.mimeType.split(";")[0],
-                        codecs = format.mimeType.split("codecs=")[1].removeSurrounding("\""),
-                        bitrate = format.bitrate,
+                        mimeType = mimeType,
+                        codecs = codecs,
+                        bitrate = format.bitrate.toInt(),
                         sampleRate = format.audioSampleRate,
-                        contentLength = format.contentLength!!,
+                        contentLength = contentLength,
                         loudnessDb = playbackData.audioConfig?.loudnessDb,
                         playbackUrl = playbackData.streamUrl
                     ),
@@ -100,7 +110,7 @@ constructor(
 
             val streamUrl = playbackData.streamUrl.let {
                 // Specify range to avoid YouTube's throttling
-                "${it}&range=0-${format.contentLength ?: 10000000}"
+                if (it.contains("range=")) it else "${it}&range=0-${contentLength}"
             }
 
             songUrlCache[mediaId] =
