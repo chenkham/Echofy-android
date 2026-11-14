@@ -2,26 +2,17 @@ package com.Chenkham.Echofy
 
 import android.Manifest
 import android.annotation.SuppressLint
-import android.app.PendingIntent
-import android.app.PictureInPictureParams
-import android.app.RemoteAction
-import android.content.ActivityNotFoundException
-import android.content.BroadcastReceiver
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
-import android.content.IntentFilter
 import android.content.ServiceConnection
 import android.content.pm.PackageManager
 import android.content.res.Configuration
 import android.graphics.drawable.BitmapDrawable
-import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.os.IBinder
-import android.provider.Settings
 import android.util.Log
-import android.util.Rational
 import android.view.View
 import android.view.WindowManager
 import android.widget.Toast
@@ -33,13 +24,8 @@ import androidx.annotation.RequiresApi
 import androidx.compose.animation.AnimatedContentTransitionScope
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.Crossfade
-import androidx.compose.animation.core.FastOutSlowInEasing
-import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateDpAsState
-import androidx.compose.animation.core.animateFloat
-import androidx.compose.animation.core.infiniteRepeatable
-import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
@@ -50,8 +36,6 @@ import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -92,7 +76,6 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
-import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -103,23 +86,19 @@ import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
-import androidx.compose.runtime.snapshotFlow
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.scale
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.input.nestedscroll.nestedScroll
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
@@ -137,17 +116,11 @@ import androidx.compose.ui.util.fastFirstOrNull
 import androidx.compose.ui.util.fastForEach
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
-import androidx.core.app.NotificationManagerCompat
-import androidx.core.content.ContextCompat
 import androidx.core.net.toUri
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.core.util.Consumer
 import androidx.core.view.WindowCompat
-import androidx.datastore.preferences.core.edit
-import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.hilt.navigation.compose.hiltViewModel
-import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.lifecycleScope
 import androidx.media3.common.MediaItem
 import androidx.media3.common.Player
@@ -156,7 +129,6 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
-import coil.compose.AsyncImage
 import coil.imageLoader
 import coil.request.ImageRequest
 import com.Chenkham.Echofy.ads.AdManager
@@ -185,16 +157,12 @@ import com.Chenkham.Echofy.db.*
 import com.Chenkham.Echofy.db.MusicDatabase
 import com.Chenkham.Echofy.db.daos.*
 import com.Chenkham.Echofy.db.entities.SearchHistory
-import com.Chenkham.Echofy.extensions.toMediaItem
-import com.Chenkham.Echofy.jam.JamRoomCode
 import com.Chenkham.Echofy.models.toMediaMetadata
 import com.Chenkham.Echofy.playback.DownloadUtil
 import com.Chenkham.Echofy.playback.MusicService
 import com.Chenkham.Echofy.playback.MusicService.MusicBinder
 import com.Chenkham.Echofy.playback.PlayerConnection
 import com.Chenkham.Echofy.playback.queues.YouTubeQueue
-import com.Chenkham.Echofy.ui.component.AvatarPreferenceManager
-import com.Chenkham.Echofy.ui.component.AvatarSelection
 import com.Chenkham.Echofy.ui.component.BottomSheetMenu
 import com.Chenkham.Echofy.ui.component.IconButton
 import com.Chenkham.Echofy.ui.component.LocalAdManager
@@ -202,9 +170,12 @@ import com.Chenkham.Echofy.ui.component.LocalMenuState
 import com.Chenkham.Echofy.ui.component.LocaleManager
 import com.Chenkham.Echofy.ui.component.Lyrics
 import com.Chenkham.Echofy.ui.component.MenuState
-import com.Chenkham.Echofy.ui.component.SwitchPreference
+import com.Chenkham.Echofy.ui.component.ProfileIconWithUpdateBadge
 import com.Chenkham.Echofy.ui.component.TopSearch
 import com.Chenkham.Echofy.ui.component.rememberBottomSheetState
+import com.Chenkham.Echofy.ui.main.MainIntentHandler
+import com.Chenkham.Echofy.ui.main.NotificationDeepLinkManager
+import com.Chenkham.Echofy.ui.main.PictureInPictureHelper
 import com.Chenkham.Echofy.ui.menu.YouTubeSongMenu
 import com.Chenkham.Echofy.ui.player.AppleBottomSheetPlayer
 import com.Chenkham.Echofy.ui.player.BottomSheetPlayer
@@ -239,12 +210,9 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.flow.filterNotNull
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import kotlinx.coroutines.withTimeoutOrNull
 import timber.log.Timber
 import java.net.URLDecoder
 import java.net.URLEncoder
@@ -286,42 +254,33 @@ class MainActivity : ComponentActivity() {
     }
 
     companion object {
-        private const val ACTION_PIP_CONTROL = "com.Chenkham.Echofy.PIP_CONTROL"
-        private const val EXTRA_CONTROL_TYPE = "control_type"
-        private const val CONTROL_PLAY_PAUSE = 1
-        private const val CONTROL_NEXT = 2
-        private const val CONTROL_PREVIOUS = 3
-        private val JamRegistryUrlKey = stringPreferencesKey("jam_registry_url_override")
-        private val JamInviteBaseUrlKey = stringPreferencesKey("jam_invite_base_url_override")
-        private val JamAllocationUrlKey = stringPreferencesKey("jam_room_allocate_url_override")
         const val ACTION_SEARCH = "com.Chenkham.Echofy.action.SEARCH"
         const val ACTION_EXPLORE = "com.Chenkham.Echofy.action.EXPLORE"
         const val ACTION_LIBRARY = "com.Chenkham.Echofy.action.LIBRARY"
     }
 
-    private val pipBroadcastReceiver =
-        object : BroadcastReceiver() {
-            override fun onReceive(
-                context: Context?,
-                intent: Intent?,
-            ) {
-                if (intent?.action == ACTION_PIP_CONTROL) {
-                    when (intent.getIntExtra(EXTRA_CONTROL_TYPE, 0)) {
-                        CONTROL_PLAY_PAUSE -> {
-                            playerConnection?.player?.let { player ->
-                                if (player.isPlaying) player.pause() else player.play()
-                            }
-                        }
-                        CONTROL_NEXT -> playerConnection?.player?.seekToNext()
-                        CONTROL_PREVIOUS -> playerConnection?.player?.seekToPrevious()
-                    }
-                    // Update PiP actions after control
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                        updatePipParams()
-                    }
-                }
-            }
-        }
+    private val pipHelper by lazy {
+        PictureInPictureHelper(
+            activity = this,
+            playerConnectionProvider = { playerConnection },
+        )
+    }
+
+    private val notificationDeepLinkManager by lazy {
+        NotificationDeepLinkManager(this)
+    }
+
+    private val mainIntentHandler by lazy {
+        MainIntentHandler(
+            context = this,
+            scope = lifecycleScope,
+            database = database,
+            downloadUtil = downloadUtil,
+            dataStore = dataStore,
+            playerConnectionProvider = { playerConnection },
+            onPendingJamRoomCode = { pendingJamRoomCode = it },
+        )
+    }
 
     private val serviceConnection =
         object : ServiceConnection {
@@ -347,73 +306,13 @@ class MainActivity : ComponentActivity() {
     override fun onStart() {
         super.onStart()
         // Handle deep links from push notifications
-        handleNotificationDeepLink(intent)
+        notificationDeepLinkManager.handleNotificationDeepLink(intent)
     }
-
-    /**
-     * Handle deep links from push notifications (album, etc.)
-     * Also saves the notification to local history when opened from tap.
-     */
-    private fun handleNotificationDeepLink(intent: Intent?) {
-        intent ?: return
-
-        val navigateTo = intent.getStringExtra("navigate_to")
-        val albumId = intent.getStringExtra("albumId")
-
-        // Check if this is from a notification (FCM adds google.message_id)
-        val messageId = intent.getStringExtra("google.message_id")
-        val fcmTitle = intent.getStringExtra("gcm.notification.title")
-        val fcmBody = intent.getStringExtra("gcm.notification.body")
-
-        // Save notification to local history if it came from FCM
-        if (messageId != null || fcmTitle != null) {
-            val title = fcmTitle ?: intent.getStringExtra("title") ?: "Notification"
-            val body = fcmBody ?: intent.getStringExtra("body") ?: ""
-            val type = intent.getStringExtra("type") ?: "general"
-            saveNotificationToHistory(title, body, type)
-        }
-
-        if (navigateTo == "album" && albumId != null) {
-            Log.d("MainActivity", "Deep link to album: $albumId")
-            pendingNotificationAlbumId = albumId
-        }
-    }
-
-    /**
-     * Save notification to local SharedPreferences for in-app display.
-     */
-    private fun saveNotificationToHistory(
-        title: String,
-        body: String,
-        type: String,
-    ) {
-        try {
-            val prefs = getSharedPreferences("echofy_notifications", Context.MODE_PRIVATE)
-            val notifications = prefs.getStringSet("notifications", mutableSetOf())?.toMutableSet() ?: mutableSetOf()
-
-            // Check if this notification was already saved (avoid duplicates)
-            val exists = notifications.any { it.contains("|$title|$body|") }
-            if (exists) return
-
-            notifications.add("${System.currentTimeMillis()}|$title|$body|$type|false")
-            prefs.edit().putStringSet("notifications", notifications.take(50).toSet()).apply()
-            Log.d("MainActivity", "Saved notification to history: $title")
-        } catch (e: Exception) {
-            Log.e("MainActivity", "Failed to save notification: ${e.message}")
-        }
-    }
-
-    // Store pending album navigation from notification
-    private var pendingNotificationAlbumId: String? = null
 
     /**
      * Called by navigation composable when navController is ready
      */
-    fun consumePendingNotificationNavigation(): String? {
-        val albumId = pendingNotificationAlbumId
-        pendingNotificationAlbumId = null
-        return albumId
-    }
+    fun consumePendingNotificationNavigation(): String? = notificationDeepLinkManager.consumePendingNotificationNavigation()
 
     override fun onStop() {
         super.onStop()
@@ -476,11 +375,7 @@ class MainActivity : ComponentActivity() {
             adManager.releaseNativeAds()
         }
 
-        try {
-            unregisterReceiver(pipBroadcastReceiver)
-        } catch (e: Exception) {
-            // Receiver might not be registered
-        }
+        pipHelper.unregister(this)
 
         try {
             unbindService(serviceConnection)
@@ -518,7 +413,7 @@ class MainActivity : ComponentActivity() {
             playerConnection?.isPlaying?.value == true &&
             pipEnabled
         ) {
-            enterPipMode()
+            pipHelper.enterPipMode()
         }
     }
 
@@ -527,100 +422,8 @@ class MainActivity : ComponentActivity() {
         newConfig: Configuration,
     ) {
         super.onPictureInPictureModeChanged(isInPictureInPictureMode, newConfig)
+        pipHelper.onPictureInPictureModeChanged(isInPictureInPictureMode)
         isInPipMode = isInPictureInPictureMode
-    }
-
-    @RequiresApi(Build.VERSION_CODES.O)
-    private fun enterPipMode() {
-        try {
-            val params = buildPipParams()
-            enterPictureInPictureMode(params)
-        } catch (e: Exception) {
-            Timber.e(e, "Failed to enter PiP mode")
-        }
-    }
-
-    @RequiresApi(Build.VERSION_CODES.O)
-    private fun buildPipParams(): PictureInPictureParams {
-        val isPlaying = playerConnection?.player?.isPlaying == true
-
-        val actions = mutableListOf<RemoteAction>()
-
-        // Previous button
-        val prevIntent =
-            PendingIntent.getBroadcast(
-                this,
-                CONTROL_PREVIOUS,
-                Intent(ACTION_PIP_CONTROL).putExtra(EXTRA_CONTROL_TYPE, CONTROL_PREVIOUS),
-                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
-            )
-        actions.add(
-            RemoteAction(
-                android.graphics.drawable.Icon.createWithResource(this, R.drawable.skip_previous),
-                "Previous",
-                "Previous track",
-                prevIntent,
-            ),
-        )
-
-        // Play/Pause button
-        val playPauseIntent =
-            PendingIntent.getBroadcast(
-                this,
-                CONTROL_PLAY_PAUSE,
-                Intent(ACTION_PIP_CONTROL).putExtra(EXTRA_CONTROL_TYPE, CONTROL_PLAY_PAUSE),
-                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
-            )
-        val playPauseIcon = if (isPlaying) R.drawable.pause else R.drawable.play
-        val playPauseTitle = if (isPlaying) "Pause" else "Play"
-        actions.add(
-            RemoteAction(
-                android.graphics.drawable.Icon.createWithResource(this, playPauseIcon),
-                playPauseTitle,
-                playPauseTitle,
-                playPauseIntent,
-            ),
-        )
-
-        // Next button
-        val nextIntent =
-            PendingIntent.getBroadcast(
-                this,
-                CONTROL_NEXT,
-                Intent(ACTION_PIP_CONTROL).putExtra(EXTRA_CONTROL_TYPE, CONTROL_NEXT),
-                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
-            )
-        actions.add(
-            RemoteAction(
-                android.graphics.drawable.Icon.createWithResource(this, R.drawable.skip_next),
-                "Next",
-                "Next track",
-                nextIntent,
-            ),
-        )
-
-        val builder =
-            PictureInPictureParams.Builder()
-                .setAspectRatio(Rational(16, 9))
-                .setActions(actions)
-
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-            builder.setAutoEnterEnabled(true)
-            builder.setSeamlessResizeEnabled(true)
-        }
-
-        return builder.build()
-    }
-
-    @RequiresApi(Build.VERSION_CODES.O)
-    private fun updatePipParams() {
-        if (isInPipMode) {
-            try {
-                setPictureInPictureParams(buildPipParams())
-            } catch (e: Exception) {
-                Timber.e(e, "Failed to update PiP params")
-            }
-        }
     }
 
     override fun attachBaseContext(newBase: Context) {
@@ -670,7 +473,7 @@ class MainActivity : ComponentActivity() {
             Context.BIND_AUTO_CREATE,
         )
 
-        intent?.let { handleIntent(it) }
+        intent?.let { mainIntentHandler.handleIntent(it) }
 
         // Keep the launcher long-press menu in sync with the user's preference.
         lifecycleScope.launch {
@@ -678,12 +481,7 @@ class MainActivity : ComponentActivity() {
         }
 
         // Register PiP broadcast receiver
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            registerReceiver(pipBroadcastReceiver, IntentFilter(ACTION_PIP_CONTROL), RECEIVER_NOT_EXPORTED)
-        } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            @Suppress("UnspecifiedRegisterReceiverFlag")
-            registerReceiver(pipBroadcastReceiver, IntentFilter(ACTION_PIP_CONTROL))
-        }
+        pipHelper.register(this)
 
         setContent {
             // Request notification permission on Android 13+
@@ -1130,7 +928,7 @@ class MainActivity : ComponentActivity() {
                                             ?.toUri() ?: return@Consumer
 
                                     // Handle Jam Together invite intents
-                                    val jamCode = extractJamRoomCode(uri)
+                                    val jamCode = MainIntentHandler.extractJamRoomCode(uri)
                                     if (jamCode != null) {
                                         pendingJamRoomCode = jamCode
                                         Toast.makeText(this@MainActivity, "Together invite ready: $jamCode", Toast.LENGTH_SHORT).show()
@@ -2268,296 +2066,7 @@ class MainActivity : ComponentActivity() {
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         setIntent(intent)
-        handleIntent(intent)
-    }
-
-    private fun handleIntent(intent: Intent) {
-        if (handleJamConfigIntent(intent)) {
-            return
-        }
-
-        if (handleJamJoinIntent(intent)) {
-            return
-        }
-
-        // Launcher long-press shortcut: play a smart playlist straight away.
-        if (intent.action == com.Chenkham.Echofy.utils.DynamicShortcuts.ACTION_PLAY_PLAYLIST) {
-            intent.getStringExtra(com.Chenkham.Echofy.utils.DynamicShortcuts.EXTRA_PLAYLIST_ID)
-                ?.let { playSmartPlaylist(it) }
-            return
-        }
-
-        // Handle Google Assistant "Play [query]" intent
-        if (intent.action == android.provider.MediaStore.INTENT_ACTION_MEDIA_PLAY_FROM_SEARCH) {
-            lifecycleScope.launch {
-                val isEnabled = dataStore.data.first()[com.Chenkham.Echofy.constants.VoiceControlEnabledKey] ?: false
-
-                if (!isEnabled) {
-                    // The intent filter stays registered, so Assistant can still route
-                    // here; explain why nothing happened instead of failing silently.
-                    Toast.makeText(
-                        this@MainActivity,
-                        "Enable Google Assistant Integration in AI settings to use voice playback",
-                        Toast.LENGTH_LONG,
-                    ).show()
-                    return@launch
-                }
-
-                val query = intent.getStringExtra(android.app.SearchManager.QUERY)
-
-                if (!query.isNullOrEmpty()) {
-                    val lowerQuery = query.lowercase()
-
-                    // Handle "Play my downloads" or "Play downloaded songs"
-                    if (lowerQuery.contains("download") || lowerQuery.contains("offline")) {
-                        playSmartPlaylist(com.Chenkham.Echofy.db.entities.PlaylistEntity.DOWNLOADED_PLAYLIST_ID)
-                        return@launch
-                    }
-
-                    // Handle "Play liked songs" or "Play favorites"
-                    if (lowerQuery.contains("liked") || lowerQuery.contains("favorite")) {
-                        playSmartPlaylist(com.Chenkham.Echofy.db.entities.PlaylistEntity.LIKED_PLAYLIST_ID)
-                        return@launch
-                    }
-
-                    // Fallback to online search for everything else
-                    performOnlineSearchAndPlay(query)
-                } else {
-                    // No query, just "Play music" -> Resume playback or play random/shuffle
-                    playerConnection?.player?.play()
-                }
-            }
-            return
-        }
-
-        // Handle shared YouTube / YouTube Music URL logic
-        val rawSharedText = intent.getStringExtra(Intent.EXTRA_TEXT) ?: intent.extras?.getString(Intent.EXTRA_TEXT)
-        val uri =
-            intent.data ?: rawSharedText?.let { text ->
-                val match = Regex("""https?://[^\s<>"']+""").find(text)
-                match?.value?.toUri() ?: runCatching { text.trim().toUri() }.getOrNull()
-            } ?: return
-
-        val videoId =
-            when {
-                uri.pathSegments.firstOrNull() == "watch" -> uri.getQueryParameter("v")
-                uri.host?.contains("youtu.be", ignoreCase = true) == true -> uri.pathSegments.firstOrNull()
-                uri.pathSegments.firstOrNull() == "shorts" -> uri.pathSegments.getOrNull(1)
-                uri.pathSegments.firstOrNull() == "live" -> uri.pathSegments.getOrNull(1)
-                uri.getQueryParameter("v") != null -> uri.getQueryParameter("v")
-                else -> {
-                    val urlString = uri.toString()
-                    val idMatch = Regex("""(?:v=|youtu\.be/|shorts/|live/)([a-zA-Z0-9_-]{11})""").find(urlString)
-                    idMatch?.groupValues?.getOrNull(1)
-                }
-            }?.takeIf { it.isNotBlank() }
-
-        if (videoId != null) {
-            lifecycleScope.launch {
-                val playerConn =
-                    withTimeoutOrNull(20000) {
-                        snapshotFlow { playerConnection }.filterNotNull().first()
-                    } ?: playerConnection
-
-                if (playerConn != null) {
-                    playerConn.playQueue(
-                        com.Chenkham.Echofy.playback.queues.YouTubeQueue.radio(
-                            com.Chenkham.Echofy.models.MediaMetadata(
-                                id = videoId,
-                                title = "Loading...",
-                                artists = emptyList<com.Chenkham.Echofy.models.MediaMetadata.Artist>(),
-                                duration = 0,
-                                thumbnailUrl = "https://i.ytimg.com/vi/$videoId/hqdefault.jpg",
-                            ),
-                        ),
-                    )
-                } else {
-                    Timber.tag("MainActivity").e("Failed to bind playerConnection for shared link $videoId")
-                }
-            }
-        }
-    }
-
-    private fun handleJamJoinIntent(intent: Intent): Boolean {
-        val rawText = intent.extras?.getString(Intent.EXTRA_TEXT)
-        val uriCandidates =
-            buildList {
-                intent.data?.let(::add)
-                rawText?.let { text ->
-                    runCatching { Uri.parse(text.trim()) }.getOrNull()?.let(::add)
-                }
-            }
-
-        val roomCode =
-            uriCandidates
-                .firstNotNullOfOrNull(::extractJamRoomCode)
-                ?: rawText
-                    ?.trim()
-                    ?.uppercase()
-                    ?.takeIf { JamRoomCode.parse(it) != null }
-                ?: return false
-
-        pendingJamRoomCode = roomCode
-        Toast.makeText(this, "Together invite ready", Toast.LENGTH_SHORT).show()
-        return true
-    }
-
-    private fun handleJamConfigIntent(intent: Intent): Boolean {
-        val uri = intent.data ?: return false
-        if (uri.scheme?.lowercase() != "echofy" || uri.host?.lowercase() != "config") {
-            return false
-        }
-
-        val registryUrl =
-            uri.getQueryParameter("jamRegistryUrl")
-                ?: uri.getQueryParameter("registryUrl")
-        val inviteBaseUrl =
-            uri.getQueryParameter("jamInviteBaseUrl")
-                ?: uri.getQueryParameter("inviteBaseUrl")
-        val allocationUrl =
-            uri.getQueryParameter("jamRoomAllocateUrl")
-                ?: uri.getQueryParameter("roomAllocateUrl")
-
-        if (registryUrl.isNullOrBlank() && inviteBaseUrl.isNullOrBlank() && allocationUrl.isNullOrBlank()) {
-            Toast.makeText(this, "No Jam config found in this link", Toast.LENGTH_SHORT).show()
-            return true
-        }
-
-        lifecycleScope.launch {
-            dataStore.edit { preferences ->
-                registryUrl?.trim()?.takeIf { it.isNotBlank() }?.let {
-                    preferences[JamRegistryUrlKey] = it
-                }
-                inviteBaseUrl?.trim()?.takeIf { it.isNotBlank() }?.let {
-                    preferences[JamInviteBaseUrlKey] = it.removeSuffix("/")
-                }
-                allocationUrl?.trim()?.takeIf { it.isNotBlank() }?.let {
-                    preferences[JamAllocationUrlKey] = it
-                }
-            }
-            playerConnection?.service?.jamSessionManager?.refreshRegistry(forceRefresh = true)
-            Toast.makeText(
-                this@MainActivity,
-                "Echofy Together control plane connected",
-                Toast.LENGTH_SHORT,
-            ).show()
-        }
-        return true
-    }
-
-    private fun extractJamRoomCode(uri: Uri): String? {
-        val normalizedScheme = uri.scheme?.lowercase()
-        val normalizedHost = uri.host?.lowercase()
-        val cleanSegments = uri.pathSegments.filterNot { it.equals("echofy-website", ignoreCase = true) }
-
-        val candidate =
-            when {
-                normalizedScheme == "echofy" && normalizedHost in setOf("jam", "r", "together") ->
-                    uri.pathSegments.firstOrNull() ?: uri.getQueryParameter("code") ?: uri.getQueryParameter("room")
-
-                normalizedScheme == "echofy" && normalizedHost in setOf("join", "open") ->
-                    uri.getQueryParameter("room")
-                        ?: uri.getQueryParameter("roomCode")
-                        ?: uri.getQueryParameter("jam")
-                        ?: uri.getQueryParameter("code")
-
-                cleanSegments.firstOrNull()?.lowercase() in setOf("jam", "r", "together") ->
-                    cleanSegments.getOrNull(1)
-
-                else ->
-                    uri.getQueryParameter("jam")
-                        ?: uri.getQueryParameter("room")
-                        ?: uri.getQueryParameter("together")
-                        ?: uri.getQueryParameter("code")
-            }
-
-        return candidate
-            ?.trim()
-            ?.uppercase()
-            ?.takeIf { JamRoomCode.parse(it) != null }
-    }
-
-    private fun playSmartPlaylist(playlistId: String) {
-        lifecycleScope.launch {
-            // Wait for service connection if needed
-            if (playerConnection == null) {
-                // Simple retry mechanism or wait
-                delay(1000)
-            }
-
-            // Construct mapping logic similar to MediaLibrarySessionCallback
-            val songs: List<com.Chenkham.Echofy.db.entities.Song> =
-                withContext(Dispatchers.IO) {
-                    when (playlistId) {
-                        com.Chenkham.Echofy.db.entities.PlaylistEntity.LIKED_PLAYLIST_ID -> {
-                            database.likedSongs(
-                                com.Chenkham.Echofy.constants.SongSortType.CREATE_DATE,
-                                descending = true,
-                            ).first()
-                        }
-                        com.Chenkham.Echofy.db.entities.PlaylistEntity.DOWNLOADED_PLAYLIST_ID -> {
-                            // Mirrors MediaLibrarySessionCallback: all songs whose download
-                            // completed, most recently downloaded last.
-                            val downloads = downloadUtil.downloads.value
-                            database.allSongs().first()
-                                .filter {
-                                    downloads[it.id]?.state ==
-                                        androidx.media3.exoplayer.offline.Download.STATE_COMPLETED
-                                }
-                                .sortedBy { downloads[it.id]?.updateTimeMs ?: 0L }
-                        }
-                        else -> emptyList()
-                    }
-                }
-
-            // Better approach: Use the TransportControls/MediaController to play by ID
-            // This ensures logic stays in Service/Callback
-            val mediaId = "${com.Chenkham.Echofy.playback.MusicService.PLAYLIST}/$playlistId"
-            // We can't easily "playFromMediaId" with the simple MediaController shim we have in PlayerConnection.
-            // But we can construct the queue manually if we have the songs.
-
-            if (songs.isNotEmpty()) {
-                playerConnection?.playQueue(
-                    com.Chenkham.Echofy.playback.queues.ListQueue(
-                        title = if (playlistId == com.Chenkham.Echofy.db.entities.PlaylistEntity.LIKED_PLAYLIST_ID) "Liked Songs" else "Downloads",
-                        items = songs.map { it.toMediaItem() },
-                        startIndex = 0,
-                    ),
-                )
-            } else {
-                Toast.makeText(this@MainActivity, "No songs found", Toast.LENGTH_SHORT).show()
-            }
-        }
-    }
-
-    private fun performOnlineSearchAndPlay(query: String) {
-        lifecycleScope.launch {
-            Toast.makeText(this@MainActivity, "Searching for $query...", Toast.LENGTH_SHORT).show()
-
-            val result: Result<com.arturo254.opentune.innertube.pages.SearchResult> =
-                withContext(Dispatchers.IO) {
-                    YouTube.search(query, com.arturo254.opentune.innertube.YouTube.SearchFilter.FILTER_SONG)
-                }
-
-            result.onSuccess { searchResult ->
-                val firstSong = searchResult.items.firstNotNullOfOrNull { it as? com.arturo254.opentune.innertube.models.SongItem }
-
-                if (firstSong != null) {
-                    // Create a queue starting with this song
-                    playerConnection?.playQueue(
-                        YouTubeQueue(
-                            WatchEndpoint(videoId = firstSong.id),
-                            firstSong.toMediaMetadata(),
-                        ),
-                    )
-                } else {
-                    Toast.makeText(this@MainActivity, "No songs found for $query", Toast.LENGTH_LONG).show()
-                }
-            }.onFailure {
-                reportException(it)
-                Toast.makeText(this@MainActivity, "Search failed", Toast.LENGTH_SHORT).show()
-            }
-        }
+        mainIntentHandler.handleIntent(intent)
     }
 
     @SuppressLint("ObsoleteSdkInt")
@@ -2584,280 +2093,3 @@ val LocalPlayerAwareWindowInsets =
     compositionLocalOf<WindowInsets> { error("No WindowInsets provided") }
 val LocalDownloadUtil = staticCompositionLocalOf<DownloadUtil> { error("No DownloadUtil provided") }
 val LocalSyncUtils = staticCompositionLocalOf<SyncUtils> { error("No SyncUtils provided") }
-
-@Composable
-fun NotificationPermissionPreference() {
-    val context = LocalContext.current
-    var permissionGranted by remember { mutableStateOf(false) }
-
-    // FunciÃ³n para verificar permisos extraÃ­da para mejor legibilidad
-    val checkNotificationPermission =
-        remember {
-            {
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                    ContextCompat.checkSelfPermission(
-                        context,
-                        Manifest.permission.POST_NOTIFICATIONS,
-                    ) == PackageManager.PERMISSION_GRANTED // Usar PackageManager en lugar de PermissionChecker
-                } else {
-                    // Para versiones anteriores, verificar si las notificaciones estÃ¡n habilitadas
-                    NotificationManagerCompat.from(context).areNotificationsEnabled()
-                }
-            }
-        }
-
-    val notificationPermissionLauncher =
-        rememberLauncherForActivityResult(
-            contract = ActivityResultContracts.RequestPermission(),
-        ) { isGranted ->
-            permissionGranted = isGranted
-            // Opcional: agregar callback para manejar el resultado
-            if (!isGranted) {
-                // Manejar caso cuando el usuario rechaza el permiso
-                Log.d("NotificationPermission", "Permiso de notificaciones denegado")
-            }
-        }
-
-    // Verificar permisos al inicializar y cuando la app vuelve al foreground
-    LaunchedEffect(Unit) {
-        permissionGranted = checkNotificationPermission()
-    }
-
-    // Escuchar cambios cuando la app vuelve del background
-    val lifecycleOwner = androidx.lifecycle.compose.LocalLifecycleOwner.current
-    DisposableEffect(lifecycleOwner) {
-        val observer =
-            LifecycleEventObserver { _, event ->
-                if (event == Lifecycle.Event.ON_RESUME) {
-                    permissionGranted = checkNotificationPermission()
-                }
-            }
-        lifecycleOwner.lifecycle.addObserver(observer)
-        onDispose {
-            lifecycleOwner.lifecycle.removeObserver(observer)
-        }
-    }
-
-    SwitchPreference(
-        title = { Text(stringResource(R.string.notification)) },
-        icon = {
-            Icon(
-                painter =
-                    painterResource(
-                        id =
-                            if (permissionGranted) {
-                                R.drawable.notification_on
-                            } else {
-                                R.drawable.notification_off
-                            },
-                    ),
-                contentDescription =
-                    stringResource(
-                        if (permissionGranted) {
-                            R.string.notifications_enabled
-                        } else {
-                            R.string.notifications_disabled
-                        },
-                    ),
-            )
-        },
-        checked = permissionGranted,
-        onCheckedChange = { checked ->
-            when {
-                checked && !permissionGranted -> {
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                        notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
-                    } else {
-                        // Para versiones anteriores, dirigir a configuraciÃ³n
-                        openNotificationSettings(context)
-                    }
-                }
-
-                !checked && permissionGranted -> {
-                    // Si el usuario intenta desactivar, dirigir a configuraciÃ³n del sistema
-                    openNotificationSettings(context)
-                }
-            }
-        },
-    )
-}
-
-// FunciÃ³n auxiliar para abrir configuraciÃ³n de notificaciones
-private fun openNotificationSettings(context: Context) {
-    val intent =
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS).apply {
-                putExtra(Settings.EXTRA_APP_PACKAGE, context.packageName)
-            }
-        } else {
-            Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
-                data = Uri.fromParts("package", context.packageName, null)
-            }
-        }
-
-    try {
-        context.startActivity(intent)
-    } catch (e: ActivityNotFoundException) {
-        Log.e("NotificationSettings", "No se pudo abrir configuraciÃ³n de notificaciones", e)
-        // Fallback: abrir configuraciÃ³n general
-        context.startActivity(Intent(Settings.ACTION_SETTINGS))
-    }
-}
-
-@Composable
-fun ProfileIconWithUpdateBadge(
-    currentVersion: String,
-    onProfileClick: () -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    val context = LocalContext.current
-    val avatarManager = remember { AvatarPreferenceManager(context) }
-    val currentSelection by avatarManager.getAvatarSelection.collectAsState(initial = AvatarSelection.Default)
-    var showUpdateBadge by remember { mutableStateOf(false) }
-    // PERFORMANCE FIX: Use rememberUpdatedState to prevent stale closure
-    val updatedOnClick = rememberUpdatedState(onProfileClick)
-
-    // AnimaciÃ³n del badge
-    val infiniteTransition = rememberInfiniteTransition(label = "badge_animation")
-    val scale by infiniteTransition.animateFloat(
-        initialValue = 1f,
-        targetValue = 1.15f,
-        animationSpec =
-            infiniteRepeatable(
-                animation = tween(1000, easing = FastOutSlowInEasing),
-                repeatMode = RepeatMode.Reverse,
-            ),
-        label = "scale",
-    )
-
-    val alpha by infiniteTransition.animateFloat(
-        initialValue = 0.6f,
-        targetValue = 1f,
-        animationSpec =
-            infiniteRepeatable(
-                animation = tween(1000, easing = FastOutSlowInEasing),
-                repeatMode = RepeatMode.Reverse,
-            ),
-        label = "alpha",
-    )
-
-    Box(
-        contentAlignment = Alignment.Center,
-        modifier =
-            Modifier
-                .size(48.dp)
-                .clip(CircleShape)
-                .clickable(
-                    indication = null,
-                    interactionSource = remember { MutableInteractionSource() },
-                ) {
-                    try {
-                        updatedOnClick.value()
-                    } catch (e: Exception) {
-                        e.printStackTrace()
-                    }
-                },
-    ) {
-        // Avatar usando el nuevo sistema
-        Box(contentAlignment = Alignment.Center) {
-            when (currentSelection) {
-                is AvatarSelection.Custom -> {
-                    AsyncImage(
-                        model =
-                            ImageRequest.Builder(context)
-                                .data((currentSelection as AvatarSelection.Custom).uri.toUri())
-                                .crossfade(true)
-                                .error(R.drawable.person)
-                                .placeholder(R.drawable.person)
-                                .build(),
-                        contentDescription = "Avatar personalizado",
-                        modifier =
-                            modifier
-                                .size(28.dp)
-                                .clip(CircleShape),
-                        contentScale = ContentScale.Crop,
-                    )
-                }
-
-                is AvatarSelection.DiceBear -> {
-                    AsyncImage(
-                        model =
-                            ImageRequest.Builder(context)
-                                .data((currentSelection as AvatarSelection.DiceBear).url)
-                                .crossfade(true)
-                                .error(R.drawable.person)
-                                .placeholder(R.drawable.person)
-                                .build(),
-                        contentDescription = "Avatar DiceBear",
-                        modifier =
-                            modifier
-                                .size(28.dp)
-                                .clip(CircleShape),
-                        contentScale = ContentScale.Crop,
-                    )
-                }
-
-                else -> {
-                    Icon(
-                        painter = painterResource(R.drawable.person),
-                        contentDescription = "Avatar predeterminado",
-                        modifier = modifier,
-                    )
-                }
-            }
-        }
-
-        // Badge de actualizaciÃ³n mejorado - dentro del avatar
-        if (showUpdateBadge) {
-            Box(
-                modifier =
-                    Modifier
-                        .align(Alignment.Center)
-                        .size(28.dp),
-            ) {
-                // Anillo de pulso exterior
-                Box(
-                    modifier =
-                        Modifier
-                            .fillMaxSize()
-                            .scale(scale)
-                            .background(
-                                brush =
-                                    Brush.radialGradient(
-                                        colors =
-                                            listOf(
-                                                MaterialTheme.colorScheme.primary.copy(alpha = 0.3f * alpha),
-                                                Color.Transparent,
-                                            ),
-                                    ),
-                                shape = CircleShape,
-                            ),
-                )
-
-                // Overlay semi-transparente
-                Box(
-                    modifier =
-                        Modifier
-                            .fillMaxSize()
-                            .background(
-                                color = MaterialTheme.colorScheme.surface.copy(alpha = 0.85f),
-                                shape = CircleShape,
-                            ),
-                )
-
-                // Ãcono de actualizaciÃ³n con animaciÃ³n
-                Icon(
-                    painter = painterResource(R.drawable.update),
-                    contentDescription = "ActualizaciÃ³n disponible",
-                    tint = MaterialTheme.colorScheme.primary,
-                    modifier =
-                        Modifier
-                            .size(18.dp)
-                            .align(Alignment.Center)
-                            .scale(scale)
-                            .alpha(alpha),
-                )
-            }
-        }
-    }
-}

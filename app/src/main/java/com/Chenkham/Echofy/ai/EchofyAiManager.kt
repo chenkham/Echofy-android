@@ -14,14 +14,7 @@ import android.speech.SpeechRecognizer
 import android.speech.tts.TextToSpeech
 import android.speech.tts.UtteranceProgressListener
 import com.Chenkham.Echofy.db.InternalDatabase
-import com.Chenkham.Echofy.db.entities.PlaylistEntity
-import com.Chenkham.Echofy.db.entities.PlaylistSongMap
-import com.Chenkham.Echofy.models.toMediaMetadata
 import com.Chenkham.Echofy.playback.PlayerConnection
-import com.Chenkham.Echofy.playback.queues.YouTubeQueue
-import com.arturo254.opentune.innertube.YouTube
-import com.arturo254.opentune.innertube.models.SongItem
-import com.arturo254.opentune.innertube.models.WatchEndpoint
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -40,49 +33,6 @@ import org.json.JSONObject
 import timber.log.Timber
 import java.util.Locale
 import java.util.UUID
-
-enum class InputSource { TEXT, VOICE, HEY_COMMAND }
-
-enum class AiCallState {
-    DISCONNECTED,
-    CONNECTING,
-    CONNECTED_IDLE,
-    LISTENING,
-    THINKING,
-    SPEAKING,
-}
-
-enum class AiModelOption(
-    val displayName: String,
-    val modelId: String,
-    val contextWindow: String,
-    val description: String,
-) {
-    DEFAULT("Default", "default", "128K", "Free & Unlimited Cloud Agent"),
-    FAST("Fast", "openai", "128K", "Fast conversational model"),
-    LLAMA("Llama", "llama", "128K", "High precision music reasoning"),
-}
-
-enum class AiModelStatus {
-    NOT_DOWNLOADED,
-    DOWNLOADING,
-    READY,
-}
-
-data class ChatMessage(
-    val id: String = UUID.randomUUID().toString(),
-    val text: String,
-    val isUser: Boolean,
-    val timestamp: Long = System.currentTimeMillis(),
-)
-
-data class AgentAction(
-    val speakResponse: String,
-    val actionType: String,
-    val query: String = "",
-    val playlistName: String = "",
-    val volumeLevel: Int = 70,
-)
 
 class EchofyAiManager private constructor(private val context: Context) {
     private val scope = CoroutineScope(Dispatchers.Main + Job())
@@ -119,6 +69,7 @@ class EchofyAiManager private constructor(private val context: Context) {
 
     private val audioManager = context.getSystemService(Context.AUDIO_SERVICE) as AudioManager
     private val database = InternalDatabase.newInstance(context)
+    private val voiceActionExecutor = VoiceActionExecutor(audioManager, database)
 
     init {
         initTts()
@@ -838,7 +789,20 @@ class EchofyAiManager private constructor(private val context: Context) {
                     queryAiAgent(cleanInput, _chatHistory.value, userContext, source)
                 }
 
-            executeAgentAction(agentAction, player, source)
+            voiceActionExecutor.executeAgentAction(
+                action = agentAction,
+                playerConnection = player,
+                source = source,
+                onRespond = { text, src -> respondAndContinue(text, src) },
+                onWakeAck = {
+                    withContext(Dispatchers.Main) {
+                        _callState.value = AiCallState.CONNECTED_IDLE
+                        if (_isHeyListening.value && !_isDrivingMode.value) {
+                            openWakeWordDetector?.startListening()
+                        }
+                    }
+                },
+            )
         }
     }
 
@@ -990,244 +954,6 @@ class EchofyAiManager private constructor(private val context: Context) {
             query = result.query,
             playlistName = result.playlistName,
         )
-    }
-
-    private fun fuzzyMatch(
-        s1: String,
-        s2: String,
-    ): Float {
-        val a = s1.lowercase(Locale.getDefault()).trim()
-        val b = s2.lowercase(Locale.getDefault()).trim()
-        if (a == b) return 1.0f
-        if (a.contains(b) || b.contains(a)) return 0.85f
-
-        val costs = IntArray(b.length + 1)
-        for (j in 0..b.length) costs[j] = j
-        for (i in 1..a.length) {
-            costs[0] = i
-            var nw = i - 1
-            for (j in 1..b.length) {
-                val cj = Math.min(1 + Math.min(costs[j], costs[j - 1]), if (a[i - 1] == b[j - 1]) nw else nw + 1)
-                nw = costs[j]
-                costs[j] = cj
-            }
-        }
-        val maxLen = Math.max(a.length, b.length)
-        if (maxLen == 0) return 1.0f
-        return 1.0f - (costs[b.length].toFloat() / maxLen.toFloat())
-    }
-
-    private fun fallbackLocalIntentClassifier(userInput: String): AgentAction {
-        val text = userInput.lowercase(Locale.getDefault())
-        return when {
-            text.contains("pause") || text.contains("stop music") -> AgentAction("Paused playback!", "PAUSE")
-            text.contains("resume") || text.contains("unpause") -> AgentAction("Resuming playback!", "RESUME")
-            text.contains("next") || text.contains("skip") -> AgentAction("Skipping to next track!", "NEXT")
-            text.contains("previous") || text.contains("go back") -> AgentAction("Going back!", "PREVIOUS")
-
-            text.contains("hey") || text.contains("hi") || text.contains("hello") ->
-                AgentAction("Hey there! How's your day going? Want to listen to some music or chat?", "CHAT")
-
-            text.contains("suggest") || text.contains("recommend") ->
-                AgentAction("I can suggest songs based on your mood! Tell me what genre or artist you like.", "CHAT")
-
-            else -> AgentAction("I'm here! Tell me what song or artist you'd like to play, or ask any question.", "CHAT")
-        }
-    }
-
-    private suspend fun executeAgentAction(
-        action: AgentAction,
-        playerConnection: PlayerConnection?,
-        source: InputSource = InputSource.TEXT,
-    ) {
-        when (action.actionType) {
-            "WAKE_ACK" -> {
-                // Reached when the wake word fired but the follow-up utterance was
-                // just "hey" with no command. The capture pass already happened, so
-                // simply re-arm the detector instead of starting another recognizer.
-                withContext(Dispatchers.Main) {
-                    _callState.value = AiCallState.CONNECTED_IDLE
-                    if (_isHeyListening.value && !_isDrivingMode.value) {
-                        openWakeWordDetector?.startListening()
-                    }
-                }
-            }
-            "PAUSE" -> {
-                withContext(Dispatchers.Main) { playerConnection?.player?.pause() }
-                respondAndContinue(action.speakResponse, source)
-            }
-            "RESUME" -> {
-                withContext(Dispatchers.Main) { playerConnection?.player?.play() }
-                respondAndContinue(action.speakResponse, source)
-            }
-            "NEXT" -> {
-                withContext(Dispatchers.Main) { playerConnection?.player?.seekToNext() }
-                respondAndContinue(action.speakResponse, source)
-            }
-            "PREVIOUS" -> {
-                withContext(Dispatchers.Main) { playerConnection?.player?.seekToPrevious() }
-                respondAndContinue(action.speakResponse, source)
-            }
-            "SET_VOLUME" -> {
-                val maxVol = audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC)
-                val targetVol = (maxVol * (action.volumeLevel / 100f)).toInt().coerceIn(0, maxVol)
-                audioManager.setStreamVolume(AudioManager.STREAM_MUSIC, targetVol, 0)
-                respondAndContinue(action.speakResponse, source)
-            }
-            "SHUFFLE" -> {
-                withContext(Dispatchers.Main) {
-                    playerConnection?.player?.let {
-                        it.shuffleModeEnabled = !it.shuffleModeEnabled
-                    }
-                }
-                respondAndContinue(action.speakResponse, source)
-            }
-            "REPEAT" -> {
-                withContext(Dispatchers.Main) {
-                    playerConnection?.player?.let {
-                        it.repeatMode =
-                            when (it.repeatMode) {
-                                androidx.media3.common.Player.REPEAT_MODE_OFF -> androidx.media3.common.Player.REPEAT_MODE_ALL
-                                androidx.media3.common.Player.REPEAT_MODE_ALL -> androidx.media3.common.Player.REPEAT_MODE_ONE
-                                else -> androidx.media3.common.Player.REPEAT_MODE_OFF
-                            }
-                    }
-                }
-                respondAndContinue(action.speakResponse, source)
-            }
-            "WHATS_PLAYING" -> {
-                val metadata = withContext(Dispatchers.Main) { playerConnection?.mediaMetadata?.value }
-                if (metadata != null) {
-                    val artistNames = metadata.artists.joinToString(", ") { it.name }
-                    respondAndContinue("Now playing: \"${metadata.title}\" by $artistNames 🎵", source)
-                } else {
-                    respondAndContinue("Nothing is playing right now. Ask me to play something!", source)
-                }
-            }
-            "LIKE_SONG" -> {
-                try {
-                    val metadata = withContext(Dispatchers.Main) { playerConnection?.mediaMetadata?.value }
-                    if (metadata != null) {
-                        withContext(Dispatchers.Main) {
-                            playerConnection?.toggleLike()
-                        }
-                        respondAndContinue("Toggled like for \"${metadata.title}\"! ❤️", source)
-                    } else {
-                        respondAndContinue("No song is currently playing to like.", source)
-                    }
-                } catch (e: Exception) {
-                    Timber.w(e, "Failed to like current song")
-                    respondAndContinue("Couldn't like the song. Try again?", source)
-                }
-            }
-            "CREATE_PLAYLIST" -> {
-                val playlistTitle = action.playlistName.ifEmpty { "AI Mix" }
-                val songIds = mutableListOf<String>()
-
-                // Search for songs if query is provided
-                if (action.query.isNotEmpty()) {
-                    withContext(Dispatchers.IO) {
-                        runCatching {
-                            val searchResult = YouTube.search(action.query, YouTube.SearchFilter.FILTER_SONG).getOrNull()
-                            searchResult?.items?.filterIsInstance<SongItem>()?.take(15)?.forEach { songItem ->
-                                runCatching {
-                                    database.query {
-                                        insert(songItem.toMediaMetadata().toSongEntity())
-                                    }
-                                }
-                                songIds.add(songItem.id)
-                            }
-                        }
-                    }
-                }
-
-                // Fall back to history/liked if no songs found from search
-                if (songIds.isEmpty()) {
-                    withContext(Dispatchers.IO) {
-                        runCatching {
-                            val events = database.events().first().take(10)
-                            events.forEach { songIds.add(it.song.song.id) }
-                        }
-                        runCatching {
-                            val liked = database.likedSongsByRowIdAsc().first().take(10)
-                            liked.forEach { if (!songIds.contains(it.song.id)) songIds.add(it.song.id) }
-                        }
-                    }
-                }
-
-                // Actually create the playlist with songs
-                withContext(Dispatchers.IO) {
-                    runCatching {
-                        val newPlaylist = PlaylistEntity(name = playlistTitle)
-                        database.query {
-                            insert(newPlaylist)
-                            songIds.distinct().forEachIndexed { idx, sId ->
-                                runCatching {
-                                    insert(PlaylistSongMap(playlistId = newPlaylist.id, songId = sId, position = idx))
-                                }
-                            }
-                        }
-                    }
-                }
-
-                val count = songIds.distinct().size
-                val finalMessage =
-                    if (action.speakResponse.isNotBlank() && !action.speakResponse.startsWith("Created playlist")) {
-                        "${action.speakResponse}\n\nCreated your playlist \"$playlistTitle\" with $count songs in your Library!"
-                    } else {
-                        "Created your playlist \"$playlistTitle\" with $count songs! Check your Library to see it."
-                    }
-                respondAndContinue(finalMessage, source)
-            }
-            "PLAY_SONG" -> {
-                if (action.query.isNotEmpty()) {
-                    executePlaySongAction(action.query, action.speakResponse, playerConnection, source)
-                } else {
-                    respondAndContinue(action.speakResponse, source)
-                }
-            }
-            else -> {
-                respondAndContinue(action.speakResponse, source)
-            }
-        }
-    }
-
-    private suspend fun executePlaySongAction(
-        query: String,
-        speakText: String,
-        playerConnection: PlayerConnection?,
-        source: InputSource = InputSource.TEXT,
-    ) {
-        val songResult =
-            withContext(Dispatchers.IO) {
-                val songSearch =
-                    runCatching {
-                        YouTube.search(query, YouTube.SearchFilter.FILTER_SONG).getOrNull()?.items?.firstOrNull() as? SongItem
-                    }.getOrNull()
-
-                if (songSearch != null) {
-                    songSearch
-                } else {
-                    runCatching {
-                        YouTube.searchSummary(query).getOrNull()?.summaries
-                            ?.firstOrNull()?.items?.firstOrNull()
-                    }.getOrNull()
-                }
-            }
-
-        if (songResult != null) {
-            val videoId = songResult.id
-            val title = songResult.title
-
-            withContext(Dispatchers.Main) {
-                playerConnection?.playQueue(
-                    YouTubeQueue(WatchEndpoint(videoId = videoId)),
-                )
-            }
-            respondAndContinue("Playing \"$title\" on Echofy now! 🎵", source)
-        } else {
-            respondAndContinue("Couldn't find \"$query\" right now. Try another song?", source)
-        }
     }
 
     private fun addUserMessage(text: String) {

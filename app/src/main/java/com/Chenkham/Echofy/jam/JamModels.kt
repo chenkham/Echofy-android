@@ -161,19 +161,19 @@ data class JamParticipant(
 
     companion object {
         fun fromMap(map: Map<*, *>): JamParticipant? {
-            val participantId = map["participantId"] as? String ?: return null
-            val displayName = map["displayName"] as? String ?: "Listener"
+            val participantId = map[JamDocFields.PARTICIPANT_ID] as? String ?: return null
+            val displayName = map[JamDocFields.DISPLAY_NAME] as? String ?: "Listener"
             val role =
-                (map["role"] as? String)
+                (map[JamDocFields.ROLE] as? String)
                     ?.let { runCatching { JamParticipantRole.valueOf(it) }.getOrNull() }
                     ?: JamParticipantRole.GUEST
             return JamParticipant(
                 participantId = participantId,
                 displayName = displayName,
                 role = role,
-                authUid = map["authUid"] as? String,
-                joinedAtEpochMs = (map["joinedAtEpochMs"] as? Number)?.toLong() ?: 0L,
-                lastSeenAtEpochMs = (map["lastSeenAtEpochMs"] as? Number)?.toLong() ?: 0L,
+                authUid = map[JamDocFields.AUTH_UID] as? String,
+                joinedAtEpochMs = (map[JamDocFields.JOINED_AT_EPOCH_MS] as? Number)?.toLong() ?: 0L,
+                lastSeenAtEpochMs = (map[JamDocFields.LAST_SEEN_AT_EPOCH_MS] as? Number)?.toLong() ?: 0L,
             )
         }
     }
@@ -211,34 +211,34 @@ data class JamRoomMeta(
 
     companion object {
         fun fromMap(map: Map<*, *>): JamRoomMeta? {
-            val roomCode = map["roomCode"] as? String ?: return null
-            val roomId = map["roomId"] as? String ?: return null
-            val hostParticipantId = map["hostParticipantId"] as? String ?: return null
+            val roomCode = map[JamDocFields.ROOM_CODE] as? String ?: return null
+            val roomId = map[JamDocFields.ROOM_ID] as? String ?: return null
+            val hostParticipantId = map[JamDocFields.HOST_PARTICIPANT_ID] as? String ?: return null
             return JamRoomMeta(
                 roomCode = roomCode,
                 roomId = roomId,
-                shardId = map["shardId"] as? String ?: "",
+                shardId = map[JamDocFields.SHARD_ID] as? String ?: "",
                 hostParticipantId = hostParticipantId,
-                hostAuthUid = map["hostAuthUid"] as? String ?: "",
-                hostName = map["hostName"] as? String ?: "",
-                requireApproval = map["requireApproval"] as? Boolean ?: false,
-                allowGuestControls = map["allowGuestControls"] as? Boolean ?: true,
-                createdAtEpochMs = (map["createdAtEpochMs"] as? Number)?.toLong() ?: 0L,
-                lastActivityAtEpochMs = (map["lastActivityAtEpochMs"] as? Number)?.toLong() ?: 0L,
-                status = map["status"] as? String ?: "active",
+                hostAuthUid = map[JamDocFields.HOST_AUTH_UID] as? String ?: "",
+                hostName = map[JamDocFields.HOST_NAME] as? String ?: "",
+                requireApproval = map[JamDocFields.REQUIRE_APPROVAL] as? Boolean ?: false,
+                allowGuestControls = map[JamDocFields.ALLOW_GUEST_CONTROLS] as? Boolean ?: true,
+                createdAtEpochMs = (map[JamDocFields.CREATED_AT_EPOCH_MS] as? Number)?.toLong() ?: 0L,
+                lastActivityAtEpochMs = (map[JamDocFields.LAST_ACTIVITY_AT_EPOCH_MS] as? Number)?.toLong() ?: 0L,
+                status = map[JamDocFields.STATUS] as? String ?: JamDocFields.STATUS_ACTIVE,
                 closedAtEpochMs = (map["closedAtEpochMs"] as? Number)?.toLong(),
-                schemaVersion = (map["schemaVersion"] as? Number)?.toInt() ?: 1,
-                mediaId = map["mediaId"] as? String ?: "",
-                title = map["title"] as? String ?: "",
-                artist = map["artist"] as? String ?: "",
-                thumbnailUrl = map["thumbnailUrl"] as? String ?: "",
-                durationSeconds = (map["durationSeconds"] as? Number)?.toInt() ?: -1,
-                playbackState = map["playbackState"] as? String ?: "PAUSED",
-                playbackSpeed = (map["playbackSpeed"] as? Number)?.toFloat() ?: 1f,
-                positionMs = (map["positionMs"] as? Number)?.toLong() ?: 0L,
-                updatedAtEpochMs = (map["updatedAtEpochMs"] as? Number)?.toLong() ?: 0L,
-                stateVersion = (map["stateVersion"] as? Number)?.toLong() ?: 0L,
-                issuedByParticipantId = map["issuedByParticipantId"] as? String ?: "",
+                schemaVersion = (map[JamDocFields.SCHEMA_VERSION] as? Number)?.toInt() ?: 1,
+                mediaId = map[JamDocFields.MEDIA_ID] as? String ?: "",
+                title = map[JamDocFields.TITLE] as? String ?: "",
+                artist = map[JamDocFields.ARTIST] as? String ?: "",
+                thumbnailUrl = map[JamDocFields.THUMBNAIL_URL] as? String ?: "",
+                durationSeconds = (map[JamDocFields.DURATION_SECONDS] as? Number)?.toInt() ?: -1,
+                playbackState = map[JamDocFields.PLAYBACK_STATE] as? String ?: "PAUSED",
+                playbackSpeed = (map[JamDocFields.PLAYBACK_SPEED] as? Number)?.toFloat() ?: 1f,
+                positionMs = (map[JamDocFields.POSITION_MS] as? Number)?.toLong() ?: 0L,
+                updatedAtEpochMs = (map[JamDocFields.UPDATED_AT_EPOCH_MS] as? Number)?.toLong() ?: 0L,
+                stateVersion = (map[JamDocFields.STATE_VERSION] as? Number)?.toLong() ?: 0L,
+                issuedByParticipantId = map[JamDocFields.ISSUED_BY_PARTICIPANT_ID] as? String ?: "",
             )
         }
     }

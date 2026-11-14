@@ -205,18 +205,18 @@ class AppwriteTogetherSessionManager(
                     documentId = docId,
                     data =
                         mapOf(
-                            "mediaId" to mediaId,
-                            "title" to title,
-                            "artist" to artist,
-                            "thumbnailUrl" to thumbnailUrl,
-                            "durationSeconds" to durationSeconds,
-                            "playbackState" to playbackState.name,
-                            "playbackSpeed" to playbackSpeed.toDouble(),
-                            "positionMs" to positionMs,
-                            "updatedAtEpochMs" to now,
-                            "stateVersion" to version,
-                            "issuedByParticipantId" to session.participantId,
-                            "lastActivityAtEpochMs" to now,
+                            JamDocFields.MEDIA_ID to mediaId,
+                            JamDocFields.TITLE to title,
+                            JamDocFields.ARTIST to artist,
+                            JamDocFields.THUMBNAIL_URL to thumbnailUrl,
+                            JamDocFields.DURATION_SECONDS to durationSeconds,
+                            JamDocFields.PLAYBACK_STATE to playbackState.name,
+                            JamDocFields.PLAYBACK_SPEED to playbackSpeed.toDouble(),
+                            JamDocFields.POSITION_MS to positionMs,
+                            JamDocFields.UPDATED_AT_EPOCH_MS to now,
+                            JamDocFields.STATE_VERSION to version,
+                            JamDocFields.ISSUED_BY_PARTICIPANT_ID to session.participantId,
+                            JamDocFields.LAST_ACTIVITY_AT_EPOCH_MS to now,
                         ),
                 )
             }.onFailure { Timber.tag(TAG).w(it, "Failed to publish playback") }
@@ -258,7 +258,7 @@ class AppwriteTogetherSessionManager(
                     databaseId = AppwriteConfig.DATABASE_ID,
                     collectionId = AppwriteConfig.COL_ROOMS,
                     documentId = docId,
-                    data = mapOf("allowGuestControls" to enabled),
+                    data = mapOf(JamDocFields.ALLOW_GUEST_CONTROLS to enabled),
                 )
             }.onFailure { Timber.tag(TAG).w(it, "Failed to update guestControls") }
         }
@@ -277,7 +277,7 @@ class AppwriteTogetherSessionManager(
                     databaseId = AppwriteConfig.DATABASE_ID,
                     collectionId = AppwriteConfig.COL_ROOMS,
                     documentId = docId,
-                    data = mapOf("requireApproval" to enabled),
+                    data = mapOf(JamDocFields.REQUIRE_APPROVAL to enabled),
                 )
             }.onFailure { Timber.tag(TAG).w(it, "Failed to update requireApproval") }
         }
@@ -378,29 +378,29 @@ class AppwriteTogetherSessionManager(
         val roomId = session.roomCode.roomId
         val data =
             mapOf(
-                "roomCode" to session.roomCode.roomCode,
-                "roomId" to roomId,
-                "hostParticipantId" to session.participantId,
-                "shardId" to session.roomCode.shardId,
-                "hostAuthUid" to (session.authUid ?: ""),
-                "hostName" to (session.displayName ?: ""),
-                "requireApproval" to false,
-                "allowGuestControls" to true,
-                "status" to "active",
-                "schemaVersion" to 1,
-                "createdAtEpochMs" to now,
-                "lastActivityAtEpochMs" to now,
-                "mediaId" to "",
-                "title" to "",
-                "artist" to "",
-                "thumbnailUrl" to "",
-                "durationSeconds" to -1,
-                "playbackState" to "PAUSED",
-                "playbackSpeed" to 1.0,
-                "positionMs" to 0,
-                "updatedAtEpochMs" to now,
-                "stateVersion" to 0,
-                "issuedByParticipantId" to session.participantId,
+                JamDocFields.ROOM_CODE to session.roomCode.roomCode,
+                JamDocFields.ROOM_ID to roomId,
+                JamDocFields.HOST_PARTICIPANT_ID to session.participantId,
+                JamDocFields.SHARD_ID to session.roomCode.shardId,
+                JamDocFields.HOST_AUTH_UID to (session.authUid ?: ""),
+                JamDocFields.HOST_NAME to (session.displayName ?: ""),
+                JamDocFields.REQUIRE_APPROVAL to false,
+                JamDocFields.ALLOW_GUEST_CONTROLS to true,
+                JamDocFields.STATUS to JamDocFields.STATUS_ACTIVE,
+                JamDocFields.SCHEMA_VERSION to 1,
+                JamDocFields.CREATED_AT_EPOCH_MS to now,
+                JamDocFields.LAST_ACTIVITY_AT_EPOCH_MS to now,
+                JamDocFields.MEDIA_ID to "",
+                JamDocFields.TITLE to "",
+                JamDocFields.ARTIST to "",
+                JamDocFields.THUMBNAIL_URL to "",
+                JamDocFields.DURATION_SECONDS to -1,
+                JamDocFields.PLAYBACK_STATE to "PAUSED",
+                JamDocFields.PLAYBACK_SPEED to 1.0,
+                JamDocFields.POSITION_MS to 0,
+                JamDocFields.UPDATED_AT_EPOCH_MS to now,
+                JamDocFields.STATE_VERSION to 0,
+                JamDocFields.ISSUED_BY_PARTICIPANT_ID to session.participantId,
             )
         return try {
             db.createDocument(
@@ -426,7 +426,7 @@ class AppwriteTogetherSessionManager(
                 databaseId = AppwriteConfig.DATABASE_ID,
                 collectionId = AppwriteConfig.COL_ROOMS,
                 documentId = docId,
-                data = mapOf("status" to "closed"),
+                data = mapOf(JamDocFields.STATUS to JamDocFields.STATUS_CLOSED),
             )
         }.onFailure { Timber.tag(TAG).w(it, "Failed to mark room closed") }
     }
@@ -437,14 +437,14 @@ class AppwriteTogetherSessionManager(
         val resolvedName = session.displayName ?: session.role.name.lowercase().replaceFirstChar(Char::uppercase)
         val data =
             mapOf(
-                "roomId" to session.roomCode.roomId,
-                "participantId" to session.participantId,
-                "displayName" to resolvedName,
-                "nameInitial" to (resolvedName.firstOrNull()?.uppercase() ?: "?"),
-                "role" to session.role.name,
-                "authUid" to (session.authUid ?: ""),
-                "joinedAtEpochMs" to now,
-                "lastSeenAtEpochMs" to now,
+                JamDocFields.ROOM_ID to session.roomCode.roomId,
+                JamDocFields.PARTICIPANT_ID to session.participantId,
+                JamDocFields.DISPLAY_NAME to resolvedName,
+                JamDocFields.NAME_INITIAL to (resolvedName.firstOrNull()?.uppercase() ?: "?"),
+                JamDocFields.ROLE to session.role.name,
+                JamDocFields.AUTH_UID to (session.authUid ?: ""),
+                JamDocFields.JOINED_AT_EPOCH_MS to now,
+                JamDocFields.LAST_SEEN_AT_EPOCH_MS to now,
             )
         runCatching {
             AppwriteClientProvider.databases(appContext)
@@ -674,13 +674,13 @@ class AppwriteTogetherSessionManager(
                         val db = AppwriteClientProvider.databases(appContext)
                         db.updateDocument(
                             AppwriteConfig.DATABASE_ID, AppwriteConfig.COL_PRESENCE,
-                            presenceDocId, mapOf("lastSeenAtEpochMs" to now),
+                            presenceDocId, mapOf(JamDocFields.LAST_SEEN_AT_EPOCH_MS to now),
                         )
                         if (session.role == JamParticipantRole.HOST) {
                             val roomDocId = currentRoomDocId ?: session.roomCode.roomId
                             db.updateDocument(
                                 AppwriteConfig.DATABASE_ID, AppwriteConfig.COL_ROOMS,
-                                roomDocId, mapOf("lastActivityAtEpochMs" to now),
+                                roomDocId, mapOf(JamDocFields.LAST_ACTIVITY_AT_EPOCH_MS to now),
                             )
                         }
                     }.onFailure { Timber.tag(TAG).w(it, "Heartbeat failed") }

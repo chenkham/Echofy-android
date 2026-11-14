@@ -25,7 +25,6 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
-import com.Chenkham.Echofy.NotificationPermissionPreference
 import com.Chenkham.Echofy.R
 import com.Chenkham.Echofy.constants.BecauseYouListenedEnabledKey
 import com.Chenkham.Echofy.constants.CacheTranslationsKey
@@ -57,6 +56,7 @@ import com.Chenkham.Echofy.constants.TopSize
 import com.Chenkham.Echofy.ui.component.EditTextPreference
 import com.Chenkham.Echofy.ui.component.EnumListPreference
 import com.Chenkham.Echofy.ui.component.ListPreference
+import com.Chenkham.Echofy.ui.component.NotificationPermissionPreference
 import com.Chenkham.Echofy.ui.component.SettingsGeneralCategory
 import com.Chenkham.Echofy.ui.component.SettingsPage
 import com.Chenkham.Echofy.ui.component.SliderPreference
