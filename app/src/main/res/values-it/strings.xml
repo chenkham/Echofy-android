@@ -7,10 +7,6 @@
     <string name="albums">Album</string>
     <string name="playlists">Playlist</string>
     <!-- Top bar -->
-    <plurals name="n_selected">
-        <item quantity="one">%d selezionato</item>
-        <item quantity="other">%d selezionato</item>
-    </plurals>
     <!-- Home -->
     <string name="history">Cronologia</string>
     <string name="stats">Statistiche</string>
@@ -181,14 +177,6 @@
     <plurals name="n_year">
         <item quantity="one">%d anno</item>
         <item quantity="other">%d anni</item>
-    </plurals>
-    <plurals name="n_element">
-        <item quantity="one">%d elemento</item>
-        <item quantity="other">%d elementi</item>
-    </plurals>
-    <plurals name="n_time">
-        <item quantity="one">%d volta</item>
-        <item quantity="other">%d volte</item>
     </plurals>
     <!-- Snackbar -->
     <string name="playlist_imported">Playlist importata</string>
@@ -415,7 +403,7 @@
     <string name="update_version">Aggiorna v%1$s</string>
     <string name="download_question">Vuoi scaricare la nuova versione?</string>
     <string name="downloadup">Scarica</string>
-    <string name="downloadingup">Scaricamento aggiornamento...</string>
+    <string name="downloadingup">Scaricamento aggiornamento&#8230;</string>
     <string name="download_completed">Download completato</string>
     <string name="install">Installa</string>
     <string name="download_errorup">Errore nel scaricare l\'aggiornamento</string>

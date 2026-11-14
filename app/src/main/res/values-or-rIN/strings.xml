@@ -7,10 +7,6 @@
     <string name="playlists">ପ୍ଲେଲିଷ୍ଟଗୁଡିକ</string>
 
     <!-- Top bar -->
-    <plurals name="n_selected">
-        <item quantity="one">%d selected</item>
-        <item quantity="other">%d selected</item>
-    </plurals>
 
     <!-- Home -->
     <string name="history">History</string>

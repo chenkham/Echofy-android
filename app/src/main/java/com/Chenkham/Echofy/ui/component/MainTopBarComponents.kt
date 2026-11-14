@@ -5,10 +5,8 @@ import android.content.ActivityNotFoundException
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
-import android.net.Uri
 import android.os.Build
 import android.provider.Settings
-import android.util.Log
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.core.FastOutSlowInEasing
@@ -56,6 +54,7 @@ import androidx.lifecycle.LifecycleEventObserver
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.Chenkham.Echofy.R
+import timber.log.Timber
 
 /**
  * Switch preference widget for toggling runtime notification permissions.
@@ -85,7 +84,7 @@ fun NotificationPermissionPreference() {
         ) { isGranted ->
             permissionGranted = isGranted
             if (!isGranted) {
-                Log.d("NotificationPermission", "Notification permission denied")
+                Timber.d("Notification permission denied")
             }
         }
 
@@ -153,20 +152,14 @@ fun NotificationPermissionPreference() {
  */
 fun openNotificationSettings(context: Context) {
     val intent =
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS).apply {
-                putExtra(Settings.EXTRA_APP_PACKAGE, context.packageName)
-            }
-        } else {
-            Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
-                data = Uri.fromParts("package", context.packageName, null)
-            }
+        Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS).apply {
+            putExtra(Settings.EXTRA_APP_PACKAGE, context.packageName)
         }
 
     try {
         context.startActivity(intent)
     } catch (e: ActivityNotFoundException) {
-        Log.e("NotificationSettings", "Failed to open notification settings", e)
+        Timber.e(e, "Failed to open notification settings")
         context.startActivity(Intent(Settings.ACTION_SETTINGS))
     }
 }

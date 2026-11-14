@@ -7,10 +7,6 @@
     <string name="playlists">Afspeellijsten</string>
 
     <!-- Top bar -->
-    <plurals name="n_selected">
-        <item quantity="one">%d geselecteerd</item>
-        <item quantity="other">%d geselecteerd</item>
-    </plurals>
 
     <!-- Home -->
     <string name="history">Geschiedenis</string>

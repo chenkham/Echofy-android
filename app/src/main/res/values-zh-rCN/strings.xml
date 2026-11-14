@@ -9,9 +9,6 @@
     <string name="playlists">"æ’­æ”¾åˆ—è¡¨"</string>
 
     <!-- Top bar -->
-    <plurals name="n_selected">
-        <item quantity="other">"å·²é€‰æ‹© %d ä¸ª"</item>
-    </plurals>
 
     <!-- Home -->
     <string name="history">"å¬æ­ŒåŽ†å²"</string>
@@ -187,12 +184,6 @@
     </plurals>
     <plurals name="n_year">
         <item quantity="other">"%d å¹´"</item>
-    </plurals>
-    <plurals name="n_element">
-        <item quantity="other">"%d ä¸ªå…ƒç´ "</item>
-    </plurals>
-    <plurals name="n_time">
-        <item quantity="other">"%d æ¬¡"</item>
     </plurals>
 
     <!-- Snackbar -->
@@ -423,7 +414,7 @@
     <string name="update_version">"æ›´æ–° v%1$s"</string>
     <string name="download_question">"æ‚¨æƒ³ä¸‹è½½æ–°ç‰ˆæœ¬å—ï¼Ÿ"</string>
     <string name="downloadup">"ä¸‹è½½"</string>
-    <string name="downloadingup">"æ­£åœ¨ä¸‹è½½æ›´æ–°..."</string>
+    <string name="downloadingup">"æ­£åœ¨ä¸‹è½½æ›´æ–°&#8230;"</string>
     <string name="download_completed">"ä¸‹è½½å®Œæˆ"</string>
     <string name="install">"å®‰è£…"</string>
     <string name="download_errorup">"ä¸‹è½½æ›´æ–°æ—¶å‡ºé”™"</string>

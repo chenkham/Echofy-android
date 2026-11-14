@@ -7,12 +7,6 @@
     <string name="playlists">Плэй-лісты</string>
 
     <!-- Top bar -->
-    <plurals name="n_selected">
-        <item quantity="one">%d абрана</item>
-        <item quantity="few">%d абраны</item>
-        <item quantity="many">%d абрана</item>
-        <item quantity="other">%d абрана</item>
-    </plurals>
 
     <!-- Home -->
     <string name="history">Гісторыя</string>

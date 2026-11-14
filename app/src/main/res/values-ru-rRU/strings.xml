@@ -9,12 +9,6 @@
     <string name="playlists">"ÐŸÐ»ÐµÐ¹Ð»Ð¸ÑÑ‚Ñ‹"</string>
 
     <!-- Top bar -->
-    <plurals name="n_selected">
-        <item quantity="one">"%d Ð²Ñ‹Ð±Ñ€Ð°Ð½Ð¾"</item>
-        <item quantity="few">"%d Ð²Ñ‹Ð±Ñ€Ð°Ð½Ð¾"</item>
-        <item quantity="many">"%d Ð²Ñ‹Ð±Ñ€Ð°Ð½Ð¾"</item>
-        <item quantity="other">"%d Ð²Ñ‹Ð±Ñ€Ð°Ð½Ð¾"</item>
-    </plurals>
 
     <!-- Home -->
     <string name="history">"Ð˜ÑÑ‚Ð¾Ñ€Ð¸Ñ"</string>
@@ -105,7 +99,7 @@
     <string name="remove_from_library">"Ð£Ð´Ð°Ð»Ð¸Ñ‚ÑŒ Ð¸Ð· Ð±Ð¸Ð±Ð»Ð¸Ð¾Ñ‚ÐµÐºÐ¸"</string>
     <string name="remove_from_playlist">"Ð£Ð´Ð°Ð»Ð¸Ñ‚ÑŒ Ð¸Ð· Ð¿Ð»ÐµÐ¹Ð»Ð¸ÑÑ‚Ð°"</string>
     <string name="download">"Ð—Ð°Ð³Ñ€ÑƒÐ·Ð¸Ñ‚ÑŒ"</string>
-    <string name="downloading">"Ð—Ð°Ð³Ñ€ÑƒÐ·ÐºÐ°..."</string>
+    <string name="downloading">"Ð—Ð°Ð³Ñ€ÑƒÐ·ÐºÐ°&#8230;"</string>
     <string name="remove_download">"Ð£Ð´Ð°Ð»Ð¸Ñ‚ÑŒ Ð¸Ð· Ð·Ð°Ð³Ñ€ÑƒÐ·Ð¾Ðº"</string>
     <string name="import_playlist">"Ð˜Ð¼Ð¿Ð¾Ñ€Ñ‚Ð¸Ñ€Ð¾Ð²Ð°Ñ‚ÑŒ Ð¿Ð»ÐµÐ¹Ð»Ð¸ÑÑ‚"</string>
     <string name="add_to_playlist">"Ð”Ð¾Ð±Ð°Ð²Ð¸Ñ‚ÑŒ Ð² Ð¿Ð»ÐµÐ¹Ð»Ð¸ÑÑ‚"</string>
@@ -211,18 +205,6 @@
         <item quantity="few">"%d Ð³Ð¾Ð´Ð°"</item>
         <item quantity="many">"%d Ð»ÐµÑ‚"</item>
         <item quantity="other">"%d Ð»ÐµÑ‚"</item>
-    </plurals>
-    <plurals name="n_element">
-        <item quantity="one">"%d ÑÐ»ÐµÐ¼ÐµÐ½Ñ‚"</item>
-        <item quantity="few">"%d ÑÐ»ÐµÐ¼ÐµÐ½Ñ‚Ð°"</item>
-        <item quantity="many">"%d ÑÐ»ÐµÐ¼ÐµÐ½Ñ‚Ð¾Ð²"</item>
-        <item quantity="other">"%d ÑÐ»ÐµÐ¼ÐµÐ½Ñ‚Ð¾Ð²"</item>
-    </plurals>
-    <plurals name="n_time">
-        <item quantity="one">"%d Ñ€Ð°Ð·"</item>
-        <item quantity="few">"%d Ñ€Ð°Ð·Ð°"</item>
-        <item quantity="many">"%d Ñ€Ð°Ð·"</item>
-        <item quantity="other">"%d Ñ€Ð°Ð·"</item>
     </plurals>
 
     <!-- Snackbar -->
@@ -459,7 +441,7 @@
     <string name="update_version">"ÐžÐ±Ð½Ð¾Ð²Ð»ÐµÐ½Ð¸Ðµ v%1$s"</string>
     <string name="download_question">"Ð¥Ð¾Ñ‚Ð¸Ñ‚Ðµ Ð·Ð°Ð³Ñ€ÑƒÐ·Ð¸Ñ‚ÑŒ Ð½Ð¾Ð²ÑƒÑŽ Ð²ÐµÑ€ÑÐ¸ÑŽ?"</string>
     <string name="downloadup">"Ð—Ð°Ð³Ñ€ÑƒÐ·Ð¸Ñ‚ÑŒ"</string>
-    <string name="downloadingup">"Ð—Ð°Ð³Ñ€ÑƒÐ·ÐºÐ° Ð¾Ð±Ð½Ð¾Ð²Ð»ÐµÐ½Ð¸Ñ..."</string>
+    <string name="downloadingup">"Ð—Ð°Ð³Ñ€ÑƒÐ·ÐºÐ° Ð¾Ð±Ð½Ð¾Ð²Ð»ÐµÐ½Ð¸Ñ&#8230;"</string>
     <string name="download_completed">"Ð—Ð°Ð³Ñ€ÑƒÐ·ÐºÐ° Ð·Ð°Ð²ÐµÑ€ÑˆÐµÐ½Ð°"</string>
     <string name="install">"Ð£ÑÑ‚Ð°Ð½Ð¾Ð²Ð¸Ñ‚ÑŒ"</string>
     <string name="download_errorup">"ÐžÑˆÐ¸Ð±ÐºÐ° Ð·Ð°Ð³Ñ€ÑƒÐ·ÐºÐ¸ Ð¾Ð±Ð½Ð¾Ð²Ð»ÐµÐ½Ð¸Ñ"</string>

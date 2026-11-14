@@ -451,16 +451,14 @@ class App : Application(), ImageLoaderFactory {
         try {
             val notificationManager = getSystemService(android.content.Context.NOTIFICATION_SERVICE) as android.app.NotificationManager
 
-            // Create channel for Android 8.0+
-            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
-                val channel =
-                    android.app.NotificationChannel(
-                        "echofy_welcome",
-                        "Welcome",
-                        android.app.NotificationManager.IMPORTANCE_DEFAULT,
-                    )
-                notificationManager.createNotificationChannel(channel)
-            }
+            // Create channel
+            val channel =
+                android.app.NotificationChannel(
+                    "echofy_welcome",
+                    "Welcome",
+                    android.app.NotificationManager.IMPORTANCE_DEFAULT,
+                )
+            notificationManager.createNotificationChannel(channel)
 
             val intent =
                 android.content.Intent(this, MainActivity::class.java).apply {

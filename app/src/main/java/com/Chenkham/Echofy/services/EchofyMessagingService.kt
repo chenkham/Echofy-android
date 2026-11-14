@@ -9,7 +9,6 @@ import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.media.RingtoneManager
 import android.net.Uri
-import android.os.Build
 import android.util.Log
 import androidx.core.app.NotificationCompat
 import com.Chenkham.Echofy.MainActivity
@@ -370,19 +369,17 @@ class EchofyMessagingService : FirebaseMessagingService() {
         }
 
     private fun createNotificationChannel(manager: NotificationManager) {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val channel =
-                NotificationChannel(
-                    CHANNEL_ID,
-                    CHANNEL_NAME,
-                    NotificationManager.IMPORTANCE_HIGH,
-                ).apply {
-                    description = "Echofy push notifications"
-                    enableVibration(true)
-                    enableLights(true)
-                }
-            manager.createNotificationChannel(channel)
-        }
+        val channel =
+            NotificationChannel(
+                CHANNEL_ID,
+                CHANNEL_NAME,
+                NotificationManager.IMPORTANCE_HIGH,
+            ).apply {
+                description = "Echofy push notifications"
+                enableVibration(true)
+                enableLights(true)
+            }
+        manager.createNotificationChannel(channel)
     }
 
     private fun defaultIntent() =

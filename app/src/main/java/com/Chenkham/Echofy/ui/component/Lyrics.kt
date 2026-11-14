@@ -3,10 +3,8 @@ package com.Chenkham.Echofy.ui.component
 import android.annotation.SuppressLint
 import android.content.Intent
 import android.content.res.Configuration
-import android.os.Build
 import android.widget.Toast
 import androidx.activity.compose.BackHandler
-import androidx.annotation.RequiresApi
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.LinearEasing
@@ -181,7 +179,6 @@ import kotlinx.coroutines.withContext
 import java.util.Locale
 import kotlin.time.Duration.Companion.seconds
 
-@RequiresApi(Build.VERSION_CODES.M)
 @OptIn(ExperimentalFoundationApi::class, ExperimentalMaterial3Api::class)
 @SuppressLint("UnusedBoxWithConstraintsScope", "StringFormatInvalid")
 @Composable

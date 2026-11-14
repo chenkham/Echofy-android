@@ -9,14 +9,6 @@
     <string name="explore">الإستكشاف</string>
 
     <!-- شريط علوي -->
-    <plurals name="n_selected">
-        <item quantity="zero">لا شيء محدد</item>
-        <item quantity="one">عنصر واحد محدد</item>
-        <item quantity="two">عنصران محددان</item>
-        <item quantity="few">%d عناصر محددة</item>
-        <item quantity="many">%d عنصر محدد</item>
-        <item quantity="other">%d عنصر محدد</item>
-    </plurals>
 
     <!-- الرئيسية-->
     <string name="history">السجل</string>
@@ -231,24 +223,6 @@
         <item quantity="few">%d سنوات</item>
         <item quantity="many">%d سنة</item>
         <item quantity="other">%d سنة</item>
-    </plurals>
-
-    <plurals name="n_element">
-        <item quantity="zero">لا عناصر</item>
-        <item quantity="one">%d عنصر</item>
-        <item quantity="two">%d عنصران</item>
-        <item quantity="few">%d عناصر</item>
-        <item quantity="many">%d عنصراً</item>
-        <item quantity="other">%d عنصراً</item>
-    </plurals>
-
-    <plurals name="n_time">
-        <item quantity="zero">لا مرات</item>
-        <item quantity="one">%d مرة</item>
-        <item quantity="two">%d مرتان</item>
-        <item quantity="few">%d مرات</item>
-        <item quantity="many">%d مرة</item>
-        <item quantity="other">%d مرة</item>
     </plurals>
 
     <plurals name="minute">

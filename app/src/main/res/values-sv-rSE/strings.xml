@@ -9,10 +9,6 @@
     <string name="playlists">"Spellistor"</string>
 
     <!-- Top bar -->
-    <plurals name="n_selected">
-        <item quantity="one">"%d markerad"</item>
-        <item quantity="other">"%d markerade"</item>
-    </plurals>
 
     <!-- Home -->
     <string name="history">"Historik"</string>
@@ -45,7 +41,7 @@
 
     <!-- Search -->
     <string name="search">"SÃ¶k"</string>
-    <string name="search_yt_music">"SÃ¶k pÃ¥ YouTube Music..."</string>
+    <string name="search_yt_music">"SÃ¶k pÃ¥ YouTube Music&#8230;"</string>
     <string name="search_library">"SÃ¶k i biblioteket"</string>
     <string name="filter_library">"Bibliotek"</string>
     <string name="filter_liked">"Gillade"</string>
@@ -195,14 +191,6 @@
     <plurals name="n_year">
         <item quantity="one">"%d Ã¥r"</item>
         <item quantity="other">"%d Ã¥r"</item>
-    </plurals>
-    <plurals name="n_element">
-        <item quantity="one">"%d element"</item>
-        <item quantity="other">"%d element"</item>
-    </plurals>
-    <plurals name="n_time">
-        <item quantity="one">"%d gÃ¥ng"</item>
-        <item quantity="other">"%d gÃ¥nger"</item>
     </plurals>
 
     <!-- Snackbar -->
@@ -435,7 +423,7 @@
     <string name="update_version">"Uppdatering v%1$s"</string>
     <string name="download_question">"Vill du ladda ner den nya versionen?"</string>
     <string name="downloadup">"Ladda ner"</string>
-    <string name="downloadingup">"Laddar ner uppdatering..."</string>
+    <string name="downloadingup">"Laddar ner uppdatering&#8230;"</string>
     <string name="download_completed">"Nedladdning klar"</string>
     <string name="install">"Installera"</string>
     <string name="download_errorup">"Fel vid nedladdning av uppdateringen"</string>

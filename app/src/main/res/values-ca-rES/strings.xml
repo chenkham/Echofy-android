@@ -9,10 +9,6 @@
     <string name="playlists">"Llistes de reproducciÃ³"</string>
 
     <!-- Top bar -->
-    <plurals name="n_selected">
-        <item quantity="one">"S'ha seleccionat %d"</item>
-        <item quantity="other">"S'han seleccionat %d"</item>
-    </plurals>
 
     <!-- Home -->
     <string name="history">"Historial"</string>
@@ -46,7 +42,7 @@
     <!-- Search -->
     <string name="search">"Cerca"</string>
     <string name="search_yt_music">"Cerca al Youtube Music"</string>
-    <string name="search_library">"Cerca a la biblioteca..."</string>
+    <string name="search_library">"Cerca a la biblioteca&#8230;"</string>
     <string name="filter_library">"Biblioteca"</string>
     <string name="filter_liked">"Agradat"</string>
     <string name="filter_downloaded">"Baixat "</string>
@@ -196,14 +192,6 @@ Treu el m'agrada a tot"</string>
     <plurals name="n_year">
         <item quantity="one">"%d any"</item>
         <item quantity="other">"%d anys"</item>
-    </plurals>
-    <plurals name="n_element">
-        <item quantity="one">"%d element"</item>
-        <item quantity="other">"%d elements"</item>
-    </plurals>
-    <plurals name="n_time">
-        <item quantity="one">"%d vegada"</item>
-        <item quantity="other">"%d vegades"</item>
     </plurals>
 
     <!-- Snackbar -->
@@ -465,8 +453,8 @@ Treu el m'agrada a tot"</string>
     <string name="confirm">"confirma"</string>
     <string name="problem_solver">"Solucionador de problemas"</string>
     <string name="action_login">"Iniciar sesiÃ³n"</string>
-    <string name="generating_image">"S'estÃ  generant la imatge..."</string>
-    <string name="please_wait">"Espereu..."</string>
+    <string name="generating_image">"S'estÃ  generant la imatge&#8230;"</string>
+    <string name="please_wait">"Espereu&#8230;"</string>
     <string name="share_lyrics">"Comparteix la lletra"</string>
     <string name="share_as_text">"Comparteix com a text"</string>
     <string name="share_as_image">"Comparteix com a imatge"</string>

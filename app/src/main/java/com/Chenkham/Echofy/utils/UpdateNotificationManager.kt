@@ -12,7 +12,6 @@ import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
-import android.os.Build
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.datastore.preferences.core.edit
@@ -46,17 +45,15 @@ object UpdateNotificationManager {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
     fun createNotificationChannel(context: Context) {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val name = context.getString(R.string.update_notification_channel_name)
-            val descriptionText = context.getString(R.string.update_notification_channel_desc)
-            val importance = NotificationManager.IMPORTANCE_DEFAULT
-            val channel =
-                NotificationChannel(CHANNEL_ID, name, importance).apply {
-                    description = descriptionText
-                }
-            val notificationManager = context.getSystemService(NotificationManager::class.java)
-            notificationManager?.createNotificationChannel(channel)
-        }
+        val name = context.getString(R.string.update_notification_channel_name)
+        val descriptionText = context.getString(R.string.update_notification_channel_desc)
+        val importance = NotificationManager.IMPORTANCE_DEFAULT
+        val channel =
+            NotificationChannel(CHANNEL_ID, name, importance).apply {
+                description = descriptionText
+            }
+        val notificationManager = context.getSystemService(NotificationManager::class.java)
+        notificationManager?.createNotificationChannel(channel)
     }
 
     fun schedulePeriodicUpdateCheck(context: Context) {

@@ -7,11 +7,6 @@
     <string name="playlists">Listas de reproducciÃ³n</string>
 
     <!-- Top bar -->
-    <plurals name="n_selected">
-        <item quantity="one">%d seleccionada</item>
-        <item quantity="many">%d seleccionadas</item>
-        <item quantity="other">%d seleccionadas</item>
-    </plurals>
 
     <!-- Home -->
     <string name="history">Historial</string>
@@ -442,7 +437,7 @@
     <string name="update_version">Actualizar v%1$s</string>
     <string name="download_question">Â¿Desea descargar la nueva versiÃ³n?</string>
     <string name="downloadup">Descargar</string>
-    <string name="downloadingup">Descargando actualizaciÃ³n...</string>
+    <string name="downloadingup">Descargando actualizaciÃ³n&#8230;</string>
     <string name="download_completed">Descarga completada</string>
     <string name="install">Instalar</string>
     <string name="download_errorup">Error al descargar la actualizaciÃ³n</string>
@@ -545,13 +540,13 @@
     <string name="cloud_upload_enabled_description">Las copias de seguridad se cargarÃ¡n en filebin.net</string>
     <string name="cloud_upload_disabled_description">Las copias de seguridad solo se guardarÃ¡n localmente</string>
     <string name="backup_with_cloud">Crear copia de seguridad local y cargarla en la nube</string>
-    <string name="uploading_backup">Cargando copia de seguridad...</string>
+    <string name="uploading_backup">Cargando copia de seguridad&#8230;</string>
     <string name="backup_success">Copia de seguridad realizada correctamente</string>
     <string name="backup_upload_error">Error al cargar la copia de seguridad</string>
-    <string name="cache_clearing">Borrando...</string>
+    <string name="cache_clearing">Borrando&#8230;</string>
     <string name="info_button">InformaciÃ³n</string>
     <string name="reset_button">Restablecer</string>
-    <string name="processing_songs">Procesando canciones...</string>
+    <string name="processing_songs">Procesando canciones&#8230;</string>
     <string name="understood">Entendido</string>
 
 

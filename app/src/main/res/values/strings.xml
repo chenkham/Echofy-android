@@ -27,12 +27,6 @@
 
 
 
-    <!-- Top bar -->
-    <plurals name="n_selected">
-        <item quantity="one">%d selected</item>
-        <item quantity="other">%d selected</item>
-    </plurals>
-
     <!-- Home -->
     <string name="history">History</string>
     <string name="stats">Stats</string>
@@ -236,14 +230,6 @@
     <plurals name="n_year">
         <item quantity="one">%d year</item>
         <item quantity="other">%d years</item>
-    </plurals>
-    <plurals name="n_element">
-        <item quantity="one">%d element</item>
-        <item quantity="other">%d elements</item>
-    </plurals>
-    <plurals name="n_time">
-        <item quantity="one">%d time</item>
-        <item quantity="other">%d times</item>
     </plurals>
 
     <!-- Snackbar -->

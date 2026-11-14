@@ -9,10 +9,6 @@
     <string name="playlists">"Wiedergabelisten"</string>
 
     <!-- Top bar -->
-    <plurals name="n_selected">
-        <item quantity="one">"%d ausgewÃ¤hlt"</item>
-        <item quantity="other">"%d ausgewÃ¤hlt"</item>
-    </plurals>
 
     <!-- Home -->
     <string name="history">"Verlauf"</string>
@@ -195,14 +191,6 @@
     <plurals name="n_year">
         <item quantity="one">"%d Jahr"</item>
         <item quantity="other">"%d Jahre"</item>
-    </plurals>
-    <plurals name="n_element">
-        <item quantity="one">"%d Element"</item>
-        <item quantity="other">"%d Elemente"</item>
-    </plurals>
-    <plurals name="n_time">
-        <item quantity="one">"%d mal"</item>
-        <item quantity="other">"%d mal"</item>
     </plurals>
 
     <!-- Snackbar -->
@@ -435,7 +423,7 @@
     <string name="update_version">"Aktualisierung v%1$s"</string>
     <string name="download_question">"Willst du die neue Version herunterladen?"</string>
     <string name="downloadup">"Herunterladen"</string>
-    <string name="downloadingup">"Lade Aktualisierung herunter..."</string>
+    <string name="downloadingup">"Lade Aktualisierung herunter&#8230;"</string>
     <string name="download_completed">"Herunterladen abgeschlossen"</string>
     <string name="install">"Installieren"</string>
     <string name="download_errorup">"Fehler beim Herunterladen der Aktualisierung"</string>

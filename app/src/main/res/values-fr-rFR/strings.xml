@@ -9,11 +9,6 @@
     <string name="playlists">"Playlists"</string>
 
     <!-- Top bar -->
-    <plurals name="n_selected">
-        <item quantity="one">"%d sÃ©lectionnÃ©"</item>
-        <item quantity="many">"%d sÃ©lectionnÃ©s"</item>
-        <item quantity="other">"%d sÃ©lectionnÃ©s"</item>
-    </plurals>
 
     <!-- Home -->
     <string name="history">"Historique"</string>
@@ -203,16 +198,6 @@
         <item quantity="one">"%d annÃ©e"</item>
         <item quantity="many">"%d annÃ©es"</item>
         <item quantity="other">"%d annÃ©es"</item>
-    </plurals>
-    <plurals name="n_element">
-        <item quantity="one">"%d Ã©lÃ©ment"</item>
-        <item quantity="many">"%d Ã©lÃ©ments"</item>
-        <item quantity="other">"%d Ã©lÃ©ments"</item>
-    </plurals>
-    <plurals name="n_time">
-        <item quantity="one">"%d fois"</item>
-        <item quantity="many">"%d fois"</item>
-        <item quantity="other">"%d fois"</item>
     </plurals>
 
     <!-- Snackbar -->
@@ -447,7 +432,7 @@
     <string name="update_version">"Mise Ã  jour v%1$s"</string>
     <string name="download_question">"Souhaitez-vous tÃ©lÃ©charger la nouvelle version ?"</string>
     <string name="downloadup">"TÃ©lÃ©charger"</string>
-    <string name="downloadingup">"TÃ©lÃ©chargement de la mise Ã  jour..."</string>
+    <string name="downloadingup">"TÃ©lÃ©chargement de la mise Ã  jour&#8230;"</string>
     <string name="download_completed">"TÃ©lÃ©chargement terminÃ©"</string>
     <string name="install">"Installer"</string>
     <string name="download_errorup">"Erreur lors du tÃ©lÃ©chargement de la mise Ã  jour"</string>

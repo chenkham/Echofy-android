@@ -7,10 +7,6 @@
     <string name="albums">Albums</string>
     <string name="playlists">Playlists</string>
     <!-- Top bar -->
-    <plurals name="n_selected">
-        <item quantity="one">%d selected</item>
-        <item quantity="other">%d selected</item>
-    </plurals>
     <!-- Home -->
     <string name="history">History</string>
     <string name="stats">Stats</string>
@@ -181,14 +177,6 @@
     <plurals name="n_year">
         <item quantity="one">%d year</item>
         <item quantity="other">%d years</item>
-    </plurals>
-    <plurals name="n_element">
-        <item quantity="one">%d element</item>
-        <item quantity="other">%d elements</item>
-    </plurals>
-    <plurals name="n_time">
-        <item quantity="one">%d time</item>
-        <item quantity="other">%d times</item>
     </plurals>
     <!-- Snackbar -->
     <string name="playlist_imported">Playlist imported</string>
@@ -421,7 +409,7 @@
     <string name="update_version">Update v%1$s</string>
     <string name="download_question">Would you like to download the new version?</string>
     <string name="downloadup">Download</string>
-    <string name="downloadingup">Downloading update...</string>
+    <string name="downloadingup">Downloading update&#8230;</string>
     <string name="download_completed">Download completed</string>
     <string name="install">Install</string>
     <string name="download_errorup">Error downloading the update</string>

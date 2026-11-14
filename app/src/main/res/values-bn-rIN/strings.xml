@@ -7,10 +7,6 @@
     <string name="playlists">প্লেলিস্ট</string>
 
     <!-- Top bar -->
-    <plurals name="n_selected">
-        <item quantity="one">%d নির্বাচিত</item>
-        <item quantity="other">%d নির্বাচিত</item>
-    </plurals>
 
     <!-- Home -->
     <string name="history">ইতিহাস</string>

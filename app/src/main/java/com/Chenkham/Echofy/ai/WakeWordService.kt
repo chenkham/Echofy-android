@@ -133,7 +133,6 @@ class WakeWordService : Service() {
     }
 
     private fun createNotificationChannel() {
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) return
         val channel =
             NotificationChannel(
                 CHANNEL_ID,
@@ -172,11 +171,7 @@ class WakeWordService : Service() {
                 Intent(context, WakeWordService::class.java)
                     .putExtra(EXTRA_DRIVING_MODE, drivingMode)
             try {
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                    context.startForegroundService(intent)
-                } else {
-                    context.startService(intent)
-                }
+                context.startForegroundService(intent)
             } catch (e: Exception) {
                 Timber.e(e, "Unable to start WakeWordService")
             }

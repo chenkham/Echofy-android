@@ -5,7 +5,6 @@ import android.app.NotificationManager
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
-import android.os.Build
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.datastore.preferences.core.edit
@@ -84,15 +83,13 @@ class ReleaseRadarWorker(
         if (!NotificationManagerCompat.from(context).areNotificationsEnabled()) return
 
         val manager = context.getSystemService(NotificationManager::class.java) ?: return
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            manager.createNotificationChannel(
-                NotificationChannel(
-                    CHANNEL_ID,
-                    context.getString(R.string.release_radar),
-                    NotificationManager.IMPORTANCE_DEFAULT,
-                ),
-            )
-        }
+        manager.createNotificationChannel(
+            NotificationChannel(
+                CHANNEL_ID,
+                context.getString(R.string.release_radar),
+                NotificationManager.IMPORTANCE_DEFAULT,
+            ),
+        )
 
         val pendingIntent =
             PendingIntent.getActivity(

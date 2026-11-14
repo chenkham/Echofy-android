@@ -9,9 +9,6 @@
     <string name="playlists">"ãƒ—ãƒ¬ã‚¤ãƒªã‚¹ãƒˆ"</string>
 
     <!-- Top bar -->
-    <plurals name="n_selected">
-        <item quantity="other">"%d é¸æŠžæ¸ˆã¿"</item>
-    </plurals>
 
     <!-- Home -->
     <string name="history">"å±¥æ­´"</string>
@@ -187,12 +184,6 @@
     </plurals>
     <plurals name="n_year">
         <item quantity="other">"%d å¹´"</item>
-    </plurals>
-    <plurals name="n_element">
-        <item quantity="other">"%d å€‹ã®è¦ç´ "</item>
-    </plurals>
-    <plurals name="n_time">
-        <item quantity="other">"%d å›ž"</item>
     </plurals>
 
     <!-- Snackbar -->
@@ -423,7 +414,7 @@
     <string name="update_version">"ã‚¢ãƒƒãƒ—ãƒ‡ãƒ¼ãƒˆãƒãƒ¼ã‚¸ãƒ§ãƒ³ %1$s"</string>
     <string name="download_question">"æ–°ã—ã„ãƒãƒ¼ã‚¸ãƒ§ãƒ³ã‚’ãƒ€ã‚¦ãƒ³ãƒ­ãƒ¼ãƒ‰ã—ã¾ã™ã‹ï¼Ÿ"</string>
     <string name="downloadup">"ãƒ€ã‚¦ãƒ³ãƒ­ãƒ¼ãƒ‰"</string>
-    <string name="downloadingup">"ã‚¢ãƒƒãƒ—ãƒ‡ãƒ¼ãƒˆã‚’ãƒ€ã‚¦ãƒ³ãƒ­ãƒ¼ãƒ‰ä¸­..."</string>
+    <string name="downloadingup">"ã‚¢ãƒƒãƒ—ãƒ‡ãƒ¼ãƒˆã‚’ãƒ€ã‚¦ãƒ³ãƒ­ãƒ¼ãƒ‰ä¸­&#8230;"</string>
     <string name="download_completed">"ãƒ€ã‚¦ãƒ³ãƒ­ãƒ¼ãƒ‰å®Œäº†"</string>
     <string name="install">"ã‚¤ãƒ³ã‚¹ãƒˆãƒ¼ãƒ«"</string>
     <string name="download_errorup">"ã‚¢ãƒƒãƒ—ãƒ‡ãƒ¼ãƒˆã®ãƒ€ã‚¦ãƒ³ãƒ­ãƒ¼ãƒ‰ã§ã‚¨ãƒ©ãƒ¼ãŒç™ºç”Ÿã—ã¾ã—ãŸ"</string>

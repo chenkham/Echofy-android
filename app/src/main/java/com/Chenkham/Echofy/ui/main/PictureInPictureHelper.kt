@@ -10,7 +10,6 @@ import android.content.Intent
 import android.content.IntentFilter
 import android.os.Build
 import android.util.Rational
-import androidx.annotation.RequiresApi
 import com.Chenkham.Echofy.R
 import com.Chenkham.Echofy.playback.PlayerConnection
 import timber.log.Timber
@@ -45,9 +44,7 @@ class PictureInPictureHelper(
                         CONTROL_NEXT -> playerConnectionProvider()?.player?.seekToNext()
                         CONTROL_PREVIOUS -> playerConnectionProvider()?.player?.seekToPrevious()
                     }
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                        updatePipParams()
-                    }
+                    updatePipParams()
                 }
             }
         }
@@ -59,7 +56,7 @@ class PictureInPictureHelper(
                 IntentFilter(ACTION_PIP_CONTROL),
                 Context.RECEIVER_NOT_EXPORTED,
             )
-        } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+        } else {
             @Suppress("UnspecifiedRegisterReceiverFlag")
             context.registerReceiver(pipBroadcastReceiver, IntentFilter(ACTION_PIP_CONTROL))
         }
@@ -73,7 +70,6 @@ class PictureInPictureHelper(
         }
     }
 
-    @RequiresApi(Build.VERSION_CODES.O)
     fun enterPipMode() {
         try {
             val params = buildPipParams()
@@ -83,7 +79,6 @@ class PictureInPictureHelper(
         }
     }
 
-    @RequiresApi(Build.VERSION_CODES.O)
     fun updatePipParams() {
         if (isInPipMode) {
             try {
@@ -94,7 +89,6 @@ class PictureInPictureHelper(
         }
     }
 
-    @RequiresApi(Build.VERSION_CODES.O)
     fun buildPipParams(): PictureInPictureParams {
         val isPlaying = playerConnectionProvider()?.player?.isPlaying == true
 

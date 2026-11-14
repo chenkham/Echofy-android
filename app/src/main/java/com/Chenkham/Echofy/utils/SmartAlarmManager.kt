@@ -20,11 +20,7 @@ class SmartAlarmReceiver : BroadcastReceiver() {
             Intent(context, MusicService::class.java).apply {
                 action = "com.Chenkham.Echofy.action.ALARM_WAKE"
             }
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            context.startForegroundService(serviceIntent)
-        } else {
-            context.startService(serviceIntent)
-        }
+        context.startForegroundService(serviceIntent)
     }
 }
 

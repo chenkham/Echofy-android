@@ -7,10 +7,6 @@
     <string name="playlists">Listas de reproduÃ§Ã£o</string>
 
     <!-- Top bar -->
-    <plurals name="n_selected">
-        <item quantity="one">%d selecionado</item>
-        <item quantity="other">%d selecionados</item>
-    </plurals>
 
     <!-- Home -->
     <string name="history">HistÃ³rico</string>
@@ -199,14 +195,6 @@
     <plurals name="n_year">
         <item quantity="one">%d ano</item>
         <item quantity="other">%d anos</item>
-    </plurals>
-    <plurals name="n_element">
-        <item quantity="one">%d elemento</item>
-        <item quantity="other">%d elementos</item>
-    </plurals>
-    <plurals name="n_time">
-        <item quantity="one">%d vez</item>
-        <item quantity="other">%d vezes</item>
     </plurals>
 
     <!-- Snackbar -->
@@ -573,12 +561,12 @@
     <string name="cloud_upload_enabled_description">Os backups serÃ£o enviados para filebin.net</string>
     <string name="cloud_upload_disabled_description">Os backups serÃ£o salvos apenas localmente</string>
     <string name="backup_with_cloud">Criar backup local e enviar para a nuvem</string>
-    <string name="uploading_backup">Enviando backup...</string>
+    <string name="uploading_backup">Enviando backup&#8230;</string>
     <string name="backup_success">Backup bem-sucedido</string>
     <string name="backup_upload_error">Erro ao enviar backup</string>
-    <string name="cache_clearing">Limpar...</string>
+    <string name="cache_clearing">Limpar&#8230;</string>
     <string name="info_button">InformaÃ§Ãµes</string>
     <string name="reset_button">Redefinir</string>
-    <string name="processing_songs">Processando mÃºsicas...</string>
+    <string name="processing_songs">Processando mÃºsicas&#8230;</string>
     <string name="understood">Entendido</string>
 </resources>

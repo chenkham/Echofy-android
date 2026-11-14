@@ -409,10 +409,7 @@ class MainActivity : ComponentActivity() {
     override fun onUserLeaveHint() {
         super.onUserLeaveHint()
         // Enter PiP mode when user leaves the app (presses home) while music is playing
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O &&
-            playerConnection?.isPlaying?.value == true &&
-            pipEnabled
-        ) {
+        if (playerConnection?.isPlaying?.value == true && pipEnabled) {
             pipHelper.enterPipMode()
         }
     }

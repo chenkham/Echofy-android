@@ -7,10 +7,6 @@
     <string name="albums">AlbÃ¼mler</string>
     <string name="playlists">Ã‡alma Listesi</string>
     <!-- Top bar -->
-    <plurals name="n_selected">
-        <item quantity="one">%d seÃ§ili</item>
-        <item quantity="other">%d seÃ§ilenler</item>
-    </plurals>
     <!-- Home -->
     <string name="history">GeÃ§miÅŸ</string>
     <string name="stats">Ä°statistikler</string>
@@ -181,14 +177,6 @@
     <plurals name="n_year">
         <item quantity="one">%d yÄ±l</item>
         <item quantity="other">%d yÄ±llar</item>
-    </plurals>
-    <plurals name="n_element">
-        <item quantity="one">%d Ã¶ÄŸe</item>
-        <item quantity="other">%d Ã¶ÄŸeler</item>
-    </plurals>
-    <plurals name="n_time">
-        <item quantity="one">%d sÃ¼re</item>
-        <item quantity="other">%d zamanlar</item>
     </plurals>
     <!-- Snackbar -->
     <string name="playlist_imported">Oynatma listesi iÃ§e aktarÄ±ldÄ±</string>
@@ -415,7 +403,7 @@
     <string name="update_version">Versiyon%1$s</string>
     <string name="download_question">Yeni sÃ¼rÃ¼mÃ¼ indirmek ister misiniz?</string>
     <string name="downloadup">Ä°ndir</string>
-    <string name="downloadingup">GÃ¼ncellenme indiriliyor...</string>
+    <string name="downloadingup">GÃ¼ncellenme indiriliyor&#8230;</string>
     <string name="download_completed">Ä°ndirme tamamlandÄ±</string>
     <string name="install">YÃ¼kle</string>
     <string name="download_errorup">GÃ¼ncelleme indirilirken hata oluÅŸtu</string>

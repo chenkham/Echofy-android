@@ -226,7 +226,7 @@ object DeviceCapabilities {
         get() = Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
 
     val supportsHardwareAcceleration: Boolean
-        get() = Build.VERSION.SDK_INT >= Build.VERSION_CODES.O
+        get() = true
 
     val isHighEndDevice: Boolean
         get() = Runtime.getRuntime().maxMemory() > 256 * 1024 * 1024 // > 256MB heap

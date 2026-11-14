@@ -186,12 +186,7 @@ fun AppleBottomSheetPlayer(
         if (isPlaying && hapticBassEnabled) {
             val vibrator = context.getSystemService(android.content.Context.VIBRATOR_SERVICE) as? android.os.Vibrator
             while (isActive) {
-                if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
-                    vibrator?.vibrate(android.os.VibrationEffect.createOneShot(30, 40))
-                } else {
-                    @Suppress("DEPRECATION")
-                    vibrator?.vibrate(30)
-                }
+                vibrator?.vibrate(android.os.VibrationEffect.createOneShot(30, 40))
                 kotlinx.coroutines.delay(480L)
             }
         }

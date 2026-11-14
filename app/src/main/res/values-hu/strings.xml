@@ -7,10 +7,6 @@
     <string name="albums">Albumok</string>
     <string name="playlists">LejÃ¡tszÃ¡si listÃ¡k</string>
     <!-- Top bar -->
-    <plurals name="n_selected">
-        <item quantity="one">%d kivÃ¡lasztva</item>
-        <item quantity="other">%d kivÃ¡lasztva</item>
-    </plurals>
     <!-- Home -->
     <string name="history">ElÅ‘zmÃ©nyek</string>
     <string name="stats">StatisztikÃ¡k</string>
@@ -181,14 +177,6 @@
     <plurals name="n_year">
         <item quantity="one">%d Ã©v</item>
         <item quantity="other">%d Ã©v</item>
-    </plurals>
-    <plurals name="n_element">
-        <item quantity="one">%d elem</item>
-        <item quantity="other">%d elem</item>
-    </plurals>
-    <plurals name="n_time">
-        <item quantity="one">%d alkalom</item>
-        <item quantity="other">%d alkalom</item>
     </plurals>
     <!-- Snackbar -->
     <string name="playlist_imported">LejÃ¡tszÃ¡si lista importÃ¡lva</string>
@@ -415,7 +403,7 @@
     <string name="update_version">v%1$s-s frissÃ­tÃ©s</string>
     <string name="download_question">Le akarja tÃ¶lteni az Ãºj verziÃ³t?</string>
     <string name="downloadup">LetÃ¶ltÃ©s</string>
-    <string name="downloadingup">FrissÃ­tÃ©s letÃ¶ltÃ©se...</string>
+    <string name="downloadingup">FrissÃ­tÃ©s letÃ¶ltÃ©se&#8230;</string>
     <string name="download_completed">LetÃ¶ltÃ©s befejezve</string>
     <string name="install">TelepÃ­tÃ©s</string>
     <string name="download_errorup">Hiba a frissÃ­tÃ©s letÃ¶ltÃ©sekor</string>

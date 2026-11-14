@@ -18,7 +18,6 @@ import android.os.Binder
 import android.os.Build
 import android.os.PowerManager
 import android.util.Log
-import androidx.annotation.RequiresApi
 import androidx.core.content.ContextCompat
 import androidx.core.content.getSystemService
 import androidx.core.net.toUri
@@ -858,7 +857,6 @@ class MusicService :
 
     private var isForegroundStarted = false
 
-    @RequiresApi(Build.VERSION_CODES.O)
     override fun onStartCommand(
         intent: Intent?,
         flags: Int,
@@ -912,7 +910,6 @@ class MusicService :
         }
     }
 
-    @RequiresApi(Build.VERSION_CODES.O)
     override fun onCreate() {
         super.onCreate()
         instance = this
@@ -1020,12 +1017,7 @@ class MusicService :
                     player.seekToNextMediaItem()
                     // Light haptic acknowledgement
                     val vibrator = getSystemService(Context.VIBRATOR_SERVICE) as? android.os.Vibrator
-                    if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
-                        vibrator?.vibrate(android.os.VibrationEffect.createOneShot(80, android.os.VibrationEffect.DEFAULT_AMPLITUDE))
-                    } else {
-                        @Suppress("DEPRECATION")
-                        vibrator?.vibrate(80)
-                    }
+                    vibrator?.vibrate(android.os.VibrationEffect.createOneShot(80, android.os.VibrationEffect.DEFAULT_AMPLITUDE))
                 }
             }
         shakeDetector?.let { com.Chenkham.Echofy.utils.ShakeDetector.register(this, it) }
@@ -2708,7 +2700,6 @@ class MusicService :
         }
     }
 
-    @RequiresApi(Build.VERSION_CODES.O)
     override fun onEvents(
         player: Player,
         events: Player.Events,
@@ -3894,7 +3885,6 @@ class MusicService :
         // in onEvents stays valid.
     }
 
-    @RequiresApi(Build.VERSION_CODES.O)
     override fun onDestroy() {
         if (isQueuePersistent) {
             saveQueueToDisk()

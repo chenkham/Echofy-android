@@ -92,7 +92,6 @@ object ComposeToImage {
         )
     }
 
-    @RequiresApi(Build.VERSION_CODES.M)
     suspend fun createLyricsImage(
         context: Context,
         coverArtUrl: String?,

@@ -8,12 +8,6 @@
     <string name="explore">Prozkoumat</string>
 
     <!-- Top bar -->
-    <plurals name="n_selected">
-        <item quantity="one">Vybrána %d</item>
-        <item quantity="few">Vybrány %d</item>
-        <item quantity="many">Vybráno %d</item>
-        <item quantity="other">Vybráno %d</item>
-    </plurals>
 
     <!-- Home -->
     <string name="history">Historie</string>
@@ -191,12 +185,6 @@
         <item quantity="few">%d roky</item>
         <item quantity="many">%d let</item>
         <item quantity="other">%d let</item>
-    </plurals>
-    <plurals name="n_element">
-        <item quantity="one">%d prvek</item>
-        <item quantity="few">%d prvky</item>
-        <item quantity="many">%d prvků</item>
-        <item quantity="other">%d prvků</item>
     </plurals>
 
     <!-- Snackbar -->

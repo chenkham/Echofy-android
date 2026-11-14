@@ -7,10 +7,6 @@
     <string name="playlists">Daftar putar</string>
 
     <!-- Top bar -->
-    <plurals name="n_selected">
-        <item quantity="one">%D dipilih</item>
-        <item quantity="other">%D dipilih</item>
-    </plurals>
 
     <!-- Home -->
     <string name="history">Sejarah</string>
@@ -199,14 +195,6 @@
     <plurals name="n_year">
         <item quantity="one">%D tahun</item>
         <item quantity="other">%d tahun</item>
-    </plurals>
-    <plurals name="n_element">
-        <item quantity="one">%D elemen</item>
-        <item quantity="other">%D elemen</item>
-    </plurals>
-    <plurals name="n_time">
-        <item quantity="one">%d waktu</item>
-        <item quantity="other">%D kali</item>
     </plurals>
 
     <!-- Snackbar -->
@@ -454,7 +442,7 @@
     <string name="update_version">Perbarui v%1 $ s</string>
     <string name="download_question">Apakah Anda ingin mengunduh versi baru?</string>
     <string name="downloadup">Unduh</string>
-    <string name="downloadingup">Mengunduh pembaruan ...</string>
+    <string name="downloadingup">Mengunduh pembaruan &#8230;</string>
     <string name="download_completed">Unduh selesai</string>
     <string name="install">Memasang</string>
     <string name="download_errorup">Kesalahan mengunduh pembaruan</string>

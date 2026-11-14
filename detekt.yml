@@ -7,6 +7,50 @@ config:
   warningsAsErrors: false
   checkExhaustiveness: false
 
+# --- Suppress Compose / project-specific noise ---
+naming:
+  active: true
+  FunctionNaming:
+    active: true
+    # Compose @Composable functions use PascalCase by convention
+    excludes: ['**/ui/**', '**/component/**', '**/screens/**', '**/player/**']
+  PackageNaming:
+    active: false  # com.Chenkham.Echofy uses uppercase — cannot rename without breaking applicationId
+
+style:
+  active: true
+  MagicNumber:
+    active: true
+    # Compose dp/sp sizing, color hex, animation durations are standard idioms
+    excludes: ['**/ui/**', '**/component/**', '**/screens/**', '**/player/**', '**/widget/**']
+    ignoreNumbers: ['-1', '0', '1', '2', '3', '4', '5', '10', '100']
+    ignoreHashCodeFunction: true
+    ignorePropertyDeclaration: true
+    ignoreLocalVariableDeclaration: false
+    ignoreConstantDeclaration: true
+    ignoreCompanionObjectPropertyDeclaration: true
+    ignoreAnnotation: true
+    ignoreNamedArgument: true
+    ignoreEnums: true
+  MaxLineLength:
+    active: true
+    maxLineLength: 150  # Compose lambdas legitimately run long
+    excludeCommentStatements: true
+    excludePackageStatements: true
+    excludeImportStatements: true
+  NewLineAtEndOfFile:
+    active: false  # ktlint handles this
+  UnusedPrivateMember:
+    active: true
+    allowedNames: '(_|ignored|expected)'
+  UnusedPrivateProperty:
+    active: true
+    allowedNames: '(_|ignored|expected)'
+  UnusedPrivateClass:
+    active: true
+  ModifierOrder:
+    active: true
+
 complexity:
   active: true
   LargeClass:
@@ -33,25 +77,13 @@ complexity:
     functionThreshold: 6
     constructorThreshold: 7
     ignoreDefaultParameters: true
+    ignoreAnnotated: ['Composable']
   StringLiteralDuplication:
     active: true
     threshold: 5
     ignoreAnnotation: true
     excludeStringsWithLessThan5Characters: true
     ignoreStringsRegex: '$^'
-
-style:
-  active: true
-  UnusedPrivateMember:
-    active: true
-    allowedNames: '(_|ignored|expected)'
-  UnusedPrivateProperty:
-    active: true
-    allowedNames: '(_|ignored|expected)'
-  UnusedPrivateClass:
-    active: true
-  ModifierOrder:
-    active: true
 
 coroutines:
   active: true

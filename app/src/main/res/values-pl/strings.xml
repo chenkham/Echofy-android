@@ -9,12 +9,6 @@
     <string name="playlists">"Playlisty"</string>
 
     <!-- Top bar -->
-    <plurals name="n_selected">
-        <item quantity="one">"%d wybrany"</item>
-        <item quantity="few">"%d wybrane"</item>
-        <item quantity="many">"%d wybranych"</item>
-        <item quantity="other">"%d wybranych"</item>
-    </plurals>
 
     <!-- Home -->
     <string name="history">"Historia"</string>
@@ -211,18 +205,6 @@
         <item quantity="few">"%d lata"</item>
         <item quantity="many">"%d lat"</item>
         <item quantity="other">"%d lat"</item>
-    </plurals>
-    <plurals name="n_element">
-        <item quantity="one">"%d element"</item>
-        <item quantity="few">"%d elementy"</item>
-        <item quantity="many">"%d elementÃ³w"</item>
-        <item quantity="other">"%d elementÃ³w"</item>
-    </plurals>
-    <plurals name="n_time">
-        <item quantity="one">"%d raz"</item>
-        <item quantity="few">"%d razy"</item>
-        <item quantity="many">"%d razy"</item>
-        <item quantity="other">"%d razy"</item>
     </plurals>
 
     <!-- Snackbar -->
@@ -459,7 +441,7 @@
     <string name="update_version">"Wersja v%1$s"</string>
     <string name="download_question">"Czy chcesz pobraÄ‡ nowÄ… wersjÄ™?"</string>
     <string name="downloadup">"Pobierz"</string>
-    <string name="downloadingup">"Pobieranie aktualizacji..."</string>
+    <string name="downloadingup">"Pobieranie aktualizacji&#8230;"</string>
     <string name="download_completed">"Pobieranie ukoÅ„czone"</string>
     <string name="install">"Zainstaluj"</string>
     <string name="download_errorup">"BÅ‚Ä…d pobierania aktualizacji"</string>
@@ -578,12 +560,12 @@ Aplikacja zrestartuje siÄ™ automatycznie."</string>
     <string name="cloud_upload_enabled_description">"Kopie zapasowe bÄ™dÄ… zapisywane na filebin.net"</string>
     <string name="cloud_upload_disabled_description">"Kopie zapasowe bÄ™dÄ… zapisywane lokalnie"</string>
     <string name="backup_with_cloud">"StwÃ³rz kopiÄ™ zapasowÄ… i przeÅ›lij jÄ… do chmury"</string>
-    <string name="uploading_backup">"PrzesyÅ‚anie kopii zapasowej..."</string>
+    <string name="uploading_backup">"PrzesyÅ‚anie kopii zapasowej&#8230;"</string>
     <string name="backup_success">"Kopia zostaÅ‚a stworzona"</string>
     <string name="backup_upload_error">"BÅ‚Ä…d przesyÅ‚ania kopii"</string>
-    <string name="cache_clearing">"Czyszczenie..."</string>
+    <string name="cache_clearing">"Czyszczenie&#8230;"</string>
     <string name="info_button">"Informacje"</string>
     <string name="reset_button">"Reset"</string>
-    <string name="processing_songs">"Przetwarzanie utworÃ³w..."</string>
+    <string name="processing_songs">"Przetwarzanie utworÃ³w&#8230;"</string>
     <string name="understood">"Rozumiem"</string>
 </resources>

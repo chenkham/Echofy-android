@@ -9,9 +9,6 @@
     <string name="playlists">"Danh sÃ¡ch phÃ¡t"</string>
 
     <!-- Top bar -->
-    <plurals name="n_selected">
-        <item quantity="other">"ÄÃ£ chá»n %d"</item>
-    </plurals>
 
     <!-- Home -->
     <string name="history">"Lá»‹ch sá»­"</string>
@@ -187,12 +184,6 @@
     </plurals>
     <plurals name="n_year">
         <item quantity="other">"%d nÄƒm"</item>
-    </plurals>
-    <plurals name="n_element">
-        <item quantity="other">"%d yáº¿u tá»‘"</item>
-    </plurals>
-    <plurals name="n_time">
-        <item quantity="other">"%d thá»i gian"</item>
     </plurals>
 
     <!-- Snackbar -->
@@ -423,7 +414,7 @@
     <string name="update_version">"Cáº­p nháº­t v%1$s"</string>
     <string name="download_question">"Báº¡n cÃ³ muá»‘n táº£i xuá»‘ng phiÃªn báº£n má»›i?"</string>
     <string name="downloadup">"Táº£i xuá»‘ng"</string>
-    <string name="downloadingup">"Äang táº£i báº£n cáº­p nháº­t..."</string>
+    <string name="downloadingup">"Äang táº£i báº£n cáº­p nháº­t&#8230;"</string>
     <string name="download_completed">"Táº£i xuá»‘ng hoÃ n táº¥t"</string>
     <string name="install">"CÃ i Ä‘áº·t"</string>
     <string name="download_errorup">"Lá»—i táº£i báº£n cáº­p nháº­t"</string>

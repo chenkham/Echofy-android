@@ -7,7 +7,6 @@ import android.content.Context
 import android.content.Intent
 import android.content.res.Configuration
 import android.content.res.Resources
-import android.os.Build
 import android.os.LocaleList
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.compose.animation.AnimatedVisibility
@@ -194,11 +193,7 @@ class LocaleManager private constructor(private val context: Context) {
             val systemCode =
                 try {
                     val localeList =
-                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-                            ConfigurationCompat.getLocales(Resources.getSystem().configuration)
-                        } else {
-                            LocaleListCompat.create(Locale.getDefault())
-                        }
+                        ConfigurationCompat.getLocales(Resources.getSystem().configuration)
 
                     val systemLocale =
                         if (localeList.isEmpty) {
@@ -277,11 +272,7 @@ class LocaleManager private constructor(private val context: Context) {
             val locale = parseLocaleCode(localeCode)
             val config = Configuration(context.resources.configuration)
 
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-                config.setLocale(locale)
-            } else {
-                config.locale = locale
-            }
+            config.setLocale(locale)
 
             val localizedContext = context.createConfigurationContext(config)
             val localizedResources = localizedContext.resources
@@ -472,14 +463,10 @@ class LocaleManager private constructor(private val context: Context) {
             Locale.setDefault(locale)
             val config = Configuration(context.resources.configuration)
 
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-                val localeList = LocaleList(locale)
-                LocaleList.setDefault(localeList)
-                config.setLocales(localeList)
-                config.setLocale(locale)
-            } else {
-                config.locale = locale
-            }
+            val localeList = LocaleList(locale)
+            LocaleList.setDefault(localeList)
+            config.setLocales(localeList)
+            config.setLocale(locale)
 
             @Suppress("DEPRECATION")
             context.resources.updateConfiguration(config, context.resources.displayMetrics)
@@ -496,21 +483,11 @@ class LocaleManager private constructor(private val context: Context) {
             Locale.setDefault(locale)
             val config = Configuration(baseContext.resources.configuration)
 
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-                config.setLocale(locale)
-                val localeList = LocaleList(locale)
-                LocaleList.setDefault(localeList)
-                config.setLocales(localeList)
-                baseContext.createConfigurationContext(config)
-            } else {
-                config.locale = locale
-                @Suppress("DEPRECATION")
-                baseContext.resources.updateConfiguration(
-                    config,
-                    baseContext.resources.displayMetrics,
-                )
-                baseContext
-            }
+            config.setLocale(locale)
+            val localeList = LocaleList(locale)
+            LocaleList.setDefault(localeList)
+            config.setLocales(localeList)
+            baseContext.createConfigurationContext(config)
         } catch (e: Exception) {
             Timber.tag(TAG).e(e, "Error aplicando idioma al contexto")
             baseContext

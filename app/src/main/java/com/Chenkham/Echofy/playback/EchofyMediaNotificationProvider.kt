@@ -168,23 +168,21 @@ class EchofyMediaNotificationProvider(
             channelId: String,
             @StringRes nameResId: Int,
         ) {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                val channel =
-                    NotificationChannel(
-                        channelId,
-                        context.getString(nameResId),
-                        NotificationManager.IMPORTANCE_DEFAULT,
-                    ).apply {
-                        description = context.getString(R.string.music_player_description)
-                        setShowBadge(true)
-                        lockscreenVisibility = Notification.VISIBILITY_PUBLIC
-                        setBypassDnd(false)
-                        enableVibration(false)
-                        setSound(null, null)
-                    }
-                val notificationManager = context.getSystemService(NotificationManager::class.java)
-                notificationManager?.createNotificationChannel(channel)
-            }
+            val channel =
+                NotificationChannel(
+                    channelId,
+                    context.getString(nameResId),
+                    NotificationManager.IMPORTANCE_DEFAULT,
+                ).apply {
+                    description = context.getString(R.string.music_player_description)
+                    setShowBadge(true)
+                    lockscreenVisibility = Notification.VISIBILITY_PUBLIC
+                    setBypassDnd(false)
+                    enableVibration(false)
+                    setSound(null, null)
+                }
+            val notificationManager = context.getSystemService(NotificationManager::class.java)
+            notificationManager?.createNotificationChannel(channel)
         }
     }
 }

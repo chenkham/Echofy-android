@@ -8,10 +8,6 @@
     <string name="playlists">Î›Î¯ÏƒÏ„ÎµÏ‚</string>
     <string name="explore">Î•Î¾ÎµÏÎµÏÎ½Î·ÏƒÎ·</string>
     <!-- Top bar -->
-    <plurals name="n_selected">
-        <item quantity="one">%d ÎµÏ€Î¹Î»Î­Ï‡Î¸Î·ÎºÎµ</item>
-        <item quantity="other">%d ÎµÏ€Î¹Î»Î­Ï‡Î¸Î·ÎºÎ±Î½</item>
-    </plurals>
     <!-- Home -->
     <string name="history">Î™ÏƒÏ„Î¿ÏÎ¹ÎºÏŒ</string>
     <string name="stats">Î£Ï„Î±Ï„Î¹ÏƒÏ„Î¹ÎºÎ¬</string>
@@ -181,14 +177,6 @@
     <plurals name="n_year">
         <item quantity="one">%d Î­Ï„Î¿Ï‚</item>
         <item quantity="other">%d Î­Ï„Î·</item>
-    </plurals>
-    <plurals name="n_element">
-        <item quantity="one">%d ÏƒÏ„Î¿Î¹Ï‡ÎµÎ¯Î¿</item>
-        <item quantity="other">%d ÏƒÏ„Î¿Î¹Ï‡ÎµÎ¯Î±</item>
-    </plurals>
-    <plurals name="n_time">
-        <item quantity="one">%d Ï†Î¿ÏÎ¬</item>
-        <item quantity="other">%d Ï†Î¿ÏÎ­Ï‚</item>
     </plurals>
     <!-- Snackbar -->
     <string name="playlist_imported">Î— Î»Î¯ÏƒÏ„Î± ÎµÎ¹ÏƒÎ®Ï‡Î¸Î·</string>

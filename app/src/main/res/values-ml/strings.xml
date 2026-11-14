@@ -9,10 +9,6 @@
     <string name="playlists">"à´ªàµà´²àµ‡à´²à´¿à´¸àµà´±àµà´±àµ"</string>
 
     <!-- Top bar -->
-    <plurals name="n_selected">
-        <item quantity="one">"%d à´¤à´¿à´°à´žàµà´žàµ†à´Ÿàµà´¤àµà´¤àµ"</item>
-        <item quantity="other">"%d à´¤à´¿à´°à´žàµà´žàµ†à´Ÿàµà´¤àµà´¤àµ"</item>
-    </plurals>
 
     <!-- Home -->
     <string name="history">"à´šà´°à´¿à´¤àµà´°à´‚"</string>
@@ -195,14 +191,6 @@
     <plurals name="n_year">
         <item quantity="one">"%d à´µàµ¼à´·à´‚"</item>
         <item quantity="other">"%d à´µàµ¼à´·à´™àµà´™àµ¾"</item>
-    </plurals>
-    <plurals name="n_element">
-        <item quantity="one">"%d à´˜à´Ÿà´•à´‚"</item>
-        <item quantity="other">"%d à´˜à´Ÿà´•à´™àµà´™àµ¾"</item>
-    </plurals>
-    <plurals name="n_time">
-        <item quantity="one">"%d à´¸à´®à´¯à´‚"</item>
-        <item quantity="other">"%d à´¸à´®à´¯à´‚"</item>
     </plurals>
 
     <!-- Snackbar -->
@@ -435,7 +423,7 @@
     <string name="update_version">"v%1$s à´…à´ªàµà´¡àµ‡à´±àµà´±àµ à´šàµ†à´¯àµà´¯àµà´•"</string>
     <string name="download_question">"à´ªàµà´¤à´¿à´¯ à´ªà´¤à´¿à´ªàµà´ªàµ à´¡àµ—àµºà´²àµ‹à´¡àµ à´šàµ†à´¯àµà´¯à´¾àµ» à´¨à´¿à´™àµà´™àµ¾ à´†à´—àµà´°à´¹à´¿à´•àµà´•àµà´¨àµà´¨àµà´£àµà´Ÿàµ‹?"</string>
     <string name="downloadup">"à´‡à´±à´•àµà´•àµà´®à´¤à´¿"</string>
-    <string name="downloadingup">"à´…à´ªàµâ€Œà´¡àµ‡à´±àµà´±àµ à´¡àµ—àµºà´²àµ‹à´¡àµ à´šàµ†à´¯àµà´¯àµà´¨àµà´¨àµ..."</string>
+    <string name="downloadingup">"à´…à´ªàµâ€Œà´¡àµ‡à´±àµà´±àµ à´¡àµ—àµºà´²àµ‹à´¡àµ à´šàµ†à´¯àµà´¯àµà´¨àµà´¨àµ&#8230;"</string>
     <string name="download_completed">"à´¡àµ—àµºà´²àµ‹à´¡àµ à´ªàµ‚àµ¼à´¤àµà´¤à´¿à´¯à´¾à´¯à´¿"</string>
     <string name="install">"à´‡à´¨àµâ€à´¸àµà´±àµà´±à´¾à´³àµà´šàµ†à´¯àµà´¯àµà´•"</string>
     <string name="download_errorup">"à´…à´ªàµà´¡àµ‡à´±àµà´±àµ à´¡àµ—àµºà´²àµ‹à´¡àµ à´šàµ†à´¯àµà´¯àµà´¨àµà´¨à´¤à´¿àµ½ à´ªà´¿à´¶à´•àµ"</string>

@@ -6,7 +6,6 @@ import android.appwidget.AppWidgetProvider
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
-import android.os.Build
 import android.widget.RemoteViews
 import androidx.core.graphics.drawable.toBitmap
 import coil.ImageLoader
@@ -61,12 +60,7 @@ class LyricsWidget : AppWidgetProvider() {
                 Intent(context, MusicWidget::class.java).apply {
                     this.action = action
                 }
-            val flags =
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                    PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-                } else {
-                    PendingIntent.FLAG_UPDATE_CURRENT
-                }
+            val flags = PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
             return PendingIntent.getBroadcast(context, action.hashCode(), intent, flags)
         }
 
@@ -77,12 +71,7 @@ class LyricsWidget : AppWidgetProvider() {
                     addCategory(Intent.CATEGORY_LAUNCHER)
                     flags = Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP
                 }
-            val flags =
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                    PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-                } else {
-                    PendingIntent.FLAG_UPDATE_CURRENT
-                }
+            val flags = PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
             return PendingIntent.getActivity(context, 0, intent, flags)
         }
 
@@ -137,7 +126,7 @@ class LyricsWidget : AppWidgetProvider() {
                     context,
                     1001,
                     refreshIntent,
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE else PendingIntent.FLAG_UPDATE_CURRENT,
+                    PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
                 )
             views.setOnClickPendingIntent(R.id.widget_lyrics_output, refreshPendingIntent)
 

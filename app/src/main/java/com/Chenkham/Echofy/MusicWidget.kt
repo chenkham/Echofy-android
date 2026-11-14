@@ -8,7 +8,6 @@ import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.graphics.Bitmap
-import android.os.Build
 import android.os.Handler
 import android.os.Looper
 import android.widget.RemoteViews
@@ -410,12 +409,7 @@ class MusicWidget : AppWidgetProvider() {
                     this.action = action
                 }
 
-            val flags =
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                    PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-                } else {
-                    PendingIntent.FLAG_UPDATE_CURRENT
-                }
+            val flags = PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
 
             return PendingIntent.getBroadcast(context, action.hashCode(), intent, flags)
         }
@@ -427,12 +421,7 @@ class MusicWidget : AppWidgetProvider() {
             launchIntent.apply {
                 flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
             }
-            val flags =
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                    PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-                } else {
-                    PendingIntent.FLAG_UPDATE_CURRENT
-                }
+            val flags = PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
             return PendingIntent.getActivity(context, 0, launchIntent, flags)
         }
 

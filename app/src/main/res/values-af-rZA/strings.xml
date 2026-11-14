@@ -7,10 +7,6 @@
     <string name="playlists">Snitlyste</string>
 
     <!-- Top bar -->
-    <plurals name="n_selected">
-        <item quantity="one">%d gekies</item>
-        <item quantity="other">%d gekies</item>
-    </plurals>
 
     <!-- Home -->
     <string name="history">Geskiedenis</string>
@@ -199,14 +195,6 @@
     <plurals name="n_year">
         <item quantity="one">%d jaar</item>
         <item quantity="other">%d jare</item>
-    </plurals>
-    <plurals name="n_element">
-        <item quantity="one">%d element</item>
-        <item quantity="other">%d elemente</item>
-    </plurals>
-    <plurals name="n_time">
-        <item quantity="one">%d tyd</item>
-        <item quantity="other">%d tye</item>
     </plurals>
 
     <!-- Snackbar -->

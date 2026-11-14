@@ -6,7 +6,6 @@ import android.appwidget.AppWidgetProvider
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
-import android.os.Build
 import android.widget.RemoteViews
 import androidx.core.graphics.drawable.toBitmap
 import androidx.media3.common.Player
@@ -267,12 +266,7 @@ class CompactMusicWidget : AppWidgetProvider() {
                 Intent(context, CompactMusicWidget::class.java).apply {
                     this.action = action
                 }
-            val flags =
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                    PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-                } else {
-                    PendingIntent.FLAG_UPDATE_CURRENT
-                }
+            val flags = PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
             return PendingIntent.getBroadcast(context, action.hashCode(), intent, flags)
         }
 
@@ -283,12 +277,7 @@ class CompactMusicWidget : AppWidgetProvider() {
             launchIntent.apply {
                 flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
             }
-            val flags =
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                    PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-                } else {
-                    PendingIntent.FLAG_UPDATE_CURRENT
-                }
+            val flags = PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
             return PendingIntent.getActivity(context, 0, launchIntent, flags)
         }
 

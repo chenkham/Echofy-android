@@ -17,7 +17,7 @@
     <string name="no_title">No title</string>
     <string name="unknown_artist">Unknown artist</string>
     <string name="unknown_item_type">Unknown item type</string>
-    <string name="loading_charts">Loading charts...</string>
+    <string name="loading_charts">Loading charts&#8230;</string>
     <string name="retry_button">Retry</string>
     <string name="album_cover_desc">Album cover</string>
     <string name="top_music_videos">Top music videos</string>
@@ -339,7 +339,7 @@
     <string name="playback">Playback</string>
     <string name="jossred_fallback_label">Use alternative source</string>
     <string name="jossred_fallback_description">Attempt to play from JossRed if YouTube fails</string>
-    <string name="search_folders">Search folders...</string>
+    <string name="search_folders">Search folders&#8230;</string>
     <string name="folders">folders</string>
     <string name="no_folders_found">No folders found</string>
     <string name="show_all_folders">Show all folders</string>

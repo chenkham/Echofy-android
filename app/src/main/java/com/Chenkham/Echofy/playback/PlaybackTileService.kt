@@ -3,10 +3,8 @@ package com.Chenkham.Echofy.playback
 import android.annotation.SuppressLint
 import android.content.ComponentName
 import android.graphics.drawable.Icon
-import android.os.Build
 import android.service.quicksettings.Tile
 import android.service.quicksettings.TileService
-import androidx.annotation.RequiresApi
 import androidx.media3.common.Player
 import androidx.media3.session.MediaController
 import androidx.media3.session.SessionToken
@@ -21,7 +19,6 @@ import com.google.common.util.concurrent.MoreExecutors
  * Play/pause tile for the notification shade so playback can be controlled without
  * opening the app. The tile is a no-op when the user disables it in settings.
  */
-@RequiresApi(Build.VERSION_CODES.N)
 class PlaybackTileService : TileService() {
     private var controllerFuture: ListenableFuture<MediaController>? = null
     private var controller: MediaController? = null

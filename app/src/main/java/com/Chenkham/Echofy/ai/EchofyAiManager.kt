@@ -6,7 +6,6 @@ import android.media.AudioAttributes
 import android.media.AudioFocusRequest
 import android.media.AudioManager
 import android.media.MediaPlayer
-import android.os.Build
 import android.os.Bundle
 import android.speech.RecognitionListener
 import android.speech.RecognizerIntent
@@ -303,54 +302,32 @@ class EchofyAiManager private constructor(private val context: Context) {
     }
 
     private fun requestAudioFocusForVoice(): Boolean {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            audioFocusRequest =
-                AudioFocusRequest.Builder(AudioManager.AUDIOFOCUS_GAIN_TRANSIENT_MAY_DUCK)
-                    .setAudioAttributes(
-                        android.media.AudioAttributes.Builder()
-                            .setUsage(android.media.AudioAttributes.USAGE_ASSISTANCE_ACCESSIBILITY)
-                            .setContentType(android.media.AudioAttributes.CONTENT_TYPE_SPEECH)
-                            .build(),
-                    )
-                    .setAcceptsDelayedFocusGain(false)
-                    .setWillPauseWhenDucked(false)
-                    .setOnAudioFocusChangeListener { focusChange ->
-                        when (focusChange) {
-                            AudioManager.AUDIOFOCUS_LOSS, AudioManager.AUDIOFOCUS_LOSS_TRANSIENT -> {
-                                Timber.d("Audio focus lost for Hey Jarvis listener")
-                            }
+        audioFocusRequest =
+            AudioFocusRequest.Builder(AudioManager.AUDIOFOCUS_GAIN_TRANSIENT_MAY_DUCK)
+                .setAudioAttributes(
+                    android.media.AudioAttributes.Builder()
+                        .setUsage(android.media.AudioAttributes.USAGE_ASSISTANCE_ACCESSIBILITY)
+                        .setContentType(android.media.AudioAttributes.CONTENT_TYPE_SPEECH)
+                        .build(),
+                )
+                .setAcceptsDelayedFocusGain(false)
+                .setWillPauseWhenDucked(false)
+                .setOnAudioFocusChangeListener { focusChange ->
+                    when (focusChange) {
+                        AudioManager.AUDIOFOCUS_LOSS, AudioManager.AUDIOFOCUS_LOSS_TRANSIENT -> {
+                            Timber.d("Audio focus lost for Hey Jarvis listener")
                         }
                     }
-                    .build()
+                }
+                .build()
 
-            val result = audioManager.requestAudioFocus(audioFocusRequest!!)
-            return result == AudioManager.AUDIOFOCUS_REQUEST_GRANTED
-        } else {
-            @Suppress("DEPRECATION")
-            val result =
-                audioManager.requestAudioFocus(
-                    { focusChange ->
-                        when (focusChange) {
-                            AudioManager.AUDIOFOCUS_LOSS, AudioManager.AUDIOFOCUS_LOSS_TRANSIENT -> {
-                                Timber.d("Audio focus lost for Hey Jarvis listener")
-                            }
-                        }
-                    },
-                    AudioManager.STREAM_MUSIC,
-                    AudioManager.AUDIOFOCUS_GAIN_TRANSIENT_MAY_DUCK,
-                )
-            return result == AudioManager.AUDIOFOCUS_REQUEST_GRANTED
-        }
+        val result = audioManager.requestAudioFocus(audioFocusRequest!!)
+        return result == AudioManager.AUDIOFOCUS_REQUEST_GRANTED
     }
 
     private fun abandonAudioFocusForVoice() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            audioFocusRequest?.let { audioManager.abandonAudioFocusRequest(it) }
-            audioFocusRequest = null
-        } else {
-            @Suppress("DEPRECATION")
-            audioManager.abandonAudioFocus(null)
-        }
+        audioFocusRequest?.let { audioManager.abandonAudioFocusRequest(it) }
+        audioFocusRequest = null
     }
 
     /**

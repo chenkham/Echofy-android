@@ -9,9 +9,6 @@
     <string name="playlists">"Danh sách phát"</string>
 
     <!-- Top bar -->
-    <plurals name="n_selected">
-        <item quantity="other">"n_selected"</item>
-    </plurals>
 
     <!-- Home -->
     <string name="history">"lịch sử"</string>
@@ -187,12 +184,6 @@
     </plurals>
     <plurals name="n_year">
         <item quantity="other">"n_year"</item>
-    </plurals>
-    <plurals name="n_element">
-        <item quantity="other">"n_element"</item>
-    </plurals>
-    <plurals name="n_time">
-        <item quantity="other">"n_time"</item>
     </plurals>
 
     <!-- Snackbar -->

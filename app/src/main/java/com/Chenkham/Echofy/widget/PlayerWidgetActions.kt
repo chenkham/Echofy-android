@@ -3,8 +3,6 @@ package com.Chenkham.Echofy.widget
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
-import android.os.Build
-import androidx.core.content.ContextCompat
 import androidx.glance.GlanceId
 import androidx.glance.action.ActionParameters
 import androidx.glance.appwidget.action.ActionCallback
@@ -105,11 +103,7 @@ object PlayerWidgetActions {
         action: String,
     ) {
         try {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                context.startService(serviceIntent(context, action))
-            } else {
-                ContextCompat.startForegroundService(context, serviceIntent(context, action))
-            }
+            context.startService(serviceIntent(context, action))
         } catch (e: Throwable) {
             Timber.w(e, "sendServiceAction fallback suppressed exception")
         }

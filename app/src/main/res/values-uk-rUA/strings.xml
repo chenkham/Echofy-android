@@ -7,12 +7,6 @@
     <string name="albums">ÐÐ»ÑŒÐ±Ð¾Ð¼Ð¸</string>
     <string name="playlists">ÐŸÐ»ÐµÐ¹Ð»Ð¸ÑÑ‚Ð¸</string>
     <!-- Top bar -->
-    <plurals name="n_selected">
-        <item quantity="one">Ð’Ð¸Ð±Ñ€Ð°Ð½Ð¾: %d</item>
-        <item quantity="few">Ð’Ð¸Ð±Ñ€Ð°Ð½Ð¾: %d</item>
-        <item quantity="many">Ð’Ð¸Ð±Ñ€Ð°Ð½Ð¾: %d</item>
-        <item quantity="other">Ð’Ð¸Ð±Ñ€Ð°Ð½Ð¾: %d</item>
-    </plurals>
     <!-- Home -->
     <string name="history">Ð†ÑÑ‚Ð¾Ñ€Ñ–Ñ</string>
     <string name="stats">Ð¡Ñ‚Ð°Ñ‚Ð¸ÑÑ‚Ð¸ÐºÐ°</string>
@@ -197,18 +191,6 @@
         <item quantity="few">%d Ñ€Ð¾ÐºÐ¸</item>
         <item quantity="many">%d Ñ€Ð¾ÐºÑ–Ð²</item>
         <item quantity="other">%d Ñ€Ð¾ÐºÑ–Ð²</item>
-    </plurals>
-    <plurals name="n_element">
-        <item quantity="one">%d d ÐµÐ»ÐµÐ¼ÐµÐ½Ñ‚</item>
-        <item quantity="few">%d ÐµÐ»ÐµÐ¼ÐµÐ½Ñ‚</item>
-        <item quantity="many">%d ÐµÐ»ÐµÐ¼ÐµÐ½Ñ‚Ð¸</item>
-        <item quantity="other">%d ÐµÐ»ÐµÐ¼ÐµÐ½Ñ‚Ð¸</item>
-    </plurals>
-    <plurals name="n_time">
-        <item quantity="one">%d d Ñ€Ð°Ð·</item>
-        <item quantity="few">%d Ñ€Ð°Ð·Ð¸</item>
-        <item quantity="many">%d Ñ€Ð°Ð·Ñ–Ð²</item>
-        <item quantity="other">%d Ñ€Ð°Ð·Ñ–Ð²</item>
     </plurals>
     <!-- Snackbar -->
     <string name="playlist_imported">ÐŸÐ»ÐµÐ¹Ð»Ð¸ÑÑ‚ Ñ–Ð¼Ð¿Ð¾Ñ€Ñ‚Ð¾Ð²Ð°Ð½Ð¾</string>
@@ -439,7 +421,7 @@
     <string name="update_version">ÐžÐ½Ð¾Ð²Ð¸Ñ‚Ð¸%1$s</string>
     <string name="download_question">Ð—Ð°Ð²Ð°Ð½Ñ‚Ð°Ð¶Ð¸Ñ‚Ð¸ Ð½Ð¾Ð²Ñƒ Ð²ÐµÑ€ÑÑ–ÑŽ?</string>
     <string name="downloadup">Ð—Ð²Ð°Ð½Ñ‚Ð°Ð¶Ð¸Ñ‚Ð¸</string>
-    <string name="downloadingup">Ð—Ð°Ð²Ð°Ð½Ñ‚Ð°Ð¶ÐµÐ½Ð½Ñ Ð¾Ð½Ð¾Ð²Ð»ÐµÐ½Ð½Ñ...</string>
+    <string name="downloadingup">Ð—Ð°Ð²Ð°Ð½Ñ‚Ð°Ð¶ÐµÐ½Ð½Ñ Ð¾Ð½Ð¾Ð²Ð»ÐµÐ½Ð½Ñ&#8230;</string>
     <string name="download_completed">Ð—Ð°Ð²Ð°Ð½Ñ‚Ð°Ð¶ÐµÐ½Ð½Ñ Ð·Ð°Ð²ÐµÑ€ÑˆÐµÐ½Ð¾</string>
     <string name="install">Ð†Ð½ÑÑ‚Ð°Ð»ÑŽÐ²Ð°Ñ‚Ð¸</string>
     <string name="download_errorup">ÐŸÐ¾Ð¼Ð¸Ð»ÐºÐ° Ð·Ð°Ð²Ð°Ð½Ñ‚Ð°Ð¶ÐµÐ½Ð½Ñ Ð¾Ð½Ð¾Ð²Ð»ÐµÐ½Ð½Ñ</string>

@@ -7,9 +7,6 @@
     <string name="playlists">플레이리스트</string>
 
     <!-- Top bar -->
-    <plurals name="n_selected">
-        <item quantity="other">%d 선택됨</item>
-    </plurals>
 
     <!-- Home -->
     <string name="history">기록</string>
