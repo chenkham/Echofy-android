@@ -7,7 +7,6 @@
 package com.Chenkham.Echofy.viewmodels
 
 import android.content.Context
-import androidx.datastore.preferences.core.booleanPreferencesKey
 import com.Chenkham.Echofy.utils.reportException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -152,6 +151,3 @@ suspend fun BackupRestoreViewModel.uploadBackupToCloud(
     val filebinService = FilebinService()
     return filebinService.uploadFile(backupFile, onProgress)
 }
-
-// Clave para DataStore
-private val CLOUD_BACKUP_ENABLED_KEY = booleanPreferencesKey("cloud_backup_enabled")

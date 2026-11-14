@@ -15,6 +15,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -29,7 +30,6 @@ import com.Chenkham.Echofy.db.entities.Playlist
 import com.Chenkham.Echofy.db.entities.PlaylistEntity
 import com.Chenkham.Echofy.utils.dataStore
 import com.arturo254.opentune.innertube.YouTube
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.map
@@ -44,13 +44,13 @@ fun CreatePlaylistDialog(
     onCreated: suspend (Playlist) -> Unit = {},
 ) {
     val database = LocalDatabase.current
-    val workerScope = remember { CoroutineScope(Dispatchers.IO) }
+    val coroutineScope = rememberCoroutineScope()
     var syncedPlaylist by remember { mutableStateOf(false) }
 
     val context = LocalContext.current
-    val innerTubeCookie by context.dataStore.data
-        .map { it[InnerTubeCookieKey] }
-        .collectAsState(initial = null)
+    val innerTubeCookie by remember(context) {
+        context.dataStore.data.map { it[InnerTubeCookieKey] }
+    }.collectAsState(initial = null)
 
     val isLoggedIn = !innerTubeCookie.isNullOrEmpty()
     TextFieldDialog(
@@ -59,7 +59,7 @@ fun CreatePlaylistDialog(
         initialTextFieldValue = TextFieldValue(initialTextFieldValue ?: ""),
         onDismiss = onDismiss,
         onDone = { playlistName ->
-            workerScope.launch {
+            coroutineScope.launch(Dispatchers.IO) {
                 val browseId =
                     if (syncedPlaylist && isLoggedIn) {
                         val result = YouTube.createPlaylist(playlistName)

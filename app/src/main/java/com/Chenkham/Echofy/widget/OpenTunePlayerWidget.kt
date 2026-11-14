@@ -259,23 +259,15 @@ private fun SolidBackground(color: ColorProvider) {
 @Composable
 private fun ProgressBar(progress: Float) {
     val clamped = progress.coerceIn(0f, 1f)
-    Box(
+    androidx.glance.appwidget.LinearProgressIndicator(
+        progress = clamped,
         modifier =
             GlanceModifier
                 .fillMaxWidth()
-                .height(3.dp)
-                .cornerRadius(1.5.dp)
-                .background(ColorProvider(Color.White.copy(alpha = 0.25f))),
-    ) {
-        Box(
-            modifier =
-                GlanceModifier
-                    .fillMaxWidth()
-                    .height(3.dp)
-                    .cornerRadius(1.5.dp)
-                    .background(ColorProvider(Color.White)),
-        ) {}
-    }
+                .height(3.dp),
+        color = ColorProvider(Color.White),
+        backgroundColor = ColorProvider(Color.White.copy(alpha = 0.25f)),
+    )
 }
 
 @SuppressLint("RestrictedApi")

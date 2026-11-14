@@ -508,7 +508,7 @@ fun PlayerSettings(
                                 valueRange = -1f..1f,
                                 steps = 19,
                             )
-                        } 
+                        }
                     },
                     {
                         Column(modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)) {
@@ -527,7 +527,7 @@ fun PlayerSettings(
                                 valueRange = 0f..1f,
                                 steps = 9,
                             )
-                        } 
+                        }
                     },
                     {
                         SwitchPreference(
@@ -551,7 +551,7 @@ fun PlayerSettings(
                                     valueRange = 10f..100f,
                                 )
                             }
-                        } 
+                        }
                     },
                 ),
         )
@@ -710,7 +710,7 @@ fun PlayerSettings(
                                     valueRange = 5f..120f,
                                 )
                             }
-                        } 
+                        }
                     },
                 ),
         )

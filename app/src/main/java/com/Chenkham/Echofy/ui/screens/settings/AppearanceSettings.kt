@@ -611,7 +611,7 @@ fun AppearanceSettings(
                                 },
                                 isEnabled = useDarkTheme,
                             )
-                        } 
+                        }
                     },
                     {
                         PreferenceEntry(

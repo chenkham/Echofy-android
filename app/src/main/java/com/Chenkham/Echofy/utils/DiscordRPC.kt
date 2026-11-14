@@ -45,7 +45,7 @@ class DiscordRPC(
 
         val songTitleWithRate =
             if (playbackSpeed != 1.0f) {
-                "${song.song.title} [${String.format("%.2fx", playbackSpeed)}]"
+                "${song.song.title} [${String.format(java.util.Locale.US, "%.2fx", playbackSpeed)}]"
             } else {
                 song.song.title
             }

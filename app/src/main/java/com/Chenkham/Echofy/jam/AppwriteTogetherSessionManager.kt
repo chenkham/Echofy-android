@@ -239,7 +239,7 @@ class AppwriteTogetherSessionManager(
 
     fun moveQueueItemUp(itemId: String) { /* no-op */ }
 
-    fun moveQueueItemDown(itemId: String)  { /* no-op */ }
+    fun moveQueueItemDown(itemId: String) { /* no-op */ }
 
     fun replaceQueue(items: List<MediaMetadata>) { /* no-op */ }
 

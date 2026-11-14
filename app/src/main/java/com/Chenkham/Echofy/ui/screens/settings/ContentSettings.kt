@@ -343,7 +343,7 @@ fun ContentSettings(
                                     onValueChange = onProxyUrlChange,
                                 )
                             }
-                        } 
+                        }
                     },
                 ),
         )

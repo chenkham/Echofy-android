@@ -366,10 +366,6 @@
             android:exported="false"
             android:foregroundServiceType="microphone" />
 
-        <service
-            android:name=".playback.DynamicEchoService"
-            android:exported="false" />
-
         <receiver
             android:name="androidx.media3.session.MediaButtonReceiver"
             android:exported="true">

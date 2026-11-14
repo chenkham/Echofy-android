@@ -1016,7 +1016,7 @@ private fun NerdStatsSection(playerConnection: com.Chenkham.Echofy.playback.Play
                             value =
                                 currentFormat?.contentLength?.let {
                                     if (it > 0) {
-                                        "${String.format("%.2f", it / 1024.0 / 1024.0)} MB"
+                                        "${String.format(java.util.Locale.US, "%.2f", it / 1024.0 / 1024.0)} MB"
                                     } else {
                                         stringResource(R.string.unknown_content_length)
                                     }
@@ -1928,7 +1928,7 @@ private fun formatFileSize(bytes: Long): String {
     return when {
         bytes < 1024 -> "$bytes B"
         bytes < 1024 * 1024 -> "${bytes / 1024} KB"
-        bytes < 1024 * 1024 * 1024 -> "${String.format("%.2f", bytes / (1024.0 * 1024.0))} MB"
-        else -> "${String.format("%.2f", bytes / (1024.0 * 1024.0 * 1024.0))} GB"
+        bytes < 1024 * 1024 * 1024 -> "${String.format(java.util.Locale.US, "%.2f", bytes / (1024.0 * 1024.0))} MB"
+        else -> "${String.format(java.util.Locale.US, "%.2f", bytes / (1024.0 * 1024.0 * 1024.0))} GB"
     }
 }

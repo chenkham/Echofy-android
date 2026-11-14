@@ -198,7 +198,7 @@
     <!-- Snackbar -->
     <string name="playlist_imported">"playlist_imported"</string>
     <string name="imported_playlist">"imported_playlist"</string>
-    <string name="removed_song_from_playlist">"removed_song_from_playlist"</string>
+    <string name="removed_song_from_playlist">Loại bỏ \"%s\" từ danh sách phát</string>
     <string name="playlist_synced">"playlist_synced"</string>
     <string name="undo">"hoàn tác"</string>
 

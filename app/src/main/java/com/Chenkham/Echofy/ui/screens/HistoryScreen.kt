@@ -143,7 +143,7 @@ fun HistoryScreen(
                 Toast.makeText(
                     context,
                     if (written != null) {
-                        context.getString(R.string.export_history_success, written)
+                        context.getString(R.string.export_history_success)
                     } else {
                         context.getString(R.string.export_history_failed)
                     },

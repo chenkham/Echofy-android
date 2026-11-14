@@ -63,8 +63,8 @@ class CompactMusicWidget : AppWidgetProvider() {
                 }
                 MusicWidget.ACTION_OPEN_APP -> openApp(context)
             }
-            updateAllWidgets(context)
-            MusicWidget.updateAllWidgets(context)
+            updateAllWidgets(context.applicationContext)
+            MusicWidget.updateAllWidgets(context.applicationContext)
             return
         }
 
@@ -73,16 +73,19 @@ class CompactMusicWidget : AppWidgetProvider() {
             return
         }
 
+        val appContext = context.applicationContext
         val pendingResult = goAsync()
         CoroutineScope(Dispatchers.Main).launch {
-            val sessionToken =
-                SessionToken(
-                    context.applicationContext,
-                    ComponentName(context.applicationContext, com.Chenkham.Echofy.playback.MusicService::class.java),
-                )
-            val controllerFuture = MediaController.Builder(context.applicationContext, sessionToken).buildAsync()
+            var controllerFuture: com.google.common.util.concurrent.ListenableFuture<MediaController>? = null
             try {
-                val controller = withContext(Dispatchers.IO) { controllerFuture.get() }
+                val sessionToken =
+                    SessionToken(
+                        appContext,
+                        ComponentName(appContext, com.Chenkham.Echofy.playback.MusicService::class.java),
+                    )
+                val future = MediaController.Builder(appContext, sessionToken).buildAsync()
+                controllerFuture = future
+                val controller = withContext(Dispatchers.IO) { future.get() }
                 when (action) {
                     MusicWidget.ACTION_PLAY_PAUSE -> {
                         if (controller.playWhenReady) {
@@ -97,11 +100,12 @@ class CompactMusicWidget : AppWidgetProvider() {
                     MusicWidget.ACTION_PREV -> controller.seekToPrevious()
                     MusicWidget.ACTION_NEXT -> controller.seekToNext()
                 }
-                updateAllWidgets(context)
-                MusicWidget.updateAllWidgets(context)
-            } catch (_: Exception) {
+                updateAllWidgets(appContext)
+                MusicWidget.updateAllWidgets(appContext)
+            } catch (t: Throwable) {
+                timber.log.Timber.w(t, "CompactMusicWidget action handling failed")
             } finally {
-                MediaController.releaseFuture(controllerFuture)
+                controllerFuture?.let { MediaController.releaseFuture(it) }
                 pendingResult.finish()
             }
         }

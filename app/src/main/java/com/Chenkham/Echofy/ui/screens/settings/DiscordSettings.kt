@@ -139,6 +139,7 @@ fun DiscordSettings(
     ) { innerPadding ->
         Column(
             Modifier
+                .padding(innerPadding)
                 .windowInsetsPadding(
                     LocalPlayerAwareWindowInsets.current.only(WindowInsetsSides.Horizontal + WindowInsetsSides.Bottom),
                 )

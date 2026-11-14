@@ -97,6 +97,6 @@ object AudioBookmarkManager {
         val totalSec = (pos / 1000).coerceAtLeast(0)
         val min = totalSec / 60
         val sec = totalSec % 60
-        return String.format("%02d:%02d", min, sec)
+        return String.format(java.util.Locale.US, "%02d:%02d", min, sec)
     }
 }

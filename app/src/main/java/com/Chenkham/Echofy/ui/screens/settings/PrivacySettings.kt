@@ -71,7 +71,7 @@ fun PrivacySettings(
                             title = {
                                 Row(verticalAlignment = Alignment.CenterVertically) {
                                     Text(stringResource(R.string.pause_listen_history))
-                                } 
+                                }
                             },
                             icon = { Icon(painterResource(R.drawable.history), null) },
                             checked = pauseListenHistory,
@@ -96,7 +96,7 @@ fun PrivacySettings(
                             title = {
                                 Row(verticalAlignment = Alignment.CenterVertically) {
                                     Text(stringResource(R.string.pause_search_history))
-                                } 
+                                }
                             },
                             icon = { Icon(painterResource(R.drawable.search_off), null) },
                             checked = pauseSearchHistory,

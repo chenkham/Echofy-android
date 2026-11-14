@@ -1,11 +1,5 @@
 package com.Chenkham.Echofy
 
-import androidx.compose.foundation.layout.fillMaxHeight
-import androidx.compose.foundation.layout.windowInsetsPadding
-import androidx.compose.foundation.layout.WindowInsetsSides
-import androidx.compose.foundation.layout.only
-import com.Chenkham.Echofy.constants.UseSystemFontKey
-
 import android.Manifest
 import android.annotation.SuppressLint
 import android.app.PendingIntent
@@ -21,7 +15,6 @@ import android.content.ServiceConnection
 import android.content.pm.PackageManager
 import android.content.res.Configuration
 import android.graphics.drawable.BitmapDrawable
-
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
@@ -67,17 +60,21 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.add
 import androidx.compose.foundation.layout.asPaddingValues
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.AlertDialogDefaults
@@ -86,10 +83,10 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
+import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.NavigationRail
 import androidx.compose.material3.NavigationRailItem
 import androidx.compose.material3.NavigationRailItemDefaults
-import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -109,6 +106,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -139,10 +137,10 @@ import androidx.compose.ui.util.fastFirstOrNull
 import androidx.compose.ui.util.fastForEach
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
-import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
 import androidx.core.net.toUri
+import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.core.util.Consumer
 import androidx.core.view.WindowCompat
 import androidx.datastore.preferences.core.edit
@@ -153,10 +151,6 @@ import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.lifecycleScope
 import androidx.media3.common.MediaItem
 import androidx.media3.common.Player
-import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.filterNotNull
-import kotlinx.coroutines.withTimeoutOrNull
-import androidx.compose.runtime.snapshotFlow
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
@@ -165,9 +159,8 @@ import androidx.navigation.compose.rememberNavController
 import coil.compose.AsyncImage
 import coil.imageLoader
 import coil.request.ImageRequest
-import com.arturo254.opentune.innertube.YouTube
-import com.arturo254.opentune.innertube.models.SongItem
-import com.arturo254.opentune.innertube.models.WatchEndpoint
+import com.Chenkham.Echofy.ads.AdManager
+import com.Chenkham.Echofy.constants.AodAutoActivationKey
 import com.Chenkham.Echofy.constants.AppBarHeight
 import com.Chenkham.Echofy.constants.AppFont
 import com.Chenkham.Echofy.constants.CustomFontKey
@@ -180,17 +173,20 @@ import com.Chenkham.Echofy.constants.MiniPlayerHeight
 import com.Chenkham.Echofy.constants.NavigationBarAnimationSpec
 import com.Chenkham.Echofy.constants.NavigationBarHeight
 import com.Chenkham.Echofy.constants.PauseSearchHistoryKey
+import com.Chenkham.Echofy.constants.PlayerLayoutStyle
+import com.Chenkham.Echofy.constants.PlayerLayoutStyleKey
 import com.Chenkham.Echofy.constants.PureBlackKey
 import com.Chenkham.Echofy.constants.SearchSource
 import com.Chenkham.Echofy.constants.SearchSourceKey
 import com.Chenkham.Echofy.constants.SlimNavBarKey
-
 import com.Chenkham.Echofy.constants.StopMusicOnTaskClearKey
+import com.Chenkham.Echofy.constants.UseSystemFontKey
 import com.Chenkham.Echofy.db.*
-import com.Chenkham.Echofy.db.daos.*
 import com.Chenkham.Echofy.db.MusicDatabase
+import com.Chenkham.Echofy.db.daos.*
 import com.Chenkham.Echofy.db.entities.SearchHistory
 import com.Chenkham.Echofy.extensions.toMediaItem
+import com.Chenkham.Echofy.jam.JamRoomCode
 import com.Chenkham.Echofy.models.toMediaMetadata
 import com.Chenkham.Echofy.playback.DownloadUtil
 import com.Chenkham.Echofy.playback.MusicService
@@ -198,28 +194,23 @@ import com.Chenkham.Echofy.playback.MusicService.MusicBinder
 import com.Chenkham.Echofy.playback.PlayerConnection
 import com.Chenkham.Echofy.playback.queues.YouTubeQueue
 import com.Chenkham.Echofy.ui.component.AvatarPreferenceManager
-import com.Chenkham.Echofy.ui.component.LocalAdManager
 import com.Chenkham.Echofy.ui.component.AvatarSelection
 import com.Chenkham.Echofy.ui.component.BottomSheetMenu
 import com.Chenkham.Echofy.ui.component.IconButton
+import com.Chenkham.Echofy.ui.component.LocalAdManager
 import com.Chenkham.Echofy.ui.component.LocalMenuState
-import com.Chenkham.Echofy.ui.component.MenuState
 import com.Chenkham.Echofy.ui.component.LocaleManager
 import com.Chenkham.Echofy.ui.component.Lyrics
+import com.Chenkham.Echofy.ui.component.MenuState
 import com.Chenkham.Echofy.ui.component.SwitchPreference
 import com.Chenkham.Echofy.ui.component.TopSearch
 import com.Chenkham.Echofy.ui.component.rememberBottomSheetState
 import com.Chenkham.Echofy.ui.menu.YouTubeSongMenu
 import com.Chenkham.Echofy.ui.player.AppleBottomSheetPlayer
-import com.Chenkham.Echofy.constants.AodAutoActivationKey
 import com.Chenkham.Echofy.ui.player.BottomSheetPlayer
-import com.Chenkham.Echofy.constants.PlayerLayoutStyleKey
-import com.Chenkham.Echofy.constants.PlayerLayoutStyle
-import com.Chenkham.Echofy.jam.JamRoomCode
 import com.Chenkham.Echofy.ui.screens.Screens
 import com.Chenkham.Echofy.ui.screens.musicrecognition.openMusicRecognition
 import com.Chenkham.Echofy.ui.screens.navigationBuilder
-
 import com.Chenkham.Echofy.ui.screens.search.LocalSearchScreen
 import com.Chenkham.Echofy.ui.screens.search.OnlineSearchScreen
 import com.Chenkham.Echofy.ui.screens.settings.DarkMode
@@ -233,27 +224,32 @@ import com.Chenkham.Echofy.ui.utils.backToMain
 import com.Chenkham.Echofy.ui.utils.resetHeightOffset
 import com.Chenkham.Echofy.utils.SyncUtils
 import com.Chenkham.Echofy.utils.dataStore
-import com.google.android.play.core.appupdate.AppUpdateManagerFactory
-import com.google.android.play.core.install.model.AppUpdateType
-import com.google.android.play.core.install.model.UpdateAvailability
 import com.Chenkham.Echofy.utils.get
 import com.Chenkham.Echofy.utils.rememberEnumPreference
 import com.Chenkham.Echofy.utils.rememberPreference
 import com.Chenkham.Echofy.utils.reportException
+import com.arturo254.opentune.innertube.YouTube
+import com.arturo254.opentune.innertube.models.SongItem
+import com.arturo254.opentune.innertube.models.WatchEndpoint
+import com.google.android.play.core.appupdate.AppUpdateManagerFactory
+import com.google.android.play.core.install.model.AppUpdateType
+import com.google.android.play.core.install.model.UpdateAvailability
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeoutOrNull
 import timber.log.Timber
 import java.net.URLDecoder
 import java.net.URLEncoder
 import javax.inject.Inject
 import kotlin.time.Duration.Companion.minutes
-import com.Chenkham.Echofy.ads.AdManager
 
 // El codigo original de la aplicacion pertenece a : Arturo Cervantes Galindo (Arturo254) Cualquier parecido es copia y pega de mi codigo original
 
@@ -428,6 +424,7 @@ class MainActivity : ComponentActivity() {
     private var volumeUpLongPressStartTime = 0L
     private val LONG_PRESS_THRESHOLD_MS = 600L
 
+    @SuppressLint("RestrictedApi")
     override fun dispatchKeyEvent(event: android.view.KeyEvent): Boolean {
         if (hardwareVolumeSkipEnabled) {
             when (event.keyCode) {

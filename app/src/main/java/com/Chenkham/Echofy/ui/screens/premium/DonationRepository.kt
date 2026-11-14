@@ -73,7 +73,7 @@ data class DonationSupporter(
             amount: Double,
             currency: String,
         ): String {
-            val value = if (amount % 1.0 == 0.0) amount.toInt().toString() else String.format("%.2f", amount)
+            val value = if (amount % 1.0 == 0.0) amount.toInt().toString() else String.format(java.util.Locale.US, "%.2f", amount)
             return when (currency.uppercase()) {
                 "INR" -> "₹$value"
                 "USD" -> "$$value"

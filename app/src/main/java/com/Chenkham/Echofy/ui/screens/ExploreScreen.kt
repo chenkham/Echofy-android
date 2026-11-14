@@ -125,6 +125,7 @@ fun ExploreScreen(
             tabs.indexOfFirst { it.key == initialTab }.takeIf { it >= 0 } ?: 0,
         )
     }
+    val safeSelectedTab = selectedTab.coerceIn(0, (tabs.size - 1).coerceAtLeast(0))
 
     val mixesViewModel: MixcloudViewModel = hiltViewModel()
     val ambientViewModel: AmbientSoundsViewModel = hiltViewModel()
@@ -135,7 +136,7 @@ fun ExploreScreen(
     val onRefresh: () -> Unit = {
         coroutineScope.launch {
             isRefreshing = true
-            when (tabs.getOrNull(selectedTab)?.key) {
+            when (tabs.getOrNull(safeSelectedTab)?.key) {
                 "genres" -> viewModel.retry()
                 "charts" -> chartsViewModel.loadCharts()
                 "podcasts" -> podcastsViewModel.loadPodcasts()
@@ -165,7 +166,7 @@ fun ExploreScreen(
             Column(modifier = Modifier.fillMaxSize()) {
                 ExploreTabSelector(
                     tabs = tabs,
-                    selectedTab = selectedTab,
+                    selectedTab = safeSelectedTab,
                     onTabSelected = { selectedTab = it },
                     modifier = Modifier.padding(vertical = 4.dp),
                 )
@@ -177,7 +178,7 @@ fun ExploreScreen(
                             .fillMaxSize()
                             .weight(1f),
                 ) {
-                    val tabKey = tabs.getOrNull(selectedTab)?.key
+                    val tabKey = tabs.getOrNull(safeSelectedTab)?.key
                     when (tabKey) {
                         "genres" -> GenresTab(navController, viewModel)
                         "charts" -> ChartsTab(navController, chartsViewModel)

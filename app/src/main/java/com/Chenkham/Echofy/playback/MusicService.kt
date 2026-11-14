@@ -423,7 +423,7 @@ class MusicService :
                     withContext(Dispatchers.Main) {
                         android.widget.Toast.makeText(
                             this@MusicService,
-                            getString(R.string.listening_reminder_message, minutes),
+                            getString(R.string.listening_reminder_message),
                             android.widget.Toast.LENGTH_LONG,
                         ).show()
                     }
@@ -870,6 +870,38 @@ class MusicService :
                 EchofyMediaNotificationProvider.createNotificationChannel(this, CHANNEL_ID, R.string.music_player)
             } catch (e: Throwable) {
                 Timber.tag(TAG).w(e, "Notification channel creation failed")
+            }
+        }
+        intent?.action?.let { action ->
+            when (action) {
+                com.Chenkham.Echofy.widget.PlayerWidgetActions.ACTION_PLAY_PAUSE,
+                com.Chenkham.Echofy.MusicWidget.ACTION_PLAY_PAUSE,
+                -> {
+                    if (this::player.isInitialized) {
+                        if (player.isPlaying) {
+                            player.pause()
+                        } else {
+                            if (player.playbackState == Player.STATE_IDLE || player.playbackState == Player.STATE_ENDED) {
+                                player.prepare()
+                            }
+                            player.play()
+                        }
+                    }
+                }
+                com.Chenkham.Echofy.widget.PlayerWidgetActions.ACTION_NEXT,
+                com.Chenkham.Echofy.MusicWidget.ACTION_NEXT,
+                -> {
+                    if (this::player.isInitialized && player.hasNextMediaItem()) {
+                        player.seekToNext()
+                    }
+                }
+                com.Chenkham.Echofy.widget.PlayerWidgetActions.ACTION_PREVIOUS,
+                com.Chenkham.Echofy.MusicWidget.ACTION_PREV,
+                -> {
+                    if (this::player.isInitialized && (player.hasPreviousMediaItem() || player.currentPosition > 3000)) {
+                        player.seekToPrevious()
+                    }
+                }
             }
         }
         return try {
@@ -2731,12 +2763,11 @@ class MusicService :
                 }
             }
             // Send empty activity to the Discord RPC if the player is not playing
-            else if (!events.containsAny(Player.EVENT_POSITION_DISCONTINUITY, Player.EVENT_MEDIA_ITEM_TRANSITION))
-                {
-                    scope.launch {
-                        discordRpc?.stopActivity()
-                    }
+            else if (!events.containsAny(Player.EVENT_POSITION_DISCONTINUITY, Player.EVENT_MEDIA_ITEM_TRANSITION)) {
+                scope.launch {
+                    discordRpc?.stopActivity()
                 }
+            }
         }
     }
 
@@ -3775,10 +3806,13 @@ class MusicService :
     }
 
     private fun saveQueueToDisk() {
+        if (!this::player.isInitialized) return
         if (player.playbackState == STATE_IDLE && player.mediaItemCount == 0) {
-            filesDir.resolve(PERSISTENT_AUTOMIX_FILE).delete()
-            filesDir.resolve(PERSISTENT_QUEUE_FILE).delete()
-            filesDir.resolve(PERSISTENT_PLAYER_STATE_FILE).delete()
+            scope.launch(Dispatchers.IO) {
+                filesDir.resolve(PERSISTENT_AUTOMIX_FILE).delete()
+                filesDir.resolve(PERSISTENT_QUEUE_FILE).delete()
+                filesDir.resolve(PERSISTENT_PLAYER_STATE_FILE).delete()
+            }
             return
         }
 
@@ -3812,37 +3846,39 @@ class MusicService :
                     playbackState = player.playbackState, // Estado actual del reproductor
                 )
 
-            runCatching {
-                filesDir.resolve(PERSISTENT_QUEUE_FILE).outputStream().use { fos ->
-                    ObjectOutputStream(fos).use { oos ->
-                        oos.writeObject(persistQueue)
+            scope.launch(Dispatchers.IO) {
+                runCatching {
+                    filesDir.resolve(PERSISTENT_QUEUE_FILE).outputStream().use { fos ->
+                        ObjectOutputStream(fos).use { oos ->
+                            oos.writeObject(persistQueue)
+                        }
                     }
+                }.onFailure {
+                    Log.e(TAG, "Error saving queue to disk", it)
+                    reportException(it)
                 }
-            }.onFailure {
-                Log.e(TAG, "Error saving queue to disk", it)
-                reportException(it)
-            }
 
-            runCatching {
-                filesDir.resolve(PERSISTENT_AUTOMIX_FILE).outputStream().use { fos ->
-                    ObjectOutputStream(fos).use { oos ->
-                        oos.writeObject(persistAutomix)
+                runCatching {
+                    filesDir.resolve(PERSISTENT_AUTOMIX_FILE).outputStream().use { fos ->
+                        ObjectOutputStream(fos).use { oos ->
+                            oos.writeObject(persistAutomix)
+                        }
                     }
+                }.onFailure {
+                    Log.e(TAG, "Error saving automix to disk", it)
+                    reportException(it)
                 }
-            }.onFailure {
-                Log.e(TAG, "Error saving automix to disk", it)
-                reportException(it)
-            }
 
-            runCatching {
-                filesDir.resolve(PERSISTENT_PLAYER_STATE_FILE).outputStream().use { fos ->
-                    ObjectOutputStream(fos).use { oos ->
-                        oos.writeObject(playerState)
+                runCatching {
+                    filesDir.resolve(PERSISTENT_PLAYER_STATE_FILE).outputStream().use { fos ->
+                        ObjectOutputStream(fos).use { oos ->
+                            oos.writeObject(playerState)
+                        }
                     }
+                }.onFailure {
+                    Log.e(TAG, "Error saving player state to disk", it)
+                    reportException(it)
                 }
-            }.onFailure {
-                Log.e(TAG, "Error saving player state to disk", it)
-                reportException(it)
             }
         } catch (e: Exception) {
             Log.e(TAG, "Error in saveQueueToDisk", e)

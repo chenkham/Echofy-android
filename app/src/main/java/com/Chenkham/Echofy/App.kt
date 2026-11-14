@@ -534,7 +534,7 @@ class App : Application(), ImageLoaderFactory {
                 .memoryCache {
                     coil.memory.MemoryCache.Builder(this)
                         .maxSizePercent(0.20)
-                        .strongReferencesEnabled(false)
+                        .strongReferencesEnabled(true)
                         .weakReferencesEnabled(true)
                         .build()
                 }

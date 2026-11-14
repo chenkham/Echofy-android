@@ -7,6 +7,7 @@ import android.content.Context
 import android.content.ContextWrapper
 import android.content.pm.ActivityInfo
 import android.content.res.Configuration
+import android.os.Build
 import android.view.View
 import android.view.ViewGroup
 import android.view.WindowManager
@@ -243,21 +244,30 @@ private fun FullscreenOverlay(
         insets.systemBarsBehavior =
             WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
 
-        val previousCutoutMode = window.attributes.layoutInDisplayCutoutMode
-        window.attributes =
-            window.attributes.apply {
-                layoutInDisplayCutoutMode =
-                    WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES
+        val previousCutoutMode =
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+                window.attributes.layoutInDisplayCutoutMode
+            } else {
+                0
             }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+            window.attributes =
+                window.attributes.apply {
+                    layoutInDisplayCutoutMode =
+                        WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES
+                }
+        }
 
         onDispose {
             root.removeView(composeView)
             composeView.disposeComposition()
             window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
-            window.attributes =
-                window.attributes.apply {
-                    layoutInDisplayCutoutMode = previousCutoutMode
-                }
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+                window.attributes =
+                    window.attributes.apply {
+                        layoutInDisplayCutoutMode = previousCutoutMode
+                    }
+            }
             insets.systemBarsBehavior = previousBehavior
             insets.show(WindowInsetsCompat.Type.systemBars())
         }

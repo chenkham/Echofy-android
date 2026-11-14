@@ -802,7 +802,7 @@ class BackupRestoreViewModel
                 } ?: return
 
                 val result =
-                    uploadBackupToCloud(context, tempFile) { progress ->
+                    uploadBackupToCloud(tempFile) { progress ->
                         _cloudUploadState.update { it.copy(uploadProgress = progress) }
                     }
 
@@ -833,7 +833,6 @@ class BackupRestoreViewModel
         }
 
         private suspend fun uploadBackupToCloud(
-            context: Context,
             file: File,
             onProgress: (Int) -> Unit = {},
         ): Result<String> =

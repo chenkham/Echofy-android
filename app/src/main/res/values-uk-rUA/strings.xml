@@ -157,55 +157,55 @@
     <string name="duplicates_description_multiple">%d Ð¿Ñ–ÑÐµÐ½ÑŒ Ð²Ð¶Ðµ Ñ” Ñƒ Ð²Ð°ÑˆÐ¾Ð¼Ñƒ Ð¿Ð»ÐµÐ¹Ð»Ð¸ÑÑ‚Ñ–</string>
     <!-- Noun -->
     <plurals name="n_song">
-        <item quantity="one">%d Ð¿Ñ–ÑÐ½Ñ</item>
+        <item quantity="one">%d d Ð¿Ñ–ÑÐ½Ñ</item>
         <item quantity="few">%d Ð¿Ñ–ÑÐ½Ñ–</item>
         <item quantity="many">%d Ð¿Ñ–ÑÐµÐ½ÑŒ</item>
         <item quantity="other">%d Ð¿Ñ–ÑÐµÐ½ÑŒ</item>
     </plurals>
     <plurals name="n_artist">
-        <item quantity="one">%d Ð²Ð¸ÐºÐ¾Ð½Ð°Ð²ÐµÑ†ÑŒ</item>
+        <item quantity="one">%d d Ð²Ð¸ÐºÐ¾Ð½Ð°Ð²ÐµÑ†ÑŒ</item>
         <item quantity="few">%d Ð²Ð¸ÐºÐ¾Ð½Ð°Ð²Ñ†Ñ</item>
         <item quantity="many">%d Ð²Ð¸ÐºÐ¾Ð½Ð°Ð²Ñ†Ñ–Ð²</item>
         <item quantity="other">%d Ð²Ð¸ÐºÐ¾Ð½Ð°Ð²Ñ†Ñ–Ð²</item>
     </plurals>
     <plurals name="n_album">
-        <item quantity="one">%d Ð°Ð»ÑŒÐ±Ð¾Ð¼</item>
+        <item quantity="one">%d d Ð°Ð»ÑŒÐ±Ð¾Ð¼</item>
         <item quantity="few">%d Ð°Ð»ÑŒÐ±Ð¾Ð¼Ð¸</item>
         <item quantity="many">%d Ð°Ð»ÑŒÐ±Ð¾Ð¼Ñ–Ð²</item>
         <item quantity="other">%d Ð°Ð»ÑŒÐ±Ð¾Ð¼Ñ–Ð²</item>
     </plurals>
     <plurals name="n_playlist">
-        <item quantity="one">%d Ð¿Ð»ÐµÐ¹Ð»Ð¸ÑÑ‚</item>
+        <item quantity="one">%d d Ð¿Ð»ÐµÐ¹Ð»Ð¸ÑÑ‚</item>
         <item quantity="few">%d Ð¿Ð»ÐµÐ¹Ð»Ð¸ÑÑ‚Ð¸</item>
         <item quantity="many">%d Ð¿Ð»ÐµÐ¹Ð»Ð¸ÑÑ‚Ñ–Ð²</item>
         <item quantity="other">%d Ð¿Ð»ÐµÐ¹Ð»Ð¸ÑÑ‚Ñ–Ð²</item>
     </plurals>
     <plurals name="n_week">
-        <item quantity="one">%d Ñ‚Ð¸Ð¶Ð´ÐµÐ½ÑŒ</item>
+        <item quantity="one">%d d Ñ‚Ð¸Ð¶Ð´ÐµÐ½ÑŒ</item>
         <item quantity="few">%d Ñ‚Ð¸Ð¶Ð½Ñ–</item>
         <item quantity="many">%d Ñ‚Ð¸Ð¶Ð½Ñ–Ð²</item>
         <item quantity="other">%d Ñ‚Ð¸Ð¶Ð½Ñ–Ð²</item>
     </plurals>
     <plurals name="n_month">
-        <item quantity="one">%d Ð¼Ñ–ÑÑÑ†ÑŒ</item>
+        <item quantity="one">%d d Ð¼Ñ–ÑÑÑ†ÑŒ</item>
         <item quantity="few">%d Ð¼Ñ–ÑÑÑ†Ñ–</item>
         <item quantity="many">%d Ð¼Ñ–ÑÑÑ†Ñ–Ð²</item>
         <item quantity="other">%d Ð¼Ñ–ÑÑÑ†Ñ–Ð²</item>
     </plurals>
     <plurals name="n_year">
-        <item quantity="one">%d Ñ€Ñ–Ðº</item>
+        <item quantity="one">%d d Ñ€Ñ–Ðº</item>
         <item quantity="few">%d Ñ€Ð¾ÐºÐ¸</item>
         <item quantity="many">%d Ñ€Ð¾ÐºÑ–Ð²</item>
         <item quantity="other">%d Ñ€Ð¾ÐºÑ–Ð²</item>
     </plurals>
     <plurals name="n_element">
-        <item quantity="one">%d ÐµÐ»ÐµÐ¼ÐµÐ½Ñ‚</item>
+        <item quantity="one">%d d ÐµÐ»ÐµÐ¼ÐµÐ½Ñ‚</item>
         <item quantity="few">%d ÐµÐ»ÐµÐ¼ÐµÐ½Ñ‚</item>
         <item quantity="many">%d ÐµÐ»ÐµÐ¼ÐµÐ½Ñ‚Ð¸</item>
         <item quantity="other">%d ÐµÐ»ÐµÐ¼ÐµÐ½Ñ‚Ð¸</item>
     </plurals>
     <plurals name="n_time">
-        <item quantity="one">%d Ñ€Ð°Ð·</item>
+        <item quantity="one">%d d Ñ€Ð°Ð·</item>
         <item quantity="few">%d Ñ€Ð°Ð·Ð¸</item>
         <item quantity="many">%d Ñ€Ð°Ð·Ñ–Ð²</item>
         <item quantity="other">%d Ñ€Ð°Ð·Ñ–Ð²</item>
@@ -221,7 +221,7 @@
     <string name="sleep_timer">Ð¢Ð°Ð¹Ð¼ÐµÑ€ ÑÐ½Ñƒ</string>
     <string name="end_of_song">ÐšÑ–Ð½ÐµÑ†ÑŒ Ð¿Ñ–ÑÐ½Ñ–</string>
     <plurals name="minute">
-        <item quantity="one">1 Ñ…Ð²Ð¸Ð»Ð¸Ð½Ð°</item>
+        <item quantity="one">%d d Ñ…Ð²Ð¸Ð»Ð¸Ð½Ð°</item>
         <item quantity="few">%d Ñ…Ð²Ð¸Ð»Ð¸Ð½Ð¸</item>
         <item quantity="many">%d Ñ…Ð²Ð¸Ð»Ð¸Ð½</item>
         <item quantity="other">%d Ñ…Ð²Ð¸Ð»Ð¸Ð½</item>
@@ -408,7 +408,7 @@
     <string name="corner_radius_label">Ð Ð°Ð´Ñ–ÑƒÑ ÐºÑƒÑ‚Ñ–Ð²: %1$s</string>
     <string name="unmute">Ð£Ð²Ñ–Ð¼ÐºÐ½ÑƒÑ‚Ð¸ Ð·Ð²ÑƒÐº</string>
     <plurals name="seconds">
-        <item quantity="one">1 ÑÐµÐºÑƒÐ½Ð´Ð°</item>
+        <item quantity="one">%d ÑÐµÐºÑƒÐ½Ð´Ð°</item>
         <item quantity="few">%d ÑÐµÐºÑƒÐ½Ð´Ð¸</item>
         <item quantity="many">%d ÑÐµÐºÑƒÐ½Ð´</item>
         <item quantity="other">%d ÑÐµÐºÑƒÐ½Ð´</item>

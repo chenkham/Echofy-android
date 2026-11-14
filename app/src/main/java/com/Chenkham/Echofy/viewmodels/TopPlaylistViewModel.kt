@@ -6,14 +6,12 @@
 
 package com.Chenkham.Echofy.viewmodels
 
-import android.content.Context
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.Chenkham.Echofy.constants.MyTopFilter
 import com.Chenkham.Echofy.db.MusicDatabase
 import dagger.hilt.android.lifecycle.HiltViewModel
-import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -25,7 +23,6 @@ import javax.inject.Inject
 class TopPlaylistViewModel
     @Inject
     constructor(
-        @ApplicationContext context: Context,
         database: MusicDatabase,
         savedStateHandle: SavedStateHandle,
     ) : ViewModel() {
