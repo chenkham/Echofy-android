@@ -10,8 +10,6 @@ import androidx.compose.runtime.snapshotFlow
 import androidx.core.net.toUri
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
-import androidx.datastore.preferences.core.edit
-import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.media3.exoplayer.offline.Download
 import com.Chenkham.Echofy.constants.SongSortType
 import com.Chenkham.Echofy.constants.VoiceControlEnabledKey
@@ -19,7 +17,6 @@ import com.Chenkham.Echofy.db.MusicDatabase
 import com.Chenkham.Echofy.db.entities.PlaylistEntity
 import com.Chenkham.Echofy.db.entities.Song
 import com.Chenkham.Echofy.extensions.toMediaItem
-import com.Chenkham.Echofy.jam.JamRoomCode
 import com.Chenkham.Echofy.models.MediaMetadata
 import com.Chenkham.Echofy.models.toMediaMetadata
 import com.Chenkham.Echofy.playback.DownloadUtil
@@ -56,49 +53,16 @@ class MainIntentHandler(
 ) {
     companion object {
         private const val TAG = "MainIntentHandler"
-        val JamRegistryUrlKey = stringPreferencesKey("jam_registry_url_override")
-        val JamInviteBaseUrlKey = stringPreferencesKey("jam_invite_base_url_override")
-        val JamAllocationUrlKey = stringPreferencesKey("jam_room_allocate_url_override")
+        val JamRegistryUrlKey = MainJamIntentHandler.JamRegistryUrlKey
+        val JamInviteBaseUrlKey = MainJamIntentHandler.JamInviteBaseUrlKey
+        val JamAllocationUrlKey = MainJamIntentHandler.JamAllocationUrlKey
 
-        /**
-         * Parses and extracts Jam Room Code from incoming URIs.
-         */
-        fun extractJamRoomCode(uri: Uri): String? {
-            val normalizedScheme = uri.scheme?.lowercase()
-            val normalizedHost = uri.host?.lowercase()
-            val cleanSegments = uri.pathSegments.filterNot { it.equals("echofy-website", ignoreCase = true) }
-
-            val candidate =
-                when {
-                    normalizedScheme == "echofy" && normalizedHost in setOf("jam", "r", "together") ->
-                        uri.pathSegments.firstOrNull() ?: uri.getQueryParameter("code") ?: uri.getQueryParameter("room")
-
-                    normalizedScheme == "echofy" && normalizedHost in setOf("join", "open") ->
-                        uri.getQueryParameter("room")
-                            ?: uri.getQueryParameter("roomCode")
-                            ?: uri.getQueryParameter("jam")
-                            ?: uri.getQueryParameter("code")
-
-                    cleanSegments.firstOrNull()?.lowercase() in setOf("jam", "r", "together") ->
-                        cleanSegments.getOrNull(1)
-
-                    else ->
-                        uri.getQueryParameter("jam")
-                            ?: uri.getQueryParameter("room")
-                            ?: uri.getQueryParameter("together")
-                            ?: uri.getQueryParameter("code")
-                }
-
-            return candidate
-                ?.trim()
-                ?.uppercase()
-                ?.takeIf { JamRoomCode.parse(it) != null }
-        }
+        fun extractJamRoomCode(uri: Uri): String? = MainJamIntentHandler.extractJamRoomCode(uri)
     }
 
     fun handleIntent(intent: Intent) {
-        if (handleJamConfigIntent(intent)) return
-        if (handleJamJoinIntent(intent)) return
+        if (MainJamIntentHandler.handleJamConfigIntent(context, intent, scope, dataStore, playerConnectionProvider)) return
+        if (MainJamIntentHandler.handleJamJoinIntent(context, intent, onPendingJamRoomCode)) return
 
         if (intent.action == DynamicShortcuts.ACTION_PLAY_PLAYLIST) {
             intent.getStringExtra(DynamicShortcuts.EXTRA_PLAYLIST_ID)?.let { playSmartPlaylist(it) }
@@ -118,29 +82,21 @@ class MainIntentHandler(
             val isEnabled = dataStore.data.first()[VoiceControlEnabledKey] ?: false
 
             if (!isEnabled) {
-                Toast.makeText(
-                    context,
-                    "Enable Google Assistant Integration in AI settings to use voice playback",
-                    Toast.LENGTH_LONG,
-                ).show()
+                Toast.makeText(context, "Enable Google Assistant Integration in AI settings to use voice playback", Toast.LENGTH_LONG).show()
                 return@launch
             }
 
             val query = intent.getStringExtra(SearchManager.QUERY)
-
             if (!query.isNullOrEmpty()) {
                 val lowerQuery = query.lowercase()
-
                 if (lowerQuery.contains("download") || lowerQuery.contains("offline")) {
                     playSmartPlaylist(PlaylistEntity.DOWNLOADED_PLAYLIST_ID)
                     return@launch
                 }
-
                 if (lowerQuery.contains("liked") || lowerQuery.contains("favorite")) {
                     playSmartPlaylist(PlaylistEntity.LIKED_PLAYLIST_ID)
                     return@launch
                 }
-
                 performOnlineSearchAndPlay(query)
             } else {
                 playerConnectionProvider()?.player?.play()
@@ -196,73 +152,6 @@ class MainIntentHandler(
         }
     }
 
-    private fun handleJamJoinIntent(intent: Intent): Boolean {
-        val rawText = intent.extras?.getString(Intent.EXTRA_TEXT)
-        val uriCandidates =
-            buildList {
-                intent.data?.let(::add)
-                rawText?.let { text ->
-                    runCatching { Uri.parse(text.trim()) }.getOrNull()?.let(::add)
-                }
-            }
-
-        val roomCode =
-            uriCandidates
-                .firstNotNullOfOrNull(::extractJamRoomCode)
-                ?: rawText
-                    ?.trim()
-                    ?.uppercase()
-                    ?.takeIf { JamRoomCode.parse(it) != null }
-                ?: return false
-
-        onPendingJamRoomCode(roomCode)
-        Toast.makeText(context, "Together invite ready", Toast.LENGTH_SHORT).show()
-        return true
-    }
-
-    private fun handleJamConfigIntent(intent: Intent): Boolean {
-        val uri = intent.data ?: return false
-        if (uri.scheme?.lowercase() != "echofy" || uri.host?.lowercase() != "config") {
-            return false
-        }
-
-        val registryUrl =
-            uri.getQueryParameter("jamRegistryUrl")
-                ?: uri.getQueryParameter("registryUrl")
-        val inviteBaseUrl =
-            uri.getQueryParameter("jamInviteBaseUrl")
-                ?: uri.getQueryParameter("inviteBaseUrl")
-        val allocationUrl =
-            uri.getQueryParameter("jamRoomAllocateUrl")
-                ?: uri.getQueryParameter("roomAllocateUrl")
-
-        if (registryUrl.isNullOrBlank() && inviteBaseUrl.isNullOrBlank() && allocationUrl.isNullOrBlank()) {
-            Toast.makeText(context, "No Jam config found in this link", Toast.LENGTH_SHORT).show()
-            return true
-        }
-
-        scope.launch {
-            dataStore.edit { preferences ->
-                registryUrl?.trim()?.takeIf { it.isNotBlank() }?.let {
-                    preferences[JamRegistryUrlKey] = it
-                }
-                inviteBaseUrl?.trim()?.takeIf { it.isNotBlank() }?.let {
-                    preferences[JamInviteBaseUrlKey] = it.removeSuffix("/")
-                }
-                allocationUrl?.trim()?.takeIf { it.isNotBlank() }?.let {
-                    preferences[JamAllocationUrlKey] = it
-                }
-            }
-            playerConnectionProvider()?.service?.jamSessionManager?.refreshRegistry(forceRefresh = true)
-            Toast.makeText(
-                context,
-                "Echofy Together control plane connected",
-                Toast.LENGTH_SHORT,
-            ).show()
-        }
-        return true
-    }
-
     fun playSmartPlaylist(playlistId: String) {
         scope.launch {
             if (playerConnectionProvider() == null) {
@@ -273,17 +162,12 @@ class MainIntentHandler(
                 withContext(Dispatchers.IO) {
                     when (playlistId) {
                         PlaylistEntity.LIKED_PLAYLIST_ID -> {
-                            database.likedSongs(
-                                SongSortType.CREATE_DATE,
-                                descending = true,
-                            ).first()
+                            database.likedSongs(SongSortType.CREATE_DATE, descending = true).first()
                         }
                         PlaylistEntity.DOWNLOADED_PLAYLIST_ID -> {
                             val downloads = downloadUtil.downloads.value
                             database.allSongs().first()
-                                .filter {
-                                    downloads[it.id]?.state == Download.STATE_COMPLETED
-                                }
+                                .filter { downloads[it.id]?.state == Download.STATE_COMPLETED }
                                 .sortedBy { downloads[it.id]?.updateTimeMs ?: 0L }
                         }
                         else -> emptyList()
@@ -308,20 +192,15 @@ class MainIntentHandler(
         scope.launch {
             Toast.makeText(context, "Searching for $query...", Toast.LENGTH_SHORT).show()
 
-            val result: Result<SearchResult> =
-                withContext(Dispatchers.IO) {
-                    YouTube.search(query, YouTube.SearchFilter.FILTER_SONG)
-                }
+            val result: Result<SearchResult> = withContext(Dispatchers.IO) {
+                YouTube.search(query, YouTube.SearchFilter.FILTER_SONG)
+            }
 
             result.onSuccess { searchResult ->
                 val firstSong = searchResult.items.firstNotNullOfOrNull { it as? SongItem }
-
                 if (firstSong != null) {
                     playerConnectionProvider()?.playQueue(
-                        YouTubeQueue(
-                            WatchEndpoint(videoId = firstSong.id),
-                            firstSong.toMediaMetadata(),
-                        ),
+                        YouTubeQueue(WatchEndpoint(videoId = firstSong.id), firstSong.toMediaMetadata()),
                     )
                 } else {
                     Toast.makeText(context, "No songs found for $query", Toast.LENGTH_LONG).show()
