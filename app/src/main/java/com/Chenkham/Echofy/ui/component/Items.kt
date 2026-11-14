@@ -23,8 +23,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.setValue
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -90,14 +88,12 @@ inline fun ListItem(
                         .basicMarquee()
                         .fillMaxWidth(),
             )
-
             if (subtitle != null) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     subtitle()
                 }
             }
         }
-
         trailingContent()
     }
 }
@@ -115,7 +111,6 @@ fun ListItem(
     title = title,
     subtitle = {
         badges()
-
         if (!subtitle.isNullOrEmpty()) {
             Text(
                 text = subtitle,
@@ -169,9 +164,7 @@ fun GridItem(
         ) {
             thumbnailContent()
         }
-
         Spacer(modifier = Modifier.height(6.dp))
-
         Text(
             text = title,
             style = MaterialTheme.typography.bodyLarge,
@@ -185,10 +178,8 @@ fun GridItem(
                     .basicMarquee()
                     .fillMaxWidth(),
         )
-
         Row(verticalAlignment = Alignment.CenterVertically) {
             badges()
-
             Text(
                 text = subtitle,
                 style = MaterialTheme.typography.bodyMedium,
@@ -227,9 +218,7 @@ fun SmallGridItem(
         ) {
             thumbnailContent()
         }
-
         Spacer(modifier = Modifier.height(6.dp))
-
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center,
