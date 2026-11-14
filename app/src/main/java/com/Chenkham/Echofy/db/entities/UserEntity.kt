@@ -11,5 +11,5 @@ data class UserEntity(
     val photoUrl: String?,
     val signInTimestamp: Long = System.currentTimeMillis(),
     val isActive: Boolean = true,
-    val isPremium: Boolean = false
+    val isPremium: Boolean = false,
 )

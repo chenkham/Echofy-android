@@ -10,8 +10,6 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -22,7 +20,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -44,14 +41,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.Chenkham.Echofy.R
-
 import com.Chenkham.Echofy.utils.MaterialShapes
 import com.Chenkham.Echofy.utils.toShape
 
@@ -61,7 +55,7 @@ import com.Chenkham.Echofy.utils.toShape
 data class SmallButtonShapeOption(
     val name: String,
     val shape: Shape,
-    val displayName: String
+    val displayName: String,
 )
 
 /**
@@ -70,7 +64,7 @@ data class SmallButtonShapeOption(
 enum class ShapeType {
     SMALL_BUTTONS,
     PLAY_PAUSE,
-    MINIPLAYER_THUMBNAIL
+    MINIPLAYER_THUMBNAIL,
 }
 
 /**
@@ -88,56 +82,59 @@ fun UnifiedShapeBottomSheet(
     onMiniPlayerShapeSelected: (String) -> Unit,
     onDismiss: () -> Unit,
     sheetState: SheetState = rememberModalBottomSheetState(),
-    initialTab: ShapeType = ShapeType.SMALL_BUTTONS
+    initialTab: ShapeType = ShapeType.SMALL_BUTTONS,
 ) {
-    var selectedTabIndex by remember { mutableIntStateOf(
-        when (initialTab) {
-            ShapeType.SMALL_BUTTONS -> 0
-            ShapeType.PLAY_PAUSE -> 1
-            ShapeType.MINIPLAYER_THUMBNAIL -> 2
-        }
-    ) }
-
-    // Lista COMPLETA de formas disponibles
-    val availableShapes = remember {
-        listOf(
-            SmallButtonShapeOption("Pill", MaterialShapes.Pill, "Pill"),
-            SmallButtonShapeOption("Circle", MaterialShapes.Circle, "Circle"),
-            SmallButtonShapeOption("Square", MaterialShapes.Square, "Square"),
-            SmallButtonShapeOption("Diamond", MaterialShapes.Diamond, "Diamond"),
-            SmallButtonShapeOption("Pentagon", MaterialShapes.Pentagon, "Pentagon"),
-            SmallButtonShapeOption("Heart", MaterialShapes.Heart, "Heart"),
-            SmallButtonShapeOption("Oval", MaterialShapes.Oval, "Oval"),
-            SmallButtonShapeOption("Arch", MaterialShapes.Arch, "Arch"),
-            SmallButtonShapeOption("SemiCircle", MaterialShapes.SemiCircle, "Semicircle"),
-            SmallButtonShapeOption("Triangle", MaterialShapes.Triangle, "Triangle"),
-            SmallButtonShapeOption("Arrow", MaterialShapes.Arrow, "Arrow"),
-            SmallButtonShapeOption("Fan", MaterialShapes.Fan, "Fan"),
-            SmallButtonShapeOption("Gem", MaterialShapes.Gem, "Gem"),
-            SmallButtonShapeOption("Bun", MaterialShapes.Bun, "Bun"),
-            SmallButtonShapeOption("Ghostish", MaterialShapes.Ghostish, "Ghost-ish"),
-            SmallButtonShapeOption("Cookie4Sided", MaterialShapes.Cookie4Sided, "Cookie 4"),
-            SmallButtonShapeOption("Cookie6Sided", MaterialShapes.Cookie6Sided, "Cookie 6"),
-            SmallButtonShapeOption("Cookie7Sided", MaterialShapes.Cookie7Sided, "Cookie 7"),
-            SmallButtonShapeOption("Cookie9Sided", MaterialShapes.Cookie9Sided, "Cookie 9"),
-            SmallButtonShapeOption("Cookie12Sided", MaterialShapes.Cookie12Sided, "Cookie 12"),
-            SmallButtonShapeOption("Clover4Leaf", MaterialShapes.Clover4Leaf, "Clover 4"),
-            SmallButtonShapeOption("Clover8Leaf", MaterialShapes.Clover8Leaf, "Clover 8"),
-            SmallButtonShapeOption("Sunny", MaterialShapes.Sunny, "Sunny"),
-            SmallButtonShapeOption("VerySunny", MaterialShapes.VerySunny, "Very Sunny"),
-            SmallButtonShapeOption("Burst", MaterialShapes.Burst, "Burst"),
-            SmallButtonShapeOption("SoftBurst", MaterialShapes.SoftBurst, "Soft Burst"),
-            SmallButtonShapeOption("Boom", MaterialShapes.Boom, "Boom"),
-            SmallButtonShapeOption("SoftBoom", MaterialShapes.SoftBoom, "Soft Boom"),
-            SmallButtonShapeOption("Flower", MaterialShapes.Flower, "Flower"),
-            SmallButtonShapeOption("PixelCircle", MaterialShapes.PixelCircle, "Pixel Circle"),
-            SmallButtonShapeOption("PixelTriangle", MaterialShapes.PixelTriangle, "Pixel Triangle"),
-            SmallButtonShapeOption("Puffy", MaterialShapes.Puffy, "Puffy"),
-            SmallButtonShapeOption("PuffyDiamond", MaterialShapes.PuffyDiamond, "Puffy Diamond"),
-            SmallButtonShapeOption("Slanted", MaterialShapes.Slanted, "Slanted"),
-            SmallButtonShapeOption("ClamShell", MaterialShapes.ClamShell, "Clam Shell")
+    var selectedTabIndex by remember {
+        mutableIntStateOf(
+            when (initialTab) {
+                ShapeType.SMALL_BUTTONS -> 0
+                ShapeType.PLAY_PAUSE -> 1
+                ShapeType.MINIPLAYER_THUMBNAIL -> 2
+            },
         )
     }
+
+    // Lista COMPLETA de formas disponibles
+    val availableShapes =
+        remember {
+            listOf(
+                SmallButtonShapeOption("Pill", MaterialShapes.Pill, "Pill"),
+                SmallButtonShapeOption("Circle", MaterialShapes.Circle, "Circle"),
+                SmallButtonShapeOption("Square", MaterialShapes.Square, "Square"),
+                SmallButtonShapeOption("Diamond", MaterialShapes.Diamond, "Diamond"),
+                SmallButtonShapeOption("Pentagon", MaterialShapes.Pentagon, "Pentagon"),
+                SmallButtonShapeOption("Heart", MaterialShapes.Heart, "Heart"),
+                SmallButtonShapeOption("Oval", MaterialShapes.Oval, "Oval"),
+                SmallButtonShapeOption("Arch", MaterialShapes.Arch, "Arch"),
+                SmallButtonShapeOption("SemiCircle", MaterialShapes.SemiCircle, "Semicircle"),
+                SmallButtonShapeOption("Triangle", MaterialShapes.Triangle, "Triangle"),
+                SmallButtonShapeOption("Arrow", MaterialShapes.Arrow, "Arrow"),
+                SmallButtonShapeOption("Fan", MaterialShapes.Fan, "Fan"),
+                SmallButtonShapeOption("Gem", MaterialShapes.Gem, "Gem"),
+                SmallButtonShapeOption("Bun", MaterialShapes.Bun, "Bun"),
+                SmallButtonShapeOption("Ghostish", MaterialShapes.Ghostish, "Ghost-ish"),
+                SmallButtonShapeOption("Cookie4Sided", MaterialShapes.Cookie4Sided, "Cookie 4"),
+                SmallButtonShapeOption("Cookie6Sided", MaterialShapes.Cookie6Sided, "Cookie 6"),
+                SmallButtonShapeOption("Cookie7Sided", MaterialShapes.Cookie7Sided, "Cookie 7"),
+                SmallButtonShapeOption("Cookie9Sided", MaterialShapes.Cookie9Sided, "Cookie 9"),
+                SmallButtonShapeOption("Cookie12Sided", MaterialShapes.Cookie12Sided, "Cookie 12"),
+                SmallButtonShapeOption("Clover4Leaf", MaterialShapes.Clover4Leaf, "Clover 4"),
+                SmallButtonShapeOption("Clover8Leaf", MaterialShapes.Clover8Leaf, "Clover 8"),
+                SmallButtonShapeOption("Sunny", MaterialShapes.Sunny, "Sunny"),
+                SmallButtonShapeOption("VerySunny", MaterialShapes.VerySunny, "Very Sunny"),
+                SmallButtonShapeOption("Burst", MaterialShapes.Burst, "Burst"),
+                SmallButtonShapeOption("SoftBurst", MaterialShapes.SoftBurst, "Soft Burst"),
+                SmallButtonShapeOption("Boom", MaterialShapes.Boom, "Boom"),
+                SmallButtonShapeOption("SoftBoom", MaterialShapes.SoftBoom, "Soft Boom"),
+                SmallButtonShapeOption("Flower", MaterialShapes.Flower, "Flower"),
+                SmallButtonShapeOption("PixelCircle", MaterialShapes.PixelCircle, "Pixel Circle"),
+                SmallButtonShapeOption("PixelTriangle", MaterialShapes.PixelTriangle, "Pixel Triangle"),
+                SmallButtonShapeOption("Puffy", MaterialShapes.Puffy, "Puffy"),
+                SmallButtonShapeOption("PuffyDiamond", MaterialShapes.PuffyDiamond, "Puffy Diamond"),
+                SmallButtonShapeOption("Slanted", MaterialShapes.Slanted, "Slanted"),
+                SmallButtonShapeOption("ClamShell", MaterialShapes.ClamShell, "Clam Shell"),
+            )
+        }
 
     val tabTitles = listOf("Small Buttons", "Play/Pause", "MiniPlayer")
     val tabIcons = listOf(R.drawable.scatter_plot, R.drawable.play, R.drawable.album)
@@ -150,25 +147,27 @@ fun UnifiedShapeBottomSheet(
         dragHandle = {
             Column(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalAlignment = Alignment.CenterHorizontally
+                horizontalAlignment = Alignment.CenterHorizontally,
             ) {
                 // Drag handle personalizado Material 3 Expressive
                 Box(
-                    modifier = Modifier
-                        .padding(top = 16.dp, bottom = 12.dp)
-                        .width(40.dp)
-                        .height(4.dp)
-                        .clip(MaterialShapes.Pill.toShape())
-                        .background(MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f))
+                    modifier =
+                        Modifier
+                            .padding(top = 16.dp, bottom = 12.dp)
+                            .width(40.dp)
+                            .height(4.dp)
+                            .clip(MaterialShapes.Pill.toShape())
+                            .background(MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f)),
                 )
             }
-        }
+        },
     ) {
         Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 24.dp)
-                .padding(bottom = 32.dp)
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 24.dp)
+                    .padding(bottom = 32.dp),
         ) {
             // TÃ­tulo principal con jerarquÃ­a clara
             Text(
@@ -176,14 +175,14 @@ fun UnifiedShapeBottomSheet(
                 style = MaterialTheme.typography.headlineSmall,
                 color = MaterialTheme.colorScheme.onSurface,
                 fontWeight = androidx.compose.ui.text.font.FontWeight.Bold,
-                modifier = Modifier.padding(bottom = 8.dp)
+                modifier = Modifier.padding(bottom = 8.dp),
             )
 
             Text(
                 text = "Customize shapes for all buttons",
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.padding(bottom = 20.dp)
+                modifier = Modifier.padding(bottom = 20.dp),
             )
 
             // Tabs con iconos - Material 3 Expressive
@@ -191,9 +190,10 @@ fun UnifiedShapeBottomSheet(
                 selectedTabIndex = selectedTabIndex,
                 containerColor = MaterialTheme.colorScheme.surfaceContainerHighest,
                 contentColor = MaterialTheme.colorScheme.primary,
-                modifier = Modifier
-                    .padding(bottom = 24.dp)
-                    .clip(RoundedCornerShape(12.dp))
+                modifier =
+                    Modifier
+                        .padding(bottom = 24.dp)
+                        .clip(RoundedCornerShape(12.dp)),
             ) {
                 tabTitles.forEachIndexed { index, title ->
                     Tab(
@@ -203,34 +203,35 @@ fun UnifiedShapeBottomSheet(
                             Icon(
                                 painter = painterResource(tabIcons[index]),
                                 contentDescription = null,
-                                modifier = Modifier.size(20.dp)
+                                modifier = Modifier.size(20.dp),
                             )
                         },
                         text = {
                             Text(
                                 text = title,
-                                style = MaterialTheme.typography.labelLarge
+                                style = MaterialTheme.typography.labelLarge,
                             )
                         },
                         selectedContentColor = MaterialTheme.colorScheme.primary,
-                        unselectedContentColor = MaterialTheme.colorScheme.onSurfaceVariant
+                        unselectedContentColor = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                 }
             }
 
             // Grid de formas con espaciado coherente
-            val currentSelectedShape = when (selectedTabIndex) {
-                0 -> selectedSmallButtonsShape
-                1 -> selectedPlayPauseShape
-                2 -> selectedMiniPlayerShape
-                else -> selectedSmallButtonsShape
-            }
+            val currentSelectedShape =
+                when (selectedTabIndex) {
+                    0 -> selectedSmallButtonsShape
+                    1 -> selectedPlayPauseShape
+                    2 -> selectedMiniPlayerShape
+                    else -> selectedSmallButtonsShape
+                }
 
             LazyVerticalGrid(
                 columns = GridCells.Fixed(4),
                 horizontalArrangement = Arrangement.spacedBy(12.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp),
-                modifier = Modifier.heightIn(max = 400.dp)
+                modifier = Modifier.heightIn(max = 400.dp),
             ) {
                 items(availableShapes) { shapeOption ->
                     SmallButtonShapeItem(
@@ -243,7 +244,7 @@ fun UnifiedShapeBottomSheet(
                                 2 -> onMiniPlayerShapeSelected(shapeOption.name)
                             }
                             onDismiss()
-                        }
+                        },
                     )
                 }
             }
@@ -259,65 +260,73 @@ fun UnifiedShapeBottomSheet(
 private fun SmallButtonShapeItem(
     shapeOption: SmallButtonShapeOption,
     isSelected: Boolean,
-    onClick: () -> Unit
+    onClick: () -> Unit,
 ) {
     // AnimaciÃ³n de escala suave
     val scale by animateFloatAsState(
         targetValue = if (isSelected) 1.05f else 1f,
-        animationSpec = spring(
-            dampingRatio = 0.7f,
-            stiffness = 300f
-        ),
-        label = "scale"
+        animationSpec =
+            spring(
+                dampingRatio = 0.7f,
+                stiffness = 300f,
+            ),
+        label = "scale",
     )
 
     // TransiciÃ³n de color del contenedor
     val backgroundColor by animateColorAsState(
-        targetValue = if (isSelected)
-            MaterialTheme.colorScheme.primaryContainer
-        else
-            MaterialTheme.colorScheme.surfaceContainerHighest,
+        targetValue =
+            if (isSelected) {
+                MaterialTheme.colorScheme.primaryContainer
+            } else {
+                MaterialTheme.colorScheme.surfaceContainerHighest
+            },
         animationSpec = tween(250),
-        label = "backgroundColor"
+        label = "backgroundColor",
     )
 
     // Color del borde con transiciÃ³n
     val borderColor by animateColorAsState(
-        targetValue = if (isSelected)
-            MaterialTheme.colorScheme.primary
-        else
-            Color.Transparent,
+        targetValue =
+            if (isSelected) {
+                MaterialTheme.colorScheme.primary
+            } else {
+                Color.Transparent
+            },
         animationSpec = tween(250),
-        label = "borderColor"
+        label = "borderColor",
     )
 
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(6.dp),
-        modifier = Modifier
-            .scale(scale)
-            .aspectRatio(1f)
-            .clip(RoundedCornerShape(16.dp))
-            .background(backgroundColor)
-            .border(
-                width = if (isSelected) 2.dp else 0.dp,
-                color = borderColor,
-                shape = RoundedCornerShape(16.dp)
-            )
-            .clickable(onClick = onClick)
-            .padding(8.dp)
+        modifier =
+            Modifier
+                .scale(scale)
+                .aspectRatio(1f)
+                .clip(RoundedCornerShape(16.dp))
+                .background(backgroundColor)
+                .border(
+                    width = if (isSelected) 2.dp else 0.dp,
+                    color = borderColor,
+                    shape = RoundedCornerShape(16.dp),
+                )
+                .clickable(onClick = onClick)
+                .padding(8.dp),
     ) {
         // Preview de la forma
         Box(
-            modifier = Modifier
-                .size(40.dp)
-                .clip(shapeOption.shape.toShape())
-                .background(
-                    if (isSelected)
-                        MaterialTheme.colorScheme.primary
-                    else
-                        MaterialTheme.colorScheme.onSurfaceVariant
-                )
+            modifier =
+                Modifier
+                    .size(40.dp)
+                    .clip(shapeOption.shape.toShape())
+                    .background(
+                        if (isSelected) {
+                            MaterialTheme.colorScheme.primary
+                        } else {
+                            MaterialTheme.colorScheme.onSurfaceVariant
+                        },
+                    ),
         )
 
         // Nombre de la forma
@@ -327,10 +336,12 @@ private fun SmallButtonShapeItem(
             textAlign = TextAlign.Center,
             maxLines = 2,
             minLines = 2,
-            color = if (isSelected)
-                MaterialTheme.colorScheme.onPrimaryContainer
-            else
-                MaterialTheme.colorScheme.onSurface
+            color =
+                if (isSelected) {
+                    MaterialTheme.colorScheme.onPrimaryContainer
+                } else {
+                    MaterialTheme.colorScheme.onSurface
+                },
         )
     }
 }
@@ -347,7 +358,7 @@ fun UnifiedShapeSelectorButton(
     onSmallButtonsShapeSelected: (String) -> Unit,
     onPlayPauseShapeSelected: (String) -> Unit,
     onMiniPlayerShapeSelected: (String) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
 ) {
     var showBottomSheet by remember { mutableStateOf(false) }
     val sheetState = rememberModalBottomSheetState()
@@ -359,13 +370,13 @@ fun UnifiedShapeSelectorButton(
         icon = {
             Icon(
                 painter = painterResource(R.drawable.scatter_plot),
-                contentDescription = null
+                contentDescription = null,
             )
         },
         onClick = {
             showBottomSheet = true
         },
-        modifier = modifier
+        modifier = modifier,
     )
 
     if (showBottomSheet) {
@@ -378,7 +389,7 @@ fun UnifiedShapeSelectorButton(
             onMiniPlayerShapeSelected = onMiniPlayerShapeSelected,
             onDismiss = { showBottomSheet = false },
             sheetState = sheetState,
-            initialTab = ShapeType.SMALL_BUTTONS
+            initialTab = ShapeType.SMALL_BUTTONS,
         )
     }
 }

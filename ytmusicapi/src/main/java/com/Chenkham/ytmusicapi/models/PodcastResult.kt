@@ -13,7 +13,7 @@ data class PodcastResult(
     val description: String? = null,
     val saved: Boolean = false,
     val thumbnails: List<Thumbnail> = emptyList(),
-    val episodes: List<Episode> = emptyList()
+    val episodes: List<Episode> = emptyList(),
 )
 
 /**
@@ -22,7 +22,7 @@ data class PodcastResult(
 @Serializable
 data class Author(
     val name: String,
-    val id: String? = null
+    val id: String? = null,
 )
 
 /**
@@ -38,7 +38,7 @@ data class Episode(
     val browseId: String? = null,
     val videoType: String? = null,
     val date: String? = null,
-    val thumbnails: List<Thumbnail> = emptyList()
+    val thumbnails: List<Thumbnail> = emptyList(),
 )
 
 /**
@@ -54,7 +54,7 @@ data class EpisodeResult(
     val saved: Boolean = false,
     val playlistId: String? = null,
     val thumbnails: List<Thumbnail> = emptyList(),
-    val description: String? = null
+    val description: String? = null,
 )
 
 /**
@@ -65,28 +65,27 @@ data class ChannelResult(
     val title: String,
     val thumbnails: List<Thumbnail> = emptyList(),
     val episodes: ChannelSection? = null,
-    val podcasts: ChannelSection? = null
+    val podcasts: ChannelSection? = null,
 )
 
 @Serializable
 data class ChannelSection(
     val browseId: String? = null,
     val results: List<Episode> = emptyList(),
-    val params: String? = null
+    val params: String? = null,
 )
 
 @Serializable
 data class PodcastLandingResult(
     val title: String = "Podcasts",
-    val sections: List<PodcastLandingSection> = emptyList()
+    val sections: List<PodcastLandingSection> = emptyList(),
 )
 
 @Serializable
 data class PodcastLandingSection(
     val title: String,
-    val items: List<PodcastItem> = emptyList()
+    val items: List<PodcastItem> = emptyList(),
 )
-
 
 /**
  * A podcast item shown under "Podcasts" on a channel page
@@ -97,5 +96,5 @@ data class PodcastItem(
     val browseId: String,
     val podcastId: String? = null,
     val channel: Author? = null,
-    val thumbnails: List<Thumbnail> = emptyList()
+    val thumbnails: List<Thumbnail> = emptyList(),
 )

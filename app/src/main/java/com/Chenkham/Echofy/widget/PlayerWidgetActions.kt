@@ -15,8 +15,10 @@ object PlayerWidgetActions {
     const val ACTION_PREVIOUS = "com.Chenkham.Echofy.widget.action.PREVIOUS"
     const val ACTION_REFRESH = "com.Chenkham.Echofy.widget.action.REFRESH"
 
-    fun serviceIntent(context: Context, action: String): Intent =
-        Intent(context, MusicService::class.java).setAction(action)
+    fun serviceIntent(
+        context: Context,
+        action: String,
+    ): Intent = Intent(context, MusicService::class.java).setAction(action)
 
     fun openAppIntent(context: Context): Intent =
         Intent(context, MainActivity::class.java)
@@ -24,7 +26,10 @@ object PlayerWidgetActions {
             .addCategory(Intent.CATEGORY_LAUNCHER)
             .addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP)
 
-    fun sendServiceAction(context: Context, action: String) {
+    fun sendServiceAction(
+        context: Context,
+        action: String,
+    ) {
         ContextCompat.startForegroundService(context, serviceIntent(context, action))
     }
 }

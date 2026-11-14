@@ -75,7 +75,6 @@ val WidgetScrimOpacityKey = floatPreferencesKey("widget_scrim_opacity")
 val WidgetCornerRadiusKey = floatPreferencesKey("widget_corner_radius")
 val WidgetShowProgressBarKey = booleanPreferencesKey("widget_show_progress_bar")
 
-
 enum class AodArtShape {
     ROUNDED,
     CIRCLE,
@@ -84,7 +83,7 @@ enum class AodArtShape {
     HEXAGON,
     STAR,
     ARCH,
-    PETAL
+    PETAL,
 }
 
 enum class AodStyle {
@@ -92,19 +91,19 @@ enum class AodStyle {
     BACKGROUND,
     MINIMAL,
     LARGE,
-    SPOTLIGHT
+    SPOTLIGHT,
 }
 
 enum class AodControlStyle {
     ROUNDED,
     SQUARE,
     ACCENT,
-    MINIMAL_FLAT
+    MINIMAL_FLAT,
 }
 
 enum class PlaybackMode {
-    AUDIO,  // Default - shows album art thumbnail
-    VIDEO   // Shows music video
+    AUDIO, // Default - shows album art thumbnail
+    VIDEO, // Shows music video
 }
 
 enum class SeasonalWallpaper {
@@ -120,7 +119,7 @@ enum class SliderStyle {
     SQUIGGLY,
     SLIM,
     YOUTUBE_MUSIC,
-    VINTAGE_CABLE
+    VINTAGE_CABLE,
 }
 
 const val SYSTEM_DEFAULT = "SYSTEM_DEFAULT"
@@ -239,7 +238,6 @@ val PlayerTextAlignmentKey = stringPreferencesKey("playerTextAlignment")
 
 val RotateBackgroundKey = booleanPreferencesKey("rotate_background")
 
-
 val SmallButtonsShapeKey = stringPreferencesKey("small_buttons_shape")
 const val DefaultSmallButtonsShape = "Circle"
 
@@ -292,11 +290,9 @@ val SongFilterKey = stringPreferencesKey("songFilter")
 val ArtistFilterKey = stringPreferencesKey("artistFilter")
 val AlbumFilterKey = stringPreferencesKey("albumFilter")
 
-
 val LyricsScrollKey = booleanPreferencesKey("lyricsScrollKey")
 
 val DiscordUseDetailsKey = booleanPreferencesKey("discordUseDetails")
-
 
 val ArtistViewTypeKey = stringPreferencesKey("artistViewType")
 val AlbumViewTypeKey = stringPreferencesKey("albumViewType")
@@ -480,7 +476,6 @@ enum class PlayerBackgroundStyle {
     GLOW_ANIMATED,
 }
 
-
 enum class PlayerButtonsStyle {
     DEFAULT,
     SECONDARY,
@@ -488,12 +483,12 @@ enum class PlayerButtonsStyle {
 
 enum class MiniPlayerStyle {
     Floating,
-    Slim
+    Slim,
 }
 
 enum class PlayerLayoutStyle {
     CLASSIC,
-    APPLE_MUSIC
+    APPLE_MUSIC,
 }
 
 val TopSize = stringPreferencesKey("topSize")
@@ -736,7 +731,6 @@ val OnboardingSelectedCountryKey = stringPreferencesKey("onboardingSelectedCount
 val OnboardingSelectedArtistsKey = stringPreferencesKey("onboardingSelectedArtists") // JSON array
 val OnboardingSelectedLanguageKey = stringPreferencesKey("onboardingSelectedLanguage")
 
-
 // Backpaper (App Background Wallpaper) Settings
 val BackpaperEnabledKey = booleanPreferencesKey("backpaperEnabled")
 val BackpaperTypeKey = stringPreferencesKey("backpaperType")
@@ -753,9 +747,9 @@ val BackpaperApplyToSearchKey = booleanPreferencesKey("backpaperApplyToSearch")
 val BackpaperApplyToLyricsKey = booleanPreferencesKey("backpaperApplyToLyrics")
 
 enum class BackpaperType {
-    NONE,       // No wallpaper
-    BUILT_IN,   // Use bundled wallpaper
-    CUSTOM      // Use user's custom photo
+    NONE, // No wallpaper
+    BUILT_IN, // Use bundled wallpaper
+    CUSTOM, // Use user's custom photo
 }
 
 enum class WallpaperCategory {
@@ -765,7 +759,7 @@ enum class WallpaperCategory {
     AUTUMN,
     NIGHT,
     NATURE,
-    ABSTRACT
+    ABSTRACT,
 }
 
 enum class BackpaperScreen {
@@ -775,7 +769,7 @@ enum class BackpaperScreen {
     PLAYER,
     SETTINGS,
     SEARCH,
-    LYRICS
+    LYRICS,
 }
 
 val IsGuestModeKey = booleanPreferencesKey("is_guest_mode")
@@ -859,6 +853,7 @@ val MixcloudEnabledKey = booleanPreferencesKey("mixcloudEnabled")
 // ---------------------------------------------------------------------------
 /** Fades the volume down before the sleep timer pauses instead of cutting abruptly. */
 val SleepTimerFadeOutKey = booleanPreferencesKey("sleepTimerFadeOut")
+
 /** Length of the sleep timer fade, in seconds. */
 val SleepTimerFadeDurationKey = intPreferencesKey("sleepTimerFadeDuration")
 
@@ -873,6 +868,7 @@ val VolumeFadeOnPauseKey = booleanPreferencesKey("volumeFadeOnPause")
 // ---------------------------------------------------------------------------
 /** Caps the in-app playback volume to protect hearing. */
 val VolumeLimitEnabledKey = booleanPreferencesKey("volumeLimitEnabled")
+
 /** Maximum volume as a percentage (10..100) when the limit is enabled. */
 val VolumeLimitPercentKey = intPreferencesKey("volumeLimitPercent")
 
@@ -891,12 +887,16 @@ fun playbackPitchKey(songId: String) = floatPreferencesKey("playbackPitch_$songI
 // ---------------------------------------------------------------------------
 // Listening streaks and milestones
 // ---------------------------------------------------------------------------
+
 /** Master switch for streak tracking and milestone notices. */
 val ListeningStreakEnabledKey = booleanPreferencesKey("listeningStreakEnabled")
+
 /** Current consecutive-day listening streak. */
 val ListeningStreakCountKey = intPreferencesKey("listeningStreakCount")
+
 /** Longest streak ever reached. */
 val ListeningStreakBestKey = intPreferencesKey("listeningStreakBest")
+
 /** Epoch day of the most recent counted listening day. */
 val ListeningStreakLastDayKey = longPreferencesKey("listeningStreakLastDay")
 
@@ -905,6 +905,7 @@ val ListeningStreakLastDayKey = longPreferencesKey("listeningStreakLastDay")
 // ---------------------------------------------------------------------------
 /** Allows the notification-shade tile to control playback. */
 val QuickSettingsTileEnabledKey = booleanPreferencesKey("quickSettingsTileEnabled")
+
 /** Keeps launcher long-press shortcuts up to date with recent listening. */
 val DynamicShortcutsEnabledKey = booleanPreferencesKey("dynamicShortcutsEnabled")
 
@@ -919,6 +920,7 @@ val AbLoopEnabledKey = booleanPreferencesKey("abLoopEnabled")
 // ---------------------------------------------------------------------------
 /** Downmixes stereo to mono for single-ear listening. */
 val MonoAudioKey = booleanPreferencesKey("monoAudio")
+
 /** Left/right balance from -1 (full left) to 1 (full right). */
 val AudioBalanceKey = floatPreferencesKey("audioBalance")
 
@@ -981,16 +983,20 @@ enum class MoodPlaylist(
 // ---------------------------------------------------------------------------
 // Smart resume for long-form content
 // ---------------------------------------------------------------------------
+
 /** Offers to resume long tracks (mixes, podcasts, live sets) where they left off. */
 val SmartResumeEnabledKey = booleanPreferencesKey("smartResumeEnabled")
+
 /** Minimum track length, in minutes, before a position is remembered. */
 val SmartResumeMinMinutesKey = intPreferencesKey("smartResumeMinMinutes")
+
 /** Saved playback position for a specific song. */
 fun resumePositionKey(songId: String) = longPreferencesKey("resumePosition_$songId")
 
 // ---------------------------------------------------------------------------
 // Headphone automation
 // ---------------------------------------------------------------------------
+
 /** Resumes playback automatically when headphones are connected. */
 val ResumeOnHeadphonesKey = booleanPreferencesKey("resumeOnHeadphones")
 
@@ -999,6 +1005,7 @@ val ResumeOnHeadphonesKey = booleanPreferencesKey("resumeOnHeadphones")
 // ---------------------------------------------------------------------------
 /** Double tapping the artwork seeks backward or forward. */
 val DoubleTapSeekKey = booleanPreferencesKey("doubleTapSeek")
+
 /** How many seconds a single double-tap seek jumps. */
 val DoubleTapSeekSecondsKey = intPreferencesKey("doubleTapSeekSeconds")
 
@@ -1007,10 +1014,13 @@ val DoubleTapSeekSecondsKey = intPreferencesKey("doubleTapSeekSeconds")
 // ---------------------------------------------------------------------------
 /** Disables decorative animations across the app. */
 val ReduceMotionKey = booleanPreferencesKey("reduceMotion")
+
 /** Reminds the user after a long continuous listening session. */
 val ListeningReminderEnabledKey = booleanPreferencesKey("listeningReminderEnabled")
+
 /** How many minutes of listening before a reminder appears. */
 val ListeningReminderMinutesKey = intPreferencesKey("listeningReminderMinutes")
+
 /** Larger, higher-contrast lyrics for readability. */
 val HighContrastLyricsKey = booleanPreferencesKey("highContrastLyrics")
 
@@ -1025,8 +1035,10 @@ val CacheTranslationsKey = booleanPreferencesKey("cacheTranslations")
 // ---------------------------------------------------------------------------
 /** Shows a "this week in previous years" row built from listening history. */
 val TimeMachineEnabledKey = booleanPreferencesKey("timeMachineEnabled")
+
 /** Surfaces rarely played songs from the user's own library. */
 val HiddenGemsEnabledKey = booleanPreferencesKey("hiddenGemsEnabled")
+
 /** Shows an explainable "because you listened to [artist]" row on Home. */
 val BecauseYouListenedEnabledKey = booleanPreferencesKey("becauseYouListenedEnabled")
 
@@ -1053,10 +1065,13 @@ enum class HomeRow(val titleRes: Int) {
 // ---------------------------------------------------------------------------
 // Playback speed per content type
 // ---------------------------------------------------------------------------
+
 /** Applies a separate default speed to long-form content such as podcasts and DJ sets. */
 val SpeedPerContentTypeKey = booleanPreferencesKey("speedPerContentType")
+
 /** Default speed used for long-form content when [SpeedPerContentTypeKey] is on. */
 val LongFormPlaybackSpeedKey = floatPreferencesKey("longFormPlaybackSpeed")
+
 /** Track length, in minutes, at or above which a track counts as long-form. */
 val LongFormMinMinutesKey = intPreferencesKey("longFormMinMinutes")
 
@@ -1065,12 +1080,14 @@ val LongFormMinMinutesKey = intPreferencesKey("longFormMinMinutes")
 // ---------------------------------------------------------------------------
 /** Skips to the next track once a trailing silent outro is reached. */
 val SkipSilentOutroKey = booleanPreferencesKey("skipSilentOutro")
+
 /** How many seconds of trailing audio are treated as a skippable outro. */
 val SilentOutroSecondsKey = intPreferencesKey("silentOutroSeconds")
 
 // ---------------------------------------------------------------------------
 // Personalisation: font and launcher icon
 // ---------------------------------------------------------------------------
+
 /** Font family applied app-wide. Stored via [CustomFontKey]. */
 enum class AppFont {
     SYSTEM,
@@ -1098,10 +1115,6 @@ val GitHubReleasesEtagKey = stringPreferencesKey("github_releases_etag")
 val GitHubReleasesJsonKey = stringPreferencesKey("github_releases_json")
 val GitHubReleasesLastCheckedAtKey = longPreferencesKey("github_releases_last_checked_at")
 val GitHubReleasesFingerprintKey = stringPreferencesKey("github_releases_fingerprint")
-
-
-
-
 
 val SpotifySpDcKey = stringPreferencesKey("spotify_sp_dc")
 val SpotifySpKeyKey = stringPreferencesKey("spotify_sp_key")

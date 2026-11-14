@@ -4,7 +4,6 @@
  * Licensed Under GPL-3.0 | see git history for contributors
  */
 
-
 import com.arturo254.opentune.betterlyrics.TTMLParser
 
 fun main(args: Array<String>) {

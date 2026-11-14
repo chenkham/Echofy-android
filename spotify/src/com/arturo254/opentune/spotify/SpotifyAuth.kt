@@ -7,11 +7,11 @@
 
 package com.arturo254.opentune.spotify
 
+import com.arturo254.opentune.spotify.models.SpotifyInternalToken
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
-import com.arturo254.opentune.spotify.models.SpotifyInternalToken
 import java.net.HttpURLConnection
 import java.net.URL
 import javax.crypto.Mac
@@ -183,9 +183,9 @@ object SpotifyAuth {
         val offset = hash[hash.size - 1].toInt() and 0x0F
         val code =
             ((hash[offset].toInt() and 0x7F) shl 24) or
-                    ((hash[offset + 1].toInt() and 0xFF) shl 16) or
-                    ((hash[offset + 2].toInt() and 0xFF) shl 8) or
-                    (hash[offset + 3].toInt() and 0xFF)
+                ((hash[offset + 1].toInt() and 0xFF) shl 16) or
+                ((hash[offset + 2].toInt() and 0xFF) shl 8) or
+                (hash[offset + 3].toInt() and 0xFF)
 
         val otp = code % 1_000_000
         return otp.toString().padStart(6, '0')

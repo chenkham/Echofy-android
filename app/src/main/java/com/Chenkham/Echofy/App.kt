@@ -11,9 +11,7 @@ import coil.ImageLoader
 import coil.ImageLoaderFactory
 import coil.disk.DiskCache
 import coil.request.CachePolicy
-import com.arturo254.opentune.innertube.YouTube
-import com.arturo254.opentune.innertube.models.YouTubeLocale
-import com.Chenkham.kugou.KuGou
+import com.Chenkham.Echofy.ads.AdManager
 import com.Chenkham.Echofy.constants.AccountChannelHandleKey
 import com.Chenkham.Echofy.constants.AccountEmailKey
 import com.Chenkham.Echofy.constants.AccountNameKey
@@ -27,23 +25,26 @@ import com.Chenkham.Echofy.constants.MaxImageCacheSizeKey
 import com.Chenkham.Echofy.constants.ProxyEnabledKey
 import com.Chenkham.Echofy.constants.ProxyTypeKey
 import com.Chenkham.Echofy.constants.ProxyUrlKey
+import com.Chenkham.Echofy.constants.ReleaseRadarEnabledKey
 import com.Chenkham.Echofy.constants.SYSTEM_DEFAULT
 import com.Chenkham.Echofy.constants.UseLoginForBrowse
 import com.Chenkham.Echofy.constants.VisitorDataKey
 import com.Chenkham.Echofy.constants.VisitorDataTimestampKey
 import com.Chenkham.Echofy.extensions.toEnum
 import com.Chenkham.Echofy.extensions.toInetSocketAddress
-import com.Chenkham.Echofy.utils.dataStore
 import com.Chenkham.Echofy.utils.ReleaseRadarWorker
-import com.Chenkham.Echofy.constants.ReleaseRadarEnabledKey
+import com.Chenkham.Echofy.utils.dataStore
 import com.Chenkham.Echofy.utils.get
-import kotlinx.coroutines.flow.first
 import com.Chenkham.Echofy.utils.reportException
+import com.Chenkham.kugou.KuGou
+import com.arturo254.opentune.innertube.YouTube
+import com.arturo254.opentune.innertube.models.YouTubeLocale
 import dagger.hilt.android.HiltAndroidApp
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
@@ -52,11 +53,9 @@ import timber.log.Timber
 import java.net.Proxy
 import java.util.Locale
 import javax.inject.Inject
-import com.Chenkham.Echofy.ads.AdManager
 
 @HiltAndroidApp
 class App : Application(), ImageLoaderFactory {
-    
     @Inject
     lateinit var adManager: AdManager
 
@@ -64,7 +63,7 @@ class App : Application(), ImageLoaderFactory {
         super.attachBaseContext(base)
         androidx.multidex.MultiDex.install(this)
     }
-    
+
     /**
      * Debug-only jank detector. Every violation is logged with a stack trace pointing at the
      * offending line, which is how main-thread disk/network work and leaked resources get
@@ -126,17 +125,18 @@ class App : Application(), ImageLoaderFactory {
         }
         instance = this
         Timber.plant(Timber.DebugTree())
-        
+
         // PERFORMANCE: Set locale immediately with system defaults (no IO blocking)
         val locale = Locale.getDefault()
         val systemCountry = locale.country.takeIf { it in CountryCodeToName } ?: "US"
         val languageTag = locale.toLanguageTag().replace("-Hant", "")
-        val systemLanguage = locale.language.takeIf { it in LanguageCodeToName }
-            ?: languageTag.takeIf { it in LanguageCodeToName }
-            ?: "en"
+        val systemLanguage =
+            locale.language.takeIf { it in LanguageCodeToName }
+                ?: languageTag.takeIf { it in LanguageCodeToName }
+                ?: "en"
 
         YouTube.locale = YouTubeLocale(gl = systemCountry, hl = systemLanguage)
-        
+
         if (languageTag == "zh-TW") {
             KuGou.useTraditionalChinese = true
         }
@@ -164,7 +164,7 @@ class App : Application(), ImageLoaderFactory {
             kotlinx.coroutines.delay(3000)
             adManager.initialize()
         }
-        
+
         // PERFORMANCE: Phase 5 - FCM topics (5 seconds delay)
         GlobalScope.launch(Dispatchers.IO) {
             kotlinx.coroutines.delay(5000)
@@ -213,7 +213,10 @@ class App : Application(), ImageLoaderFactory {
      * - Retries the fetch up to 3 times with exponential backoff on failure.
      */
     @OptIn(DelicateCoroutinesApi::class)
-    private fun initializeVisitorData(systemCountry: String, systemLanguage: String) {
+    private fun initializeVisitorData(
+        systemCountry: String,
+        systemLanguage: String,
+    ) {
         GlobalScope.launch(Dispatchers.IO) {
             // Observe store changes (e.g. after login/logout) and apply to YouTube
             dataStore.data
@@ -294,24 +297,29 @@ class App : Application(), ImageLoaderFactory {
      * Apply user preferences for proxy, locale, etc.
      */
     @OptIn(DelicateCoroutinesApi::class)
-    private fun applyUserPreferences(systemCountry: String, systemLanguage: String) {
+    private fun applyUserPreferences(
+        systemCountry: String,
+        systemLanguage: String,
+    ) {
         GlobalScope.launch(Dispatchers.IO) {
             val userCountry = dataStore[ContentCountryKey]?.takeIf { it != SYSTEM_DEFAULT }
             val userLanguage = dataStore[ContentLanguageKey]?.takeIf { it != SYSTEM_DEFAULT }
 
             if (userCountry != null || userLanguage != null) {
-                YouTube.locale = YouTubeLocale(
-                    gl = userCountry ?: systemCountry,
-                    hl = userLanguage ?: systemLanguage
-                )
+                YouTube.locale =
+                    YouTubeLocale(
+                        gl = userCountry ?: systemCountry,
+                        hl = userLanguage ?: systemLanguage,
+                    )
             }
 
             if (dataStore[ProxyEnabledKey] == true) {
                 try {
-                    YouTube.proxy = Proxy(
-                        dataStore[ProxyTypeKey].toEnum(defaultValue = Proxy.Type.HTTP),
-                        dataStore[ProxyUrlKey]!!.toInetSocketAddress()
-                    )
+                    YouTube.proxy =
+                        Proxy(
+                            dataStore[ProxyTypeKey].toEnum(defaultValue = Proxy.Type.HTTP),
+                            dataStore[ProxyUrlKey]!!.toInetSocketAddress(),
+                        )
                 } catch (e: Exception) {
                     withContext(Dispatchers.Main) {
                         Toast.makeText(this@App, "Failed to parse proxy url.", LENGTH_SHORT).show()
@@ -337,11 +345,12 @@ class App : Application(), ImageLoaderFactory {
                 .map { it[DataSyncIdKey] }
                 .distinctUntilChanged()
                 .collect { dataSyncId ->
-                    YouTube.dataSyncId = dataSyncId?.let {
-                        it.takeIf { !it.contains("||") }
-                            ?: it.takeIf { it.endsWith("||") }?.substringBefore("||")
-                            ?: it.substringAfter("||")
-                    }
+                    YouTube.dataSyncId =
+                        dataSyncId?.let {
+                            it.takeIf { !it.contains("||") }
+                                ?: it.takeIf { it.endsWith("||") }?.substringBefore("||")
+                                ?: it.substringAfter("||")
+                        }
                 }
         }
 
@@ -360,14 +369,14 @@ class App : Application(), ImageLoaderFactory {
                 }
         }
     }
-    
+
     /**
      * Called when the app is terminating. Clear cache if auto-clear preference is enabled.
      */
     @OptIn(DelicateCoroutinesApi::class)
     override fun onTerminate() {
         super.onTerminate()
-        
+
         // Check if auto-clear cache is enabled
         GlobalScope.launch(Dispatchers.IO) {
             try {
@@ -381,7 +390,7 @@ class App : Application(), ImageLoaderFactory {
             }
         }
     }
-    
+
     /**
      * Clears all app caches (image cache and song cache).
      */
@@ -391,7 +400,7 @@ class App : Application(), ImageLoaderFactory {
             val imageCacheDir = cacheDir.resolve("coil")
             imageCacheDir.deleteRecursively()
             Timber.d("Image cache cleared")
-            
+
             // Clear ExoPlayer cache
             val playerCacheDir = cacheDir.resolve("exoplayer")
             playerCacheDir.deleteRecursively()
@@ -400,7 +409,7 @@ class App : Application(), ImageLoaderFactory {
             Timber.e(e, "Failed to clear caches")
         }
     }
-    
+
     /**
      * Subscribe to default FCM topics for receiving notifications.
      */
@@ -420,7 +429,7 @@ class App : Application(), ImageLoaderFactory {
             }
         }
     }
-    
+
     /**
      * Show welcome notification on first app launch.
      * Shows in system notification bar AND saves to in-app history.
@@ -428,55 +437,61 @@ class App : Application(), ImageLoaderFactory {
     private fun showWelcomeNotificationIfFirstLaunch() {
         val prefs = getSharedPreferences("echofy_app", android.content.Context.MODE_PRIVATE)
         val hasShownWelcome = prefs.getBoolean("has_shown_welcome", false)
-        
+
         if (hasShownWelcome) return
-        
+
         // Mark as shown
         prefs.edit().putBoolean("has_shown_welcome", true).apply()
-        
+
         // Welcome message content
         val title = "Welcome to Echofy! 🎵"
         val body = "No ads. No limits. Welcome to Echofy—download your favorites and play offline"
-        
+
         // Show system notification
         try {
             val notificationManager = getSystemService(android.content.Context.NOTIFICATION_SERVICE) as android.app.NotificationManager
-            
+
             // Create channel for Android 8.0+
             if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
-                val channel = android.app.NotificationChannel(
-                    "echofy_welcome",
-                    "Welcome",
-                    android.app.NotificationManager.IMPORTANCE_DEFAULT
-                )
+                val channel =
+                    android.app.NotificationChannel(
+                        "echofy_welcome",
+                        "Welcome",
+                        android.app.NotificationManager.IMPORTANCE_DEFAULT,
+                    )
                 notificationManager.createNotificationChannel(channel)
             }
-            
-            val intent = android.content.Intent(this, MainActivity::class.java).apply {
-                flags = android.content.Intent.FLAG_ACTIVITY_NEW_TASK or android.content.Intent.FLAG_ACTIVITY_CLEAR_TOP
-            }
-            
-            val pendingIntent = android.app.PendingIntent.getActivity(
-                this, 0, intent,
-                android.app.PendingIntent.FLAG_IMMUTABLE or android.app.PendingIntent.FLAG_UPDATE_CURRENT
-            )
-            
-            val notification = androidx.core.app.NotificationCompat.Builder(this, "echofy_welcome")
-                .setSmallIcon(R.drawable.notification_on)
-                .setContentTitle(title)
-                .setContentText(body)
-                .setStyle(androidx.core.app.NotificationCompat.BigTextStyle().bigText(body))
-                .setPriority(androidx.core.app.NotificationCompat.PRIORITY_DEFAULT)
-                .setContentIntent(pendingIntent)
-                .setAutoCancel(true)
-                .build()
-            
+
+            val intent =
+                android.content.Intent(this, MainActivity::class.java).apply {
+                    flags = android.content.Intent.FLAG_ACTIVITY_NEW_TASK or android.content.Intent.FLAG_ACTIVITY_CLEAR_TOP
+                }
+
+            val pendingIntent =
+                android.app.PendingIntent.getActivity(
+                    this,
+                    0,
+                    intent,
+                    android.app.PendingIntent.FLAG_IMMUTABLE or android.app.PendingIntent.FLAG_UPDATE_CURRENT,
+                )
+
+            val notification =
+                androidx.core.app.NotificationCompat.Builder(this, "echofy_welcome")
+                    .setSmallIcon(R.drawable.notification_on)
+                    .setContentTitle(title)
+                    .setContentText(body)
+                    .setStyle(androidx.core.app.NotificationCompat.BigTextStyle().bigText(body))
+                    .setPriority(androidx.core.app.NotificationCompat.PRIORITY_DEFAULT)
+                    .setContentIntent(pendingIntent)
+                    .setAutoCancel(true)
+                    .build()
+
             notificationManager.notify(1, notification)
             Timber.d("Showed welcome notification")
         } catch (e: Exception) {
             Timber.e(e, "Failed to show welcome notification")
         }
-        
+
         // Also save to in-app notification history
         try {
             val notifPrefs = getSharedPreferences("echofy_notifications", android.content.Context.MODE_PRIVATE)
@@ -491,11 +506,12 @@ class App : Application(), ImageLoaderFactory {
     override fun newImageLoader(): ImageLoader {
         val cacheSize = dataStore[MaxImageCacheSizeKey] ?: 512
 
-        val okHttpClient = okhttp3.OkHttpClient.Builder()
-            .connectionPool(okhttp3.ConnectionPool(8, 5, java.util.concurrent.TimeUnit.MINUTES))
-            .connectTimeout(10, java.util.concurrent.TimeUnit.SECONDS)
-            .readTimeout(10, java.util.concurrent.TimeUnit.SECONDS)
-            .build()
+        val okHttpClient =
+            okhttp3.OkHttpClient.Builder()
+                .connectionPool(okhttp3.ConnectionPool(8, 5, java.util.concurrent.TimeUnit.MINUTES))
+                .connectTimeout(10, java.util.concurrent.TimeUnit.SECONDS)
+                .readTimeout(10, java.util.concurrent.TimeUnit.SECONDS)
+                .build()
 
         if (cacheSize <= 0) {
             return ImageLoader.Builder(this)
@@ -509,18 +525,19 @@ class App : Application(), ImageLoaderFactory {
 
         val safeMaxSizeBytes = (cacheSize.coerceAtLeast(64) * 1024 * 1024L)
 
-        val builder = ImageLoader.Builder(this)
-            .crossfade(false)
-            .respectCacheHeaders(false)
-            .allowHardware(Build.VERSION.SDK_INT >= Build.VERSION_CODES.P)
-            .okHttpClient(okHttpClient)
-            .memoryCache {
-                coil.memory.MemoryCache.Builder(this)
-                    .maxSizePercent(0.20)
-                    .strongReferencesEnabled(false)
-                    .weakReferencesEnabled(true)
-                    .build()
-            }
+        val builder =
+            ImageLoader.Builder(this)
+                .crossfade(false)
+                .respectCacheHeaders(false)
+                .allowHardware(Build.VERSION.SDK_INT >= Build.VERSION_CODES.P)
+                .okHttpClient(okHttpClient)
+                .memoryCache {
+                    coil.memory.MemoryCache.Builder(this)
+                        .maxSizePercent(0.20)
+                        .strongReferencesEnabled(false)
+                        .weakReferencesEnabled(true)
+                        .build()
+                }
 
         try {
             // Coil creates and manages this directory itself, lazily and off the main thread.

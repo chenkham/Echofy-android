@@ -4,8 +4,6 @@
  * Licensed Under GPL-3.0 | see git history for contributors
  */
 
-
-
 package com.Chenkham.Echofy.ui.screens.settings
 
 import androidx.compose.foundation.layout.Arrangement
@@ -32,7 +30,6 @@ import androidx.compose.material3.Slider
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
-import androidx.compose.ui.graphics.Color
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.TopAppBarScrollBehavior
 import androidx.compose.runtime.Composable
@@ -47,24 +44,22 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import com.Chenkham.Echofy.LocalPlayerAwareWindowInsets
 import com.Chenkham.Echofy.R
 import com.Chenkham.Echofy.constants.EnableLastFMScrobblingKey
 import com.Chenkham.Echofy.constants.LastFMSessionKey
-import com.Chenkham.Echofy.constants.LastFMUsernameKey
 import com.Chenkham.Echofy.constants.LastFMUseNowPlaying
+import com.Chenkham.Echofy.constants.LastFMUsernameKey
 import com.Chenkham.Echofy.constants.ScrobbleDelayPercentKey
-import com.Chenkham.Echofy.constants.ScrobbleMinSongDurationKey
 import com.Chenkham.Echofy.constants.ScrobbleDelaySecondsKey
+import com.Chenkham.Echofy.constants.ScrobbleMinSongDurationKey
 import com.Chenkham.Echofy.ui.component.IconButton
 import com.Chenkham.Echofy.ui.component.PreferenceEntry
 import com.Chenkham.Echofy.ui.component.PreferenceGroupTitle
@@ -73,6 +68,9 @@ import com.Chenkham.Echofy.ui.utils.backToMain
 import com.Chenkham.Echofy.utils.rememberPreference
 import com.Chenkham.Echofy.utils.reportException
 import com.arturo254.opentune.lastfm.LastFM
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import timber.log.Timber
 import kotlin.math.roundToInt
 
@@ -94,34 +92,40 @@ fun LastFMSettings(
     var lastfmUsername by rememberPreference(LastFMUsernameKey, "")
     var lastfmSession by rememberPreference(LastFMSessionKey, "")
 
-    val isLoggedIn = remember(lastfmSession) {
-        lastfmSession.isNotEmpty()
-    }
+    val isLoggedIn =
+        remember(lastfmSession) {
+            lastfmSession.isNotEmpty()
+        }
 
-    val (useNowPlaying, onUseNowPlayingChange) = rememberPreference(
-        key = LastFMUseNowPlaying,
-        defaultValue = false
-    )
+    val (useNowPlaying, onUseNowPlayingChange) =
+        rememberPreference(
+            key = LastFMUseNowPlaying,
+            defaultValue = false,
+        )
 
-    val (lastfmScrobbling, onlastfmScrobblingChange) = rememberPreference(
-        key = EnableLastFMScrobblingKey,
-        defaultValue = false
-    )
+    val (lastfmScrobbling, onlastfmScrobblingChange) =
+        rememberPreference(
+            key = EnableLastFMScrobblingKey,
+            defaultValue = false,
+        )
 
-    val (scrobbleDelayPercent, onScrobbleDelayPercentChange) = rememberPreference(
-        ScrobbleDelayPercentKey,
-        defaultValue = LastFM.DEFAULT_SCROBBLE_DELAY_PERCENT
-    )
+    val (scrobbleDelayPercent, onScrobbleDelayPercentChange) =
+        rememberPreference(
+            ScrobbleDelayPercentKey,
+            defaultValue = LastFM.DEFAULT_SCROBBLE_DELAY_PERCENT,
+        )
 
-    val (minTrackDuration, onMinTrackDurationChange) = rememberPreference(
-        ScrobbleMinSongDurationKey,
-        defaultValue = LastFM.DEFAULT_SCROBBLE_MIN_SONG_DURATION
-    )
+    val (minTrackDuration, onMinTrackDurationChange) =
+        rememberPreference(
+            ScrobbleMinSongDurationKey,
+            defaultValue = LastFM.DEFAULT_SCROBBLE_MIN_SONG_DURATION,
+        )
 
-    val (scrobbleDelaySeconds, onScrobbleDelaySecondsChange) = rememberPreference(
-        ScrobbleDelaySecondsKey,
-        defaultValue = LastFM.DEFAULT_SCROBBLE_DELAY_SECONDS
-    )
+    val (scrobbleDelaySeconds, onScrobbleDelaySecondsChange) =
+        rememberPreference(
+            ScrobbleDelaySecondsKey,
+            defaultValue = LastFM.DEFAULT_SCROBBLE_DELAY_SECONDS,
+        )
 
     var showLoginDialog by rememberSaveable { mutableStateOf(false) }
     var isLoggingIn by rememberSaveable { mutableStateOf(false) }
@@ -132,7 +136,7 @@ fun LastFMSettings(
         var tempPassword by rememberSaveable { mutableStateOf("") }
 
         AlertDialog(
-            onDismissRequest = { 
+            onDismissRequest = {
                 if (!isLoggingIn) {
                     showLoginDialog = false
                     loginError = null
@@ -141,22 +145,22 @@ fun LastFMSettings(
             title = { Text(stringResource(R.string.login)) },
             text = {
                 Column(
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
                     OutlinedTextField(
                         value = tempUsername,
-                        onValueChange = { 
+                        onValueChange = {
                             tempUsername = it
                             loginError = null
                         },
                         label = { Text(stringResource(R.string.username)) },
                         singleLine = true,
                         enabled = !isLoggingIn,
-                        modifier = Modifier.fillMaxWidth()
+                        modifier = Modifier.fillMaxWidth(),
                     )
                     OutlinedTextField(
                         value = tempPassword,
-                        onValueChange = { 
+                        onValueChange = {
                             tempPassword = it
                             loginError = null
                         },
@@ -165,7 +169,7 @@ fun LastFMSettings(
                         visualTransformation = PasswordVisualTransformation(),
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
                         enabled = !isLoggingIn,
-                        modifier = Modifier.fillMaxWidth()
+                        modifier = Modifier.fillMaxWidth(),
                     )
 
                     loginError?.let { error ->
@@ -173,26 +177,27 @@ fun LastFMSettings(
                             text = error,
                             color = MaterialTheme.colorScheme.error,
                             style = MaterialTheme.typography.bodySmall,
-                            modifier = Modifier.padding(top = 4.dp)
+                            modifier = Modifier.padding(top = 4.dp),
                         )
                     }
 
                     if (isLoggingIn) {
                         Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(top = 8.dp),
+                            modifier =
+                                Modifier
+                                    .fillMaxWidth()
+                                    .padding(top = 8.dp),
                             horizontalArrangement = Arrangement.Center,
-                            verticalAlignment = Alignment.CenterVertically
+                            verticalAlignment = Alignment.CenterVertically,
                         ) {
                             CircularProgressIndicator(
                                 modifier = Modifier.size(24.dp),
-                                strokeWidth = 2.dp
+                                strokeWidth = 2.dp,
                             )
                             Text(
                                 text = stringResource(R.string.logging_in),
                                 style = MaterialTheme.typography.bodyMedium,
-                                modifier = Modifier.padding(start = 8.dp)
+                                modifier = Modifier.padding(start = 8.dp),
                             )
                         }
                     }
@@ -205,16 +210,16 @@ fun LastFMSettings(
                             loginError = "Please enter username and password"
                             return@TextButton
                         }
-                        
+
                         if (!LastFM.isInitialized()) {
                             loginError = "Last.fm API key not configured"
                             Timber.e("Last.fm API key not configured")
                             return@TextButton
                         }
-                        
+
                         isLoggingIn = true
                         loginError = null
-                        
+
                         coroutineScope.launch(Dispatchers.IO) {
                             LastFM.getMobileSession(tempUsername, tempPassword)
                                 .onSuccess { auth ->
@@ -231,28 +236,30 @@ fun LastFMSettings(
                                 .onFailure { exception ->
                                     withContext(Dispatchers.Main) {
                                         isLoggingIn = false
-                                        val errorMessage = when (exception) {
-                                            is LastFM.LastFmException -> {
-                                                // Last.fm API error codes:
-                                                // 4 = Invalid authentication token
-                                                // 10 = Invalid API key
-                                                // 13 = Invalid method signature
-                                                // 26 = API key suspended
-                                                when (exception.code) {
-                                                    4 -> "Invalid username or password"
-                                                    10 -> "Invalid API key. Please contact the developer."
-                                                    13 -> "Authentication error. Please try again."
-                                                    26 -> "API key suspended. Please contact the developer."
-                                                    else -> exception.message
+                                        val errorMessage =
+                                            when (exception) {
+                                                is LastFM.LastFmException -> {
+                                                    // Last.fm API error codes:
+                                                    // 4 = Invalid authentication token
+                                                    // 10 = Invalid API key
+                                                    // 13 = Invalid method signature
+                                                    // 26 = API key suspended
+                                                    when (exception.code) {
+                                                        4 -> "Invalid username or password"
+                                                        10 -> "Invalid API key. Please contact the developer."
+                                                        13 -> "Authentication error. Please try again."
+                                                        26 -> "API key suspended. Please contact the developer."
+                                                        else -> exception.message
+                                                    }
                                                 }
+                                                else ->
+                                                    when {
+                                                        exception.message?.contains("network", ignoreCase = true) == true ||
+                                                            exception.message?.contains("connect", ignoreCase = true) == true ->
+                                                            "Network error. Check your connection."
+                                                        else -> exception.message ?: "Login failed. Please try again."
+                                                    }
                                             }
-                                            else -> when {
-                                                exception.message?.contains("network", ignoreCase = true) == true ||
-                                                exception.message?.contains("connect", ignoreCase = true) == true ->
-                                                    "Network error. Check your connection."
-                                                else -> exception.message ?: "Login failed. Please try again."
-                                            }
-                                        }
                                         loginError = errorMessage
                                         Timber.e(exception, "Last.fm login failed")
                                         reportException(exception)
@@ -260,7 +267,7 @@ fun LastFMSettings(
                                 }
                         }
                     },
-                    enabled = !isLoggingIn && tempUsername.isNotBlank() && tempPassword.isNotBlank()
+                    enabled = !isLoggingIn && tempUsername.isNotBlank() && tempPassword.isNotBlank(),
                 ) {
                     Text(stringResource(R.string.login))
                 }
@@ -271,25 +278,25 @@ fun LastFMSettings(
                         showLoginDialog = false
                         loginError = null
                     },
-                    enabled = !isLoggingIn
+                    enabled = !isLoggingIn,
                 ) {
                     Text(stringResource(R.string.cancel))
                 }
-            }
+            },
         )
     }
 
     Column(
         Modifier
             .windowInsetsPadding(LocalPlayerAwareWindowInsets.current.only(WindowInsetsSides.Horizontal + WindowInsetsSides.Bottom))
-            .verticalScroll(rememberScrollState())
+            .verticalScroll(rememberScrollState()),
     ) {
         Spacer(
             Modifier.windowInsetsPadding(
                 LocalPlayerAwareWindowInsets.current.only(
-                    WindowInsetsSides.Top
-                )
-            )
+                    WindowInsetsSides.Top,
+                ),
+            ),
         )
 
         PreferenceGroupTitle(
@@ -344,7 +351,7 @@ fun LastFMSettings(
         )
 
         PreferenceGroupTitle(
-            title = stringResource(R.string.scrobbling_configuration)
+            title = stringResource(R.string.scrobbling_configuration),
         )
 
         var showMinTrackDurationDialog by rememberSaveable { mutableStateOf(false) }
@@ -361,19 +368,19 @@ fun LastFMSettings(
                 text = {
                     Column(
                         horizontalAlignment = Alignment.CenterHorizontally,
-                        modifier = Modifier.padding(16.dp)
+                        modifier = Modifier.padding(16.dp),
                     ) {
                         Text(
                             text = "${tempMinTrackDuration}s",
                             style = MaterialTheme.typography.bodyLarge,
-                            modifier = Modifier.padding(bottom = 16.dp)
+                            modifier = Modifier.padding(bottom = 16.dp),
                         )
 
                         Slider(
                             value = tempMinTrackDuration.toFloat(),
                             onValueChange = { tempMinTrackDuration = it.toInt() },
                             valueRange = 10f..60f,
-                            modifier = Modifier.fillMaxWidth()
+                            modifier = Modifier.fillMaxWidth(),
                         )
                     }
                 },
@@ -382,7 +389,7 @@ fun LastFMSettings(
                         onClick = {
                             onMinTrackDurationChange(tempMinTrackDuration)
                             showMinTrackDurationDialog = false
-                        }
+                        },
                     ) {
                         Text(stringResource(android.R.string.ok))
                     }
@@ -392,18 +399,18 @@ fun LastFMSettings(
                         onClick = {
                             tempMinTrackDuration = minTrackDuration
                             showMinTrackDurationDialog = false
-                        }
+                        },
                     ) {
                         Text(stringResource(android.R.string.cancel))
                     }
-                }
+                },
             )
         }
 
         PreferenceEntry(
             title = { Text(stringResource(R.string.scrobble_min_track_duration)) },
             description = "${minTrackDuration}s",
-            onClick = { showMinTrackDurationDialog = true }
+            onClick = { showMinTrackDurationDialog = true },
         )
 
         var showScrobbleDelayPercentDialog by rememberSaveable { mutableStateOf(false) }
@@ -420,19 +427,19 @@ fun LastFMSettings(
                 text = {
                     Column(
                         horizontalAlignment = Alignment.CenterHorizontally,
-                        modifier = Modifier.padding(16.dp)
+                        modifier = Modifier.padding(16.dp),
                     ) {
                         Text(
                             text = "${(tempScrobbleDelayPercent * 100).roundToInt()}%",
                             style = MaterialTheme.typography.bodyLarge,
-                            modifier = Modifier.padding(bottom = 16.dp)
+                            modifier = Modifier.padding(bottom = 16.dp),
                         )
 
                         Slider(
                             value = tempScrobbleDelayPercent,
                             onValueChange = { tempScrobbleDelayPercent = it },
                             valueRange = 0.3f..0.95f,
-                            modifier = Modifier.fillMaxWidth()
+                            modifier = Modifier.fillMaxWidth(),
                         )
                     }
                 },
@@ -441,7 +448,7 @@ fun LastFMSettings(
                         onClick = {
                             onScrobbleDelayPercentChange(tempScrobbleDelayPercent)
                             showScrobbleDelayPercentDialog = false
-                        }
+                        },
                     ) {
                         Text(stringResource(android.R.string.ok))
                     }
@@ -451,18 +458,18 @@ fun LastFMSettings(
                         onClick = {
                             tempScrobbleDelayPercent = scrobbleDelayPercent
                             showScrobbleDelayPercentDialog = false
-                        }
+                        },
                     ) {
                         Text(stringResource(android.R.string.cancel))
                     }
-                }
+                },
             )
         }
 
         PreferenceEntry(
             title = { Text(stringResource(R.string.scrobble_delay_percent)) },
             description = "${(scrobbleDelayPercent * 100).roundToInt()}%",
-            onClick = { showScrobbleDelayPercentDialog = true }
+            onClick = { showScrobbleDelayPercentDialog = true },
         )
 
         var showScrobbleDelaySecondsDialog by rememberSaveable { mutableStateOf(false) }
@@ -479,19 +486,19 @@ fun LastFMSettings(
                 text = {
                     Column(
                         horizontalAlignment = Alignment.CenterHorizontally,
-                        modifier = Modifier.padding(16.dp)
+                        modifier = Modifier.padding(16.dp),
                     ) {
                         Text(
                             text = "${tempScrobbleDelaySeconds}s",
                             style = MaterialTheme.typography.bodyLarge,
-                            modifier = Modifier.padding(bottom = 16.dp)
+                            modifier = Modifier.padding(bottom = 16.dp),
                         )
 
                         Slider(
                             value = tempScrobbleDelaySeconds.toFloat(),
                             onValueChange = { tempScrobbleDelaySeconds = it.toInt() },
                             valueRange = 30f..360f,
-                            modifier = Modifier.fillMaxWidth()
+                            modifier = Modifier.fillMaxWidth(),
                         )
                     }
                 },
@@ -500,7 +507,7 @@ fun LastFMSettings(
                         onClick = {
                             onScrobbleDelaySecondsChange(tempScrobbleDelaySeconds)
                             showScrobbleDelaySecondsDialog = false
-                        }
+                        },
                     ) {
                         Text(stringResource(android.R.string.ok))
                     }
@@ -510,23 +517,23 @@ fun LastFMSettings(
                         onClick = {
                             tempScrobbleDelaySeconds = scrobbleDelaySeconds
                             showScrobbleDelaySecondsDialog = false
-                        }
+                        },
                     ) {
                         Text(stringResource(android.R.string.cancel))
                     }
-                }
+                },
             )
         }
 
         PreferenceEntry(
             title = { Text(stringResource(R.string.scrobble_delay_minutes)) },
             description = "${scrobbleDelaySeconds}s",
-            onClick = { showScrobbleDelaySecondsDialog = true }
+            onClick = { showScrobbleDelaySecondsDialog = true },
         )
     }
 
     TopAppBar(
-            colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent, scrolledContainerColor = Color.Transparent),
+        colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent, scrolledContainerColor = Color.Transparent),
         title = { Text(stringResource(R.string.lastfm_integration)) },
         navigationIcon = {
             IconButton(
@@ -538,6 +545,6 @@ fun LastFMSettings(
                     contentDescription = null,
                 )
             }
-        }
+        },
     )
 }

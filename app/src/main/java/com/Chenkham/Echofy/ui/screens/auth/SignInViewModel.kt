@@ -13,43 +13,47 @@ import javax.inject.Inject
 
 sealed class SignInState {
     object Idle : SignInState()
+
     object Loading : SignInState()
+
     data class Success(val user: UserEntity) : SignInState()
+
     data class Error(val message: String) : SignInState()
 }
 
 @HiltViewModel
-class SignInViewModel @Inject constructor(
-    private val authRepository: AuthRepository
-) : ViewModel() {
-    
-    private val _signInState = MutableStateFlow<SignInState>(SignInState.Idle)
-    val signInState: StateFlow<SignInState> = _signInState
-    
-    // TODO: Replace with your actual Web Client ID from Firebase Console
-    private val WEB_CLIENT_ID = "1033902318161-c6qh9nvnnrvc5nql7031b4bcjotp07v6.apps.googleusercontent.com"
-    
-    fun signInWithGoogle(context: Context) {
-        viewModelScope.launch {
-            _signInState.value = SignInState.Loading
-            
-            try {
-                val result = authRepository.signInWithGoogle(WEB_CLIENT_ID, context)
-                
-                _signInState.value = result.fold(
-                    onSuccess = { user -> 
-                        SignInState.Success(user) 
-                    },
-                    onFailure = { error -> 
-                        android.util.Log.e("SignInViewModel", "Sign in failed", error)
-                        SignInState.Error(error.message ?: "Sign in failed. Check network or configuration.") 
-                    }
-                )
-            } catch (e: Exception) {
-                android.util.Log.e("SignInViewModel", "Sign in exception", e)
-                _signInState.value = SignInState.Error(e.message ?: "Unexpected error during sign in")
+class SignInViewModel
+    @Inject
+    constructor(
+        private val authRepository: AuthRepository,
+    ) : ViewModel() {
+        private val _signInState = MutableStateFlow<SignInState>(SignInState.Idle)
+        val signInState: StateFlow<SignInState> = _signInState
+
+        // TODO: Replace with your actual Web Client ID from Firebase Console
+        private val WEB_CLIENT_ID = "1033902318161-c6qh9nvnnrvc5nql7031b4bcjotp07v6.apps.googleusercontent.com"
+
+        fun signInWithGoogle(context: Context) {
+            viewModelScope.launch {
+                _signInState.value = SignInState.Loading
+
+                try {
+                    val result = authRepository.signInWithGoogle(WEB_CLIENT_ID, context)
+
+                    _signInState.value =
+                        result.fold(
+                            onSuccess = { user ->
+                                SignInState.Success(user)
+                            },
+                            onFailure = { error ->
+                                android.util.Log.e("SignInViewModel", "Sign in failed", error)
+                                SignInState.Error(error.message ?: "Sign in failed. Check network or configuration.")
+                            },
+                        )
+                } catch (e: Exception) {
+                    android.util.Log.e("SignInViewModel", "Sign in exception", e)
+                    _signInState.value = SignInState.Error(e.message ?: "Unexpected error during sign in")
+                }
             }
         }
     }
-}
-

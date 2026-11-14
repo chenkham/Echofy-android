@@ -34,19 +34,20 @@ import androidx.compose.ui.unit.dp
 @Composable
 fun SettingsCategory(
     title: String? = null,
-    items: List<SettingsCategoryItem>
+    items: List<SettingsCategoryItem>,
 ) {
     Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 6.dp)
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 6.dp),
     ) {
         title?.let {
             Text(
                 text = it,
                 style = MaterialTheme.typography.labelLarge,
                 color = MaterialTheme.colorScheme.primary,
-                modifier = Modifier.padding(start = 4.dp, bottom = 8.dp, top = 8.dp)
+                modifier = Modifier.padding(start = 4.dp, bottom = 8.dp, top = 8.dp),
             )
         }
 
@@ -54,22 +55,24 @@ fun SettingsCategory(
             shape = RoundedCornerShape(20.dp),
             color = MaterialTheme.colorScheme.surfaceContainer,
             shadowElevation = 2.dp,
-            border = androidx.compose.foundation.BorderStroke(
-                1.dp,
-                MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.2f)
-            ),
-            modifier = Modifier.fillMaxWidth()
+            border =
+                androidx.compose.foundation.BorderStroke(
+                    1.dp,
+                    MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.2f),
+                ),
+            modifier = Modifier.fillMaxWidth(),
         ) {
             Column {
                 items.forEachIndexed { index, item ->
                     Material3SettingsItemRow(item = item)
                     if (index < items.lastIndex) {
                         Spacer(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(1.dp)
-                                .padding(horizontal = 16.dp)
-                                .background(MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.12f))
+                            modifier =
+                                Modifier
+                                    .fillMaxWidth()
+                                    .height(1.dp)
+                                    .padding(horizontal = 16.dp)
+                                    .background(MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.12f)),
                         )
                     }
                 }
@@ -81,19 +84,20 @@ fun SettingsCategory(
 @Composable
 fun SettingsGeneralCategory(
     title: String? = null,
-    items: List<@Composable () -> Unit>
+    items: List<@Composable () -> Unit>,
 ) {
     Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 6.dp)
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 6.dp),
     ) {
         title?.let {
             Text(
                 text = it,
                 style = MaterialTheme.typography.labelLarge,
                 color = MaterialTheme.colorScheme.primary,
-                modifier = Modifier.padding(start = 4.dp, bottom = 8.dp, top = 8.dp)
+                modifier = Modifier.padding(start = 4.dp, bottom = 8.dp, top = 8.dp),
             )
         }
 
@@ -101,25 +105,27 @@ fun SettingsGeneralCategory(
             shape = RoundedCornerShape(20.dp),
             color = MaterialTheme.colorScheme.surfaceContainer,
             shadowElevation = 2.dp,
-            border = androidx.compose.foundation.BorderStroke(
-                1.dp,
-                MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.2f)
-            ),
-            modifier = Modifier.fillMaxWidth()
+            border =
+                androidx.compose.foundation.BorderStroke(
+                    1.dp,
+                    MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.2f),
+                ),
+            modifier = Modifier.fillMaxWidth(),
         ) {
             androidx.compose.runtime.CompositionLocalProvider(
-                com.Chenkham.Echofy.ui.component.LocalPreferenceInGroup provides true
+                com.Chenkham.Echofy.ui.component.LocalPreferenceInGroup provides true,
             ) {
                 Column {
                     items.forEachIndexed { index, item ->
                         item()
                         if (index < items.lastIndex) {
                             Spacer(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .height(1.dp)
-                                    .padding(horizontal = 16.dp)
-                                    .background(MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.12f))
+                                modifier =
+                                    Modifier
+                                        .fillMaxWidth()
+                                        .height(1.dp)
+                                        .padding(horizontal = 16.dp)
+                                        .background(MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.12f)),
                             )
                         }
                     }
@@ -130,83 +136,87 @@ fun SettingsGeneralCategory(
 }
 
 @Composable
-private fun Material3SettingsItemRow(
-    item: SettingsCategoryItem,
-) {
-    val teardropShape = RoundedCornerShape(
-        topStart = 20.dp,
-        topEnd = 20.dp,
-        bottomStart = 20.dp,
-        bottomEnd = 4.dp
-    )
+private fun Material3SettingsItemRow(item: SettingsCategoryItem) {
+    val teardropShape =
+        RoundedCornerShape(
+            topStart = 20.dp,
+            topEnd = 20.dp,
+            bottomStart = 20.dp,
+            bottomEnd = 4.dp,
+        )
 
     Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable(
-                enabled = item.onClick != null,
-                onClick = { item.onClick?.invoke() }
-            )
-            .padding(horizontal = 16.dp, vertical = 14.dp),
-        verticalAlignment = Alignment.CenterVertically
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .clickable(
+                    enabled = item.onClick != null,
+                    onClick = { item.onClick?.invoke() },
+                )
+                .padding(horizontal = 16.dp, vertical = 14.dp),
+        verticalAlignment = Alignment.CenterVertically,
     ) {
         item.icon?.let { icon ->
             Box(
-                modifier = Modifier
-                    .size(44.dp)
-                    .shadow(
-                        elevation = 3.dp,
-                        shape = teardropShape,
-                        ambientColor = Color.Black.copy(alpha = 0.45f),
-                        spotColor = Color.Black.copy(alpha = 0.35f),
-                    )
-                    .clip(teardropShape)
-                    .background(
-                        Brush.linearGradient(
-                            colors = listOf(
-                                MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.95f),
-                                MaterialTheme.colorScheme.surfaceContainerHighest.copy(alpha = 0.85f),
-                            ),
-                            start = Offset(0f, 0f),
-                            end = Offset(100f, 100f)
+                modifier =
+                    Modifier
+                        .size(44.dp)
+                        .shadow(
+                            elevation = 3.dp,
+                            shape = teardropShape,
+                            ambientColor = Color.Black.copy(alpha = 0.45f),
+                            spotColor = Color.Black.copy(alpha = 0.35f),
                         )
-                    )
-                    .border(
-                        width = 1.dp,
-                        color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.22f),
-                        shape = teardropShape
-                    ),
-                contentAlignment = Alignment.Center
+                        .clip(teardropShape)
+                        .background(
+                            Brush.linearGradient(
+                                colors =
+                                    listOf(
+                                        MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.95f),
+                                        MaterialTheme.colorScheme.surfaceContainerHighest.copy(alpha = 0.85f),
+                                    ),
+                                start = Offset(0f, 0f),
+                                end = Offset(100f, 100f),
+                            ),
+                        )
+                        .border(
+                            width = 1.dp,
+                            color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.22f),
+                            shape = teardropShape,
+                        ),
+                contentAlignment = Alignment.Center,
             ) {
                 if (item.showBadge) {
                     BadgedBox(
                         badge = {
                             Badge(
-                                containerColor = MaterialTheme.colorScheme.error
+                                containerColor = MaterialTheme.colorScheme.error,
                             )
-                        }
+                        },
                     ) {
                         Icon(
                             painter = icon,
                             contentDescription = null,
-                            tint = if (item.isHighlighted) {
-                                MaterialTheme.colorScheme.primary
-                            } else {
-                                MaterialTheme.colorScheme.primary.copy(alpha = 0.9f)
-                            },
-                            modifier = Modifier.size(22.dp)
+                            tint =
+                                if (item.isHighlighted) {
+                                    MaterialTheme.colorScheme.primary
+                                } else {
+                                    MaterialTheme.colorScheme.primary.copy(alpha = 0.9f)
+                                },
+                            modifier = Modifier.size(22.dp),
                         )
                     }
                 } else {
                     Icon(
                         painter = icon,
                         contentDescription = null,
-                        tint = if (item.isHighlighted) {
-                            MaterialTheme.colorScheme.primary
-                        } else {
-                            MaterialTheme.colorScheme.primary.copy(alpha = 0.9f)
-                        },
-                        modifier = Modifier.size(22.dp)
+                        tint =
+                            if (item.isHighlighted) {
+                                MaterialTheme.colorScheme.primary
+                            } else {
+                                MaterialTheme.colorScheme.primary.copy(alpha = 0.9f)
+                            },
+                        modifier = Modifier.size(22.dp),
                     )
                 }
             }
@@ -215,7 +225,7 @@ private fun Material3SettingsItemRow(
         }
 
         Column(
-            modifier = Modifier.weight(1f)
+            modifier = Modifier.weight(1f),
         ) {
             ProvideTextStyle(MaterialTheme.typography.titleMedium) {
                 item.title()
@@ -241,5 +251,5 @@ data class SettingsCategoryItem(
     val trailingContent: (@Composable () -> Unit)? = null,
     val showBadge: Boolean = false,
     val isHighlighted: Boolean = false,
-    val onClick: (() -> Unit)? = null
+    val onClick: (() -> Unit)? = null,
 )

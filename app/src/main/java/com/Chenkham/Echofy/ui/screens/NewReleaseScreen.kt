@@ -54,7 +54,6 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
-import androidx.compose.ui.graphics.Color
 import androidx.compose.material3.TopAppBarScrollBehavior
 import androidx.compose.material3.carousel.HorizontalMultiBrowseCarousel
 import androidx.compose.material3.carousel.HorizontalUncontainedCarousel
@@ -68,6 +67,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.layout.ContentScale
@@ -85,8 +85,6 @@ import coil.compose.AsyncImage
 import com.Chenkham.Echofy.LocalPlayerAwareWindowInsets
 import com.Chenkham.Echofy.LocalPlayerConnection
 import com.Chenkham.Echofy.R
-import com.arturo254.opentune.innertube.models.AlbumItem
-import com.arturo254.opentune.innertube.models.AlbumReleaseType
 import com.Chenkham.Echofy.ui.component.IconButton
 import com.Chenkham.Echofy.ui.component.LocalMenuState
 import com.Chenkham.Echofy.ui.component.shimmer.ShimmerHost
@@ -94,6 +92,8 @@ import com.Chenkham.Echofy.ui.menu.YouTubeAlbumMenu
 import com.Chenkham.Echofy.ui.utils.backToMain
 import com.Chenkham.Echofy.viewmodels.NewReleaseUiState
 import com.Chenkham.Echofy.viewmodels.NewReleaseViewModel
+import com.arturo254.opentune.innertube.models.AlbumItem
+import com.arturo254.opentune.innertube.models.AlbumReleaseType
 
 @OptIn(
     ExperimentalFoundationApi::class,
@@ -122,9 +122,10 @@ fun NewReleaseScreen(
         with(LocalDensity.current) { WindowInsets.systemBars.getTop(this).toDp() }
 
     Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .nestedScroll(scrollBehavior.nestedScrollConnection),
+        modifier =
+            Modifier
+                .fillMaxSize()
+                .nestedScroll(scrollBehavior.nestedScrollConnection),
     ) {
         LazyColumn(
             contentPadding = LocalPlayerAwareWindowInsets.current.asPaddingValues(),
@@ -138,21 +139,25 @@ fun NewReleaseScreen(
                 Box(modifier = Modifier.fillMaxWidth()) {
                     AnimatedVisibility(
                         visible = uiState is NewReleaseUiState.Success,
-                        enter = fadeIn(tween(500)) + slideInVertically(
-                            animationSpec = spring(
-                                dampingRatio = Spring.DampingRatioMediumBouncy,
-                                stiffness = Spring.StiffnessMediumLow,
-                            ),
-                            initialOffsetY = { -it / 2 },
-                        ),
+                        enter =
+                            fadeIn(tween(500)) +
+                                slideInVertically(
+                                    animationSpec =
+                                        spring(
+                                            dampingRatio = Spring.DampingRatioMediumBouncy,
+                                            stiffness = Spring.StiffnessMediumLow,
+                                        ),
+                                    initialOffsetY = { -it / 2 },
+                                ),
                     ) {
                         NewReleaseHero(
                             albumCount = albumsList.size,
                             singleCount = singlesList.size,
                             epCount = epsList.size,
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(horizontal = 16.dp, vertical = 12.dp),
+                            modifier =
+                                Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = 16.dp, vertical = 12.dp),
                         )
                     }
                 }
@@ -163,12 +168,13 @@ fun NewReleaseScreen(
                     AnimatedVisibility(visible = uiState is NewReleaseUiState.Loading) {
                         ShimmerHost {
                             Box(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .height(96.dp)
-                                    .padding(horizontal = 16.dp, vertical = 12.dp)
-                                    .clip(RoundedCornerShape(24.dp))
-                                    .background(MaterialTheme.colorScheme.surfaceContainerHigh),
+                                modifier =
+                                    Modifier
+                                        .fillMaxWidth()
+                                        .height(96.dp)
+                                        .padding(horizontal = 16.dp, vertical = 12.dp)
+                                        .clip(RoundedCornerShape(24.dp))
+                                        .background(MaterialTheme.colorScheme.surfaceContainerHigh),
                             )
                         }
                     }
@@ -180,13 +186,16 @@ fun NewReleaseScreen(
                 Box(modifier = Modifier.fillMaxWidth()) {
                     AnimatedVisibility(
                         visible = uiState is NewReleaseUiState.Success && albumsList.isNotEmpty(),
-                        enter = fadeIn(tween(600)) + slideInVertically(
-                            animationSpec = spring(
-                                dampingRatio = Spring.DampingRatioMediumBouncy,
-                                stiffness = Spring.StiffnessMediumLow,
-                            ),
-                            initialOffsetY = { -it / 2 },
-                        ),
+                        enter =
+                            fadeIn(tween(600)) +
+                                slideInVertically(
+                                    animationSpec =
+                                        spring(
+                                            dampingRatio = Spring.DampingRatioMediumBouncy,
+                                            stiffness = Spring.StiffnessMediumLow,
+                                        ),
+                                    initialOffsetY = { -it / 2 },
+                                ),
                     ) {
                         FeaturedCarousel(
                             albums = albumsList,
@@ -195,9 +204,10 @@ fun NewReleaseScreen(
                             navController = navController,
                             haptic = haptic,
                             menuState = menuState,
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(vertical = 8.dp),
+                            modifier =
+                                Modifier
+                                    .fillMaxWidth()
+                                    .padding(vertical = 8.dp),
                         )
                     }
                 }
@@ -211,12 +221,13 @@ fun NewReleaseScreen(
                     iconRes = R.drawable.album,
                     containerColor = MaterialTheme.colorScheme.primaryContainer,
                     contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
-                    modifier = Modifier.padding(
-                        start = 16.dp,
-                        end = 16.dp,
-                        top = 16.dp,
-                        bottom = 4.dp
-                    ),
+                    modifier =
+                        Modifier.padding(
+                            start = 16.dp,
+                            end = 16.dp,
+                            top = 16.dp,
+                            bottom = 4.dp,
+                        ),
                 )
             }
             item {
@@ -258,12 +269,13 @@ fun NewReleaseScreen(
                     iconRes = R.drawable.music_note,
                     containerColor = MaterialTheme.colorScheme.tertiaryContainer,
                     contentColor = MaterialTheme.colorScheme.onTertiaryContainer,
-                    modifier = Modifier.padding(
-                        start = 16.dp,
-                        end = 16.dp,
-                        top = 8.dp,
-                        bottom = 4.dp
-                    ),
+                    modifier =
+                        Modifier.padding(
+                            start = 16.dp,
+                            end = 16.dp,
+                            top = 8.dp,
+                            bottom = 4.dp,
+                        ),
                 )
             }
             item {
@@ -305,12 +317,13 @@ fun NewReleaseScreen(
                     iconRes = R.drawable.queue_music,
                     containerColor = MaterialTheme.colorScheme.secondaryContainer,
                     contentColor = MaterialTheme.colorScheme.onSecondaryContainer,
-                    modifier = Modifier.padding(
-                        start = 16.dp,
-                        end = 16.dp,
-                        top = 8.dp,
-                        bottom = 4.dp
-                    ),
+                    modifier =
+                        Modifier.padding(
+                            start = 16.dp,
+                            end = 16.dp,
+                            top = 8.dp,
+                            bottom = 4.dp,
+                        ),
                 )
             }
             item {
@@ -341,25 +354,30 @@ fun NewReleaseScreen(
 
             // ── Error / Empty ───────────────────────────────────────────────
             when (val state = uiState) {
-                is NewReleaseUiState.Error -> item {
-                    ErrorState(
-                        message = state.throwable?.message
-                            ?: stringResource(R.string.error_unknown),
-                        onRetry = viewModel::retry,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 24.dp, vertical = 32.dp),
-                    )
-                }
+                is NewReleaseUiState.Error ->
+                    item {
+                        ErrorState(
+                            message =
+                                state.throwable?.message
+                                    ?: stringResource(R.string.error_unknown),
+                            onRetry = viewModel::retry,
+                            modifier =
+                                Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = 24.dp, vertical = 32.dp),
+                        )
+                    }
 
-                is NewReleaseUiState.Empty -> item {
-                    EmptyState(
-                        onRefresh = viewModel::retry,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 24.dp, vertical = 32.dp),
-                    )
-                }
+                is NewReleaseUiState.Empty ->
+                    item {
+                        EmptyState(
+                            onRefresh = viewModel::retry,
+                            modifier =
+                                Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = 24.dp, vertical = 32.dp),
+                        )
+                    }
 
                 else -> Unit
             }
@@ -401,15 +419,17 @@ private fun NewReleaseHero(
     ElevatedCard(
         modifier = modifier,
         shape = RoundedCornerShape(28.dp),
-        colors = CardDefaults.elevatedCardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
-        ),
+        colors =
+            CardDefaults.elevatedCardColors(
+                containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
+            ),
         elevation = CardDefaults.elevatedCardElevation(defaultElevation = 3.dp),
     ) {
         Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 8.dp, vertical = 16.dp),
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 8.dp, vertical = 16.dp),
             horizontalArrangement = Arrangement.SpaceEvenly,
             verticalAlignment = Alignment.CenterVertically,
         ) {
@@ -470,7 +490,7 @@ private fun HeroStat(
             targetState = count,
             transitionSpec = {
                 (fadeIn(tween(300)) + slideInVertically { it / 2 }) togetherWith
-                        fadeOut(tween(200))
+                    fadeOut(tween(200))
             },
             label = "hero_count_$label",
         ) { c ->
@@ -493,13 +513,14 @@ private fun HeroStat(
 @Composable
 private fun VerticalDividerLine() {
     Box(
-        modifier = Modifier
-            .height(52.dp)
-            .width(1.dp)
-            .background(
-                MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f),
-                RoundedCornerShape(1.dp),
-            ),
+        modifier =
+            Modifier
+                .height(52.dp)
+                .width(1.dp)
+                .background(
+                    MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f),
+                    RoundedCornerShape(1.dp),
+                ),
     )
 }
 
@@ -568,7 +589,7 @@ private fun ReleaseSectionHeader(
 @OptIn(
     ExperimentalMaterial3Api::class,
     ExperimentalMaterial3ExpressiveApi::class,
-    ExperimentalFoundationApi::class
+    ExperimentalFoundationApi::class,
 )
 @Composable
 private fun FeaturedCarousel(
@@ -585,25 +606,25 @@ private fun FeaturedCarousel(
 
     Column(
         modifier = modifier,
-        verticalArrangement = Arrangement.spacedBy(8.dp)
+        verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         // Título de la sección destacada
         Row(
             modifier = Modifier.padding(horizontal = 16.dp),
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
         ) {
             Surface(
                 shape = RoundedCornerShape(12.dp),
                 color = MaterialTheme.colorScheme.primaryContainer,
-                modifier = Modifier.size(28.dp)
+                modifier = Modifier.size(28.dp),
             ) {
                 Box(contentAlignment = Alignment.Center) {
                     Icon(
                         painter = painterResource(R.drawable.star),
                         contentDescription = null,
                         tint = MaterialTheme.colorScheme.onPrimaryContainer,
-                        modifier = Modifier.size(16.dp)
+                        modifier = Modifier.size(16.dp),
                     )
                 }
             }
@@ -611,16 +632,17 @@ private fun FeaturedCarousel(
                 text = stringResource(R.string.highlights),
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.SemiBold,
-                color = MaterialTheme.colorScheme.onSurface
+                color = MaterialTheme.colorScheme.onSurface,
             )
         }
 
         HorizontalUncontainedCarousel(
             state = carouselState,
-            modifier = Modifier
-                .fillMaxWidth()
-                .wrapContentHeight()
-                .padding(vertical = 8.dp),
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .wrapContentHeight()
+                    .padding(vertical = 8.dp),
             itemWidth = 280.dp,
             itemSpacing = 12.dp,
             contentPadding = PaddingValues(horizontal = 16.dp),
@@ -659,87 +681,96 @@ private fun FeaturedCarouselCard(
 ) {
     val elevation by animateFloatAsState(
         targetValue = if (isActive) 12f else 4f,
-        animationSpec = spring(
-            Spring.DampingRatioMediumBouncy,
-            Spring.StiffnessMedium,
-        ),
+        animationSpec =
+            spring(
+                Spring.DampingRatioMediumBouncy,
+                Spring.StiffnessMedium,
+            ),
         label = "featured_elevation",
     )
 
     Card(
-        modifier = Modifier
-            .width(280.dp)
-            .height(160.dp)
-            .shadow(
-                elevation = elevation.dp,
-                shape = RoundedCornerShape(
-                    topStart = 20.dp,
-                    topEnd = 20.dp,
-                    bottomStart = 16.dp,
-                    bottomEnd = 16.dp
-                ),
-                clip = false
-            )
-            .clip(
-                RoundedCornerShape(
-                    topStart = 20.dp,
-                    topEnd = 20.dp,
-                    bottomStart = 16.dp,
-                    bottomEnd = 16.dp
+        modifier =
+            Modifier
+                .width(280.dp)
+                .height(160.dp)
+                .shadow(
+                    elevation = elevation.dp,
+                    shape =
+                        RoundedCornerShape(
+                            topStart = 20.dp,
+                            topEnd = 20.dp,
+                            bottomStart = 16.dp,
+                            bottomEnd = 16.dp,
+                        ),
+                    clip = false,
                 )
-            )
-            .combinedClickable(
-                onClick = onClick,
-                onLongClick = onLongClick,
+                .clip(
+                    RoundedCornerShape(
+                        topStart = 20.dp,
+                        topEnd = 20.dp,
+                        bottomStart = 16.dp,
+                        bottomEnd = 16.dp,
+                    ),
+                )
+                .combinedClickable(
+                    onClick = onClick,
+                    onLongClick = onLongClick,
+                ),
+        colors =
+            CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.surfaceContainer,
             ),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceContainer
-        ),
-        elevation = CardDefaults.cardElevation(
-            defaultElevation = if (isActive) 4.dp else 2.dp
-        )
+        elevation =
+            CardDefaults.cardElevation(
+                defaultElevation = if (isActive) 4.dp else 2.dp,
+            ),
     ) {
         Box(
-            modifier = Modifier.fillMaxSize()
+            modifier = Modifier.fillMaxSize(),
         ) {
             AsyncImage(
                 model = album.thumbnail,
                 contentDescription = album.title,
                 contentScale = ContentScale.Crop,
-                modifier = Modifier
-                    .fillMaxSize()
-                    .clip(
-                        RoundedCornerShape(
-                            topStart = 20.dp,
-                            topEnd = 20.dp,
-                            bottomStart = 16.dp,
-                            bottomEnd = 16.dp
-                        )
-                    )
+                modifier =
+                    Modifier
+                        .fillMaxSize()
+                        .clip(
+                            RoundedCornerShape(
+                                topStart = 20.dp,
+                                topEnd = 20.dp,
+                                bottomStart = 16.dp,
+                                bottomEnd = 16.dp,
+                            ),
+                        ),
             )
 
             // Gradiente overlay para legibilidad
             Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .background(
-                        Brush.verticalGradient(
-                            colors = listOf(
-                                Color.Transparent,
-                                Color.Black.copy(alpha = 0.6f)
+                modifier =
+                    Modifier
+                        .fillMaxSize()
+                        .background(
+                            Brush.verticalGradient(
+                                colors =
+                                    listOf(
+                                        Color.Transparent,
+                                        Color.Black.copy(alpha = 0.6f),
+                                    ),
+                                startY = 0.5f,
                             ),
-                            startY = 0.5f
-                        )
-                    )
+                        ),
             )
 
             // Información superpuesta
             Column(
-                modifier = Modifier
-                    .align(Alignment.BottomStart)
-                    .fillMaxWidth()
-                    .padding(16.dp),
-                verticalArrangement = Arrangement.spacedBy(4.dp)
+                modifier =
+                    Modifier
+                        .align(Alignment.BottomStart)
+                        .fillMaxWidth()
+                        .padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(4.dp),
             ) {
                 Text(
                     text = album.title,
@@ -747,7 +778,7 @@ private fun FeaturedCarouselCard(
                     fontWeight = FontWeight.Bold,
                     color = Color.White,
                     maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
+                    overflow = TextOverflow.Ellipsis,
                 )
                 album.artists?.firstOrNull()?.let { artist ->
                     Text(
@@ -755,14 +786,14 @@ private fun FeaturedCarouselCard(
                         style = MaterialTheme.typography.bodySmall,
                         color = Color.White.copy(alpha = 0.8f),
                         maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
+                        overflow = TextOverflow.Ellipsis,
                     )
                 }
                 album.year?.let { year: Int ->
                     Text(
                         text = year.toString(),
                         style = MaterialTheme.typography.labelSmall,
-                        color = Color.White.copy(alpha = 0.6f)
+                        color = Color.White.copy(alpha = 0.6f),
                     )
                 }
             }
@@ -771,24 +802,26 @@ private fun FeaturedCarouselCard(
             Surface(
                 shape = RoundedCornerShape(12.dp),
                 color = MaterialTheme.colorScheme.primary,
-                modifier = Modifier
-                    .align(Alignment.TopEnd)
-                    .padding(12.dp)
+                modifier =
+                    Modifier
+                        .align(Alignment.TopEnd)
+                        .padding(12.dp),
             ) {
                 Text(
                     text = "★",
                     style = MaterialTheme.typography.labelSmall,
                     fontWeight = FontWeight.Bold,
                     color = Color.White,
-                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp)
+                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
                 )
             }
 
             androidx.compose.animation.AnimatedVisibility(
                 visible = isActive && isPlaying,
-                modifier = Modifier
-                    .align(Alignment.BottomEnd)
-                    .padding(12.dp),
+                modifier =
+                    Modifier
+                        .align(Alignment.BottomEnd)
+                        .padding(12.dp),
             ) {
                 Surface(
                     shape = CircleShape,
@@ -816,7 +849,7 @@ private fun FeaturedCarouselCard(
 @OptIn(
     ExperimentalMaterial3Api::class,
     ExperimentalMaterial3ExpressiveApi::class,
-    ExperimentalFoundationApi::class
+    ExperimentalFoundationApi::class,
 )
 @Composable
 private fun ExpressiveCarousel(
@@ -832,42 +865,48 @@ private fun ExpressiveCarousel(
     val carouselState = rememberCarouselState { distinctItems.size }
 
     // Forma diferenciada según el tipo de lanzamiento
-    val cardShape = when (releaseType) {
-        AlbumReleaseType.ALBUM -> RoundedCornerShape(
-            topStart = 20.dp,
-            topEnd = 20.dp,
-            bottomStart = 16.dp,
-            bottomEnd = 16.dp
-        )
+    val cardShape =
+        when (releaseType) {
+            AlbumReleaseType.ALBUM ->
+                RoundedCornerShape(
+                    topStart = 20.dp,
+                    topEnd = 20.dp,
+                    bottomStart = 16.dp,
+                    bottomEnd = 16.dp,
+                )
 
-        AlbumReleaseType.SINGLE -> RoundedCornerShape(
-            topStart = 12.dp,
-            topEnd = 24.dp,
-            bottomStart = 24.dp,
-            bottomEnd = 12.dp
-        )
+            AlbumReleaseType.SINGLE ->
+                RoundedCornerShape(
+                    topStart = 12.dp,
+                    topEnd = 24.dp,
+                    bottomStart = 24.dp,
+                    bottomEnd = 12.dp,
+                )
 
-        AlbumReleaseType.EP -> RoundedCornerShape(
-            topStart = 16.dp,
-            topEnd = 16.dp,
-            bottomStart = 20.dp,
-            bottomEnd = 20.dp
-        )
-    }
+            AlbumReleaseType.EP ->
+                RoundedCornerShape(
+                    topStart = 16.dp,
+                    topEnd = 16.dp,
+                    bottomStart = 20.dp,
+                    bottomEnd = 20.dp,
+                )
+        }
 
     // Color de acento según el tipo
-    val accentColor = when (releaseType) {
-        AlbumReleaseType.ALBUM -> MaterialTheme.colorScheme.primary
-        AlbumReleaseType.SINGLE -> MaterialTheme.colorScheme.tertiary
-        AlbumReleaseType.EP -> MaterialTheme.colorScheme.secondary
-    }
+    val accentColor =
+        when (releaseType) {
+            AlbumReleaseType.ALBUM -> MaterialTheme.colorScheme.primary
+            AlbumReleaseType.SINGLE -> MaterialTheme.colorScheme.tertiary
+            AlbumReleaseType.EP -> MaterialTheme.colorScheme.secondary
+        }
 
     HorizontalMultiBrowseCarousel(
         state = carouselState,
-        modifier = Modifier
-            .fillMaxWidth()
-            .wrapContentHeight()
-            .padding(vertical = 8.dp),
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .wrapContentHeight()
+                .padding(vertical = 8.dp),
         preferredItemWidth = 148.dp,
         itemSpacing = 10.dp,
         contentPadding = PaddingValues(horizontal = 16.dp),
@@ -911,81 +950,88 @@ private fun ExpressiveCarouselCard(
 ) {
     val elevation by animateFloatAsState(
         targetValue = if (isActive) 10f else 3f,
-        animationSpec = spring(
-            Spring.DampingRatioMediumBouncy,
-            Spring.StiffnessMedium,
-        ),
+        animationSpec =
+            spring(
+                Spring.DampingRatioMediumBouncy,
+                Spring.StiffnessMedium,
+            ),
         label = "expressive_elevation",
     )
 
     Column(
-        modifier = Modifier
-            .width(148.dp)
-            .combinedClickable(
-                onClick = onClick,
-                onLongClick = onLongClick,
-            ),
+        modifier =
+            Modifier
+                .width(148.dp)
+                .combinedClickable(
+                    onClick = onClick,
+                    onLongClick = onLongClick,
+                ),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(6.dp),
     ) {
         Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(148.dp)
-                .shadow(
-                    elevation = elevation.dp,
-                    shape = shape,
-                    clip = false
-                )
-                .clip(shape)
-                .let { modifier ->
-                    if (isActive) {
-                        modifier.border(
-                            width = 3.dp,
-                            color = accentColor,
-                            shape = shape
-                        )
-                    } else {
-                        modifier
-                    }
-                }
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .height(148.dp)
+                    .shadow(
+                        elevation = elevation.dp,
+                        shape = shape,
+                        clip = false,
+                    )
+                    .clip(shape)
+                    .let { modifier ->
+                        if (isActive) {
+                            modifier.border(
+                                width = 3.dp,
+                                color = accentColor,
+                                shape = shape,
+                            )
+                        } else {
+                            modifier
+                        }
+                    },
         ) {
             AsyncImage(
                 model = album.thumbnail,
                 contentDescription = album.title,
                 contentScale = ContentScale.Crop,
-                modifier = Modifier
-                    .fillMaxSize()
-                    .clip(shape)
+                modifier =
+                    Modifier
+                        .fillMaxSize()
+                        .clip(shape),
             )
 
             // Badge según tipo de lanzamiento
             Surface(
                 shape = RoundedCornerShape(12.dp),
                 color = accentColor.copy(alpha = 0.9f),
-                modifier = Modifier
-                    .align(Alignment.TopEnd)
-                    .padding(8.dp)
+                modifier =
+                    Modifier
+                        .align(Alignment.TopEnd)
+                        .padding(8.dp),
             ) {
                 Text(
-                    text = when (releaseType) {
-                        AlbumReleaseType.ALBUM -> "LP"
-                        AlbumReleaseType.SINGLE -> "S"
-                        AlbumReleaseType.EP -> "EP"
-                    },
+                    text =
+                        when (releaseType) {
+                            AlbumReleaseType.ALBUM -> "LP"
+                            AlbumReleaseType.SINGLE -> "S"
+                            AlbumReleaseType.EP -> "EP"
+                        },
                     style = MaterialTheme.typography.labelSmall,
                     fontWeight = FontWeight.Bold,
                     color = Color.White,
-                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp)
+                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp),
                 )
             }
 
             // Indicador de reproducción
             androidx.compose.animation.AnimatedVisibility(
                 visible = isActive && isPlaying,
-                modifier = Modifier
-                    .align(Alignment.BottomEnd)
-                    .padding(6.dp),
+                modifier =
+                    Modifier
+                        .align(Alignment.BottomEnd)
+                        .padding(6.dp),
             ) {
                 Surface(
                     shape = CircleShape,
@@ -1012,9 +1058,10 @@ private fun ExpressiveCarouselCard(
             maxLines = 2,
             overflow = TextOverflow.Ellipsis,
             textAlign = TextAlign.Center,
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 4.dp),
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 4.dp),
         )
 
         album.artists?.firstOrNull()?.let { artist ->
@@ -1025,9 +1072,10 @@ private fun ExpressiveCarouselCard(
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
                 textAlign = TextAlign.Center,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 4.dp),
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 4.dp),
             )
         }
 
@@ -1052,9 +1100,10 @@ private fun ExpressiveCarouselCard(
 @Composable
 private fun CarouselShimmerRow() {
     Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 8.dp),
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 8.dp),
         horizontalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         repeat(4) {
@@ -1065,24 +1114,27 @@ private fun CarouselShimmerRow() {
                     verticalArrangement = Arrangement.spacedBy(6.dp),
                 ) {
                     Box(
-                        modifier = Modifier
-                            .size(148.dp)
-                            .clip(RoundedCornerShape(16.dp))
-                            .background(MaterialTheme.colorScheme.surfaceContainerHigh),
+                        modifier =
+                            Modifier
+                                .size(148.dp)
+                                .clip(RoundedCornerShape(16.dp))
+                                .background(MaterialTheme.colorScheme.surfaceContainerHigh),
                     )
                     Box(
-                        modifier = Modifier
-                            .width(96.dp)
-                            .height(12.dp)
-                            .clip(RoundedCornerShape(6.dp))
-                            .background(MaterialTheme.colorScheme.surfaceContainerHigh),
+                        modifier =
+                            Modifier
+                                .width(96.dp)
+                                .height(12.dp)
+                                .clip(RoundedCornerShape(6.dp))
+                                .background(MaterialTheme.colorScheme.surfaceContainerHigh),
                     )
                     Box(
-                        modifier = Modifier
-                            .width(64.dp)
-                            .height(10.dp)
-                            .clip(RoundedCornerShape(5.dp))
-                            .background(MaterialTheme.colorScheme.surfaceContainerHigh),
+                        modifier =
+                            Modifier
+                                .width(64.dp)
+                                .height(10.dp)
+                                .clip(RoundedCornerShape(5.dp))
+                                .background(MaterialTheme.colorScheme.surfaceContainerHigh),
                     )
                 }
             }
@@ -1135,10 +1187,11 @@ private fun ErrorState(
         Button(
             onClick = onRetry,
             shape = RoundedCornerShape(50),
-            colors = ButtonDefaults.buttonColors(
-                containerColor = MaterialTheme.colorScheme.primaryContainer,
-                contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
-            ),
+            colors =
+                ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.primaryContainer,
+                    contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                ),
         ) {
             Icon(
                 painter = painterResource(R.drawable.replay),
@@ -1185,10 +1238,11 @@ private fun EmptyState(
         Button(
             onClick = onRefresh,
             shape = RoundedCornerShape(50),
-            colors = ButtonDefaults.buttonColors(
-                containerColor = MaterialTheme.colorScheme.secondaryContainer,
-                contentColor = MaterialTheme.colorScheme.onSecondaryContainer,
-            ),
+            colors =
+                ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.secondaryContainer,
+                    contentColor = MaterialTheme.colorScheme.onSecondaryContainer,
+                ),
         ) {
             Icon(
                 painter = painterResource(R.drawable.replay),

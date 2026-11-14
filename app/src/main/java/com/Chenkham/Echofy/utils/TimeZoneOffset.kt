@@ -13,5 +13,4 @@ import java.time.ZonedDateTime
  *
  * Read at call time rather than cached, so it stays correct across DST changes and travel.
  */
-fun currentUtcOffsetSeconds(): Int =
-    ZonedDateTime.now(ZoneId.systemDefault()).offset.totalSeconds
+fun currentUtcOffsetSeconds(): Int = ZonedDateTime.now(ZoneId.systemDefault()).offset.totalSeconds

@@ -41,18 +41,19 @@ object Songlink {
     }
 
     /** Platforms worth surfacing, in the order users expect to see them. */
-    private val PLATFORM_NAMES = linkedMapOf(
-        "spotify" to "Spotify",
-        "youtubeMusic" to "YouTube Music",
-        "youtube" to "YouTube",
-        "appleMusic" to "Apple Music",
-        "amazonMusic" to "Amazon Music",
-        "deezer" to "Deezer",
-        "tidal" to "Tidal",
-        "soundcloud" to "SoundCloud",
-        "pandora" to "Pandora",
-        "napster" to "Napster",
-    )
+    private val PLATFORM_NAMES =
+        linkedMapOf(
+            "spotify" to "Spotify",
+            "youtubeMusic" to "YouTube Music",
+            "youtube" to "YouTube",
+            "appleMusic" to "Apple Music",
+            "amazonMusic" to "Amazon Music",
+            "deezer" to "Deezer",
+            "tidal" to "Tidal",
+            "soundcloud" to "SoundCloud",
+            "pandora" to "Pandora",
+            "napster" to "Napster",
+        )
 
     /**
      * Resolve any supported music URL (Spotify, Apple Music, Deezer, ...) into
@@ -63,12 +64,13 @@ object Songlink {
         userCountry: String = "US",
         apiKey: String? = null,
     ) = runCatching {
-        val response = client
-            .get("links") {
-                parameter("url", url)
-                parameter("userCountry", userCountry)
-                apiKey?.takeIf { it.isNotBlank() }?.let { parameter("key", it) }
-            }.body<SonglinkResponse>()
+        val response =
+            client
+                .get("links") {
+                    parameter("url", url)
+                    parameter("userCountry", userCountry)
+                    apiKey?.takeIf { it.isNotBlank() }?.let { parameter("key", it) }
+                }.body<SonglinkResponse>()
 
         response.toSongLinks()
     }
@@ -88,17 +90,19 @@ object Songlink {
     )
 
     private fun SonglinkResponse.toSongLinks(): SongLinks {
-        val entity = entitiesByUniqueId[entityUniqueId]
-            ?: entitiesByUniqueId.values.firstOrNull()
+        val entity =
+            entitiesByUniqueId[entityUniqueId]
+                ?: entitiesByUniqueId.values.firstOrNull()
 
-        val platforms = PLATFORM_NAMES.mapNotNull { (key, displayName) ->
-            val link = linksByPlatform[key] ?: return@mapNotNull null
-            PlatformLink(
-                platform = key,
-                displayName = displayName,
-                url = link.url,
-            )
-        }
+        val platforms =
+            PLATFORM_NAMES.mapNotNull { (key, displayName) ->
+                val link = linksByPlatform[key] ?: return@mapNotNull null
+                PlatformLink(
+                    platform = key,
+                    displayName = displayName,
+                    url = link.url,
+                )
+            }
 
         return SongLinks(
             pageUrl = pageUrl,

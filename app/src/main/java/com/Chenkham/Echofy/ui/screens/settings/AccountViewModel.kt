@@ -12,20 +12,22 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
-class AccountViewModel @Inject constructor(
-    private val authRepository: AuthRepository
-) : ViewModel() {
-    
-    val user: StateFlow<UserEntity?> = authRepository.getActiveUser()
-        .stateIn(
-            scope = viewModelScope,
-            started = SharingStarted.WhileSubscribed(5000),
-            initialValue = null
-        )
-    
-    fun signOut() {
-        viewModelScope.launch {
-            authRepository.signOut()
+class AccountViewModel
+    @Inject
+    constructor(
+        private val authRepository: AuthRepository,
+    ) : ViewModel() {
+        val user: StateFlow<UserEntity?> =
+            authRepository.getActiveUser()
+                .stateIn(
+                    scope = viewModelScope,
+                    started = SharingStarted.WhileSubscribed(5000),
+                    initialValue = null,
+                )
+
+        fun signOut() {
+            viewModelScope.launch {
+                authRepository.signOut()
+            }
         }
     }
-}

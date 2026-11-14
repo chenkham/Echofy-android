@@ -3,12 +3,12 @@ package com.Chenkham.Echofy.widget
 import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
+import android.graphics.HardwareRenderer
 import android.graphics.RenderEffect
 import android.graphics.RenderNode
 import android.graphics.Shader
 import android.hardware.HardwareBuffer
 import android.media.ImageReader
-import android.graphics.HardwareRenderer
 import android.os.Build
 import androidx.annotation.RequiresApi
 import androidx.core.graphics.drawable.toBitmap
@@ -51,8 +51,9 @@ data class PlayerWidgetState(
             metadata: MediaMetadata?,
             currentArtworkBitmap: Bitmap? = null,
         ): PlayerWidgetState {
-            val artworkBitmap = currentArtworkBitmap
-                ?: metadata?.thumbnailUrl?.let { loadArtworkFromUrl(context, it) }
+            val artworkBitmap =
+                currentArtworkBitmap
+                    ?: metadata?.thumbnailUrl?.let { loadArtworkFromUrl(context, it) }
 
             val blurBitmap = artworkBitmap?.let { computeBackgroundBlur(it) }
             val dominantColor = artworkBitmap?.let { computeDominantColor(it) }
@@ -87,7 +88,11 @@ data class PlayerWidgetState(
         }
 
         @RequiresApi(Build.VERSION_CODES.S)
-        private fun blurBitmapApi31(source: Bitmap, radius: Float, downscaleTo: Int): Bitmap? {
+        private fun blurBitmapApi31(
+            source: Bitmap,
+            radius: Float,
+            downscaleTo: Int,
+        ): Bitmap? {
             val ratio = source.width.toFloat() / source.height.toFloat()
             val width =
                 if (ratio >= 1f) downscaleTo else (downscaleTo * ratio).toInt().coerceAtLeast(1)
@@ -97,13 +102,14 @@ data class PlayerWidgetState(
 
             var reader: ImageReader? = null
             return try {
-                reader = ImageReader.newInstance(
-                    small.width,
-                    small.height,
-                    android.graphics.PixelFormat.RGBA_8888,
-                    1,
-                    HardwareBuffer.USAGE_GPU_SAMPLED_IMAGE or HardwareBuffer.USAGE_GPU_COLOR_OUTPUT,
-                )
+                reader =
+                    ImageReader.newInstance(
+                        small.width,
+                        small.height,
+                        android.graphics.PixelFormat.RGBA_8888,
+                        1,
+                        HardwareBuffer.USAGE_GPU_SAMPLED_IMAGE or HardwareBuffer.USAGE_GPU_COLOR_OUTPUT,
+                    )
 
                 val renderNode = RenderNode("widgetBlur")
                 renderNode.setPosition(0, 0, small.width, small.height)
@@ -122,10 +128,12 @@ data class PlayerWidgetState(
                     .setWaitForPresent(true)
                     .syncAndDraw()
 
-                val image = reader.acquireNextImage()
-                    ?: return null
-                val hardwareBuffer = image.hardwareBuffer
-                    ?: return null.also { image.close() }
+                val image =
+                    reader.acquireNextImage()
+                        ?: return null
+                val hardwareBuffer =
+                    image.hardwareBuffer
+                        ?: return null.also { image.close() }
 
                 val hardwareBitmap = Bitmap.wrapHardwareBuffer(hardwareBuffer, null)
                 hardwareBuffer.close()
@@ -154,17 +162,21 @@ data class PlayerWidgetState(
                 }
             }
 
-        private suspend fun loadArtworkFromUrl(context: Context, url: String): Bitmap? {
+        private suspend fun loadArtworkFromUrl(
+            context: Context,
+            url: String,
+        ): Bitmap? {
             if (url.isBlank()) return null
 
             return withContext(Dispatchers.IO) {
                 try {
                     val imageLoader = context.imageLoader
-                    val request = ImageRequest.Builder(context)
-                        .data(url)
-                        .size(200, 200)
-                        .allowHardware(false)
-                        .build()
+                    val request =
+                        ImageRequest.Builder(context)
+                            .data(url)
+                            .size(200, 200)
+                            .allowHardware(false)
+                            .build()
 
                     val result = imageLoader.execute(request)
                     when (result) {
@@ -180,14 +192,16 @@ data class PlayerWidgetState(
 
         fun fromPreferences(preferences: Preferences): PlayerWidgetState {
             val bytes = preferences[PlayerWidgetStateKeys.ArtworkBytes]
-            val bitmap = bytes?.let {
-                BitmapFactory.decodeByteArray(it, 0, it.size)
-            }
+            val bitmap =
+                bytes?.let {
+                    BitmapFactory.decodeByteArray(it, 0, it.size)
+                }
 
             val blurBytes = preferences[PlayerWidgetStateKeys.BackgroundBlurBytes]
-            val blurBitmap = blurBytes?.let {
-                BitmapFactory.decodeByteArray(it, 0, it.size)
-            }
+            val blurBitmap =
+                blurBytes?.let {
+                    BitmapFactory.decodeByteArray(it, 0, it.size)
+                }
 
             return PlayerWidgetState(
                 title = preferences[PlayerWidgetStateKeys.Title].orEmpty(),

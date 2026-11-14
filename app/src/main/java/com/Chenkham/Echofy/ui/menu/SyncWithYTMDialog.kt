@@ -27,16 +27,14 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import com.arturo254.opentune.innertube.YouTube
 import com.Chenkham.Echofy.LocalDatabase
 import com.Chenkham.Echofy.R
 import com.Chenkham.Echofy.db.addSongToPlaylist
 import com.Chenkham.Echofy.db.entities.Playlist
-import com.Chenkham.Echofy.db.entities.PlaylistEntity
-import com.Chenkham.Echofy.db.entities.PlaylistSong
 import com.Chenkham.Echofy.db.entities.Song
 import com.Chenkham.Echofy.ui.component.ListDialog
 import com.Chenkham.Echofy.ui.component.PlaylistListItem
+import com.arturo254.opentune.innertube.YouTube
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import java.time.LocalDateTime
@@ -89,33 +87,34 @@ fun SyncWithYTMDialog(
                     Text(
                         text = stringResource(R.string.no_ytm_playlists_to_merge),
                         style = MaterialTheme.typography.bodyMedium,
-                        modifier = Modifier.padding(16.dp)
+                        modifier = Modifier.padding(16.dp),
                     )
                 }
             }
             items(ytmPlaylists) { targetPlaylist ->
                 PlaylistListItem(
                     playlist = targetPlaylist,
-                    modifier = Modifier.clickable {
-                        coroutineScope.launch(Dispatchers.IO) {
-                            val songIds = songs.map { it.id }
-                            // Add songs to target local playlist DB
-                            database.addSongToPlaylist(targetPlaylist, songIds)
-                            // Push songs to YTM playlist
-                            targetPlaylist.playlist.browseId?.let { browseId ->
-                                songIds.forEach { songId ->
-                                    YouTube.addToPlaylist(browseId, songId)
+                    modifier =
+                        Modifier.clickable {
+                            coroutineScope.launch(Dispatchers.IO) {
+                                val songIds = songs.map { it.id }
+                                // Add songs to target local playlist DB
+                                database.addSongToPlaylist(targetPlaylist, songIds)
+                                // Push songs to YTM playlist
+                                targetPlaylist.playlist.browseId?.let { browseId ->
+                                    songIds.forEach { songId ->
+                                        YouTube.addToPlaylist(browseId, songId)
+                                    }
                                 }
                             }
-                        }
-                        showMergeList = false
-                        onDismiss()
-                        Toast.makeText(
-                            context,
-                            context.getString(R.string.songs_merged_into_ytm_playlist),
-                            Toast.LENGTH_SHORT
-                        ).show()
-                    }
+                            showMergeList = false
+                            onDismiss()
+                            Toast.makeText(
+                                context,
+                                context.getString(R.string.songs_merged_into_ytm_playlist),
+                                Toast.LENGTH_SHORT,
+                            ).show()
+                        },
                 )
             }
         }
@@ -126,7 +125,7 @@ fun SyncWithYTMDialog(
             icon = {
                 Icon(
                     painter = painterResource(R.drawable.sync),
-                    contentDescription = null
+                    contentDescription = null,
                 )
             },
             title = {
@@ -136,7 +135,7 @@ fun SyncWithYTMDialog(
                 Column {
                     Text(
                         text = stringResource(R.string.sync_with_ytm_description),
-                        style = MaterialTheme.typography.bodyMedium
+                        style = MaterialTheme.typography.bodyMedium,
                     )
 
                     Spacer(modifier = Modifier.height(16.dp))
@@ -144,62 +143,63 @@ fun SyncWithYTMDialog(
                     // Option 1: Upload as new YTM playlist
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clickable {
-                                coroutineScope.launch(Dispatchers.IO) {
-                                    // 1. Create YTM playlist with the same name
-                                    val browseIdResult = YouTube.createPlaylist(playlist.playlist.name)
-                                    val browseId = browseIdResult.getOrNull()?.removePrefix("VL")
-                                    if (browseId == null) {
+                        modifier =
+                            Modifier
+                                .fillMaxWidth()
+                                .clickable {
+                                    coroutineScope.launch(Dispatchers.IO) {
+                                        // 1. Create YTM playlist with the same name
+                                        val browseIdResult = YouTube.createPlaylist(playlist.playlist.name)
+                                        val browseId = browseIdResult.getOrNull()?.removePrefix("VL")
+                                        if (browseId == null) {
+                                            launch(Dispatchers.Main) {
+                                                Toast.makeText(
+                                                    context,
+                                                    context.getString(R.string.error_creating_ytm_playlist),
+                                                    Toast.LENGTH_SHORT,
+                                                ).show()
+                                            }
+                                            return@launch
+                                        }
+                                        // 2. Update local playlist to be linked to YTM browseId
+                                        database.query {
+                                            update(
+                                                playlist.playlist.copy(
+                                                    browseId = browseId,
+                                                    lastUpdateTime = LocalDateTime.now(),
+                                                ),
+                                            )
+                                        }
+                                        // 3. Add all local songs to the new YTM playlist
+                                        songs.forEach { song ->
+                                            YouTube.addToPlaylist(browseId, song.id)
+                                        }
                                         launch(Dispatchers.Main) {
                                             Toast.makeText(
                                                 context,
-                                                context.getString(R.string.error_creating_ytm_playlist),
-                                                Toast.LENGTH_SHORT
+                                                context.getString(R.string.playlist_uploaded_to_ytm),
+                                                Toast.LENGTH_SHORT,
                                             ).show()
                                         }
-                                        return@launch
                                     }
-                                    // 2. Update local playlist to be linked to YTM browseId
-                                    database.query {
-                                        update(
-                                            playlist.playlist.copy(
-                                                browseId = browseId,
-                                                lastUpdateTime = LocalDateTime.now()
-                                            )
-                                        )
-                                    }
-                                    // 3. Add all local songs to the new YTM playlist
-                                    songs.forEach { song ->
-                                        YouTube.addToPlaylist(browseId, song.id)
-                                    }
-                                    launch(Dispatchers.Main) {
-                                        Toast.makeText(
-                                            context,
-                                            context.getString(R.string.playlist_uploaded_to_ytm),
-                                            Toast.LENGTH_SHORT
-                                        ).show()
-                                    }
+                                    onDismiss()
                                 }
-                                onDismiss()
-                            }
-                            .padding(vertical = 12.dp, horizontal = 4.dp)
+                                .padding(vertical = 12.dp, horizontal = 4.dp),
                     ) {
                         Icon(
                             painter = painterResource(R.drawable.cloud_download),
                             contentDescription = null,
-                            modifier = Modifier.padding(end = 16.dp)
+                            modifier = Modifier.padding(end = 16.dp),
                         )
                         Column {
                             Text(
                                 text = stringResource(R.string.upload_to_ytm),
-                                style = MaterialTheme.typography.titleSmall
+                                style = MaterialTheme.typography.titleSmall,
                             )
                             Text(
                                 text = stringResource(R.string.upload_to_ytm_desc),
                                 style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
                             )
                         }
                     }
@@ -209,27 +209,28 @@ fun SyncWithYTMDialog(
                     // Option 2: Merge into an existing YTM playlist
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clickable {
-                                showMergeList = true
-                            }
-                            .padding(vertical = 12.dp, horizontal = 4.dp)
+                        modifier =
+                            Modifier
+                                .fillMaxWidth()
+                                .clickable {
+                                    showMergeList = true
+                                }
+                                .padding(vertical = 12.dp, horizontal = 4.dp),
                     ) {
                         Icon(
                             painter = painterResource(R.drawable.sync),
                             contentDescription = null,
-                            modifier = Modifier.padding(end = 16.dp)
+                            modifier = Modifier.padding(end = 16.dp),
                         )
                         Column {
                             Text(
                                 text = stringResource(R.string.merge_into_ytm_playlist),
-                                style = MaterialTheme.typography.titleSmall
+                                style = MaterialTheme.typography.titleSmall,
                             )
                             Text(
                                 text = stringResource(R.string.merge_into_ytm_playlist_desc),
                                 style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
                             )
                         }
                     }
@@ -240,7 +241,7 @@ fun SyncWithYTMDialog(
                 TextButton(onClick = onDismiss) {
                     Text(text = stringResource(android.R.string.cancel))
                 }
-            }
+            },
         )
     }
 }

@@ -7,6 +7,21 @@
 
 package com.arturo254.opentune.spotify
 
+import com.arturo254.opentune.spotify.models.SpotifyAlbum
+import com.arturo254.opentune.spotify.models.SpotifyArtist
+import com.arturo254.opentune.spotify.models.SpotifyImage
+import com.arturo254.opentune.spotify.models.SpotifyPaging
+import com.arturo254.opentune.spotify.models.SpotifyPlaylist
+import com.arturo254.opentune.spotify.models.SpotifyPlaylistOwner
+import com.arturo254.opentune.spotify.models.SpotifyPlaylistTrack
+import com.arturo254.opentune.spotify.models.SpotifyPlaylistTracksRef
+import com.arturo254.opentune.spotify.models.SpotifyRecommendations
+import com.arturo254.opentune.spotify.models.SpotifySavedTrack
+import com.arturo254.opentune.spotify.models.SpotifySearchResult
+import com.arturo254.opentune.spotify.models.SpotifySimpleAlbum
+import com.arturo254.opentune.spotify.models.SpotifySimpleArtist
+import com.arturo254.opentune.spotify.models.SpotifyTrack
+import com.arturo254.opentune.spotify.models.SpotifyUser
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.engine.okhttp.OkHttp
@@ -37,21 +52,6 @@ import kotlinx.serialization.json.jsonPrimitive
 import kotlinx.serialization.json.put
 import kotlinx.serialization.json.putJsonArray
 import kotlinx.serialization.json.putJsonObject
-import com.arturo254.opentune.spotify.models.SpotifyAlbum
-import com.arturo254.opentune.spotify.models.SpotifyArtist
-import com.arturo254.opentune.spotify.models.SpotifyImage
-import com.arturo254.opentune.spotify.models.SpotifyPaging
-import com.arturo254.opentune.spotify.models.SpotifyPlaylist
-import com.arturo254.opentune.spotify.models.SpotifyPlaylistOwner
-import com.arturo254.opentune.spotify.models.SpotifyPlaylistTrack
-import com.arturo254.opentune.spotify.models.SpotifyPlaylistTracksRef
-import com.arturo254.opentune.spotify.models.SpotifyRecommendations
-import com.arturo254.opentune.spotify.models.SpotifySavedTrack
-import com.arturo254.opentune.spotify.models.SpotifySearchResult
-import com.arturo254.opentune.spotify.models.SpotifySimpleAlbum
-import com.arturo254.opentune.spotify.models.SpotifySimpleArtist
-import com.arturo254.opentune.spotify.models.SpotifyTrack
-import com.arturo254.opentune.spotify.models.SpotifyUser
 
 /**
  * Spotify API client that uses the internal GraphQL API (api-partner.spotify.com)
@@ -80,7 +80,7 @@ object Spotify {
         val chromePatch = (0..499).random()
         val os = osOptions.random()
         return "Mozilla/5.0 ($os) AppleWebKit/537.36 (KHTML, like Gecko) " +
-                "Chrome/$chromeMajor.0.$chromePatch.0 Safari/537.36"
+            "Chrome/$chromeMajor.0.$chromePatch.0 Safari/537.36"
     }
 
     private val json =
@@ -212,7 +212,7 @@ object Spotify {
                 onHashExpired?.invoke(operationName)
                 throw SpotifyException(
                     412,
-                    "PersistedQueryNotFound for $operationName — hash may have rotated"
+                    "PersistedQueryNotFound for $operationName — hash may have rotated",
                 )
             }
 
@@ -253,7 +253,7 @@ object Spotify {
             log(
                 "D",
                 "GQL POST $operationName (token: ${token.take(8)}...)" +
-                        if (attempt > 0) " [retry $attempt]" else "",
+                    if (attempt > 0) " [retry $attempt]" else "",
             )
 
             val response =
@@ -278,7 +278,7 @@ object Spotify {
                 if (attempt < maxRetries - 1) {
                     log(
                         "W",
-                        "GQL $operationName -> 429, waiting ${retryAfter}s (attempt ${attempt + 1}/$maxRetries)"
+                        "GQL $operationName -> 429, waiting ${retryAfter}s (attempt ${attempt + 1}/$maxRetries)",
                     )
                     delay(retryAfter * 1000)
                     continue
@@ -292,11 +292,11 @@ object Spotify {
                 val bodyText = response.bodyAsText()
                 log(
                     "E",
-                    "GQL $operationName FAILED: ${response.status.value} — ${bodyText.take(200)}"
+                    "GQL $operationName FAILED: ${response.status.value} — ${bodyText.take(200)}",
                 )
                 throw SpotifyException(
                     response.status.value,
-                    "GraphQL error ${response.status.value}: $bodyText"
+                    "GraphQL error ${response.status.value}: $bodyText",
                 )
             }
 
@@ -336,7 +336,7 @@ object Spotify {
             log(
                 "D",
                 "REST GET $endpoint (token: ${token.take(8)}...)" +
-                        if (attempt > 0) " [retry $attempt]" else "",
+                    if (attempt > 0) " [retry $attempt]" else "",
             )
             val response =
                 restClient.get(endpoint) {
@@ -358,7 +358,7 @@ object Spotify {
                 if (attempt < maxRetries - 1) {
                     log(
                         "W",
-                        "REST $endpoint -> 429, waiting ${retryAfter}s (attempt ${attempt + 1}/$maxRetries)"
+                        "REST $endpoint -> 429, waiting ${retryAfter}s (attempt ${attempt + 1}/$maxRetries)",
                     )
                     delay(retryAfter * 1000)
                     continue
@@ -370,7 +370,7 @@ object Spotify {
                 log("E", "REST $endpoint FAILED: ${response.status.value} — ${bodyText.take(200)}")
                 throw SpotifyException(
                     response.status.value,
-                    "Spotify API error ${response.status.value}: $bodyText"
+                    "Spotify API error ${response.status.value}: $bodyText",
                 )
             }
             return response.body()
@@ -591,10 +591,14 @@ object Spotify {
                     // the response to a single level (null = root).
                     put("flatten", false)
                     putJsonArray("expandedFolders") {}
-                    if (folderUri != null) put("folderUri", folderUri) else put(
-                        "folderUri",
-                        null as String?
-                    )
+                    if (folderUri != null) {
+                        put("folderUri", folderUri)
+                    } else {
+                        put(
+                            "folderUri",
+                            null as String?,
+                        )
+                    }
                     put("includeFoldersWhenFlattening", true)
                 }
 
@@ -629,10 +633,12 @@ object Spotify {
                     val wrapper = itemElem.jsonObject.obj("item") ?: return@mapNotNull null
                     val typeName = wrapper.str("__typename") ?: ""
                     when {
-                        typeName == "PlaylistResponseWrapper" || typeName.contains(
-                            "Playlist",
-                            ignoreCase = true
-                        ) -> {
+                        typeName == "PlaylistResponseWrapper" ||
+                            typeName.contains(
+                                "Playlist",
+                                ignoreCase = true,
+                            )
+                        -> {
                             parsePlaylistWrapper(wrapper)
                                 ?.let {
                                     com.arturo254.opentune.spotify.models.SpotifyLibraryItem
@@ -640,10 +646,12 @@ object Spotify {
                                 }
                         }
 
-                        typeName == "FolderResponseWrapper" || typeName.contains(
-                            "Folder",
-                            ignoreCase = true
-                        ) -> {
+                        typeName == "FolderResponseWrapper" ||
+                            typeName.contains(
+                                "Folder",
+                                ignoreCase = true,
+                            )
+                        -> {
                             parseFolderWrapper(wrapper)
                                 ?.let {
                                     com.arturo254.opentune.spotify.models.SpotifyLibraryItem
@@ -926,7 +934,7 @@ object Spotify {
                 }
             log(
                 "D",
-                "addTracksToPlaylist: sending mutation for $playlistId with ${trackUris.size} tracks, vars=$vars"
+                "addTracksToPlaylist: sending mutation for $playlistId with ${trackUris.size} tracks, vars=$vars",
             )
             kotlinx.coroutines.withTimeout(20_000L) {
                 graphqlPost(
@@ -995,7 +1003,7 @@ object Spotify {
             )
             log(
                 "D",
-                "moveItemsInPlaylist: moved ${uids.size} items (before=$beforeUid) in $playlistId"
+                "moveItemsInPlaylist: moved ${uids.size} items (before=$beforeUid) in $playlistId",
             )
         }
 
@@ -1152,14 +1160,18 @@ object Spotify {
     ): Result<SpotifyRecommendations> =
         runCatching {
             authenticatedGet("recommendations") {
-                if (seedTrackIds.isNotEmpty()) parameter(
-                    "seed_tracks",
-                    seedTrackIds.joinToString(",")
-                )
-                if (seedArtistIds.isNotEmpty()) parameter(
-                    "seed_artists",
-                    seedArtistIds.joinToString(",")
-                )
+                if (seedTrackIds.isNotEmpty()) {
+                    parameter(
+                        "seed_tracks",
+                        seedTrackIds.joinToString(","),
+                    )
+                }
+                if (seedArtistIds.isNotEmpty()) {
+                    parameter(
+                        "seed_artists",
+                        seedArtistIds.joinToString(","),
+                    )
+                }
                 if (seedGenres.isNotEmpty()) parameter("seed_genres", seedGenres.joinToString(","))
                 parameter("limit", limit)
             }
@@ -1252,7 +1264,7 @@ object Spotify {
                             items = albumItems,
                             total = albumsSection?.int("totalCount") ?: 0,
                             limit = limit,
-                            offset = offset
+                            offset = offset,
                         )
                     } else {
                         null
@@ -1263,7 +1275,7 @@ object Spotify {
                             items = artistItems,
                             total = artistsSection?.int("totalCount") ?: 0,
                             limit = limit,
-                            offset = offset
+                            offset = offset,
                         )
                     } else {
                         null
@@ -1404,7 +1416,7 @@ object Spotify {
         runCatching {
             log(
                 "D",
-                "spotifyHome: GQL home() request — timeZone=$timeZone limit=$sectionItemsLimit"
+                "spotifyHome: GQL home() request — timeZone=$timeZone limit=$sectionItemsLimit",
             )
             val vars =
                 buildJsonObject {
@@ -1427,7 +1439,7 @@ object Spotify {
                     ?: run {
                         log(
                             "E",
-                            "spotifyHome: GQL response has no data.home — keys=${response.obj("data")?.keys}"
+                            "spotifyHome: GQL response has no data.home — keys=${response.obj("data")?.keys}",
                         )
                         throw SpotifyException(500, "Invalid home response")
                     }
@@ -1455,7 +1467,7 @@ object Spotify {
                 }
             log(
                 "D",
-                "spotifyHome: parsed ${sections.size}/${sectionElements.size} sections successfully"
+                "spotifyHome: parsed ${sections.size}/${sectionElements.size} sections successfully",
             )
 
             com.arturo254.opentune.spotify.models.SpotifyHomeFeed(
@@ -1640,10 +1652,11 @@ object Spotify {
                 images = albumImages,
                 releaseDate = albumData.obj("date")?.str("isoString"),
                 totalTracks = tracksData?.int("totalCount") ?: 0,
-                tracks = SpotifyPaging(
-                    items = trackItems,
-                    total = tracksData?.int("totalCount") ?: 0
-                ),
+                tracks =
+                    SpotifyPaging(
+                        items = trackItems,
+                        total = tracksData?.int("totalCount") ?: 0,
+                    ),
                 uri = "spotify:album:$albumId",
             )
         }
@@ -1671,9 +1684,10 @@ object Spotify {
             SpotifyArtist(
                 id = artistId,
                 name = artistData.obj("profile")?.str("name") ?: "",
-                images = parseGqlImages(
-                    artistData.obj("visuals")?.obj("avatarImage")?.arr("sources")
-                ),
+                images =
+                    parseGqlImages(
+                        artistData.obj("visuals")?.obj("avatarImage")?.arr("sources"),
+                    ),
                 uri = "spotify:artist:$artistId",
             )
         }

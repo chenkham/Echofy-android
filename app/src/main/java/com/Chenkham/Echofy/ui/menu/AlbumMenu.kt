@@ -1,11 +1,10 @@
 package com.Chenkham.Echofy.ui.menu
 
 import android.annotation.SuppressLint
-
 import android.content.Intent
+import android.widget.Toast
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
-import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
@@ -56,7 +55,6 @@ import androidx.media3.exoplayer.offline.DownloadRequest
 import androidx.media3.exoplayer.offline.DownloadService
 import androidx.navigation.NavController
 import coil.compose.AsyncImage
-import com.arturo254.opentune.innertube.YouTube
 import com.Chenkham.Echofy.LocalDatabase
 import com.Chenkham.Echofy.LocalDownloadUtil
 import com.Chenkham.Echofy.LocalPlayerConnection
@@ -65,6 +63,7 @@ import com.Chenkham.Echofy.constants.ListItemHeight
 import com.Chenkham.Echofy.constants.ListThumbnailSize
 import com.Chenkham.Echofy.db.entities.Album
 import com.Chenkham.Echofy.db.entities.Song
+import com.Chenkham.Echofy.db.update
 import com.Chenkham.Echofy.extensions.toMediaItem
 import com.Chenkham.Echofy.playback.ExoDownloadService
 import com.Chenkham.Echofy.ui.component.AlbumListItem
@@ -74,10 +73,9 @@ import com.Chenkham.Echofy.ui.component.GridMenuItem
 import com.Chenkham.Echofy.ui.component.ListDialog
 import com.Chenkham.Echofy.ui.component.ListItem
 import com.Chenkham.Echofy.ui.component.SongListItem
+import com.arturo254.opentune.innertube.YouTube
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import com.Chenkham.Echofy.db.update
-import com.Chenkham.Echofy.db.addSongToPlaylist
 
 @SuppressLint("MutableCollectionMutableState")
 @Composable
@@ -117,8 +115,8 @@ fun AlbumMenu(
                     STATE_COMPLETED
                 } else if (songs.all {
                         downloads[it.id]?.state == STATE_QUEUED ||
-                                downloads[it.id]?.state == STATE_DOWNLOADING ||
-                                downloads[it.id]?.state == STATE_COMPLETED
+                            downloads[it.id]?.state == STATE_DOWNLOADING ||
+                            downloads[it.id]?.state == STATE_COMPLETED
                     }
                 ) {
                     STATE_DOWNLOADING
@@ -271,7 +269,6 @@ fun AlbumMenu(
 
     HorizontalDivider()
 
-
     GridMenu(
         contentPadding =
             PaddingValues(
@@ -376,8 +373,8 @@ fun AlbumMenu(
                             context = context,
                             albumId = album.album.id,
                             title = album.album.title,
-                            artist = album.artists.firstOrNull()?.name
-                        )
+                            artist = album.artists.firstOrNull()?.name,
+                        ),
                     )
                 }
             context.startActivity(Intent.createChooser(intent, null))

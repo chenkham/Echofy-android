@@ -10,9 +10,8 @@ import timber.log.Timber
 class FlipToPauseDetector(
     private val context: Context,
     private val onFaceDown: () -> Unit,
-    private val onFaceUp: () -> Unit
+    private val onFaceUp: () -> Unit,
 ) : SensorEventListener {
-
     private val sensorManager = context.getSystemService(Context.SENSOR_SERVICE) as? SensorManager
     private val accelerometer = sensorManager?.getDefaultSensor(Sensor.TYPE_ACCELEROMETER)
     private val proximity = sensorManager?.getDefaultSensor(Sensor.TYPE_PROXIMITY)
@@ -75,5 +74,8 @@ class FlipToPauseDetector(
         }
     }
 
-    override fun onAccuracyChanged(sensor: Sensor?, accuracy: Int) {}
+    override fun onAccuracyChanged(
+        sensor: Sensor?,
+        accuracy: Int,
+    ) {}
 }

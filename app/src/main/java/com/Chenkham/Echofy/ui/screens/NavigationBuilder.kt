@@ -1,12 +1,5 @@
 package com.Chenkham.Echofy.ui.screens
 
-import com.Chenkham.Echofy.ui.screens.settings.AODSettings
-import com.Chenkham.Echofy.ui.screens.settings.PoTokenScreen
-import com.Chenkham.Echofy.ui.screens.settings.ThemeCreatorScreen
-import com.Chenkham.Echofy.ui.screens.settings.PalettePickerScreen
-import com.Chenkham.Echofy.ui.screens.settings.AndroidAutoSettings
-import com.Chenkham.Echofy.ui.screens.settings.UpdateScreen
-
 import android.annotation.SuppressLint
 import android.os.Build
 import androidx.annotation.RequiresApi
@@ -39,30 +32,34 @@ import com.Chenkham.Echofy.ui.screens.playlist.OnlinePlaylistScreen
 import com.Chenkham.Echofy.ui.screens.playlist.SpotifyPlaylistScreen
 import com.Chenkham.Echofy.ui.screens.playlist.TopPlaylistScreen
 import com.Chenkham.Echofy.ui.screens.search.OnlineSearchResult
+import com.Chenkham.Echofy.ui.screens.settings.AODSettings
 import com.Chenkham.Echofy.ui.screens.settings.AboutScreen
 import com.Chenkham.Echofy.ui.screens.settings.AccountSettings
+import com.Chenkham.Echofy.ui.screens.settings.AiSettings
+import com.Chenkham.Echofy.ui.screens.settings.AndroidAutoSettings
 import com.Chenkham.Echofy.ui.screens.settings.AppearanceSettings
+import com.Chenkham.Echofy.ui.screens.settings.BackpaperSettings
 import com.Chenkham.Echofy.ui.screens.settings.BackupAndRestore
 import com.Chenkham.Echofy.ui.screens.settings.ContentSettings
 import com.Chenkham.Echofy.ui.screens.settings.DiscordLoginScreen
 import com.Chenkham.Echofy.ui.screens.settings.DiscordSettings
-import com.Chenkham.Echofy.ui.screens.settings.PlayerSettings
-import com.Chenkham.Echofy.ui.screens.settings.PrivacySettings
-import com.Chenkham.Echofy.ui.screens.settings.RadioSettings
-import com.Chenkham.Echofy.ui.screens.settings.IntegrationSettings
-import com.Chenkham.Echofy.ui.screens.settings.SettingsScreen
-import com.Chenkham.Echofy.ui.screens.settings.StorageSettings
 import com.Chenkham.Echofy.ui.screens.settings.EqualizerScreen
-import com.Chenkham.Echofy.ui.screens.settings.BackpaperSettings
-import com.Chenkham.Echofy.ui.screens.settings.SaverSettings
 import com.Chenkham.Echofy.ui.screens.settings.GeneralSettings
+import com.Chenkham.Echofy.ui.screens.settings.IntegrationSettings
+import com.Chenkham.Echofy.ui.screens.settings.LastFmSettings
+import com.Chenkham.Echofy.ui.screens.settings.PalettePickerScreen
+import com.Chenkham.Echofy.ui.screens.settings.PlayerSettings
+import com.Chenkham.Echofy.ui.screens.settings.PoTokenScreen
 import com.Chenkham.Echofy.ui.screens.settings.PremiumFeaturesSettings
 import com.Chenkham.Echofy.ui.screens.settings.PremiumVisualsSettings
-import com.Chenkham.Echofy.ui.screens.settings.LastFmSettings
-import com.Chenkham.Echofy.ui.screens.settings.AiSettings
-
+import com.Chenkham.Echofy.ui.screens.settings.PrivacySettings
+import com.Chenkham.Echofy.ui.screens.settings.RadioSettings
+import com.Chenkham.Echofy.ui.screens.settings.SaverSettings
+import com.Chenkham.Echofy.ui.screens.settings.SettingsScreen
+import com.Chenkham.Echofy.ui.screens.settings.StorageSettings
+import com.Chenkham.Echofy.ui.screens.settings.ThemeCreatorScreen
+import com.Chenkham.Echofy.ui.screens.settings.UpdateScreen
 import com.Chenkham.Echofy.ui.utils.TouchBlockingWrapper
-import kotlinx.coroutines.launch
 
 @RequiresApi(Build.VERSION_CODES.TIRAMISU)
 @SuppressLint("UnrememberedMutableState")
@@ -88,7 +85,7 @@ fun NavGraphBuilder.navigationBuilder(
                         popUpTo("splash") { inclusive = true }
                     }
                 },
-                isOnboardingCompleted = isOnboardingCompleted
+                isOnboardingCompleted = isOnboardingCompleted,
             )
         }
     }
@@ -103,7 +100,7 @@ fun NavGraphBuilder.navigationBuilder(
                     navController.navigate(Screens.Home.route) {
                         popUpTo("onboarding") { inclusive = true }
                     }
-                }
+                },
             )
         }
     }
@@ -114,12 +111,11 @@ fun NavGraphBuilder.navigationBuilder(
         }
     }
 
-
     composable(route = "account_settings") {
         TouchBlockingWrapper {
             com.Chenkham.Echofy.ui.screens.settings.AccountSettings(
                 navController = navController,
-                scrollBehavior = scrollBehavior
+                scrollBehavior = scrollBehavior,
             )
         }
     }
@@ -133,7 +129,7 @@ fun NavGraphBuilder.navigationBuilder(
     }
 
     composable(
-        Screens.Premium.route
+        Screens.Premium.route,
     ) {
         TouchBlockingWrapper {
             com.Chenkham.Echofy.ui.screens.premium.SupportScreen(adManager = adManager)
@@ -194,9 +190,6 @@ fun NavGraphBuilder.navigationBuilder(
             SpotifyPlaylistScreen(navController, scrollBehavior)
         }
     }
-
-
-
 
     composable(
         route = "search/{query}",
@@ -349,8 +342,6 @@ fun NavGraphBuilder.navigationBuilder(
         }
     }
 
-
-
     composable(
         route = "top_playlist/{top}",
         arguments =
@@ -384,17 +375,17 @@ fun NavGraphBuilder.navigationBuilder(
     }
     composable(
         route = "podcast/{podcastId}",
-        arguments = listOf(
-            navArgument("podcastId") {
-                type = NavType.StringType
-            }
-        )
+        arguments =
+            listOf(
+                navArgument("podcastId") {
+                    type = NavType.StringType
+                },
+            ),
     ) {
         TouchBlockingWrapper {
             PodcastScreen(navController, scrollBehavior)
         }
     }
-
 
     composable("settings") {
         TouchBlockingWrapper {
@@ -504,12 +495,13 @@ fun NavGraphBuilder.navigationBuilder(
     }
     composable(
         route = "login?chained={chained}",
-        arguments = listOf(
-            navArgument("chained") {
-                type = NavType.BoolType
-                defaultValue = false
-            }
-        )
+        arguments =
+            listOf(
+                navArgument("chained") {
+                    type = NavType.BoolType
+                    defaultValue = false
+                },
+            ),
     ) { backStackEntry ->
         TouchBlockingWrapper {
             val chained = backStackEntry.arguments?.getBoolean("chained") ?: false
@@ -567,10 +559,11 @@ fun NavGraphBuilder.navigationBuilder(
     composable("always_on_display") {
         androidx.compose.ui.window.Dialog(
             onDismissRequest = { navController.navigateUp() },
-            properties = androidx.compose.ui.window.DialogProperties(
-                usePlatformDefaultWidth = false,
-                decorFitsSystemWindows = false,
-            )
+            properties =
+                androidx.compose.ui.window.DialogProperties(
+                    usePlatformDefaultWidth = false,
+                    decorFitsSystemWindows = false,
+                ),
         ) {
             com.Chenkham.Echofy.ui.screens.AlwaysOnDisplayScreen(navController)
         }

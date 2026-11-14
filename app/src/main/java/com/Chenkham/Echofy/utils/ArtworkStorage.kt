@@ -2,21 +2,25 @@ package com.Chenkham.Echofy.utils
 
 import android.content.Context
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.json.Json
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
 import java.io.File
 
 @Serializable
 data class SavedArtwork(
     val songId: String,
     val thumbnail: String? = null,
-    val artist: String? = null
+    val artist: String? = null,
 )
 
 object ArtworkStorage {
     private const val FILENAME = "Echofy_saved_artworks.json"
-    private val json = Json { prettyPrint = true; ignoreUnknownKeys = true }
+    private val json =
+        Json {
+            prettyPrint = true
+            ignoreUnknownKeys = true
+        }
 
     private fun fileFor(context: Context): File = File(context.filesDir, FILENAME)
 
@@ -32,9 +36,15 @@ object ArtworkStorage {
         }
     }
 
-    fun findBySongId(context: Context, songId: String): SavedArtwork? = loadAll(context).firstOrNull { it.songId == songId }
+    fun findBySongId(
+        context: Context,
+        songId: String,
+    ): SavedArtwork? = loadAll(context).firstOrNull { it.songId == songId }
 
-    fun saveOrUpdate(context: Context, artwork: SavedArtwork) {
+    fun saveOrUpdate(
+        context: Context,
+        artwork: SavedArtwork,
+    ) {
         try {
             val list = loadAll(context).toMutableList()
             val idx = list.indexOfFirst { it.songId == artwork.songId }
@@ -53,7 +63,10 @@ object ArtworkStorage {
         }
     }
 
-    fun removeBySongId(context: Context, songId: String) {
+    fun removeBySongId(
+        context: Context,
+        songId: String,
+    ) {
         try {
             val list = loadAll(context).toMutableList()
             val idx = list.indexOfFirst { it.songId == songId }

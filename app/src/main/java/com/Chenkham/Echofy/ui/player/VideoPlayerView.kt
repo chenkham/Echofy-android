@@ -7,7 +7,6 @@ import android.content.Context
 import android.content.ContextWrapper
 import android.content.pm.ActivityInfo
 import android.content.res.Configuration
-import android.view.OrientationEventListener
 import android.view.View
 import android.view.ViewGroup
 import android.view.WindowManager
@@ -99,14 +98,15 @@ fun VideoPlayerView(
         context.dataStore.data.map { it[VideoQualityKey] ?: "Auto" }
     }.collectAsState(initial = "Auto")
 
-    val playerView = remember {
-        PlayerView(context).apply {
-            useController = false
-            resizeMode = AspectRatioFrameLayout.RESIZE_MODE_FIT
-            keepScreenOn = true
-            setShutterBackgroundColor(android.graphics.Color.TRANSPARENT)
+    val playerView =
+        remember {
+            PlayerView(context).apply {
+                useController = false
+                resizeMode = AspectRatioFrameLayout.RESIZE_MODE_FIT
+                keepScreenOn = true
+                setShutterBackgroundColor(android.graphics.Color.TRANSPARENT)
+            }
         }
-    }
 
     DisposableEffect(exoPlayer) {
         playerView.player = exoPlayer
@@ -144,9 +144,10 @@ fun VideoPlayerView(
     }
 
     Box(
-        modifier = modifier
-            .clip(RoundedCornerShape(cornerRadius.dp))
-            .background(Color.Black),
+        modifier =
+            modifier
+                .clip(RoundedCornerShape(cornerRadius.dp))
+                .background(Color.Black),
         contentAlignment = Alignment.Center,
     ) {
         if (!isFullscreen) {
@@ -163,17 +164,19 @@ fun VideoPlayerView(
                 iconSize = 20.dp,
                 background = Color.Black.copy(alpha = 0.6f),
                 onClick = { isFullscreen = true },
-                modifier = Modifier
-                    .align(Alignment.BottomEnd)
-                    .padding(8.dp),
+                modifier =
+                    Modifier
+                        .align(Alignment.BottomEnd)
+                        .padding(8.dp),
             )
 
             if (selectedQuality != "Auto") {
                 QualityBadge(
                     quality = selectedQuality,
-                    modifier = Modifier
-                        .align(Alignment.TopEnd)
-                        .padding(8.dp),
+                    modifier =
+                        Modifier
+                            .align(Alignment.TopEnd)
+                            .padding(8.dp),
                 )
             }
         }
@@ -188,6 +191,7 @@ fun VideoPlayerView(
         )
     }
 }
+
 @Composable
 private fun FullscreenOverlay(
     exoPlayer: Player?,
@@ -207,19 +211,21 @@ private fun FullscreenOverlay(
     // overlay to the activity's own content view means the system relays it out with
     // the activity, so landscape works.
     DisposableEffect(activity) {
-        val root = activity?.findViewById<ViewGroup>(android.R.id.content)
-            ?: return@DisposableEffect onDispose { }
+        val root =
+            activity?.findViewById<ViewGroup>(android.R.id.content)
+                ?: return@DisposableEffect onDispose { }
 
-        val composeView = ComposeView(activity).apply {
-            setContent {
-                FullscreenContent(
-                    exoPlayer = exoPlayer,
-                    playerView = playerView,
-                    quality = currentQuality,
-                    onDismiss = { currentOnDismiss() },
-                )
+        val composeView =
+            ComposeView(activity).apply {
+                setContent {
+                    FullscreenContent(
+                        exoPlayer = exoPlayer,
+                        playerView = playerView,
+                        quality = currentQuality,
+                        onDismiss = { currentOnDismiss() },
+                    )
+                }
             }
-        }
 
         root.addView(
             composeView,
@@ -238,18 +244,20 @@ private fun FullscreenOverlay(
             WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
 
         val previousCutoutMode = window.attributes.layoutInDisplayCutoutMode
-        window.attributes = window.attributes.apply {
-            layoutInDisplayCutoutMode =
-                WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES
-        }
+        window.attributes =
+            window.attributes.apply {
+                layoutInDisplayCutoutMode =
+                    WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES
+            }
 
         onDispose {
             root.removeView(composeView)
             composeView.disposeComposition()
             window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
-            window.attributes = window.attributes.apply {
-                layoutInDisplayCutoutMode = previousCutoutMode
-            }
+            window.attributes =
+                window.attributes.apply {
+                    layoutInDisplayCutoutMode = previousCutoutMode
+                }
             insets.systemBarsBehavior = previousBehavior
             insets.show(WindowInsetsCompat.Type.systemBars())
         }
@@ -294,20 +302,24 @@ private fun FullscreenContent(
     // The play/pause icon previously read exoPlayer.isPlaying directly. That is not
     // observable state, so nothing recomposed and the icon stayed frozen.
     DisposableEffect(exoPlayer) {
-        val listener = object : Player.Listener {
-            override fun onIsPlayingChanged(playing: Boolean) {
-                isPlaying = playing
-            }
+        val listener =
+            object : Player.Listener {
+                override fun onIsPlayingChanged(playing: Boolean) {
+                    isPlaying = playing
+                }
 
-            override fun onPlaybackStateChanged(state: Int) {
-                isBuffering = state == Player.STATE_BUFFERING
-            }
+                override fun onPlaybackStateChanged(state: Int) {
+                    isBuffering = state == Player.STATE_BUFFERING
+                }
 
-            override fun onEvents(player: Player, events: Player.Events) {
-                hasNext = player.hasNextMediaItem()
-                hasPrevious = player.hasPreviousMediaItem()
+                override fun onEvents(
+                    player: Player,
+                    events: Player.Events,
+                ) {
+                    hasNext = player.hasNextMediaItem()
+                    hasPrevious = player.hasPreviousMediaItem()
+                }
             }
-        }
         exoPlayer?.addListener(listener)
         isPlaying = exoPlayer?.isPlaying == true
         isBuffering = exoPlayer?.playbackState == Player.STATE_BUFFERING
@@ -343,10 +355,11 @@ private fun FullscreenContent(
 
     val seekBy: (Long) -> Unit = { deltaMs ->
         exoPlayer?.let {
-            val target = (it.currentPosition + deltaMs).coerceIn(
-                0L,
-                it.duration.takeIf { d -> d > 0L } ?: Long.MAX_VALUE,
-            )
+            val target =
+                (it.currentPosition + deltaMs).coerceIn(
+                    0L,
+                    it.duration.takeIf { d -> d > 0L } ?: Long.MAX_VALUE,
+                )
             it.seekTo(target)
             position = target
         }
@@ -354,35 +367,37 @@ private fun FullscreenContent(
     }
 
     Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(Color.Black)
-            .pointerInput(isLocked) {
-                detectTapGestures(
-                    onTap = { showControls = !showControls },
-                    onDoubleTap = { offset ->
-                        if (isLocked) return@detectTapGestures
-                        if (offset.x < size.width / 2f) {
-                            seekBy(-SEEK_STEP_MS)
-                            seekFeedback = -1
-                        } else {
-                            seekBy(SEEK_STEP_MS)
-                            seekFeedback = 1
-                        }
-                    },
-                )
-            },
+        modifier =
+            Modifier
+                .fillMaxSize()
+                .background(Color.Black)
+                .pointerInput(isLocked) {
+                    detectTapGestures(
+                        onTap = { showControls = !showControls },
+                        onDoubleTap = { offset ->
+                            if (isLocked) return@detectTapGestures
+                            if (offset.x < size.width / 2f) {
+                                seekBy(-SEEK_STEP_MS)
+                                seekFeedback = -1
+                            } else {
+                                seekBy(SEEK_STEP_MS)
+                                seekFeedback = 1
+                            }
+                        },
+                    )
+                },
         contentAlignment = Alignment.Center,
     ) {
         AndroidView(
             factory = { ctx: Context -> FrameLayout(ctx) },
             update = { container ->
                 container.reparent(playerView)
-                playerView.resizeMode = if (isZoomed) {
-                    AspectRatioFrameLayout.RESIZE_MODE_ZOOM
-                } else {
-                    AspectRatioFrameLayout.RESIZE_MODE_FIT
-                }
+                playerView.resizeMode =
+                    if (isZoomed) {
+                        AspectRatioFrameLayout.RESIZE_MODE_ZOOM
+                    } else {
+                        AspectRatioFrameLayout.RESIZE_MODE_FIT
+                    }
             },
             modifier = Modifier.fillMaxSize(),
         )
@@ -390,17 +405,19 @@ private fun FullscreenContent(
         if (seekFeedback != 0) {
             SeekFeedback(
                 forward = seekFeedback > 0,
-                modifier = Modifier
-                    .align(if (seekFeedback > 0) Alignment.CenterEnd else Alignment.CenterStart)
-                    .padding(horizontal = 56.dp),
+                modifier =
+                    Modifier
+                        .align(if (seekFeedback > 0) Alignment.CenterEnd else Alignment.CenterStart)
+                        .padding(horizontal = 56.dp),
             )
         }
 
         AnimatedVisibility(visible = showControls, enter = fadeIn(), exit = fadeOut()) {
             Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .background(Color.Black.copy(alpha = 0.45f)),
+                modifier =
+                    Modifier
+                        .fillMaxSize()
+                        .background(Color.Black.copy(alpha = 0.45f)),
             ) {
                 if (isLocked) {
                     BarButton(
@@ -409,24 +426,35 @@ private fun FullscreenContent(
                         size = 52.dp,
                         iconSize = 26.dp,
                         background = Color.Black.copy(alpha = 0.5f),
-                        onClick = { isLocked = false; interactionNonce++ },
-                        modifier = Modifier
-                            .align(Alignment.CenterStart)
-                            .padding(start = 24.dp),
+                        onClick = {
+                            isLocked = false
+                            interactionNonce++
+                        },
+                        modifier =
+                            Modifier
+                                .align(Alignment.CenterStart)
+                                .padding(start = 24.dp),
                     )
                 } else {
                     TopBar(
                         quality = quality,
                         onCollapse = onDismiss,
-                        onLock = { isLocked = true; interactionNonce++ },
-                        onToggleFit = { isZoomed = !isZoomed; interactionNonce++ },
+                        onLock = {
+                            isLocked = true
+                            interactionNonce++
+                        },
+                        onToggleFit = {
+                            isZoomed = !isZoomed
+                            interactionNonce++
+                        },
                         onSpeed = { sheet = Sheet.SPEED },
                         onQuality = { sheet = Sheet.QUALITY },
-                        modifier = Modifier
-                            .align(Alignment.TopCenter)
-                            .fillMaxWidth()
-                            .statusBarsPadding()
-                            .padding(horizontal = 12.dp, vertical = 8.dp),
+                        modifier =
+                            Modifier
+                                .align(Alignment.TopCenter)
+                                .fillMaxWidth()
+                                .statusBarsPadding()
+                                .padding(horizontal = 12.dp, vertical = 8.dp),
                     )
 
                     CenterControls(
@@ -435,7 +463,8 @@ private fun FullscreenContent(
                         hasPrevious = hasPrevious,
                         hasNext = hasNext,
                         onPrevious = {
-                            exoPlayer?.seekToPreviousMediaItem(); interactionNonce++
+                            exoPlayer?.seekToPreviousMediaItem()
+                            interactionNonce++
                         },
                         onReplay = { seekBy(-SEEK_STEP_MS) },
                         onPlayPause = {
@@ -443,7 +472,10 @@ private fun FullscreenContent(
                             interactionNonce++
                         },
                         onForward = { seekBy(SEEK_STEP_MS) },
-                        onNext = { exoPlayer?.seekToNextMediaItem(); interactionNonce++ },
+                        onNext = {
+                            exoPlayer?.seekToNextMediaItem()
+                            interactionNonce++
+                        },
                         modifier = Modifier.align(Alignment.Center),
                     )
 
@@ -451,7 +483,10 @@ private fun FullscreenContent(
                         position = scrubPosition ?: position,
                         bufferedPosition = bufferedPosition,
                         duration = duration,
-                        onScrub = { scrubPosition = it; interactionNonce++ },
+                        onScrub = {
+                            scrubPosition = it
+                            interactionNonce++
+                        },
                         onScrubFinished = { target ->
                             exoPlayer?.seekTo(target)
                             position = target
@@ -459,14 +494,15 @@ private fun FullscreenContent(
                             interactionNonce++
                         },
                         onExitFullscreen = onDismiss,
-                        modifier = Modifier
-                            .align(Alignment.BottomCenter)
-                            .fillMaxWidth()
-                            .navigationBarsPadding()
-                            .padding(
-                                horizontal = if (isLandscape) 24.dp else 4.dp,
-                                vertical = 8.dp,
-                            ),
+                        modifier =
+                            Modifier
+                                .align(Alignment.BottomCenter)
+                                .fillMaxWidth()
+                                .navigationBarsPadding()
+                                .padding(
+                                    horizontal = if (isLandscape) 24.dp else 4.dp,
+                                    vertical = 8.dp,
+                                ),
                     )
                 }
             }
@@ -474,20 +510,21 @@ private fun FullscreenContent(
     }
 
     when (sheet) {
-        Sheet.SPEED -> OptionSheet(
-            title = "Playback speed",
-            options = PLAYBACK_SPEEDS.map { it.speedLabel() },
-            selected = speed.speedLabel(),
-            onSelect = { label ->
-                PLAYBACK_SPEEDS.firstOrNull { it.speedLabel() == label }?.let { value ->
-                    speed = value
-                    exoPlayer?.setPlaybackSpeed(value)
-                }
-                sheet = Sheet.NONE
-                interactionNonce++
-            },
-            onDismiss = { sheet = Sheet.NONE },
-        )
+        Sheet.SPEED ->
+            OptionSheet(
+                title = "Playback speed",
+                options = PLAYBACK_SPEEDS.map { it.speedLabel() },
+                selected = speed.speedLabel(),
+                onSelect = { label ->
+                    PLAYBACK_SPEEDS.firstOrNull { it.speedLabel() == label }?.let { value ->
+                        speed = value
+                        exoPlayer?.setPlaybackSpeed(value)
+                    }
+                    sheet = Sheet.NONE
+                    interactionNonce++
+                },
+                onDismiss = { sheet = Sheet.NONE },
+            )
 
         Sheet.QUALITY -> {
             val available by YTPlayerUtils.availableQualities.collectAsState()
@@ -512,8 +549,7 @@ private fun FullscreenContent(
 
 private enum class Sheet { NONE, SPEED, QUALITY }
 
-private fun Float.speedLabel(): String =
-    if (this == 1f) "Normal" else "${toString().removeSuffix(".0")}x"
+private fun Float.speedLabel(): String = if (this == 1f) "Normal" else "${toString().removeSuffix(".0")}x"
 
 @Composable
 private fun TopBar(
@@ -544,10 +580,11 @@ private fun TopBar(
         BarButton(icon = R.drawable.speed, description = "Playback speed", onClick = onSpeed)
         Row(
             verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier
-                .clip(RoundedCornerShape(16.dp))
-                .clickable(onClick = onQuality)
-                .padding(horizontal = 10.dp, vertical = 8.dp),
+            modifier =
+                Modifier
+                    .clip(RoundedCornerShape(16.dp))
+                    .clickable(onClick = onQuality)
+                    .padding(horizontal = 10.dp, vertical = 8.dp),
         ) {
             Icon(
                 painter = painterResource(R.drawable.hd),
@@ -652,9 +689,10 @@ private fun BottomBar(
     Column(modifier = modifier) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 12.dp),
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 12.dp),
         ) {
             Text(
                 text = "${makeTimeString(position)} / ${makeTimeString(duration)}",
@@ -674,9 +712,10 @@ private fun BottomBar(
             duration = duration,
             onScrub = onScrub,
             onScrubFinished = onScrubFinished,
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 12.dp),
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 12.dp),
         )
     }
 }
@@ -707,28 +746,29 @@ private fun YouTubeSeekBar(
 
     Box(
         contentAlignment = Alignment.Center,
-        modifier = modifier
-            .height(28.dp)
-            .pointerInput(duration) {
-                if (duration <= 0L) return@pointerInput
-                awaitPointerEventScope {
-                    while (true) {
-                        val down = awaitFirstDown(requireUnconsumed = false)
-                        val width = size.width.toFloat()
-                        isDragging = true
-                        var lastX = down.position.x
-                        onScrub(positionFor(lastX, width, duration))
-                        down.consume()
-                        horizontalDrag(down.id) { change ->
-                            lastX = change.position.x
+        modifier =
+            modifier
+                .height(28.dp)
+                .pointerInput(duration) {
+                    if (duration <= 0L) return@pointerInput
+                    awaitPointerEventScope {
+                        while (true) {
+                            val down = awaitFirstDown(requireUnconsumed = false)
+                            val width = size.width.toFloat()
+                            isDragging = true
+                            var lastX = down.position.x
                             onScrub(positionFor(lastX, width, duration))
-                            change.consume()
+                            down.consume()
+                            horizontalDrag(down.id) { change ->
+                                lastX = change.position.x
+                                onScrub(positionFor(lastX, width, duration))
+                                change.consume()
+                            }
+                            isDragging = false
+                            onScrubFinished(positionFor(lastX, width, duration))
                         }
-                        isDragging = false
-                        onScrubFinished(positionFor(lastX, width, duration))
                     }
-                }
-            },
+                },
     ) {
         Canvas(modifier = Modifier.fillMaxSize()) {
             val centerY = size.height / 2f
@@ -764,8 +804,11 @@ private fun YouTubeSeekBar(
     }
 }
 
-private fun positionFor(x: Float, widthPx: Float, duration: Long): Long =
-    if (widthPx <= 0f) 0L else ((x / widthPx).coerceIn(0f, 1f) * duration).toLong()
+private fun positionFor(
+    x: Float,
+    widthPx: Float,
+    duration: Long,
+): Long = if (widthPx <= 0f) 0L else ((x / widthPx).coerceIn(0f, 1f) * duration).toLong()
 
 @Composable
 private fun SeekFeedback(
@@ -774,17 +817,19 @@ private fun SeekFeedback(
 ) {
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
-        modifier = modifier
-            .size(96.dp)
-            .clip(CircleShape)
-            .background(Color.Black.copy(alpha = 0.45f))
-            .padding(16.dp),
+        modifier =
+            modifier
+                .size(96.dp)
+                .clip(CircleShape)
+                .background(Color.Black.copy(alpha = 0.45f))
+                .padding(16.dp),
         verticalArrangement = Arrangement.Center,
     ) {
         Icon(
-            painter = painterResource(
-                if (forward) R.drawable.forward_10 else R.drawable.replay_10,
-            ),
+            painter =
+                painterResource(
+                    if (forward) R.drawable.forward_10 else R.drawable.replay_10,
+                ),
             contentDescription = null,
             tint = Color.White,
             modifier = Modifier.size(34.dp),
@@ -818,10 +863,11 @@ private fun OptionSheet(
             // last options (144p/240p) off-screen with no way to reach them. Cap the sheet
             // to a fraction of the window and scroll the options inside it.
             Column(
-                modifier = Modifier
-                    .fillMaxWidth(if (isLandscape) 0.5f else 0.9f)
-                    .heightIn(max = maxSheetHeight)
-                    .padding(vertical = 16.dp),
+                modifier =
+                    Modifier
+                        .fillMaxWidth(if (isLandscape) 0.5f else 0.9f)
+                        .heightIn(max = maxSheetHeight)
+                        .padding(vertical = 16.dp),
             ) {
                 Text(
                     text = title,
@@ -833,10 +879,11 @@ private fun OptionSheet(
                     items(options) { option ->
                         Row(
                             verticalAlignment = Alignment.CenterVertically,
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .clickable { onSelect(option) }
-                                .padding(horizontal = 24.dp, vertical = 12.dp),
+                            modifier =
+                                Modifier
+                                    .fillMaxWidth()
+                                    .clickable { onSelect(option) }
+                                    .padding(horizontal = 24.dp, vertical = 12.dp),
                         ) {
                             if (option == selected) {
                                 Icon(
@@ -875,16 +922,17 @@ private fun BarButton(
 ) {
     Box(
         contentAlignment = Alignment.Center,
-        modifier = modifier
-            .size(size)
-            .clip(CircleShape)
-            .background(background)
-            .clickable(
-                enabled = enabled,
-                interactionSource = remember { MutableInteractionSource() },
-                indication = ripple(bounded = false),
-                onClick = onClick,
-            ),
+        modifier =
+            modifier
+                .size(size)
+                .clip(CircleShape)
+                .background(background)
+                .clickable(
+                    enabled = enabled,
+                    interactionSource = remember { MutableInteractionSource() },
+                    indication = ripple(bounded = false),
+                    onClick = onClick,
+                ),
     ) {
         Icon(
             painter = painterResource(icon),
@@ -901,10 +949,11 @@ private fun QualityBadge(
     modifier: Modifier = Modifier,
 ) {
     Box(
-        modifier = modifier
-            .clip(RoundedCornerShape(4.dp))
-            .background(Color.Black.copy(alpha = 0.6f))
-            .padding(horizontal = 6.dp, vertical = 2.dp),
+        modifier =
+            modifier
+                .clip(RoundedCornerShape(4.dp))
+                .background(Color.Black.copy(alpha = 0.6f))
+                .padding(horizontal = 6.dp, vertical = 2.dp),
     ) {
         Text(
             text = quality,
@@ -935,4 +984,3 @@ private fun Context.findActivity(): Activity? {
     }
     return null
 }
-

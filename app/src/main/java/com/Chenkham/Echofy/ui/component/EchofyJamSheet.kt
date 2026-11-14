@@ -11,15 +11,13 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
@@ -30,17 +28,16 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.SheetValue
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
@@ -75,13 +72,11 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-import coil.compose.AsyncImage
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.lifecycleScope
+import coil.compose.AsyncImage
 import com.Chenkham.Echofy.LocalDatabase
 import com.Chenkham.Echofy.LocalPlayerConnection
-import com.Chenkham.Echofy.MainActivity
 import com.Chenkham.Echofy.R
 import com.Chenkham.Echofy.db.entities.Playlist
 import com.Chenkham.Echofy.jam.JamParticipant
@@ -90,7 +85,6 @@ import com.Chenkham.Echofy.jam.JamQueueItem
 import com.Chenkham.Echofy.jam.JamRegistry
 import com.Chenkham.Echofy.jam.JamRoomCode
 import com.Chenkham.Echofy.jam.JamSessionPhase
-import com.Chenkham.Echofy.jam.JamSessionState
 import com.Chenkham.Echofy.models.MediaMetadata
 import com.Chenkham.Echofy.models.toMediaMetadata
 import com.arturo254.opentune.innertube.YouTube
@@ -153,34 +147,38 @@ fun EchofyJamSheet(
     val session = sessionState.session
     val roomCode = session?.roomCode?.roomCode.orEmpty()
     val inviteLink = remember(registry, roomCode) { buildInviteLink(registry, roomCode) }
-    val hostParticipant = remember(participants, session) {
-        participants.firstOrNull { it.role == JamParticipantRole.HOST }
-            ?: session?.takeIf { it.role == JamParticipantRole.HOST }?.displayName?.let {
-                JamParticipant(
-                    participantId = session.participantId,
-                    displayName = it,
-                    role = session.role,
-                    authUid = session.authUid,
-                )
-            }
-    }
-    val jamTitle = remember(participants, session, roomCode, roomMeta) {
-        val hostName = roomMeta?.hostName?.takeIf { it.isNotBlank() }
-            ?: participants.firstOrNull { it.role == JamParticipantRole.HOST }?.displayName
-            ?: session?.takeIf { it.role == JamParticipantRole.HOST }?.displayName
-        when {
-            hostName != null -> "$hostName's Together"
-            roomCode.isNotBlank() -> "Together Session"
-            else -> "Echofy Together"
+    val hostParticipant =
+        remember(participants, session) {
+            participants.firstOrNull { it.role == JamParticipantRole.HOST }
+                ?: session?.takeIf { it.role == JamParticipantRole.HOST }?.displayName?.let {
+                    JamParticipant(
+                        participantId = session.participantId,
+                        displayName = it,
+                        role = session.role,
+                        authUid = session.authUid,
+                    )
+                }
         }
-    }
+    val jamTitle =
+        remember(participants, session, roomCode, roomMeta) {
+            val hostName =
+                roomMeta?.hostName?.takeIf { it.isNotBlank() }
+                    ?: participants.firstOrNull { it.role == JamParticipantRole.HOST }?.displayName
+                    ?: session?.takeIf { it.role == JamParticipantRole.HOST }?.displayName
+            when {
+                hostName != null -> "$hostName's Together"
+                roomCode.isNotBlank() -> "Together Session"
+                else -> "Echofy Together"
+            }
+        }
 
     LaunchedEffect(initialRoomCode) {
-        val normalizedRoomCode = initialRoomCode
-            ?.trim()
-            ?.uppercase()
-            ?.takeIf { JamRoomCode.parse(it) != null }
-            ?: return@LaunchedEffect
+        val normalizedRoomCode =
+            initialRoomCode
+                ?.trim()
+                ?.uppercase()
+                ?.takeIf { JamRoomCode.parse(it) != null }
+                ?: return@LaunchedEffect
         if (session == null) {
             joinCode = normalizedRoomCode
             screen = JamSheetScreen.JOIN
@@ -197,10 +195,11 @@ fun EchofyJamSheet(
 
     ModalBottomSheet(
         onDismissRequest = { if (!isWorking) onDismiss() },
-        sheetState = rememberModalBottomSheetState(
-            skipPartiallyExpanded = true,
-            confirmValueChange = { !isWorking }
-        ),
+        sheetState =
+            rememberModalBottomSheetState(
+                skipPartiallyExpanded = true,
+                confirmValueChange = { !isWorking },
+            ),
         modifier = Modifier.fillMaxSize(),
         containerColor = Color(0xFF121212),
         dragHandle = null,
@@ -212,40 +211,94 @@ fun EchofyJamSheet(
                 modifier = Modifier.fillMaxSize(),
             ) { activeScreen ->
                 when (activeScreen) {
-                    JamSheetScreen.HOME -> JamHomeScreen(
-                        errorMessage = transientError ?: sessionState.lastError,
-                        onDismiss = onDismiss,
-                        onStart = { screen = JamSheetScreen.START },
-                        onJoin = { screen = JamSheetScreen.JOIN },
-                    )
+                    JamSheetScreen.HOME ->
+                        JamHomeScreen(
+                            errorMessage = transientError ?: sessionState.lastError,
+                            onDismiss = onDismiss,
+                            onStart = { screen = JamSheetScreen.START },
+                            onJoin = { screen = JamSheetScreen.JOIN },
+                        )
 
-                    JamSheetScreen.START -> JamStartSetupScreen(
-                    currentSong = currentSong,
-                    hostDisplayName = hostDisplayName,
-                    selectedSeedOption = selectedSeedOption,
-                    isWorking = isWorking,
-                    playlistsAvailable = playlists.isNotEmpty() || spotifyPlaylists.isNotEmpty(),
-                    onBack = { screen = JamSheetScreen.HOME },
-                    onHostNameChange = { hostDisplayName = it },
-                    onSeedOptionChange = { selectedSeedOption = it },
-                    onPickPlaylist = { screen = JamSheetScreen.PLAYLISTS },
-                    onStart = {
-                        transientError = null
-                        when (selectedSeedOption) {
-                            JamSeedOption.CURRENT_QUEUE -> {
+                    JamSheetScreen.START ->
+                        JamStartSetupScreen(
+                            currentSong = currentSong,
+                            hostDisplayName = hostDisplayName,
+                            selectedSeedOption = selectedSeedOption,
+                            isWorking = isWorking,
+                            playlistsAvailable = playlists.isNotEmpty() || spotifyPlaylists.isNotEmpty(),
+                            onBack = { screen = JamSheetScreen.HOME },
+                            onHostNameChange = { hostDisplayName = it },
+                            onSeedOptionChange = { selectedSeedOption = it },
+                            onPickPlaylist = { screen = JamSheetScreen.PLAYLISTS },
+                            onStart = {
+                                transientError = null
+                                when (selectedSeedOption) {
+                                    JamSeedOption.CURRENT_QUEUE -> {
+                                        lifecycleOwner.lifecycleScope.launch {
+                                            isWorking = true
+                                            workingMessage = "Creating your room..."
+                                            val playbackQueue = playerConnection.service.currentPlaybackQueueForJam()
+                                            if (playbackQueue.isEmpty()) {
+                                                transientError = "Play a song first, then start the Jam from your current queue."
+                                                isWorking = false
+                                                workingMessage = null
+                                                return@launch
+                                            }
+                                            jamSessionManager.createHostedSession(hostDisplayName.ifBlank { "Host" })
+                                                .onSuccess { activeSession ->
+                                                    playerConnection.service.seedJamQueue(playbackQueue.drop(1))
+                                                    playerConnection.service.syncJamStateNow()
+                                                    screen = JamSheetScreen.ACTIVE
+                                                    Toast.makeText(
+                                                        context,
+                                                        "Room ${activeSession.roomCode.roomCode} is live",
+                                                        Toast.LENGTH_SHORT,
+                                                    ).show()
+                                                }
+                                                .onFailure { error ->
+                                                    transientError = error.message ?: "Unable to start this Jam"
+                                                }
+                                            isWorking = false
+                                            workingMessage = null
+                                        }
+                                    }
+
+                                    JamSeedOption.PLAYLIST -> {
+                                        if (playlists.isEmpty() && spotifyPlaylists.isEmpty()) {
+                                            transientError = "Add or bookmark a playlist first, then start the Jam from it."
+                                        } else {
+                                            screen = JamSheetScreen.PLAYLISTS
+                                        }
+                                    }
+                                }
+                            },
+                        )
+
+                    JamSheetScreen.PLAYLISTS ->
+                        PlaylistPickerScreen(
+                            playlists = playlists,
+                            spotifyPlaylists = spotifyPlaylists,
+                            isWorking = isWorking,
+                            onBack = { screen = JamSheetScreen.START },
+                            onPickPlaylist = { playlist ->
                                 lifecycleOwner.lifecycleScope.launch {
                                     isWorking = true
                                     workingMessage = "Creating your room..."
-                                    val playbackQueue = playerConnection.service.currentPlaybackQueueForJam()
-                                    if (playbackQueue.isEmpty()) {
-                                        transientError = "Play a song first, then start the Jam from your current queue."
+                                    transientError = null
+                                    val songs =
+                                        database.playlistSongs(playlist.playlist.id)
+                                            .first()
+                                            .map { it.song.toMediaMetadata() }
+                                    if (songs.isEmpty()) {
+                                        transientError = "That playlist is empty."
                                         isWorking = false
                                         workingMessage = null
                                         return@launch
                                     }
                                     jamSessionManager.createHostedSession(hostDisplayName.ifBlank { "Host" })
                                         .onSuccess { activeSession ->
-                                            playerConnection.service.seedJamQueue(playbackQueue.drop(1))
+                                            playerConnection.service.replacePlayerQueueForJam(songs)
+                                            playerConnection.service.seedJamQueue(songs.drop(1))
                                             playerConnection.service.syncJamStateNow()
                                             screen = JamSheetScreen.ACTIVE
                                             Toast.makeText(
@@ -260,134 +313,88 @@ fun EchofyJamSheet(
                                     isWorking = false
                                     workingMessage = null
                                 }
-                            }
+                            },
+                            onPickSpotifyPlaylist = { spotifyPlaylist ->
+                                lifecycleOwner.lifecycleScope.launch {
+                                    isWorking = true
+                                    workingMessage = "Fetching Spotify tracks..."
+                                    transientError = null
+                                    val paging =
+                                        kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+                                            com.arturo254.opentune.spotify.Spotify.playlistTracks(spotifyPlaylist.id).getOrNull()
+                                        }
+                                    val tracks = paging?.items?.mapNotNull { it.track } ?: emptyList()
+                                    if (tracks.isEmpty()) {
+                                        transientError = "That playlist is empty or could not be loaded."
+                                        isWorking = false
+                                        workingMessage = null
+                                        return@launch
+                                    }
+                                    workingMessage = "Resolving music..."
+                                    val songs =
+                                        tracks.take(50).mapNotNull { track ->
+                                            com.Chenkham.Echofy.spotify.SpotifyPlaybackResolver.resolveToMetadata(track)
+                                        }
+                                    jamSessionManager.createHostedSession(hostDisplayName.ifBlank { "Host" })
+                                        .onSuccess { activeSession ->
+                                            playerConnection.service.replacePlayerQueueForJam(songs)
+                                            playerConnection.service.seedJamQueue(songs.drop(1))
+                                            playerConnection.service.syncJamStateNow()
+                                            screen = JamSheetScreen.ACTIVE
+                                            Toast.makeText(
+                                                context,
+                                                "Room ${activeSession.roomCode.roomCode} is live",
+                                                Toast.LENGTH_SHORT,
+                                            ).show()
+                                        }
+                                        .onFailure { error ->
+                                            transientError = error.message ?: "Unable to start this Jam"
+                                        }
+                                    isWorking = false
+                                    workingMessage = null
+                                }
+                            },
+                        )
 
-                            JamSeedOption.PLAYLIST -> {
-                                if (playlists.isEmpty() && spotifyPlaylists.isEmpty()) {
-                                    transientError = "Add or bookmark a playlist first, then start the Jam from it."
-                                } else {
-                                    screen = JamSheetScreen.PLAYLISTS
+                    JamSheetScreen.JOIN ->
+                        JoinJamScreen(
+                            roomCode = joinCode,
+                            guestDisplayName = guestDisplayName,
+                            isWorking = isWorking,
+                            lastError = transientError ?: sessionState.lastError,
+                            onBack = { screen = JamSheetScreen.HOME },
+                            onRoomCodeChange = { joinCode = it.uppercase() },
+                            onGuestNameChange = { guestDisplayName = it },
+                            onJoin = {
+                                lifecycleOwner.lifecycleScope.launch {
+                                    transientError = null
+                                    isWorking = true
+                                    workingMessage = "Finding room..."
+                                    jamSessionManager.joinSession(
+                                        rawRoomCode = joinCode,
+                                        displayName = guestDisplayName.ifBlank { "Listener" },
+                                    ).onSuccess {
+                                        screen = JamSheetScreen.ACTIVE
+                                        Toast.makeText(context, "Joined ${it.roomCode.roomCode}", Toast.LENGTH_SHORT).show()
+                                    }.onFailure { error ->
+                                        transientError = error.message ?: "Room not found"
+                                    }
+                                    isWorking = false
+                                    workingMessage = null
                                 }
-                            }
-                        }
-                    },
-                    )
-
-                    JamSheetScreen.PLAYLISTS -> PlaylistPickerScreen(
-                    playlists = playlists,
-                    spotifyPlaylists = spotifyPlaylists,
-                    isWorking = isWorking,
-                    onBack = { screen = JamSheetScreen.START },
-                    onPickPlaylist = { playlist ->
-                        lifecycleOwner.lifecycleScope.launch {
-                            isWorking = true
-                            workingMessage = "Creating your room..."
-                            transientError = null
-                            val songs = database.playlistSongs(playlist.playlist.id)
-                                .first()
-                                .map { it.song.toMediaMetadata() }
-                            if (songs.isEmpty()) {
-                                transientError = "That playlist is empty."
-                                isWorking = false
-                                workingMessage = null
-                                return@launch
-                            }
-                            jamSessionManager.createHostedSession(hostDisplayName.ifBlank { "Host" })
-                                .onSuccess { activeSession ->
-                                    playerConnection.service.replacePlayerQueueForJam(songs)
-                                    playerConnection.service.seedJamQueue(songs.drop(1))
-                                    playerConnection.service.syncJamStateNow()
-                                    screen = JamSheetScreen.ACTIVE
-                                    Toast.makeText(
-                                        context,
-                                        "Room ${activeSession.roomCode.roomCode} is live",
-                                        Toast.LENGTH_SHORT,
-                                    ).show()
-                                }
-                                .onFailure { error ->
-                                    transientError = error.message ?: "Unable to start this Jam"
-                                }
-                            isWorking = false
-                            workingMessage = null
-                        }
-                    },
-                    onPickSpotifyPlaylist = { spotifyPlaylist ->
-                        lifecycleOwner.lifecycleScope.launch {
-                            isWorking = true
-                            workingMessage = "Fetching Spotify tracks..."
-                            transientError = null
-                            val paging = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
-                                com.arturo254.opentune.spotify.Spotify.playlistTracks(spotifyPlaylist.id).getOrNull()
-                            }
-                            val tracks = paging?.items?.mapNotNull { it.track } ?: emptyList()
-                            if (tracks.isEmpty()) {
-                                transientError = "That playlist is empty or could not be loaded."
-                                isWorking = false
-                                workingMessage = null
-                                return@launch
-                            }
-                            workingMessage = "Resolving music..."
-                            val songs = tracks.take(50).mapNotNull { track ->
-                                com.Chenkham.Echofy.spotify.SpotifyPlaybackResolver.resolveToMetadata(track)
-                            }
-                            jamSessionManager.createHostedSession(hostDisplayName.ifBlank { "Host" })
-                                .onSuccess { activeSession ->
-                                    playerConnection.service.replacePlayerQueueForJam(songs)
-                                    playerConnection.service.seedJamQueue(songs.drop(1))
-                                    playerConnection.service.syncJamStateNow()
-                                    screen = JamSheetScreen.ACTIVE
-                                    Toast.makeText(
-                                        context,
-                                        "Room ${activeSession.roomCode.roomCode} is live",
-                                        Toast.LENGTH_SHORT,
-                                    ).show()
-                                }
-                                .onFailure { error ->
-                                    transientError = error.message ?: "Unable to start this Jam"
-                                }
-                            isWorking = false
-                            workingMessage = null
-                        }
-                    },
-                    )
-
-                    JamSheetScreen.JOIN -> JoinJamScreen(
-                    roomCode = joinCode,
-                    guestDisplayName = guestDisplayName,
-                    isWorking = isWorking,
-                    lastError = transientError ?: sessionState.lastError,
-                    onBack = { screen = JamSheetScreen.HOME },
-                    onRoomCodeChange = { joinCode = it.uppercase() },
-                    onGuestNameChange = { guestDisplayName = it },
-                    onJoin = {
-                        lifecycleOwner.lifecycleScope.launch {
-                            transientError = null
-                            isWorking = true
-                            workingMessage = "Finding room..."
-                            jamSessionManager.joinSession(
-                                rawRoomCode = joinCode,
-                                displayName = guestDisplayName.ifBlank { "Listener" },
-                            ).onSuccess {
-                                screen = JamSheetScreen.ACTIVE
-                                Toast.makeText(context, "Joined ${it.roomCode.roomCode}", Toast.LENGTH_SHORT).show()
-                            }.onFailure { error ->
-                                transientError = error.message ?: "Room not found"
-                            }
-                            isWorking = false
-                            workingMessage = null
-                        }
-                    },
-                    )
+                            },
+                        )
 
                     JamSheetScreen.ACTIVE -> {
-                        val isSyncing = session?.role == JamParticipantRole.GUEST &&
-                            remotePlayback != null &&
-                            currentSong?.id != remotePlayback?.mediaId
+                        val isSyncing =
+                            session?.role == JamParticipantRole.GUEST &&
+                                remotePlayback != null &&
+                                currentSong?.id != remotePlayback?.mediaId
 
                         if (isSyncing) {
                             Box(
                                 modifier = Modifier.fillMaxSize().background(Color(0xFF121212)),
-                                contentAlignment = Alignment.Center
+                                contentAlignment = Alignment.Center,
                             ) {
                                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                                     CircularProgressIndicator(color = Color(0xFF1DB954))
@@ -397,55 +404,55 @@ fun EchofyJamSheet(
                             }
                         } else {
                             ActiveJamScreen(
-                            jamTitle = jamTitle,
-                            roomCode = roomCode,
-                            isHost = session?.role == JamParticipantRole.HOST,
-                            canControlPlayback = session?.role == JamParticipantRole.HOST || (roomMeta?.allowGuestControls ?: true),
-                            participants = participants,
-                            allowGuestControls = roomMeta?.allowGuestControls ?: true,
-                            currentSong = currentSong,
-                            isPlaying = isPlaying,
-                            requireApproval = roomMeta?.requireApproval ?: false,
-                            onRequireApprovalChange = { jamSessionManager.updateRequireApproval(it) },
-                            canSkipPrevious = canSkipPrevious,
-                            canSkipNext = canSkipNext,
-                            shuffleEnabled = playerConnection.shuffleModeEnabled.collectAsState().value,
-                            repeatMode = playerConnection.repeatMode.collectAsState().value,
-                            onDismiss = onDismiss,
-                            onInviteClick = { showInviteSheet = true },
-                            onLeaveClick = {
-                                jamSessionManager.leaveSession()
-                                transientError = null
-                                screen = JamSheetScreen.HOME
-                            },
-                            onToggleGuestControls = { enabled ->
-                                jamSessionManager.setAllowGuestControls(enabled)
-                            },
-                            onTogglePlayPause = {
-                                if (session?.role == JamParticipantRole.HOST || (roomMeta?.allowGuestControls ?: true)) {
-                                    playerConnection.togglePlayPause()
-                                }
-                            },
-                            onSkipPrevious = {
-                                if (session?.role == JamParticipantRole.HOST || (roomMeta?.allowGuestControls ?: true)) {
-                                    playerConnection.seekToPrevious()
-                                }
-                            },
-                            onSkipNext = {
-                                if (session?.role == JamParticipantRole.HOST || (roomMeta?.allowGuestControls ?: true)) {
-                                    playerConnection.seekToNext()
-                                }
-                            },
-                            onToggleShuffle = {
-                                if (session?.role == JamParticipantRole.HOST || (roomMeta?.allowGuestControls ?: true)) {
-                                    playerConnection.toggleShuffle()
-                                }
-                            },
-                            onToggleRepeat = {
-                                if (session?.role == JamParticipantRole.HOST || (roomMeta?.allowGuestControls ?: true)) {
-                                    playerConnection.toggleReplayMode()
-                                }
-                            },
+                                jamTitle = jamTitle,
+                                roomCode = roomCode,
+                                isHost = session?.role == JamParticipantRole.HOST,
+                                canControlPlayback = session?.role == JamParticipantRole.HOST || (roomMeta?.allowGuestControls ?: true),
+                                participants = participants,
+                                allowGuestControls = roomMeta?.allowGuestControls ?: true,
+                                currentSong = currentSong,
+                                isPlaying = isPlaying,
+                                requireApproval = roomMeta?.requireApproval ?: false,
+                                onRequireApprovalChange = { jamSessionManager.updateRequireApproval(it) },
+                                canSkipPrevious = canSkipPrevious,
+                                canSkipNext = canSkipNext,
+                                shuffleEnabled = playerConnection.shuffleModeEnabled.collectAsState().value,
+                                repeatMode = playerConnection.repeatMode.collectAsState().value,
+                                onDismiss = onDismiss,
+                                onInviteClick = { showInviteSheet = true },
+                                onLeaveClick = {
+                                    jamSessionManager.leaveSession()
+                                    transientError = null
+                                    screen = JamSheetScreen.HOME
+                                },
+                                onToggleGuestControls = { enabled ->
+                                    jamSessionManager.setAllowGuestControls(enabled)
+                                },
+                                onTogglePlayPause = {
+                                    if (session?.role == JamParticipantRole.HOST || (roomMeta?.allowGuestControls ?: true)) {
+                                        playerConnection.togglePlayPause()
+                                    }
+                                },
+                                onSkipPrevious = {
+                                    if (session?.role == JamParticipantRole.HOST || (roomMeta?.allowGuestControls ?: true)) {
+                                        playerConnection.seekToPrevious()
+                                    }
+                                },
+                                onSkipNext = {
+                                    if (session?.role == JamParticipantRole.HOST || (roomMeta?.allowGuestControls ?: true)) {
+                                        playerConnection.seekToNext()
+                                    }
+                                },
+                                onToggleShuffle = {
+                                    if (session?.role == JamParticipantRole.HOST || (roomMeta?.allowGuestControls ?: true)) {
+                                        playerConnection.toggleShuffle()
+                                    }
+                                },
+                                onToggleRepeat = {
+                                    if (session?.role == JamParticipantRole.HOST || (roomMeta?.allowGuestControls ?: true)) {
+                                        playerConnection.toggleReplayMode()
+                                    }
+                                },
                             )
                         }
                     }
@@ -472,10 +479,11 @@ fun EchofyJamSheet(
                 },
                 onShare = {
                     val shareText = buildInviteShareText(session.roomCode.roomCode, inviteLink)
-                    val shareIntent = Intent(Intent.ACTION_SEND).apply {
-                        type = "text/plain"
-                        putExtra(Intent.EXTRA_TEXT, shareText)
-                    }
+                    val shareIntent =
+                        Intent(Intent.ACTION_SEND).apply {
+                            type = "text/plain"
+                            putExtra(Intent.EXTRA_TEXT, shareText)
+                        }
                     context.startActivity(Intent.createChooser(shareIntent, "Share Jam invite"))
                 },
             )
@@ -486,9 +494,10 @@ fun EchofyJamSheet(
 @Composable
 private fun JamWorkingOverlay(message: String) {
     Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(Color.Black.copy(alpha = 0.72f)),
+        modifier =
+            Modifier
+                .fillMaxSize()
+                .background(Color.Black.copy(alpha = 0.72f)),
         contentAlignment = Alignment.Center,
     ) {
         Card(
@@ -527,18 +536,20 @@ private fun JamHomeScreen(
     onJoin: () -> Unit,
 ) {
     Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(
-                Brush.verticalGradient(
-                    colors = listOf(Color(0xFF14321F), Color(0xFF121212), Color(0xFF121212)),
+        modifier =
+            Modifier
+                .fillMaxSize()
+                .background(
+                    Brush.verticalGradient(
+                        colors = listOf(Color(0xFF14321F), Color(0xFF121212), Color(0xFF121212)),
+                    ),
                 ),
-            ),
     ) {
         Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(horizontal = 24.dp, vertical = 20.dp),
+            modifier =
+                Modifier
+                    .fillMaxSize()
+                    .padding(horizontal = 24.dp, vertical = 20.dp),
         ) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -586,9 +597,10 @@ private fun JamHomeScreen(
                 colors = CardDefaults.cardColors(containerColor = Color(0xFF181818)),
             ) {
                 Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(22.dp),
+                    modifier =
+                        Modifier
+                            .fillMaxWidth()
+                            .padding(22.dp),
                     verticalArrangement = Arrangement.spacedBy(12.dp),
                 ) {
                     Text(
@@ -604,18 +616,20 @@ private fun JamHomeScreen(
                     )
                     Button(
                         onClick = onStart,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(52.dp),
+                        modifier =
+                            Modifier
+                                .fillMaxWidth()
+                                .height(52.dp),
                         shape = CircleShape,
                     ) {
                         Text("Start Together", fontWeight = FontWeight.Bold)
                     }
                     OutlinedButton(
                         onClick = onJoin,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(52.dp),
+                        modifier =
+                            Modifier
+                                .fillMaxWidth()
+                                .height(52.dp),
                         shape = CircleShape,
                     ) {
                         Text("Join with code", fontWeight = FontWeight.SemiBold)
@@ -640,10 +654,11 @@ private fun JamStartSetupScreen(
     onStart: () -> Unit,
 ) {
     Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(Color(0xFF121212))
-            .padding(horizontal = 24.dp, vertical = 20.dp),
+        modifier =
+            Modifier
+                .fillMaxSize()
+                .background(Color(0xFF121212))
+                .padding(horizontal = 24.dp, vertical = 20.dp),
     ) {
         SheetHeader(
             title = "Start Together",
@@ -674,9 +689,10 @@ private fun JamStartSetupScreen(
 
         SourceOptionCard(
             title = "Current song",
-            subtitle = currentSong?.let {
-                "Everyone will hear \"${it.title}\" — manage what plays next from your main player."
-            } ?: "Play a song first, then start the session.",
+            subtitle =
+                currentSong?.let {
+                    "Everyone will hear \"${it.title}\" — manage what plays next from your main player."
+                } ?: "Play a song first, then start the session.",
             selected = selectedSeedOption == JamSeedOption.CURRENT_QUEUE,
             enabled = currentSong != null,
             onClick = { onSeedOptionChange(JamSeedOption.CURRENT_QUEUE) },
@@ -686,11 +702,12 @@ private fun JamStartSetupScreen(
 
         SourceOptionCard(
             title = "From a playlist",
-            subtitle = if (playlistsAvailable) {
-                "Pick a playlist — the first song plays for everyone. Manage what's next from your main player."
-            } else {
-                "No playlists found yet. Add or bookmark one first."
-            },
+            subtitle =
+                if (playlistsAvailable) {
+                    "Pick a playlist — the first song plays for everyone. Manage what's next from your main player."
+                } else {
+                    "No playlists found yet. Add or bookmark one first."
+                },
             selected = selectedSeedOption == JamSeedOption.PLAYLIST,
             enabled = playlistsAvailable,
             onClick = {
@@ -709,9 +726,10 @@ private fun JamStartSetupScreen(
         Button(
             onClick = onStart,
             enabled = !isWorking,
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(54.dp),
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .height(54.dp),
             shape = CircleShape,
         ) {
             Text(if (isWorking) "Starting..." else "Start Together", fontWeight = FontWeight.Bold)
@@ -729,10 +747,11 @@ private fun PlaylistPickerScreen(
     onPickSpotifyPlaylist: (com.arturo254.opentune.spotify.models.SpotifyPlaylist) -> Unit = {},
 ) {
     Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(Color(0xFF121212))
-            .padding(horizontal = 24.dp, vertical = 20.dp),
+        modifier =
+            Modifier
+                .fillMaxSize()
+                .background(Color(0xFF121212))
+                .padding(horizontal = 24.dp, vertical = 20.dp),
     ) {
         SheetHeader(
             title = "Choose playlist",
@@ -758,21 +777,24 @@ private fun PlaylistPickerScreen(
                 Card(
                     shape = RoundedCornerShape(22.dp),
                     colors = CardDefaults.cardColors(containerColor = Color(0xFF181818)),
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clickable(enabled = !isWorking) { onPickPlaylist(playlist) },
+                    modifier =
+                        Modifier
+                            .fillMaxWidth()
+                            .clickable(enabled = !isWorking) { onPickPlaylist(playlist) },
                 ) {
                     Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(16.dp),
+                        modifier =
+                            Modifier
+                                .fillMaxWidth()
+                                .padding(16.dp),
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
                         Box(
-                            modifier = Modifier
-                                .size(52.dp)
-                                .clip(RoundedCornerShape(16.dp))
-                                .background(Color(0xFF1DB954).copy(alpha = 0.2f)),
+                            modifier =
+                                Modifier
+                                    .size(52.dp)
+                                    .clip(RoundedCornerShape(16.dp))
+                                    .background(Color(0xFF1DB954).copy(alpha = 0.2f)),
                             contentAlignment = Alignment.Center,
                         ) {
                             Icon(
@@ -805,28 +827,31 @@ private fun PlaylistPickerScreen(
                 Card(
                     shape = RoundedCornerShape(22.dp),
                     colors = CardDefaults.cardColors(containerColor = Color(0xFF181818)),
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clickable(enabled = !isWorking) { onPickSpotifyPlaylist(spotifyPlaylist) },
+                    modifier =
+                        Modifier
+                            .fillMaxWidth()
+                            .clickable(enabled = !isWorking) { onPickSpotifyPlaylist(spotifyPlaylist) },
                 ) {
                     Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(16.dp),
+                        modifier =
+                            Modifier
+                                .fillMaxWidth()
+                                .padding(16.dp),
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
                         Box(
-                            modifier = Modifier
-                                .size(52.dp)
-                                .clip(RoundedCornerShape(16.dp))
-                                .background(Color(0xFF1DB954).copy(alpha = 0.25f)),
+                            modifier =
+                                Modifier
+                                    .size(52.dp)
+                                    .clip(RoundedCornerShape(16.dp))
+                                    .background(Color(0xFF1DB954).copy(alpha = 0.25f)),
                             contentAlignment = Alignment.Center,
                         ) {
                             Icon(
                                 painter = painterResource(R.drawable.spotify_icon),
                                 contentDescription = null,
                                 tint = Color(0xFF1DB954),
-                                modifier = Modifier.size(28.dp)
+                                modifier = Modifier.size(28.dp),
                             )
                         }
                         Spacer(modifier = Modifier.width(14.dp))
@@ -866,10 +891,11 @@ private fun JoinJamScreen(
     val isJoinEnabled = JamRoomCode.parse(roomCode) != null && !isWorking
 
     Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(Color(0xFF121212))
-            .padding(horizontal = 24.dp, vertical = 20.dp),
+        modifier =
+            Modifier
+                .fillMaxSize()
+                .background(Color(0xFF121212))
+                .padding(horizontal = 24.dp, vertical = 20.dp),
     ) {
         SheetHeader(
             title = "Join Together",
@@ -917,9 +943,10 @@ private fun JoinJamScreen(
         Button(
             onClick = onJoin,
             enabled = isJoinEnabled,
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(54.dp),
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .height(54.dp),
             shape = CircleShape,
         ) {
             Text(if (isWorking) "Joining..." else "Join Together", fontWeight = FontWeight.Bold)
@@ -961,14 +988,15 @@ private fun ActiveJamScreen(
             isHost = isHost,
             requireApproval = requireApproval,
             onRequireApprovalChange = onRequireApprovalChange,
-            onDismiss = { showParticipantsDialog = false }
+            onDismiss = { showParticipantsDialog = false },
         )
     }
 
     Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(Color(0xFF121212)),
+        modifier =
+            Modifier
+                .fillMaxSize()
+                .background(Color(0xFF121212)),
     ) {
         if (!currentSong?.thumbnailUrl.isNullOrBlank()) {
             AsyncImage(
@@ -981,17 +1009,19 @@ private fun ActiveJamScreen(
         }
 
         Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(
-                    Brush.verticalGradient(
-                        colors = listOf(
-                            Color(0xFF1DB954).copy(alpha = 0.18f),
-                            Color(0xFF121212),
-                            Color(0xFF121212),
+            modifier =
+                Modifier
+                    .fillMaxSize()
+                    .background(
+                        Brush.verticalGradient(
+                            colors =
+                                listOf(
+                                    Color(0xFF1DB954).copy(alpha = 0.18f),
+                                    Color(0xFF121212),
+                                    Color(0xFF121212),
+                                ),
                         ),
                     ),
-                ),
         )
 
         Column(modifier = Modifier.fillMaxSize()) {
@@ -1048,7 +1078,7 @@ private fun ActiveJamScreen(
                 ) {
                     ParticipantRow(
                         participants = participants,
-                        onClick = { showParticipantsDialog = true }
+                        onClick = { showParticipantsDialog = true },
                     )
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         OutlinedButton(onClick = onInviteClick, shape = CircleShape) {
@@ -1082,17 +1112,19 @@ private fun ActiveJamScreen(
 
             // ── Big now-playing card — fills remaining space ──────────────
             Card(
-                modifier = Modifier
-                    .weight(1f)
-                    .fillMaxWidth()
-                    .padding(start = 18.dp, end = 18.dp, bottom = 16.dp),
+                modifier =
+                    Modifier
+                        .weight(1f)
+                        .fillMaxWidth()
+                        .padding(start = 18.dp, end = 18.dp, bottom = 16.dp),
                 shape = RoundedCornerShape(28.dp),
                 colors = CardDefaults.cardColors(containerColor = Color(0xFF181818)),
             ) {
                 Column(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(20.dp),
+                    modifier =
+                        Modifier
+                            .fillMaxSize()
+                            .padding(20.dp),
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.Center,
                 ) {
@@ -1102,18 +1134,20 @@ private fun ActiveJamScreen(
                             model = currentSong?.thumbnailUrl,
                             contentDescription = currentSong?.title,
                             contentScale = ContentScale.Crop,
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .aspectRatio(1f)
-                                .clip(RoundedCornerShape(20.dp)),
+                            modifier =
+                                Modifier
+                                    .fillMaxWidth()
+                                    .aspectRatio(1f)
+                                    .clip(RoundedCornerShape(20.dp)),
                         )
                     } else {
                         Box(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .aspectRatio(1f)
-                                .clip(RoundedCornerShape(20.dp))
-                                .background(Color(0xFF282828)),
+                            modifier =
+                                Modifier
+                                    .fillMaxWidth()
+                                    .aspectRatio(1f)
+                                    .clip(RoundedCornerShape(20.dp))
+                                    .background(Color(0xFF282828)),
                             contentAlignment = Alignment.Center,
                         ) {
                             Icon(
@@ -1210,35 +1244,40 @@ private fun SourceOptionCard(
 ) {
     Card(
         shape = RoundedCornerShape(24.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = if (selected) Color(0xFF1C2D22) else Color(0xFF181818),
-        ),
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable(enabled = enabled, onClick = onClick),
+        colors =
+            CardDefaults.cardColors(
+                containerColor = if (selected) Color(0xFF1C2D22) else Color(0xFF181818),
+            ),
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .clickable(enabled = enabled, onClick = onClick),
     ) {
         Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp),
             horizontalArrangement = Arrangement.spacedBy(14.dp),
             verticalAlignment = Alignment.Top,
         ) {
             Box(
-                modifier = Modifier
-                    .size(20.dp)
-                    .clip(CircleShape)
-                    .background(
-                        if (selected) Color(0xFF1DB954) else Color.Transparent,
-                    ),
+                modifier =
+                    Modifier
+                        .size(20.dp)
+                        .clip(CircleShape)
+                        .background(
+                            if (selected) Color(0xFF1DB954) else Color.Transparent,
+                        ),
             ) {
                 if (!selected) {
                     Box(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .padding(2.dp)
-                            .clip(CircleShape)
-                            .background(Color.White.copy(alpha = if (enabled) 0.26f else 0.12f)),
+                        modifier =
+                            Modifier
+                                .fillMaxSize()
+                                .padding(2.dp)
+                                .clip(CircleShape)
+                                .background(Color.White.copy(alpha = if (enabled) 0.26f else 0.12f)),
                     )
                 }
             }
@@ -1268,9 +1307,10 @@ private fun CurrentSourcePreview(currentSong: MediaMetadata?) {
         modifier = Modifier.fillMaxWidth(),
     ) {
         Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             if (!currentSong?.thumbnailUrl.isNullOrBlank()) {
@@ -1278,16 +1318,18 @@ private fun CurrentSourcePreview(currentSong: MediaMetadata?) {
                     model = currentSong?.thumbnailUrl,
                     contentDescription = currentSong?.title,
                     contentScale = ContentScale.Crop,
-                    modifier = Modifier
-                        .size(60.dp)
-                        .clip(RoundedCornerShape(18.dp)),
+                    modifier =
+                        Modifier
+                            .size(60.dp)
+                            .clip(RoundedCornerShape(18.dp)),
                 )
             } else {
                 Box(
-                    modifier = Modifier
-                        .size(60.dp)
-                        .clip(RoundedCornerShape(18.dp))
-                        .background(Color(0xFF282828)),
+                    modifier =
+                        Modifier
+                            .size(60.dp)
+                            .clip(RoundedCornerShape(18.dp))
+                            .background(Color(0xFF282828)),
                     contentAlignment = Alignment.Center,
                 ) {
                     Icon(
@@ -1338,16 +1380,18 @@ private fun CurrentJamTrackRow(
                 model = currentSong?.thumbnailUrl,
                 contentDescription = currentSong?.title,
                 contentScale = ContentScale.Crop,
-                modifier = Modifier
-                    .size(64.dp)
-                    .clip(RoundedCornerShape(18.dp)),
+                modifier =
+                    Modifier
+                        .size(64.dp)
+                        .clip(RoundedCornerShape(18.dp)),
             )
         } else {
             Box(
-                modifier = Modifier
-                    .size(64.dp)
-                    .clip(RoundedCornerShape(18.dp))
-                    .background(Color(0xFF282828)),
+                modifier =
+                    Modifier
+                        .size(64.dp)
+                        .clip(RoundedCornerShape(18.dp))
+                        .background(Color(0xFF282828)),
                 contentAlignment = Alignment.Center,
             ) {
                 Icon(
@@ -1415,16 +1459,18 @@ private fun CurrentJamTrackRow(
                         text = { Text("Share song") },
                         onClick = {
                             showMenu = false
-                            val shareText = com.Chenkham.Echofy.utils.ShareUtils.buildTrackShareText(
-                                context = context,
-                                songId = currentSong.id,
-                                title = currentSong.title,
-                                artist = currentSong.artists.joinToString { it.name }
-                            )
-                            val shareIntent = Intent(Intent.ACTION_SEND).apply {
-                                type = "text/plain"
-                                putExtra(Intent.EXTRA_TEXT, shareText)
-                            }
+                            val shareText =
+                                com.Chenkham.Echofy.utils.ShareUtils.buildTrackShareText(
+                                    context = context,
+                                    songId = currentSong.id,
+                                    title = currentSong.title,
+                                    artist = currentSong.artists.joinToString { it.name },
+                                )
+                            val shareIntent =
+                                Intent(Intent.ACTION_SEND).apply {
+                                    type = "text/plain"
+                                    putExtra(Intent.EXTRA_TEXT, shareText)
+                                }
                             context.startActivity(Intent.createChooser(shareIntent, "Share"))
                         },
                         leadingIcon = {
@@ -1452,17 +1498,19 @@ private fun QueueRow(
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Box(
-            modifier = Modifier
-                .size(20.dp)
-                .clip(CircleShape)
-                .background(Color.Transparent),
+            modifier =
+                Modifier
+                    .size(20.dp)
+                    .clip(CircleShape)
+                    .background(Color.Transparent),
             contentAlignment = Alignment.Center,
         ) {
             Box(
-                modifier = Modifier
-                    .size(12.dp)
-                    .clip(CircleShape)
-                    .background(Color.White.copy(alpha = 0.2f)),
+                modifier =
+                    Modifier
+                        .size(12.dp)
+                        .clip(CircleShape)
+                        .background(Color.White.copy(alpha = 0.2f)),
             )
         }
 
@@ -1501,23 +1549,37 @@ private fun QueueRow(
                 ) {
                     DropdownMenuItem(
                         text = { Text("Move up") },
-                        onClick = { showMenu = false; onMoveUp() },
+                        onClick = {
+                            showMenu = false
+                            onMoveUp()
+                        },
                         leadingIcon = {
                             Icon(painterResource(R.drawable.arrow_upward), contentDescription = null, modifier = Modifier.size(18.dp))
                         },
                     )
                     DropdownMenuItem(
                         text = { Text("Move down") },
-                        onClick = { showMenu = false; onMoveDown() },
+                        onClick = {
+                            showMenu = false
+                            onMoveDown()
+                        },
                         leadingIcon = {
                             Icon(painterResource(R.drawable.arrow_downward), contentDescription = null, modifier = Modifier.size(18.dp))
                         },
                     )
                     DropdownMenuItem(
                         text = { Text("Remove", color = Color(0xFFFF6B6B)) },
-                        onClick = { showMenu = false; onRemove() },
+                        onClick = {
+                            showMenu = false
+                            onRemove()
+                        },
                         leadingIcon = {
-                            Icon(painterResource(R.drawable.remove), contentDescription = null, tint = Color(0xFFFF6B6B), modifier = Modifier.size(18.dp))
+                            Icon(
+                                painterResource(R.drawable.remove),
+                                contentDescription = null,
+                                tint = Color(0xFFFF6B6B),
+                                modifier = Modifier.size(18.dp),
+                            )
                         },
                     )
                 }
@@ -1547,10 +1609,11 @@ private fun JamPlaybackBar(
     onToggleRepeat: () -> Unit,
 ) {
     Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .background(Color(0xFF0D0D0D))
-            .padding(horizontal = 24.dp, vertical = 14.dp),
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .background(Color(0xFF0D0D0D))
+                .padding(horizontal = 24.dp, vertical = 14.dp),
     ) {
         HorizontalDivider(color = Color.White.copy(alpha = 0.1f))
 
@@ -1568,11 +1631,12 @@ private fun JamPlaybackBar(
                 Icon(
                     painter = painterResource(if (shuffleEnabled) R.drawable.shuffle_on else R.drawable.shuffle),
                     contentDescription = "Shuffle",
-                    tint = when {
-                        !canControlPlayback -> Color.White.copy(alpha = 0.36f)
-                        shuffleEnabled -> Color(0xFF1DB954)
-                        else -> Color.White.copy(alpha = 0.72f)
-                    },
+                    tint =
+                        when {
+                            !canControlPlayback -> Color.White.copy(alpha = 0.36f)
+                            shuffleEnabled -> Color(0xFF1DB954)
+                            else -> Color.White.copy(alpha = 0.72f)
+                        },
                     modifier = Modifier.size(22.dp),
                 )
             }
@@ -1588,11 +1652,12 @@ private fun JamPlaybackBar(
                 )
             }
             Box(
-                modifier = Modifier
-                    .size(76.dp)
-                    .clip(CircleShape)
-                    .background(if (canControlPlayback) Color.White else Color(0xFF2A2A2A))
-                    .clickable(enabled = canControlPlayback, onClick = onTogglePlayPause),
+                modifier =
+                    Modifier
+                        .size(76.dp)
+                        .clip(CircleShape)
+                        .background(if (canControlPlayback) Color.White else Color(0xFF2A2A2A))
+                        .clickable(enabled = canControlPlayback, onClick = onTogglePlayPause),
                 contentAlignment = Alignment.Center,
             ) {
                 Icon(
@@ -1617,19 +1682,21 @@ private fun JamPlaybackBar(
                 onClick = onToggleRepeat,
                 enabled = canControlPlayback,
             ) {
-                val repeatIcon = when (repeatMode) {
-                    androidx.media3.common.Player.REPEAT_MODE_ONE -> R.drawable.repeat_one_on
-                    androidx.media3.common.Player.REPEAT_MODE_ALL -> R.drawable.repeat_on
-                    else -> R.drawable.repeat
-                }
+                val repeatIcon =
+                    when (repeatMode) {
+                        androidx.media3.common.Player.REPEAT_MODE_ONE -> R.drawable.repeat_one_on
+                        androidx.media3.common.Player.REPEAT_MODE_ALL -> R.drawable.repeat_on
+                        else -> R.drawable.repeat
+                    }
                 Icon(
                     painter = painterResource(repeatIcon),
                     contentDescription = "Repeat",
-                    tint = when {
-                        !canControlPlayback -> Color.White.copy(alpha = 0.36f)
-                        repeatMode != androidx.media3.common.Player.REPEAT_MODE_OFF -> Color(0xFF1DB954)
-                        else -> Color.White.copy(alpha = 0.72f)
-                    },
+                    tint =
+                        when {
+                            !canControlPlayback -> Color.White.copy(alpha = 0.36f)
+                            repeatMode != androidx.media3.common.Player.REPEAT_MODE_OFF -> Color(0xFF1DB954)
+                            else -> Color.White.copy(alpha = 0.72f)
+                        },
                     modifier = Modifier.size(22.dp),
                 )
             }
@@ -1645,10 +1712,11 @@ private fun InviteJamSheetContent(
     onShare: () -> Unit,
 ) {
     Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .background(Color(0xFF121212))
-            .padding(horizontal = 24.dp, vertical = 20.dp),
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .background(Color(0xFF121212))
+                .padding(horizontal = 24.dp, vertical = 20.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
         Text(
@@ -1663,23 +1731,25 @@ private fun InviteJamSheetContent(
             color = Color.White.copy(alpha = 0.68f),
         )
 
-        val targetInviteUrl = inviteLink?.takeIf { it.isNotBlank() }
-            ?: "${com.Chenkham.Echofy.utils.ShareUtils.DEFAULT_SHARE_DOMAIN}/?jam=${roomCode.trim().uppercase()}"
+        val targetInviteUrl =
+            inviteLink?.takeIf { it.isNotBlank() }
+                ?: "${com.Chenkham.Echofy.utils.ShareUtils.DEFAULT_SHARE_DOMAIN}/?jam=${roomCode.trim().uppercase()}"
 
         Card(
             shape = RoundedCornerShape(24.dp),
             colors = CardDefaults.cardColors(containerColor = Color(0xFF181818)),
         ) {
             Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(18.dp),
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .padding(18.dp),
                 verticalArrangement = Arrangement.spacedBy(14.dp),
-                horizontalAlignment = Alignment.CenterHorizontally
+                horizontalAlignment = Alignment.CenterHorizontally,
             ) {
                 Column(
                     modifier = Modifier.fillMaxWidth(),
-                    verticalArrangement = Arrangement.spacedBy(4.dp)
+                    verticalArrangement = Arrangement.spacedBy(4.dp),
                 ) {
                     Text(
                         text = "Room code",
@@ -1698,14 +1768,14 @@ private fun InviteJamSheetContent(
                 QrCodeView(
                     content = targetInviteUrl,
                     sizeDp = 180.dp,
-                    modifier = Modifier.padding(vertical = 4.dp)
+                    modifier = Modifier.padding(vertical = 4.dp),
                 )
 
                 Text(
                     text = "Scan with camera to join immediately",
                     style = MaterialTheme.typography.bodySmall,
                     color = Color.White.copy(alpha = 0.60f),
-                    textAlign = TextAlign.Center
+                    textAlign = TextAlign.Center,
                 )
             }
         }
@@ -1749,10 +1819,11 @@ private fun TogetherAddSongsScreen(
     }
 
     Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(Color(0xFF121212))
-            .padding(horizontal = 16.dp, vertical = 12.dp),
+        modifier =
+            Modifier
+                .fillMaxSize()
+                .background(Color(0xFF121212))
+                .padding(horizontal = 16.dp, vertical = 12.dp),
     ) {
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -1766,41 +1837,48 @@ private fun TogetherAddSongsScreen(
                 onValueChange = { query = it },
                 placeholder = { Text("Search songs to add...", color = Color.White.copy(alpha = 0.5f)) },
                 singleLine = true,
-                modifier = Modifier
-                    .weight(1f)
-                    .focusRequester(focusRequester),
-                colors = TextFieldDefaults.colors(
-                    focusedContainerColor = Color(0xFF1E1E1E),
-                    unfocusedContainerColor = Color(0xFF1E1E1E),
-                    focusedTextColor = Color.White,
-                    unfocusedTextColor = Color.White,
-                    cursorColor = Color(0xFF1DB954),
-                    focusedIndicatorColor = Color.Transparent,
-                    unfocusedIndicatorColor = Color.Transparent,
-                ),
+                modifier =
+                    Modifier
+                        .weight(1f)
+                        .focusRequester(focusRequester),
+                colors =
+                    TextFieldDefaults.colors(
+                        focusedContainerColor = Color(0xFF1E1E1E),
+                        unfocusedContainerColor = Color(0xFF1E1E1E),
+                        focusedTextColor = Color.White,
+                        unfocusedTextColor = Color.White,
+                        cursorColor = Color(0xFF1DB954),
+                        focusedIndicatorColor = Color.Transparent,
+                        unfocusedIndicatorColor = Color.Transparent,
+                    ),
                 shape = RoundedCornerShape(12.dp),
                 keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
-                keyboardActions = KeyboardActions(onSearch = {
-                    keyboardController?.hide()
-                    if (query.isNotBlank()) {
-                        isSearching = true
-                        searchError = null
-                        coroutineScope.launch {
-                            val searchResult = withContext(Dispatchers.IO) {
-                                runCatching { YouTube.search(query, YouTube.SearchFilter.FILTER_SONG).getOrThrow() }
+                keyboardActions =
+                    KeyboardActions(onSearch = {
+                        keyboardController?.hide()
+                        if (query.isNotBlank()) {
+                            isSearching = true
+                            searchError = null
+                            coroutineScope.launch {
+                                val searchResult =
+                                    withContext(Dispatchers.IO) {
+                                        runCatching { YouTube.search(query, YouTube.SearchFilter.FILTER_SONG).getOrThrow() }
+                                    }
+                                searchResult.onSuccess { page ->
+                                    results = page.items.filterIsInstance<SongItem>()
+                                }.onFailure {
+                                    searchError = "Search failed. Check your connection."
+                                }
+                                isSearching = false
                             }
-                            searchResult.onSuccess { page ->
-                                results = page.items.filterIsInstance<SongItem>()
-                            }.onFailure {
-                                searchError = "Search failed. Check your connection."
-                            }
-                            isSearching = false
                         }
-                    }
-                }),
+                    }),
             )
             if (query.isNotEmpty()) {
-                IconButton(onClick = { query = ""; results = emptyList() }) {
+                IconButton(onClick = {
+                    query = ""
+                    results = emptyList()
+                }) {
                     Icon(painter = painterResource(R.drawable.close), contentDescription = "Clear", tint = Color.White.copy(alpha = 0.7f))
                 }
             }
@@ -1871,11 +1949,12 @@ private fun TogetherSearchResultRow(
     var showMenu by remember { mutableStateOf(false) }
 
     Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(12.dp))
-            .clickable { onAddToQueue() }
-            .padding(horizontal = 8.dp, vertical = 10.dp),
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(12.dp))
+                .clickable { onAddToQueue() }
+                .padding(horizontal = 8.dp, vertical = 10.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         if (song.thumbnail.isNotBlank()) {
@@ -1883,16 +1962,18 @@ private fun TogetherSearchResultRow(
                 model = song.thumbnail,
                 contentDescription = song.title,
                 contentScale = ContentScale.Crop,
-                modifier = Modifier
-                    .size(52.dp)
-                    .clip(RoundedCornerShape(10.dp)),
+                modifier =
+                    Modifier
+                        .size(52.dp)
+                        .clip(RoundedCornerShape(10.dp)),
             )
         } else {
             Box(
-                modifier = Modifier
-                    .size(52.dp)
-                    .clip(RoundedCornerShape(10.dp))
-                    .background(Color(0xFF282828)),
+                modifier =
+                    Modifier
+                        .size(52.dp)
+                        .clip(RoundedCornerShape(10.dp))
+                        .background(Color(0xFF282828)),
                 contentAlignment = Alignment.Center,
             ) {
                 Icon(painterResource(R.drawable.music_note), contentDescription = null, tint = Color.White.copy(alpha = 0.5f))
@@ -1931,13 +2012,31 @@ private fun TogetherSearchResultRow(
             DropdownMenu(expanded = showMenu, onDismissRequest = { showMenu = false }) {
                 DropdownMenuItem(
                     text = { Text("Add to Together queue") },
-                    onClick = { showMenu = false; onAddToQueue() },
-                    leadingIcon = { Icon(painterResource(R.drawable.queue_music), contentDescription = null, modifier = Modifier.size(18.dp)) },
+                    onClick = {
+                        showMenu = false
+                        onAddToQueue()
+                    },
+                    leadingIcon = {
+                        Icon(
+                            painterResource(R.drawable.queue_music),
+                            contentDescription = null,
+                            modifier = Modifier.size(18.dp),
+                        )
+                    },
                 )
                 DropdownMenuItem(
                     text = { Text("Play next") },
-                    onClick = { showMenu = false; onPlayNext() },
-                    leadingIcon = { Icon(painterResource(R.drawable.skip_next), contentDescription = null, modifier = Modifier.size(18.dp)) },
+                    onClick = {
+                        showMenu = false
+                        onPlayNext()
+                    },
+                    leadingIcon = {
+                        Icon(
+                            painterResource(R.drawable.skip_next),
+                            contentDescription = null,
+                            modifier = Modifier.size(18.dp),
+                        )
+                    },
                 )
             }
         }
@@ -1945,21 +2044,28 @@ private fun TogetherSearchResultRow(
 }
 
 @Composable
-private fun ParticipantRow(participants: List<JamParticipant>, onClick: () -> Unit = {}) {
+private fun ParticipantRow(
+    participants: List<JamParticipant>,
+    onClick: () -> Unit = {},
+) {
     Row(
         horizontalArrangement = Arrangement.spacedBy((-8).dp),
         verticalAlignment = Alignment.CenterVertically,
-        modifier = Modifier.clickable(onClick = onClick)
+        modifier = Modifier.clickable(onClick = onClick),
     ) {
         participants.take(4).forEach { participant ->
             Box(
-                modifier = Modifier
-                    .size(34.dp)
-                    .clip(CircleShape)
-                    .background(
-                        if (participant.role == JamParticipantRole.HOST) Color(0xFF1DB954)
-                        else Color(0xFF2B2B2B),
-                    ),
+                modifier =
+                    Modifier
+                        .size(34.dp)
+                        .clip(CircleShape)
+                        .background(
+                            if (participant.role == JamParticipantRole.HOST) {
+                                Color(0xFF1DB954)
+                            } else {
+                                Color(0xFF2B2B2B)
+                            },
+                        ),
                 contentAlignment = Alignment.Center,
             ) {
                 Text(
@@ -1972,10 +2078,11 @@ private fun ParticipantRow(participants: List<JamParticipant>, onClick: () -> Un
         }
         if (participants.size > 4) {
             Box(
-                modifier = Modifier
-                    .size(34.dp)
-                    .clip(CircleShape)
-                    .background(Color(0xFF181818)),
+                modifier =
+                    Modifier
+                        .size(34.dp)
+                        .clip(CircleShape)
+                        .background(Color(0xFF181818)),
                 contentAlignment = Alignment.Center,
             ) {
                 Text(
@@ -2009,9 +2116,8 @@ private fun ParticipantsDialog(
     isHost: Boolean,
     requireApproval: Boolean,
     onRequireApprovalChange: (Boolean) -> Unit,
-    onDismiss: () -> Unit
+    onDismiss: () -> Unit,
 ) {
-
     AlertDialog(
         onDismissRequest = onDismiss,
         containerColor = Color(0xFF181818),
@@ -2020,58 +2126,62 @@ private fun ParticipantsDialog(
                 Text(
                     "Room Participants",
                     style = MaterialTheme.typography.titleLarge,
-                    color = Color.White
+                    color = Color.White,
                 )
                 Text(
                     "${participants.size} ${if (participants.size == 1) "person" else "people"} listening",
                     style = MaterialTheme.typography.bodySmall,
-                    color = Color(0xFF1DB954)
+                    color = Color(0xFF1DB954),
                 )
             }
         },
         text = {
             Column(
                 modifier = Modifier.fillMaxWidth(),
-                verticalArrangement = Arrangement.spacedBy(16.dp)
+                verticalArrangement = Arrangement.spacedBy(16.dp),
             ) {
                 if (isHost) {
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
+                        verticalAlignment = Alignment.CenterVertically,
                     ) {
                         Text(
                             "Require Approval to Join",
                             style = MaterialTheme.typography.bodyMedium,
-                            color = Color.White
+                            color = Color.White,
                         )
                         Switch(
                             checked = requireApproval,
-                            onCheckedChange = onRequireApprovalChange
+                            onCheckedChange = onRequireApprovalChange,
                         )
                     }
                     HorizontalDivider(color = Color.White.copy(alpha = 0.1f))
                 }
 
                 LazyColumn(
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                    verticalArrangement = Arrangement.spacedBy(12.dp),
                 ) {
                     items(participants, key = { it.participantId }) { participant ->
                         Row(
                             verticalAlignment = Alignment.CenterVertically,
-                            modifier = Modifier.fillMaxWidth()
+                            modifier = Modifier.fillMaxWidth(),
                         ) {
                             Box(
-                                modifier = Modifier
-                                    .size(40.dp)
-                                    .clip(CircleShape)
-                                    .background(
-                                        if (participant.role == JamParticipantRole.HOST) Color(0xFF1DB954)
-                                        else Color(0xFF2B2B2B),
-                                    ),
+                                modifier =
+                                    Modifier
+                                        .size(40.dp)
+                                        .clip(CircleShape)
+                                        .background(
+                                            if (participant.role == JamParticipantRole.HOST) {
+                                                Color(0xFF1DB954)
+                                            } else {
+                                                Color(0xFF2B2B2B)
+                                            },
+                                        ),
                                 contentAlignment = Alignment.Center,
                             ) {
-                            Text(
+                                Text(
                                     text = participant.nameInitial,
                                     color = if (participant.role == JamParticipantRole.HOST) Color.Black else Color.White,
                                     fontWeight = FontWeight.Bold,
@@ -2083,12 +2193,19 @@ private fun ParticipantsDialog(
                                 Text(
                                     text = participant.displayName,
                                     style = MaterialTheme.typography.bodyLarge,
-                                    color = Color.White
+                                    color = Color.White,
                                 )
                                 Text(
                                     text = if (participant.role == JamParticipantRole.HOST) "Host" else "Listener",
                                     style = MaterialTheme.typography.bodySmall,
-                                    color = if (participant.role == JamParticipantRole.HOST) Color(0xFF1DB954) else Color.White.copy(alpha = 0.5f)
+                                    color =
+                                        if (participant.role == JamParticipantRole.HOST) {
+                                            Color(
+                                                0xFF1DB954,
+                                            )
+                                        } else {
+                                            Color.White.copy(alpha = 0.5f)
+                                        },
                                 )
                             }
                         }
@@ -2100,7 +2217,7 @@ private fun ParticipantsDialog(
             TextButton(onClick = onDismiss) {
                 Text("Close", color = Color(0xFF1DB954))
             }
-        }
+        },
     )
 }
 
@@ -2124,12 +2241,13 @@ private fun buildInviteLink(
 private fun buildInviteShareText(
     roomCode: String,
     inviteLink: String?,
-): String = buildString {
-    append("Join my Echofy Jam Together session! 🎧")
-    appendLine()
-    append("Room code: $roomCode")
-    inviteLink?.takeIf { it.isNotBlank() }?.let {
+): String =
+    buildString {
+        append("Join my Echofy Jam Together session! 🎧")
         appendLine()
-        append("Tap to listen together: $it")
+        append("Room code: $roomCode")
+        inviteLink?.takeIf { it.isNotBlank() }?.let {
+            appendLine()
+            append("Tap to listen together: $it")
+        }
     }
-}

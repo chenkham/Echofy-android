@@ -14,13 +14,13 @@ data class ChartsResult(
     val weekly: List<ChartPlaylist> = emptyList(),
     val artists: List<ChartArtist> = emptyList(),
     val genres: List<ChartPlaylist> = emptyList(),
-    val sections: List<ChartSection> = emptyList() // Flexible sections
+    val sections: List<ChartSection> = emptyList(), // Flexible sections
 )
 
 @Serializable
 data class ChartSection(
     val title: String,
-    val items: List<ChartItem> = emptyList()
+    val items: List<ChartItem> = emptyList(),
 )
 
 @Serializable
@@ -31,13 +31,13 @@ data class ChartItem(
     val thumbnails: List<Thumbnail> = emptyList(),
     val subscribers: String? = null,
     val rank: String? = null,
-    val trend: String? = null
+    val trend: String? = null,
 )
 
 @Serializable
 data class CountryInfo(
     val selected: String? = null,
-    val options: List<String> = emptyList()
+    val options: List<String> = emptyList(),
 )
 
 /**
@@ -47,7 +47,7 @@ data class CountryInfo(
 data class ChartPlaylist(
     val title: String,
     val playlistId: String,
-    val thumbnails: List<Thumbnail> = emptyList()
+    val thumbnails: List<Thumbnail> = emptyList(),
 )
 
 /**
@@ -60,7 +60,7 @@ data class ChartArtist(
     val subscribers: String? = null,
     val thumbnails: List<Thumbnail> = emptyList(),
     val rank: String? = null,
-    val trend: String? = null  // "up", "down", or "neutral"
+    val trend: String? = null, // "up", "down", or "neutral"
 )
 
 /**
@@ -70,5 +70,5 @@ data class ChartArtist(
 data class Thumbnail(
     val url: String,
     val width: Int? = null,
-    val height: Int? = null
+    val height: Int? = null,
 )

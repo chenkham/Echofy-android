@@ -34,24 +34,27 @@ fun ReleaseInfoCard(
     releaseInfo: ReleaseInfo,
     modifier: Modifier = Modifier,
 ) {
-    val facts = buildList {
-        releaseInfo.year?.let { add("Released $it") }
-        releaseInfo.country?.let { add(it) }
-        releaseInfo.labelName?.let { label ->
-            val catalog = releaseInfo.catalogNumber
-            add(if (catalog != null) "$label ($catalog)" else label)
+    val facts =
+        buildList {
+            releaseInfo.year?.let { add("Released $it") }
+            releaseInfo.country?.let { add(it) }
+            releaseInfo.labelName?.let { label ->
+                val catalog = releaseInfo.catalogNumber
+                add(if (catalog != null) "$label ($catalog)" else label)
+            }
         }
-    }
 
     if (facts.isEmpty() && releaseInfo.formats.isEmpty()) return
 
     Card(
-        modifier = modifier
-            .fillMaxWidth()
-            .padding(horizontal = 12.dp, vertical = 6.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceContainer,
-        ),
+        modifier =
+            modifier
+                .fillMaxWidth()
+                .padding(horizontal = 12.dp, vertical = 6.dp),
+        colors =
+            CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.surfaceContainer,
+            ),
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {

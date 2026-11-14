@@ -51,40 +51,43 @@ fun AiInputBar(
 ) {
     Surface(
         color = SurfaceContainer,
-        tonalElevation = 2.dp
+        tonalElevation = 2.dp,
     ) {
         Column(
-            modifier = Modifier
-                .fillMaxWidth()
+            modifier =
+                Modifier
+                    .fillMaxWidth(),
         ) {
             // Attachment preview
             if (attachedFile != null) {
                 Surface(
                     color = SurfaceContainerHighest,
                     shape = RoundedCornerShape(12.dp),
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 14.dp, vertical = 4.dp)
+                    modifier =
+                        Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 14.dp, vertical = 4.dp),
                 ) {
                     Row(
                         modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
-                        verticalAlignment = Alignment.CenterVertically
+                        verticalAlignment = Alignment.CenterVertically,
                     ) {
                         Text(
                             "📄 ${attachedFile.fileName}",
                             style = TextStyle(fontSize = 12.sp, color = Tertiary),
                             modifier = Modifier.weight(1f),
                             maxLines = 1,
-                            overflow = TextOverflow.Ellipsis
+                            overflow = TextOverflow.Ellipsis,
                         )
                         Spacer(Modifier.width(8.dp))
                         Icon(
                             painter = painterResource(R.drawable.close),
                             contentDescription = "Remove File",
                             tint = OnSurfaceVariant,
-                            modifier = Modifier
-                                .size(16.dp)
-                                .clickable { onRemoveAttachment() }
+                            modifier =
+                                Modifier
+                                    .size(16.dp)
+                                    .clickable { onRemoveAttachment() },
                         )
                     }
                 }
@@ -92,21 +95,22 @@ fun AiInputBar(
 
             // Input row
             Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 10.dp, vertical = 8.dp),
-                verticalAlignment = Alignment.CenterVertically
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 10.dp, vertical = 8.dp),
+                verticalAlignment = Alignment.CenterVertically,
             ) {
                 // Attach file
                 IconButton(
                     onClick = onAttachClick,
-                    modifier = Modifier.size(40.dp)
+                    modifier = Modifier.size(40.dp),
                 ) {
                     Icon(
                         painter = painterResource(R.drawable.add),
                         contentDescription = "Attach File",
                         tint = OnSurfaceVariant,
-                        modifier = Modifier.size(22.dp)
+                        modifier = Modifier.size(22.dp),
                     )
                 }
 
@@ -116,14 +120,15 @@ fun AiInputBar(
                 Surface(
                     color = SurfaceContainerHighest,
                     shape = RoundedCornerShape(24.dp),
-                    modifier = Modifier.weight(1f)
+                    modifier = Modifier.weight(1f),
                 ) {
                     BasicTextField(
                         value = textInput,
                         onValueChange = onTextChange,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 18.dp, vertical = 12.dp),
+                        modifier =
+                            Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 18.dp, vertical = 12.dp),
                         textStyle = TextStyle(color = OnSurface, fontSize = 15.sp),
                         cursorBrush = SolidColor(Primary),
                         singleLine = false,
@@ -136,12 +141,12 @@ fun AiInputBar(
                                     Text(
                                         "Message Echofy...",
                                         color = OnSurfaceVariant.copy(alpha = 0.5f),
-                                        fontSize = 14.sp
+                                        fontSize = 14.sp,
                                     )
                                 }
                                 inner()
                             }
-                        }
+                        },
                     )
                 }
 
@@ -151,16 +156,17 @@ fun AiInputBar(
                 Surface(
                     shape = CircleShape,
                     color = if (isRecording) Color(0xFFEF4444) else SurfaceContainerHighest,
-                    modifier = Modifier
-                        .size(40.dp)
-                        .clickable { onMicClick() }
+                    modifier =
+                        Modifier
+                            .size(40.dp)
+                            .clickable { onMicClick() },
                 ) {
                     Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize()) {
                         Icon(
                             painter = painterResource(R.drawable.mic),
                             contentDescription = if (isRecording) "Recording..." else "Voice Input",
                             tint = if (isRecording) Color.White else OnSurfaceVariant,
-                            modifier = Modifier.size(20.dp)
+                            modifier = Modifier.size(20.dp),
                         )
                     }
                 }
@@ -172,16 +178,17 @@ fun AiInputBar(
                 Surface(
                     shape = CircleShape,
                     color = if (canSend) Primary else SurfaceContainerHighest,
-                    modifier = Modifier
-                        .size(44.dp)
-                        .clickable(enabled = canSend) { onSend() }
+                    modifier =
+                        Modifier
+                            .size(44.dp)
+                            .clickable(enabled = canSend) { onSend() },
                 ) {
                     Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize()) {
                         Icon(
                             painter = painterResource(R.drawable.arrow_upward),
                             contentDescription = "Send",
                             tint = if (canSend) OnPrimary else OnSurfaceVariant.copy(alpha = 0.4f),
-                            modifier = Modifier.size(22.dp)
+                            modifier = Modifier.size(22.dp),
                         )
                     }
                 }

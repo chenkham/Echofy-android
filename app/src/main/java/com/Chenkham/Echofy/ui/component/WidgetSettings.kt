@@ -17,7 +17,6 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.WindowInsetsSides
-import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -39,7 +38,6 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.TopAppBarScrollBehavior
-import androidx.compose.ui.graphics.Color
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
@@ -50,6 +48,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
@@ -70,8 +69,8 @@ import com.Chenkham.Echofy.ui.utils.backToMain
 import com.Chenkham.Echofy.utils.rememberPreference
 import com.Chenkham.Echofy.widget.WidgetPreferences
 import com.Chenkham.Echofy.widget.WidgetPreferencesSync
-import kotlin.math.roundToInt
 import kotlinx.coroutines.launch
+import kotlin.math.roundToInt
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -82,26 +81,31 @@ fun WidgetSettings(
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
 
-    val (rawBackgroundMode, onBackgroundModeChangeRaw) = rememberPreference(
-        WidgetBackgroundModeKey,
-        defaultValue = WidgetBackgroundMode.BLUR.name,
-    )
-    val (scrimOpacity, onScrimOpacityChange) = rememberPreference(
-        WidgetScrimOpacityKey,
-        defaultValue = 0.32f,
-    )
-    val (cornerRadius, onCornerRadiusChange) = rememberPreference(
-        WidgetCornerRadiusKey,
-        defaultValue = 24f,
-    )
-    val (showProgressBar, onShowProgressBarChange) = rememberPreference(
-        WidgetShowProgressBarKey,
-        defaultValue = true,
-    )
+    val (rawBackgroundMode, onBackgroundModeChangeRaw) =
+        rememberPreference(
+            WidgetBackgroundModeKey,
+            defaultValue = WidgetBackgroundMode.BLUR.name,
+        )
+    val (scrimOpacity, onScrimOpacityChange) =
+        rememberPreference(
+            WidgetScrimOpacityKey,
+            defaultValue = 0.32f,
+        )
+    val (cornerRadius, onCornerRadiusChange) =
+        rememberPreference(
+            WidgetCornerRadiusKey,
+            defaultValue = 24f,
+        )
+    val (showProgressBar, onShowProgressBarChange) =
+        rememberPreference(
+            WidgetShowProgressBarKey,
+            defaultValue = true,
+        )
 
-    val backgroundMode = remember(rawBackgroundMode) {
-        runCatching { WidgetBackgroundMode.valueOf(rawBackgroundMode) }.getOrDefault(WidgetBackgroundMode.BLUR)
-    }
+    val backgroundMode =
+        remember(rawBackgroundMode) {
+            runCatching { WidgetBackgroundMode.valueOf(rawBackgroundMode) }.getOrDefault(WidgetBackgroundMode.BLUR)
+        }
 
     val onBackgroundModeChange: (WidgetBackgroundMode) -> Unit = { mode ->
         onBackgroundModeChangeRaw(mode.name)
@@ -124,14 +128,16 @@ fun WidgetSettings(
         scope.launch { WidgetPreferencesSync.notifyChanged(context) }
     }
 
-    val availableBackgroundModes = WidgetBackgroundMode.entries.filter {
-        it != WidgetBackgroundMode.BLUR || Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
-    }
+    val availableBackgroundModes =
+        WidgetBackgroundMode.entries.filter {
+            it != WidgetBackgroundMode.BLUR || Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
+        }
 
     Scaffold(
-        modifier = Modifier
-            .fillMaxSize()
-            .nestedScroll(scrollBehavior.nestedScrollConnection),
+        modifier =
+            Modifier
+                .fillMaxSize()
+                .nestedScroll(scrollBehavior.nestedScrollConnection),
         containerColor = MaterialTheme.colorScheme.surfaceContainerLowest,
         contentWindowInsets = WindowInsets(0, 0, 0, 0),
         topBar = {
@@ -148,10 +154,11 @@ fun WidgetSettings(
                         )
                     }
                 },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = Color.Transparent,
-                    scrolledContainerColor = Color.Transparent,
-                ),
+                colors =
+                    TopAppBarDefaults.topAppBarColors(
+                        containerColor = Color.Transparent,
+                        scrolledContainerColor = Color.Transparent,
+                    ),
                 scrollBehavior = scrollBehavior,
             )
         },
@@ -161,7 +168,7 @@ fun WidgetSettings(
                 .fillMaxSize()
                 .padding(top = paddingValues.calculateTopPadding())
                 .windowInsetsPadding(
-                    LocalPlayerAwareWindowInsets.current.only(WindowInsetsSides.Horizontal + WindowInsetsSides.Bottom)
+                    LocalPlayerAwareWindowInsets.current.only(WindowInsetsSides.Horizontal + WindowInsetsSides.Bottom),
                 )
                 .verticalScroll(rememberScrollState())
                 .padding(bottom = 24.dp),
@@ -175,9 +182,10 @@ fun WidgetSettings(
                 scrimOpacity = scrimOpacity,
                 cornerRadius = cornerRadius.dp,
                 showProgressBar = showProgressBar,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 8.dp),
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 8.dp),
             )
 
             PreferenceGroupTitle(
@@ -185,9 +193,10 @@ fun WidgetSettings(
             )
 
             Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 8.dp),
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 8.dp),
                 horizontalArrangement = Arrangement.spacedBy(12.dp),
             ) {
                 for (mode in availableBackgroundModes) {
@@ -255,71 +264,80 @@ private fun WidgetLivePreview(
     showProgressBar: Boolean,
     modifier: Modifier = Modifier,
 ) {
-    val previewBackground = when (backgroundMode) {
-        WidgetBackgroundMode.BLUR -> Brush.radialGradient(
-            colors = listOf(Color(0xFF8B2500), Color(0xFF1E100A), Color(0xFF0F0805))
-        )
-        WidgetBackgroundMode.DOMINANT_COLOR -> Brush.linearGradient(
-            colors = listOf(Color(0xFF6B2D1B), Color(0xFF1F120E))
-        )
-        WidgetBackgroundMode.SOLID -> Brush.linearGradient(
-            colors = listOf(Color(0xFF22222A), Color(0xFF16161C))
-        )
-    }
+    val previewBackground =
+        when (backgroundMode) {
+            WidgetBackgroundMode.BLUR ->
+                Brush.radialGradient(
+                    colors = listOf(Color(0xFF8B2500), Color(0xFF1E100A), Color(0xFF0F0805)),
+                )
+            WidgetBackgroundMode.DOMINANT_COLOR ->
+                Brush.linearGradient(
+                    colors = listOf(Color(0xFF6B2D1B), Color(0xFF1F120E)),
+                )
+            WidgetBackgroundMode.SOLID ->
+                Brush.linearGradient(
+                    colors = listOf(Color(0xFF22222A), Color(0xFF16161C)),
+                )
+        }
 
     Box(
-        modifier = modifier
-            .height(130.dp)
-            .clip(RoundedCornerShape(cornerRadius))
-            .background(previewBackground),
+        modifier =
+            modifier
+                .height(130.dp)
+                .clip(RoundedCornerShape(cornerRadius))
+                .background(previewBackground),
     ) {
         Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(Color.Black.copy(alpha = scrimOpacity)),
+            modifier =
+                Modifier
+                    .fillMaxSize()
+                    .background(Color.Black.copy(alpha = scrimOpacity)),
         )
 
         Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(16.dp),
+            modifier =
+                Modifier
+                    .fillMaxSize()
+                    .padding(16.dp),
             verticalArrangement = Arrangement.SpaceBetween,
         ) {
             // Top Row: Waveform glyph
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically
+                verticalAlignment = Alignment.CenterVertically,
             ) {
                 Icon(
                     painter = painterResource(R.drawable.graphic_eq),
                     contentDescription = null,
                     tint = Color.White.copy(alpha = 0.9f),
-                    modifier = Modifier.size(20.dp)
+                    modifier = Modifier.size(20.dp),
                 )
             }
 
             // Middle Row: Title/Artist on Left, White Circle Play Button on Right
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically
+                verticalAlignment = Alignment.CenterVertically,
             ) {
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
                         text = "Con Altura ft. El Guincho",
-                        style = MaterialTheme.typography.titleMedium.copy(
-                            color = Color.White,
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 15.sp
-                        ),
-                        maxLines = 1
+                        style =
+                            MaterialTheme.typography.titleMedium.copy(
+                                color = Color.White,
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 15.sp,
+                            ),
+                        maxLines = 1,
                     )
                     Text(
                         text = "ROSALÍA",
-                        style = MaterialTheme.typography.bodySmall.copy(
-                            color = Color.White.copy(alpha = 0.75f),
-                            fontSize = 12.sp
-                        ),
-                        maxLines = 1
+                        style =
+                            MaterialTheme.typography.bodySmall.copy(
+                                color = Color.White.copy(alpha = 0.75f),
+                                fontSize = 12.sp,
+                            ),
+                        maxLines = 1,
                     )
                 }
 
@@ -327,17 +345,18 @@ private fun WidgetLivePreview(
 
                 // Solid White Circular Play Button
                 Box(
-                    modifier = Modifier
-                        .size(44.dp)
-                        .clip(CircleShape)
-                        .background(Color.White),
-                    contentAlignment = Alignment.Center
+                    modifier =
+                        Modifier
+                            .size(44.dp)
+                            .clip(CircleShape)
+                            .background(Color.White),
+                    contentAlignment = Alignment.Center,
                 ) {
                     Icon(
                         painter = painterResource(R.drawable.pause),
                         contentDescription = null,
                         tint = Color(0xFF121212),
-                        modifier = Modifier.size(22.dp)
+                        modifier = Modifier.size(22.dp),
                     )
                 }
             }
@@ -345,30 +364,32 @@ private fun WidgetLivePreview(
             // Bottom Row: Controls + Thin Progress Line
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically
+                verticalAlignment = Alignment.CenterVertically,
             ) {
                 Icon(
                     painter = painterResource(R.drawable.skip_previous),
                     contentDescription = null,
                     tint = Color.White,
-                    modifier = Modifier.size(20.dp)
+                    modifier = Modifier.size(20.dp),
                 )
 
                 if (showProgressBar) {
                     Spacer(modifier = Modifier.width(8.dp))
                     Box(
-                        modifier = Modifier
-                            .weight(1f)
-                            .height(3.dp)
-                            .clip(RoundedCornerShape(1.5.dp))
-                            .background(Color.White.copy(alpha = 0.28f)),
-                    ) {
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth(0.55f)
+                        modifier =
+                            Modifier
+                                .weight(1f)
                                 .height(3.dp)
                                 .clip(RoundedCornerShape(1.5.dp))
-                                .background(Color.White),
+                                .background(Color.White.copy(alpha = 0.28f)),
+                    ) {
+                        Box(
+                            modifier =
+                                Modifier
+                                    .fillMaxWidth(0.55f)
+                                    .height(3.dp)
+                                    .clip(RoundedCornerShape(1.5.dp))
+                                    .background(Color.White),
                         )
                     }
                     Spacer(modifier = Modifier.width(8.dp))
@@ -380,7 +401,7 @@ private fun WidgetLivePreview(
                     painter = painterResource(R.drawable.skip_next),
                     contentDescription = null,
                     tint = Color.White,
-                    modifier = Modifier.size(20.dp)
+                    modifier = Modifier.size(20.dp),
                 )
 
                 Spacer(modifier = Modifier.width(12.dp))
@@ -389,7 +410,7 @@ private fun WidgetLivePreview(
                     painter = painterResource(R.drawable.queue_music),
                     contentDescription = null,
                     tint = Color.White.copy(alpha = 0.85f),
-                    modifier = Modifier.size(18.dp)
+                    modifier = Modifier.size(18.dp),
                 )
 
                 Spacer(modifier = Modifier.width(10.dp))
@@ -398,7 +419,7 @@ private fun WidgetLivePreview(
                     painter = painterResource(R.drawable.heart),
                     contentDescription = null,
                     tint = Color.White.copy(alpha = 0.85f),
-                    modifier = Modifier.size(18.dp)
+                    modifier = Modifier.size(18.dp),
                 )
             }
         }
@@ -412,33 +433,38 @@ private fun WidgetBackgroundModeCard(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val title = when (mode) {
-        WidgetBackgroundMode.BLUR -> "Blur"
-        WidgetBackgroundMode.DOMINANT_COLOR -> "Dominant"
-        WidgetBackgroundMode.SOLID -> "Solid"
-    }
+    val title =
+        when (mode) {
+            WidgetBackgroundMode.BLUR -> "Blur"
+            WidgetBackgroundMode.DOMINANT_COLOR -> "Dominant"
+            WidgetBackgroundMode.SOLID -> "Solid"
+        }
 
     Box(
-        modifier = modifier
-            .clip(RoundedCornerShape(12.dp))
-            .background(
-                if (selected) MaterialTheme.colorScheme.primaryContainer
-                else MaterialTheme.colorScheme.surfaceContainer
-            )
-            .border(
-                width = 1.dp,
-                color = if (selected) MaterialTheme.colorScheme.primary else Color.Transparent,
-                shape = RoundedCornerShape(12.dp)
-            )
-            .clickable(onClick = onClick)
-            .padding(vertical = 12.dp, horizontal = 8.dp),
-        contentAlignment = Alignment.Center
+        modifier =
+            modifier
+                .clip(RoundedCornerShape(12.dp))
+                .background(
+                    if (selected) {
+                        MaterialTheme.colorScheme.primaryContainer
+                    } else {
+                        MaterialTheme.colorScheme.surfaceContainer
+                    },
+                )
+                .border(
+                    width = 1.dp,
+                    color = if (selected) MaterialTheme.colorScheme.primary else Color.Transparent,
+                    shape = RoundedCornerShape(12.dp),
+                )
+                .clickable(onClick = onClick)
+                .padding(vertical = 12.dp, horizontal = 8.dp),
+        contentAlignment = Alignment.Center,
     ) {
         Text(
             text = title,
             style = MaterialTheme.typography.labelMedium,
             fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal,
-            color = if (selected) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurface
+            color = if (selected) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurface,
         )
     }
 }
@@ -454,25 +480,26 @@ private fun WidgetSliderRow(
     var sliderValue by remember(value) { mutableFloatStateOf(value) }
 
     Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 6.dp)
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 6.dp),
     ) {
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
+            verticalAlignment = Alignment.CenterVertically,
         ) {
             Text(
                 text = title,
                 style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurface
+                color = MaterialTheme.colorScheme.onSurface,
             )
             Text(
                 text = valueText(sliderValue),
                 style = MaterialTheme.typography.labelMedium,
                 fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
         Slider(

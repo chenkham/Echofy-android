@@ -19,10 +19,10 @@ import androidx.media3.common.C
 import androidx.media3.common.MediaItem
 import androidx.media3.common.MimeTypes
 import androidx.media3.common.Player
-import androidx.media3.exoplayer.ExoPlayer
-import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
 import androidx.media3.datasource.DefaultDataSource
 import androidx.media3.datasource.okhttp.OkHttpDataSource
+import androidx.media3.exoplayer.ExoPlayer
+import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
 import androidx.media3.ui.AspectRatioFrameLayout
 import androidx.media3.ui.PlayerView
 import com.arturo254.opentune.canvas.CanvasCacheManager
@@ -65,11 +65,12 @@ internal fun CanvasArtworkPlayer(
     }
 
     // Ô£à Usar archivo local si existe, sino la URL
-    val finalUri = if (isLocalFile && localFilePath != null) {
-        localFilePath
-    } else {
-        currentUrl
-    }
+    val finalUri =
+        if (isLocalFile && localFilePath != null) {
+            localFilePath
+        } else {
+            currentUrl
+        }
 
     if (finalUri == null) return
 
@@ -83,23 +84,23 @@ internal fun CanvasArtworkPlayer(
                     val host = request.url.host
                     val isYouTubeMediaHost =
                         host.endsWith("googlevideo.com") ||
-                                host.endsWith("googleusercontent.com") ||
-                                host.endsWith("youtube.com") ||
-                                host.endsWith("youtube-nocookie.com") ||
-                                host.endsWith("ytimg.com")
+                            host.endsWith("googleusercontent.com") ||
+                            host.endsWith("youtube.com") ||
+                            host.endsWith("youtube-nocookie.com") ||
+                            host.endsWith("ytimg.com")
 
                     if (!isYouTubeMediaHost) return@addInterceptor chain.proceed(request)
 
                     val clientParam = request.url.queryParameter("c")?.trim().orEmpty()
                     val isWeb =
                         clientParam.startsWith("WEB", ignoreCase = true) ||
-                                clientParam.startsWith("WEB_REMIX", ignoreCase = true) ||
-                                request.url.toString().contains("c=WEB", ignoreCase = true)
+                            clientParam.startsWith("WEB_REMIX", ignoreCase = true) ||
+                            request.url.toString().contains("c=WEB", ignoreCase = true)
 
                     val userAgent =
                         when {
                             clientParam.startsWith("WEB", ignoreCase = true) ||
-                                    clientParam.startsWith("WEB_REMIX", ignoreCase = true) -> YouTubeClient.USER_AGENT_WEB
+                                clientParam.startsWith("WEB_REMIX", ignoreCase = true) -> YouTubeClient.USER_AGENT_WEB
 
                             clientParam.startsWith("IOS", ignoreCase = true) -> YouTubeClient.IOS.userAgent
 

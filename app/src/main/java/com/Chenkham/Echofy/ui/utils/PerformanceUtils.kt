@@ -67,14 +67,13 @@ class StableCallback<T>(private val callback: T) {
 data class ImmutablePlaybackInfo(
     val currentMediaId: String?,
     val currentAlbumId: String?,
-    val isPlaying: Boolean
+    val isPlaying: Boolean,
 ) {
     companion object {
         val EMPTY = ImmutablePlaybackInfo(null, null, false)
     }
 
-    fun isActiveItem(itemId: String?): Boolean =
-        itemId != null && (itemId == currentMediaId || itemId == currentAlbumId)
+    fun isActiveItem(itemId: String?): Boolean = itemId != null && (itemId == currentMediaId || itemId == currentAlbumId)
 }
 
 /**
@@ -87,14 +86,16 @@ data class ImmutablePlaybackInfo(
 data class ImmutableLibraryInfo(
     val likedSongIds: Set<String>,
     val librarySongIds: Set<String>,
-    val bookmarkedAlbumIds: Set<String>
+    val bookmarkedAlbumIds: Set<String>,
 ) {
     companion object {
         val EMPTY = ImmutableLibraryInfo(emptySet(), emptySet(), emptySet())
     }
 
     fun isLiked(songId: String): Boolean = songId in likedSongIds
+
     fun inLibrary(songId: String): Boolean = songId in librarySongIds
+
     fun isBookmarked(albumId: String): Boolean = albumId in bookmarkedAlbumIds
 }
 
@@ -133,7 +134,7 @@ fun <T> Set<T>.toStable(): StableSet<T> = StableSet(this)
 fun rememberDebouncedScrollPosition(
     listState: LazyListState,
     debounceMs: Long = 100L,
-    onScrollPositionChanged: (firstVisibleIndex: Int, offset: Int) -> Unit
+    onScrollPositionChanged: (firstVisibleIndex: Int, offset: Int) -> Unit,
 ) {
     val currentCallback by rememberUpdatedState(onScrollPositionChanged)
 
@@ -141,11 +142,11 @@ fun rememberDebouncedScrollPosition(
         snapshotFlow {
             listState.firstVisibleItemIndex to listState.firstVisibleItemScrollOffset
         }
-        .debounce(debounceMs)
-        .distinctUntilChanged()
-        .collect { (index, offset) ->
-            currentCallback(index, offset)
-        }
+            .debounce(debounceMs)
+            .distinctUntilChanged()
+            .collect { (index, offset) ->
+                currentCallback(index, offset)
+            }
     }
 }
 
@@ -157,7 +158,7 @@ fun rememberDebouncedScrollPosition(
 fun rememberDebouncedGridScrollPosition(
     gridState: LazyGridState,
     debounceMs: Long = 100L,
-    onScrollPositionChanged: (firstVisibleIndex: Int, offset: Int) -> Unit
+    onScrollPositionChanged: (firstVisibleIndex: Int, offset: Int) -> Unit,
 ) {
     val currentCallback by rememberUpdatedState(onScrollPositionChanged)
 
@@ -165,11 +166,11 @@ fun rememberDebouncedGridScrollPosition(
         snapshotFlow {
             gridState.firstVisibleItemIndex to gridState.firstVisibleItemScrollOffset
         }
-        .debounce(debounceMs)
-        .distinctUntilChanged()
-        .collect { (index, offset) ->
-            currentCallback(index, offset)
-        }
+            .debounce(debounceMs)
+            .distinctUntilChanged()
+            .collect { (index, offset) ->
+                currentCallback(index, offset)
+            }
     }
 }
 
@@ -209,7 +210,7 @@ fun rememberIsGridScrolling(gridState: LazyGridState): Boolean {
 fun DeferredContent(
     isScrolling: Boolean,
     placeholder: @Composable () -> Unit = {},
-    content: @Composable () -> Unit
+    content: @Composable () -> Unit,
 ) {
     // Use a delayed state change to prevent flickering
     var showContent by remember { mutableStateOf(!isScrolling) }
@@ -242,7 +243,7 @@ fun DeferredContent(
 @Composable
 fun rememberVisibleItemRange(
     listState: LazyListState,
-    bufferSize: Int = 5
+    bufferSize: Int = 5,
 ): IntRange {
     return remember(listState) {
         derivedStateOf {
@@ -275,8 +276,11 @@ fun <T> noOpSingleParam(): (T) -> Unit = { _ -> }
 @Immutable
 data class ImmutableList<T>(val items: List<T>) {
     val size: Int get() = items.size
+
     fun isEmpty(): Boolean = items.isEmpty()
+
     fun isNotEmpty(): Boolean = items.isNotEmpty()
+
     operator fun get(index: Int): T = items[index]
 
     companion object {
@@ -291,4 +295,3 @@ data class ImmutableList<T>(val items: List<T>) {
  * Convert a list to ImmutableList for use in Composables
  */
 fun <T> List<T>.toImmutableList(): ImmutableList<T> = ImmutableList(this)
-

@@ -42,22 +42,24 @@ object DynamicShortcuts {
         val shortcuts = mutableListOf<ShortcutInfoCompat>()
 
         if (database.likedSongsCount().first() > 0) {
-            shortcuts += buildShortcut(
-                context = context,
-                id = ID_LIKED,
-                label = context.getString(R.string.liked_songs),
-                iconRes = R.drawable.favorite,
-                playlistId = com.Chenkham.Echofy.db.entities.PlaylistEntity.LIKED_PLAYLIST_ID,
-            )
+            shortcuts +=
+                buildShortcut(
+                    context = context,
+                    id = ID_LIKED,
+                    label = context.getString(R.string.liked_songs),
+                    iconRes = R.drawable.favorite,
+                    playlistId = com.Chenkham.Echofy.db.entities.PlaylistEntity.LIKED_PLAYLIST_ID,
+                )
         }
 
-        shortcuts += buildShortcut(
-            context = context,
-            id = ID_DOWNLOADED,
-            label = context.getString(R.string.downloaded_songs),
-            iconRes = R.drawable.offline,
-            playlistId = com.Chenkham.Echofy.db.entities.PlaylistEntity.DOWNLOADED_PLAYLIST_ID,
-        )
+        shortcuts +=
+            buildShortcut(
+                context = context,
+                id = ID_DOWNLOADED,
+                label = context.getString(R.string.downloaded_songs),
+                iconRes = R.drawable.offline,
+                playlistId = com.Chenkham.Echofy.db.entities.PlaylistEntity.DOWNLOADED_PLAYLIST_ID,
+            )
 
         runCatching {
             ShortcutManagerCompat.setDynamicShortcuts(context, shortcuts)

@@ -6,7 +6,6 @@
 
 package com.arturo254.opentune.innertube.models
 
-
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 

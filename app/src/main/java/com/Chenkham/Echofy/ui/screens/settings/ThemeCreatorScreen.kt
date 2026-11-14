@@ -4,8 +4,6 @@
  * Licensed Under GPL-3.0 | see git history for contributors
  */
 
-
-
 package com.Chenkham.Echofy.ui.screens.settings
 
 import android.widget.Toast
@@ -20,9 +18,9 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsetsSides
@@ -100,20 +98,20 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import com.Chenkham.Echofy.LocalPlayerAwareWindowInsets
 import com.Chenkham.Echofy.R
 import com.Chenkham.Echofy.constants.CustomThemeColorKey
 import com.Chenkham.Echofy.constants.DynamicThemeKey
 import com.Chenkham.Echofy.ui.component.IconButton
-import com.Chenkham.Echofy.ui.theme.EchofyTheme
 import com.Chenkham.Echofy.ui.theme.ColorSaver
+import com.Chenkham.Echofy.ui.theme.EchofyTheme
 import com.Chenkham.Echofy.ui.theme.ThemeSeedPalette
 import com.Chenkham.Echofy.ui.theme.ThemeSeedPaletteCodec
 import com.Chenkham.Echofy.ui.utils.backToMain
 import com.Chenkham.Echofy.utils.rememberPreference
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 private enum class SeedRole {
     PRIMARY,
@@ -124,26 +122,27 @@ private enum class SeedRole {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ThemeCreatorScreen(
-    navController: NavController,
-) {
+fun ThemeCreatorScreen(navController: NavController) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
 
-    val (customThemeValue, setCustomThemeValue) = rememberPreference(
-        key = CustomThemeColorKey,
-        defaultValue = ThemePalettes.Default.id,
-    )
-    val (_, setDynamicThemeEnabled) = rememberPreference(
-        key = DynamicThemeKey,
-        defaultValue = true,
-    )
+    val (customThemeValue, setCustomThemeValue) =
+        rememberPreference(
+            key = CustomThemeColorKey,
+            defaultValue = ThemePalettes.Default.id,
+        )
+    val (_, setDynamicThemeEnabled) =
+        rememberPreference(
+            key = DynamicThemeKey,
+            defaultValue = true,
+        )
 
-    val seedFromPrefs = remember(customThemeValue) {
-        ThemeSeedPaletteCodec.decodeFromPreference(customThemeValue)
-            ?: ThemePalettes.findById(customThemeValue)?.toSeedPalette()
-            ?: ThemePalettes.Default.toSeedPalette()
-    }
+    val seedFromPrefs =
+        remember(customThemeValue) {
+            ThemeSeedPaletteCodec.decodeFromPreference(customThemeValue)
+                ?: ThemePalettes.findById(customThemeValue)?.toSeedPalette()
+                ?: ThemePalettes.Default.toSeedPalette()
+        }
 
     var themeName by rememberSaveable(customThemeValue) {
         mutableStateOf(ThemeSeedPaletteCodec.extractNameFromPreference(customThemeValue) ?: "")
@@ -258,7 +257,7 @@ fun ThemeCreatorScreen(
                             tertiary = ThemePalettes.Default.tertiary
                             neutral = ThemePalettes.Default.neutral
                             themeName = ""
-                        }
+                        },
                     ) {
                         Text(text = stringResource(R.string.reset))
                     }
@@ -266,15 +265,18 @@ fun ThemeCreatorScreen(
                         Text(text = stringResource(R.string.save))
                     }
                 },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent, scrolledContainerColor = Color.Transparent)
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent, scrolledContainerColor = Color.Transparent),
             )
         },
         floatingActionButton = {
             Row(
                 horizontalArrangement = Arrangement.spacedBy(12.dp),
-                modifier = Modifier
-                    .windowInsetsPadding(LocalPlayerAwareWindowInsets.current.only(WindowInsetsSides.Bottom + WindowInsetsSides.Horizontal))
-                    .padding(horizontal = 16.dp),
+                modifier =
+                    Modifier
+                        .windowInsetsPadding(
+                            LocalPlayerAwareWindowInsets.current.only(WindowInsetsSides.Bottom + WindowInsetsSides.Horizontal),
+                        )
+                        .padding(horizontal = 16.dp),
             ) {
                 ExtendedFloatingActionButton(
                     text = { Text(stringResource(R.string.import_theme)) },
@@ -285,11 +287,12 @@ fun ThemeCreatorScreen(
                 )
                 ExtendedFloatingActionButton(
                     onClick = {
-                        val safeName = themeName
-                            .trim()
-                            .ifBlank { "Echofy Theme" }
-                            .replace(Regex("[^a-zA-Z0-9 _\\-]"), "_")
-                            .take(64)
+                        val safeName =
+                            themeName
+                                .trim()
+                                .ifBlank { "Echofy Theme" }
+                                .replace(Regex("[^a-zA-Z0-9 _\\-]"), "_")
+                                .take(64)
                         exportLauncher.launch("$safeName.json")
                     },
                     text = { Text(stringResource(R.string.export_theme)) },
@@ -298,20 +301,22 @@ fun ThemeCreatorScreen(
                     contentColor = MaterialTheme.colorScheme.onPrimary,
                 )
             }
-        }
+        },
     ) { paddingValues ->
         Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(paddingValues)
-                .windowInsetsPadding(LocalPlayerAwareWindowInsets.current.only(WindowInsetsSides.Horizontal + WindowInsetsSides.Bottom))
-                .verticalScroll(rememberScrollState()),
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .padding(paddingValues)
+                    .windowInsetsPadding(LocalPlayerAwareWindowInsets.current.only(WindowInsetsSides.Horizontal + WindowInsetsSides.Bottom))
+                    .verticalScroll(rememberScrollState()),
         ) {
             ThemeHeroPreview(
                 palette = currentPalette,
-                modifier = Modifier
-                    .padding(horizontal = 16.dp)
-                    .padding(bottom = 12.dp),
+                modifier =
+                    Modifier
+                        .padding(horizontal = 16.dp)
+                        .padding(bottom = 12.dp),
             )
             ThemeRichPreview(
                 palette = currentPalette,
@@ -319,9 +324,10 @@ fun ThemeCreatorScreen(
             )
 
             Card(
-                modifier = Modifier
-                    .padding(horizontal = 16.dp, vertical = 12.dp)
-                    .fillMaxWidth(),
+                modifier =
+                    Modifier
+                        .padding(horizontal = 16.dp, vertical = 12.dp)
+                        .fillMaxWidth(),
                 shape = RoundedCornerShape(20.dp),
                 colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
             ) {
@@ -401,20 +407,37 @@ private fun ThemeHeroPreview(
     modifier: Modifier = Modifier,
 ) {
     val isDark = isSystemInDarkTheme()
-    val animatedPrimary by animateColorAsState(palette.primary, animationSpec = spring(stiffness = Spring.StiffnessMediumLow), label = "previewPrimary")
-    val animatedSecondary by animateColorAsState(palette.secondary, animationSpec = spring(stiffness = Spring.StiffnessMediumLow), label = "previewSecondary")
-    val animatedTertiary by animateColorAsState(palette.tertiary, animationSpec = spring(stiffness = Spring.StiffnessMediumLow), label = "previewTertiary")
-    val animatedNeutral by animateColorAsState(palette.neutral, animationSpec = spring(stiffness = Spring.StiffnessMediumLow), label = "previewNeutral")
+    val animatedPrimary by animateColorAsState(
+        palette.primary,
+        animationSpec = spring(stiffness = Spring.StiffnessMediumLow),
+        label = "previewPrimary",
+    )
+    val animatedSecondary by animateColorAsState(
+        palette.secondary,
+        animationSpec = spring(stiffness = Spring.StiffnessMediumLow),
+        label = "previewSecondary",
+    )
+    val animatedTertiary by animateColorAsState(
+        palette.tertiary,
+        animationSpec = spring(stiffness = Spring.StiffnessMediumLow),
+        label = "previewTertiary",
+    )
+    val animatedNeutral by animateColorAsState(
+        palette.neutral,
+        animationSpec = spring(stiffness = Spring.StiffnessMediumLow),
+        label = "previewNeutral",
+    )
 
     EchofyTheme(
         darkTheme = isDark,
         seedPalette = ThemeSeedPalette(animatedPrimary, animatedSecondary, animatedTertiary, animatedNeutral),
     ) {
         Card(
-            modifier = modifier
-                .fillMaxWidth()
-                .height(320.dp)
-                .shadow(18.dp, RoundedCornerShape(26.dp)),
+            modifier =
+                modifier
+                    .fillMaxWidth()
+                    .height(320.dp)
+                    .shadow(18.dp, RoundedCornerShape(26.dp)),
             shape = RoundedCornerShape(26.dp),
             colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
             elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
@@ -422,20 +445,22 @@ private fun ThemeHeroPreview(
             Box(Modifier.fillMaxWidth()) {
                 val glow =
                     Brush.radialGradient(
-                        colors = listOf(
-                            MaterialTheme.colorScheme.primary.copy(alpha = 0.45f),
-                            Color.Transparent,
-                        )
+                        colors =
+                            listOf(
+                                MaterialTheme.colorScheme.primary.copy(alpha = 0.45f),
+                                Color.Transparent,
+                            ),
                     )
                 Box(
                     Modifier
                         .matchParentSize()
-                        .background(glow)
+                        .background(glow),
                 )
                 Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(18.dp),
+                    modifier =
+                        Modifier
+                            .fillMaxWidth()
+                            .padding(18.dp),
                     verticalArrangement = Arrangement.spacedBy(12.dp),
                 ) {
                     Row(
@@ -488,9 +513,9 @@ private fun ThemeHeroPreview(
                                                 listOf(
                                                     MaterialTheme.colorScheme.primary,
                                                     MaterialTheme.colorScheme.tertiary,
-                                                )
-                                            )
-                                        )
+                                                ),
+                                            ),
+                                        ),
                                 )
                                 Column(Modifier.weight(1f)) {
                                     Text(
@@ -533,7 +558,7 @@ private fun ThemeHeroPreview(
                                             .weight(1f)
                                             .height(8.dp)
                                             .clip(RoundedCornerShape(99.dp))
-                                            .background(c)
+                                            .background(c),
                                     )
                                 }
                             }
@@ -609,10 +634,26 @@ private fun ThemeRichPreview(
     val systemDark = isSystemInDarkTheme()
     var isDark by rememberSaveable { mutableStateOf(systemDark) }
 
-    val animatedPrimary by animateColorAsState(palette.primary, animationSpec = spring(stiffness = Spring.StiffnessMediumLow), label = "richPreviewPrimary")
-    val animatedSecondary by animateColorAsState(palette.secondary, animationSpec = spring(stiffness = Spring.StiffnessMediumLow), label = "richPreviewSecondary")
-    val animatedTertiary by animateColorAsState(palette.tertiary, animationSpec = spring(stiffness = Spring.StiffnessMediumLow), label = "richPreviewTertiary")
-    val animatedNeutral by animateColorAsState(palette.neutral, animationSpec = spring(stiffness = Spring.StiffnessMediumLow), label = "richPreviewNeutral")
+    val animatedPrimary by animateColorAsState(
+        palette.primary,
+        animationSpec = spring(stiffness = Spring.StiffnessMediumLow),
+        label = "richPreviewPrimary",
+    )
+    val animatedSecondary by animateColorAsState(
+        palette.secondary,
+        animationSpec = spring(stiffness = Spring.StiffnessMediumLow),
+        label = "richPreviewSecondary",
+    )
+    val animatedTertiary by animateColorAsState(
+        palette.tertiary,
+        animationSpec = spring(stiffness = Spring.StiffnessMediumLow),
+        label = "richPreviewTertiary",
+    )
+    val animatedNeutral by animateColorAsState(
+        palette.neutral,
+        animationSpec = spring(stiffness = Spring.StiffnessMediumLow),
+        label = "richPreviewNeutral",
+    )
 
     EchofyTheme(
         darkTheme = isDark,
@@ -630,10 +671,11 @@ private fun ThemeRichPreview(
         var query by rememberSaveable { mutableStateOf("Echofy") }
 
         Card(
-            modifier = modifier
-                .fillMaxWidth()
-                .height(560.dp)
-                .shadow(18.dp, RoundedCornerShape(26.dp)),
+            modifier =
+                modifier
+                    .fillMaxWidth()
+                    .height(560.dp)
+                    .shadow(18.dp, RoundedCornerShape(26.dp)),
             shape = RoundedCornerShape(26.dp),
             colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
             elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
@@ -641,23 +683,25 @@ private fun ThemeRichPreview(
             Box(Modifier.fillMaxSize()) {
                 val glow =
                     Brush.linearGradient(
-                        colors = listOf(
-                            MaterialTheme.colorScheme.primary.copy(alpha = 0.22f),
-                            MaterialTheme.colorScheme.tertiary.copy(alpha = 0.12f),
-                            Color.Transparent,
-                        )
+                        colors =
+                            listOf(
+                                MaterialTheme.colorScheme.primary.copy(alpha = 0.22f),
+                                MaterialTheme.colorScheme.tertiary.copy(alpha = 0.12f),
+                                Color.Transparent,
+                            ),
                     )
                 Box(
                     Modifier
                         .matchParentSize()
-                        .background(glow)
+                        .background(glow),
                 )
 
                 Column(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .verticalScroll(scrollState)
-                        .padding(16.dp),
+                    modifier =
+                        Modifier
+                            .fillMaxSize()
+                            .verticalScroll(scrollState)
+                            .padding(16.dp),
                     verticalArrangement = Arrangement.spacedBy(14.dp),
                 ) {
                     Row(
@@ -777,9 +821,9 @@ private fun ThemeRichPreview(
                                                     listOf(
                                                         MaterialTheme.colorScheme.primary,
                                                         MaterialTheme.colorScheme.tertiary,
-                                                    )
-                                                )
-                                            )
+                                                    ),
+                                                ),
+                                            ),
                                     )
                                     Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
                                         Text(
@@ -866,9 +910,10 @@ private fun ThemeRichPreview(
                         Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                             PreviewSectionTitle("Chips")
                             Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .horizontalScroll(rememberScrollState()),
+                                modifier =
+                                    Modifier
+                                        .fillMaxWidth()
+                                        .horizontalScroll(rememberScrollState()),
                                 horizontalArrangement = Arrangement.spacedBy(10.dp),
                                 verticalAlignment = Alignment.CenterVertically,
                             ) {
@@ -876,13 +921,18 @@ private fun ThemeRichPreview(
                                     onClick = { },
                                     label = { Text("Assist") },
                                     leadingIcon = {
-                                        Icon(painter = painterResource(R.drawable.tune), contentDescription = null, modifier = Modifier.size(18.dp))
+                                        Icon(
+                                            painter = painterResource(R.drawable.tune),
+                                            contentDescription = null,
+                                            modifier = Modifier.size(18.dp),
+                                        )
                                     },
-                                    colors = AssistChipDefaults.assistChipColors(
-                                        containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
-                                        labelColor = MaterialTheme.colorScheme.onSurface,
-                                        leadingIconContentColor = MaterialTheme.colorScheme.onSurface,
-                                    ),
+                                    colors =
+                                        AssistChipDefaults.assistChipColors(
+                                            containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+                                            labelColor = MaterialTheme.colorScheme.onSurface,
+                                            leadingIconContentColor = MaterialTheme.colorScheme.onSurface,
+                                        ),
                                 )
                                 FilterChip(
                                     selected = chipSelected,
@@ -895,19 +945,21 @@ private fun ThemeRichPreview(
                                             modifier = Modifier.size(18.dp),
                                         )
                                     },
-                                    colors = FilterChipDefaults.filterChipColors(
-                                        selectedContainerColor = MaterialTheme.colorScheme.secondaryContainer,
-                                        selectedLabelColor = MaterialTheme.colorScheme.onSecondaryContainer,
-                                        selectedLeadingIconColor = MaterialTheme.colorScheme.onSecondaryContainer,
-                                    ),
+                                    colors =
+                                        FilterChipDefaults.filterChipColors(
+                                            selectedContainerColor = MaterialTheme.colorScheme.secondaryContainer,
+                                            selectedLabelColor = MaterialTheme.colorScheme.onSecondaryContainer,
+                                            selectedLeadingIconColor = MaterialTheme.colorScheme.onSecondaryContainer,
+                                        ),
                                 )
                                 AssistChip(
                                     onClick = { },
                                     label = { Text("Tertiary") },
-                                    colors = AssistChipDefaults.assistChipColors(
-                                        containerColor = MaterialTheme.colorScheme.tertiaryContainer,
-                                        labelColor = MaterialTheme.colorScheme.onTertiaryContainer,
-                                    ),
+                                    colors =
+                                        AssistChipDefaults.assistChipColors(
+                                            containerColor = MaterialTheme.colorScheme.tertiaryContainer,
+                                            labelColor = MaterialTheme.colorScheme.onTertiaryContainer,
+                                        ),
                                 )
                             }
                         }
@@ -930,9 +982,10 @@ private fun ThemeRichPreview(
                                         Surface(
                                             shape = CircleShape,
                                             color = MaterialTheme.colorScheme.surfaceContainerHigh,
-                                            modifier = Modifier
-                                                .clip(CircleShape)
-                                                .clickable { query = "" },
+                                            modifier =
+                                                Modifier
+                                                    .clip(CircleShape)
+                                                    .clickable { query = "" },
                                         ) {
                                             Icon(
                                                 painter = painterResource(R.drawable.close),
@@ -970,7 +1023,11 @@ private fun ThemeRichPreview(
                             ) {
                                 Column(Modifier.weight(1f)) {
                                     Text("Switch", style = MaterialTheme.typography.labelLarge)
-                                    Text("On/off states", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                    Text(
+                                        "On/off states",
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    )
                                 }
                                 androidx.compose.material3.Switch(
                                     checked = switchOn,
@@ -1043,7 +1100,7 @@ private fun ThemeRichPreview(
                                         contentDescription = null,
                                         tint = MaterialTheme.colorScheme.onSurfaceVariant,
                                     )
-                                }
+                                },
                             )
                             HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.55f))
                             ListItem(
@@ -1077,8 +1134,11 @@ private fun ThemeRichPreview(
                                 onClick = { navSelected = 0 },
                                 icon = {
                                     Icon(
-                                        painter = painterResource(if (navSelected == 0) R.drawable.home_filled else R.drawable.home_outlined),
-                                        contentDescription = null
+                                        painter =
+                                            painterResource(
+                                                if (navSelected == 0) R.drawable.home_filled else R.drawable.home_outlined,
+                                            ),
+                                        contentDescription = null,
                                     )
                                 },
                                 label = { Text("Home") },
@@ -1088,8 +1148,11 @@ private fun ThemeRichPreview(
                                 onClick = { navSelected = 1 },
                                 icon = {
                                     Icon(
-                                        painter = painterResource(if (navSelected == 1) R.drawable.explore_filled else R.drawable.explore_outlined),
-                                        contentDescription = null
+                                        painter =
+                                            painterResource(
+                                                if (navSelected == 1) R.drawable.explore_filled else R.drawable.explore_outlined,
+                                            ),
+                                        contentDescription = null,
                                     )
                                 },
                                 label = { Text("Explore") },
@@ -1214,9 +1277,10 @@ private fun SeedChip(
         if (selected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurface
 
     Surface(
-        modifier = modifier
-            .clip(RoundedCornerShape(999.dp))
-            .clickable(onClick = onClick),
+        modifier =
+            modifier
+                .clip(RoundedCornerShape(999.dp))
+                .clickable(onClick = onClick),
         color = container,
         contentColor = content,
         shape = RoundedCornerShape(999.dp),
@@ -1290,15 +1354,20 @@ private fun SeedColorEditor(
 
             Row(horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.CenterVertically) {
                 Box(
-                    modifier = Modifier
-                        .size(54.dp)
-                        .shadow(8.dp, CircleShape)
-                        .clip(CircleShape)
-                        .background(color)
-                        .border(1.dp, MaterialTheme.colorScheme.outlineVariant, CircleShape)
+                    modifier =
+                        Modifier
+                            .size(54.dp)
+                            .shadow(8.dp, CircleShape)
+                            .clip(CircleShape)
+                            .background(color)
+                            .border(1.dp, MaterialTheme.colorScheme.outlineVariant, CircleShape),
                 )
                 Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                    Text(text = stringResource(R.string.theme_editor_hex), style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text(
+                        text = stringResource(R.string.theme_editor_hex),
+                        style = MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
                     Text(text = hex, style = MaterialTheme.typography.titleSmall)
                 }
                 Surface(
@@ -1306,12 +1375,13 @@ private fun SeedColorEditor(
                     color = MaterialTheme.colorScheme.surfaceContainerHigh,
                 ) {
                     Row(
-                        modifier = Modifier
-                            .clickable {
-                                clipboard.setText(AnnotatedString(hex))
-                                Toast.makeText(context, context.getString(R.string.copied), Toast.LENGTH_SHORT).show()
-                            }
-                            .padding(horizontal = 12.dp, vertical = 10.dp),
+                        modifier =
+                            Modifier
+                                .clickable {
+                                    clipboard.setText(AnnotatedString(hex))
+                                    Toast.makeText(context, context.getString(R.string.copied), Toast.LENGTH_SHORT).show()
+                                }
+                                .padding(horizontal = 12.dp, vertical = 10.dp),
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(8.dp),
                     ) {
@@ -1403,11 +1473,12 @@ private fun RgbSlider(
             value = value.toFloat(),
             onValueChange = { onValueChange(it.toInt().coerceIn(0, 255)) },
             valueRange = 0f..255f,
-            colors = SliderDefaults.colors(
-                thumbColor = color,
-                activeTrackColor = color,
-                inactiveTrackColor = MaterialTheme.colorScheme.surfaceVariant,
-            ),
+            colors =
+                SliderDefaults.colors(
+                    thumbColor = color,
+                    activeTrackColor = color,
+                    inactiveTrackColor = MaterialTheme.colorScheme.surfaceVariant,
+                ),
             modifier = Modifier.weight(1f),
         )
         Text(
@@ -1423,12 +1494,13 @@ private fun PresetSwatches(
     current: Color,
     onPick: (Color) -> Unit,
 ) {
-    val swatches = remember {
-        ThemePalettes.allPalettes
-            .map { it.primary }
-            .distinctBy { it.toArgb() }
-            .take(18)
-    }
+    val swatches =
+        remember {
+            ThemePalettes.allPalettes
+                .map { it.primary }
+                .distinctBy { it.toArgb() }
+                .take(18)
+        }
 
     Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
         Text(
@@ -1440,17 +1512,18 @@ private fun PresetSwatches(
             swatches.forEach { c ->
                 val selected = c.toArgb() == current.toArgb()
                 Box(
-                    modifier = Modifier
-                        .size(32.dp)
-                        .shadow(if (selected) 8.dp else 2.dp, CircleShape)
-                        .clip(CircleShape)
-                        .background(c)
-                        .border(
-                            width = if (selected) 2.dp else 1.dp,
-                            color = if (selected) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.outlineVariant,
-                            shape = CircleShape,
-                        )
-                        .clickable { onPick(c) }
+                    modifier =
+                        Modifier
+                            .size(32.dp)
+                            .shadow(if (selected) 8.dp else 2.dp, CircleShape)
+                            .clip(CircleShape)
+                            .background(c)
+                            .border(
+                                width = if (selected) 2.dp else 1.dp,
+                                color = if (selected) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.outlineVariant,
+                                shape = CircleShape,
+                            )
+                            .clickable { onPick(c) },
                 )
             }
         }

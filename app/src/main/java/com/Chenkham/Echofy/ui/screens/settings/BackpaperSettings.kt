@@ -2,11 +2,6 @@ package com.Chenkham.Echofy.ui.screens.settings
 
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
-import com.canhub.cropper.CropImageContract
-import com.canhub.cropper.CropImageContractOptions
-import com.canhub.cropper.CropImageOptions
-import com.canhub.cropper.CropImageView
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -23,14 +18,11 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -39,16 +31,12 @@ import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarScrollBehavior
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
@@ -71,16 +59,18 @@ import com.Chenkham.Echofy.constants.BackpaperBuiltInIdKey
 import com.Chenkham.Echofy.constants.BackpaperCustomPathKey
 import com.Chenkham.Echofy.constants.BackpaperEnabledKey
 import com.Chenkham.Echofy.constants.BackpaperOpacityKey
-import com.Chenkham.Echofy.constants.BackpaperTypeKey
 import com.Chenkham.Echofy.constants.BackpaperType
-import com.Chenkham.Echofy.constants.WallpaperCategory
+import com.Chenkham.Echofy.constants.BackpaperTypeKey
 import com.Chenkham.Echofy.models.BuiltInWallpaper
 import com.Chenkham.Echofy.models.BuiltInWallpapers
 import com.Chenkham.Echofy.ui.component.SettingsPage
 import com.Chenkham.Echofy.ui.component.SwitchPreference
 import com.Chenkham.Echofy.utils.rememberEnumPreference
 import com.Chenkham.Echofy.utils.rememberPreference
-
+import com.canhub.cropper.CropImageContract
+import com.canhub.cropper.CropImageContractOptions
+import com.canhub.cropper.CropImageOptions
+import com.canhub.cropper.CropImageView
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -89,7 +79,7 @@ fun BackpaperSettings(
     scrollBehavior: TopAppBarScrollBehavior,
 ) {
     val context = LocalContext.current
-    
+
     // Preferences
     val (backpaperEnabled, onBackpaperEnabledChange) = rememberPreference(BackpaperEnabledKey, defaultValue = false)
     val (backpaperType, onBackpaperTypeChange) = rememberEnumPreference(BackpaperTypeKey, BackpaperType.NONE)
@@ -97,7 +87,7 @@ fun BackpaperSettings(
     val (customPath, onCustomPathChange) = rememberPreference(BackpaperCustomPathKey, defaultValue = "")
     val (opacity, onOpacityChange) = rememberPreference(BackpaperOpacityKey, defaultValue = 0.5f)
     val (blurAmount, onBlurAmountChange) = rememberPreference(BackpaperBlurKey, defaultValue = 0f)
-    
+
     // Per-screen toggles
     val (applyToHome, onApplyToHomeChange) = rememberPreference(BackpaperApplyToHomeKey, defaultValue = true)
     val (applyToExplore, onApplyToExploreChange) = rememberPreference(BackpaperApplyToExploreKey, defaultValue = true)
@@ -107,63 +97,61 @@ fun BackpaperSettings(
     val (applyToLyrics, onApplyToLyricsChange) = rememberPreference(BackpaperApplyToLyricsKey, defaultValue = false)
     val (applyToSettings, onApplyToSettingsChange) = rememberPreference(BackpaperApplyToSettingsKey, defaultValue = true)
     val (applyToSearch, onApplyToSearchChange) = rememberPreference(BackpaperApplyToSearchKey, defaultValue = true)
-    
-    // Image picker with cropping
-    val imageCropperLauncher = rememberLauncherForActivityResult(CropImageContract()) { result ->
-        if (result.isSuccessful) {
-            val uriContent = result.uriContent
-            val uriFilePath = result.getUriFilePath(context) // Get path from cropper result
-            
-            if (uriContent != null) {
-                // Save the cropped image path
-                onCustomPathChange(uriContent.toString())
-                onBackpaperTypeChange(BackpaperType.CUSTOM)
-                if (!backpaperEnabled) {
-                    onBackpaperEnabledChange(true)
-                }
-            }
-        } else {
-             // Handle error if needed (result.error)
-        }
-    }
-    
 
+    // Image picker with cropping
+    val imageCropperLauncher =
+        rememberLauncherForActivityResult(CropImageContract()) { result ->
+            if (result.isSuccessful) {
+                val uriContent = result.uriContent
+                val uriFilePath = result.getUriFilePath(context) // Get path from cropper result
+
+                if (uriContent != null) {
+                    // Save the cropped image path
+                    onCustomPathChange(uriContent.toString())
+                    onBackpaperTypeChange(BackpaperType.CUSTOM)
+                    if (!backpaperEnabled) {
+                        onBackpaperEnabledChange(true)
+                    }
+                }
+            } else {
+                // Handle error if needed (result.error)
+            }
+        }
 
     SettingsPage(
         title = stringResource(R.string.backpaper),
         navController = navController,
-        scrollBehavior = scrollBehavior
+        scrollBehavior = scrollBehavior,
     ) {
-
-
         // Enable/Disable toggle
         SwitchPreference(
             title = { Text(stringResource(R.string.enable_backpaper)) },
             description = stringResource(R.string.enable_backpaper_desc),
             icon = { Icon(painterResource(R.drawable.wallpaper), null) },
             checked = backpaperEnabled,
-            onCheckedChange = onBackpaperEnabledChange
+            onCheckedChange = onBackpaperEnabledChange,
         )
-        
+
         if (backpaperEnabled) {
             Spacer(modifier = Modifier.height(16.dp))
-            
+
             // Preview
             Text(
                 text = stringResource(R.string.preview),
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.SemiBold,
                 color = MaterialTheme.colorScheme.onSurface,
-                modifier = Modifier.padding(horizontal = 16.dp)
+                modifier = Modifier.padding(horizontal = 16.dp),
             )
-            
+
             Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(16.dp)
-                    .height(180.dp)
-                    .clip(RoundedCornerShape(16.dp))
-                    .background(MaterialTheme.colorScheme.surfaceVariant)
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp)
+                        .height(180.dp)
+                        .clip(RoundedCornerShape(16.dp))
+                        .background(MaterialTheme.colorScheme.surfaceVariant),
             ) {
                 when (backpaperType) {
                     BackpaperType.BUILT_IN -> {
@@ -172,13 +160,17 @@ fun BackpaperSettings(
                                 painter = painterResource(id = wallpaper.resourceId),
                                 contentDescription = null,
                                 contentScale = ContentScale.Crop,
-                                modifier = Modifier
-                                    .fillMaxSize()
-                                    .then(
-                                        if (blurAmount > 0f) Modifier.blur(blurAmount.dp)
-                                        else Modifier
-                                    )
-                                    .graphicsLayer { alpha = opacity }
+                                modifier =
+                                    Modifier
+                                        .fillMaxSize()
+                                        .then(
+                                            if (blurAmount > 0f) {
+                                                Modifier.blur(blurAmount.dp)
+                                            } else {
+                                                Modifier
+                                            },
+                                        )
+                                        .graphicsLayer { alpha = opacity },
                             )
                         }
                     }
@@ -188,110 +180,116 @@ fun BackpaperSettings(
                                 model = Uri.parse(customPath),
                                 contentDescription = null,
                                 contentScale = ContentScale.Crop,
-                                modifier = Modifier
-                                    .fillMaxSize()
-                                    .then(
-                                        if (blurAmount > 0f) Modifier.blur(blurAmount.dp)
-                                        else Modifier
-                                    )
-                                    .graphicsLayer { alpha = opacity }
+                                modifier =
+                                    Modifier
+                                        .fillMaxSize()
+                                        .then(
+                                            if (blurAmount > 0f) {
+                                                Modifier.blur(blurAmount.dp)
+                                            } else {
+                                                Modifier
+                                            },
+                                        )
+                                        .graphicsLayer { alpha = opacity },
                             )
                         }
                     }
                     BackpaperType.NONE -> {
                         Box(
                             contentAlignment = Alignment.Center,
-                            modifier = Modifier.fillMaxSize()
+                            modifier = Modifier.fillMaxSize(),
                         ) {
                             Text(
                                 text = stringResource(R.string.no_wallpaper_selected),
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
                             )
                         }
                     }
                 }
             }
-            
+
             Spacer(modifier = Modifier.height(16.dp))
-            
+
             // Adjustments
             Text(
                 text = stringResource(R.string.adjustments),
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.SemiBold,
                 color = MaterialTheme.colorScheme.onSurface,
-                modifier = Modifier.padding(horizontal = 16.dp)
+                modifier = Modifier.padding(horizontal = 16.dp),
             )
-            
+
             // Opacity slider
             Column(modifier = Modifier.padding(horizontal = 16.dp)) {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween
+                    horizontalArrangement = Arrangement.SpaceBetween,
                 ) {
                     Text(
                         text = stringResource(R.string.opacity),
-                        color = MaterialTheme.colorScheme.onSurface
+                        color = MaterialTheme.colorScheme.onSurface,
                     )
                     Text(
                         text = "${(opacity * 100).toInt()}%",
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                 }
                 Slider(
                     value = opacity,
                     onValueChange = onOpacityChange,
                     valueRange = 0.1f..1f,
-                    colors = SliderDefaults.colors(
-                        thumbColor = MaterialTheme.colorScheme.primary,
-                        activeTrackColor = MaterialTheme.colorScheme.primary,
-                    )
+                    colors =
+                        SliderDefaults.colors(
+                            thumbColor = MaterialTheme.colorScheme.primary,
+                            activeTrackColor = MaterialTheme.colorScheme.primary,
+                        ),
                 )
             }
-            
+
             // Blur slider
             Column(modifier = Modifier.padding(horizontal = 16.dp)) {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween
+                    horizontalArrangement = Arrangement.SpaceBetween,
                 ) {
                     Text(
                         text = stringResource(R.string.blur),
-                        color = MaterialTheme.colorScheme.onSurface
+                        color = MaterialTheme.colorScheme.onSurface,
                     )
                     Text(
                         text = "${blurAmount.toInt()}dp",
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                 }
                 Slider(
                     value = blurAmount,
                     onValueChange = onBlurAmountChange,
                     valueRange = 0f..30f,
-                    colors = SliderDefaults.colors(
-                        thumbColor = MaterialTheme.colorScheme.primary,
-                        activeTrackColor = MaterialTheme.colorScheme.primary,
-                    )
+                    colors =
+                        SliderDefaults.colors(
+                            thumbColor = MaterialTheme.colorScheme.primary,
+                            activeTrackColor = MaterialTheme.colorScheme.primary,
+                        ),
                 )
             }
-            
+
             Spacer(modifier = Modifier.height(16.dp))
-            
+
             // Built-in wallpapers
             Text(
                 text = stringResource(R.string.built_in_wallpapers),
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.SemiBold,
                 color = MaterialTheme.colorScheme.onSurface,
-                modifier = Modifier.padding(horizontal = 16.dp)
+                modifier = Modifier.padding(horizontal = 16.dp),
             )
-            
+
             LazyVerticalGrid(
                 columns = GridCells.Fixed(3),
                 contentPadding = PaddingValues(16.dp),
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp),
-                modifier = Modifier.height(280.dp)
+                modifier = Modifier.height(280.dp),
             ) {
                 items(BuiltInWallpapers.all) { wallpaper ->
                     WallpaperGridItem(
@@ -300,146 +298,152 @@ fun BackpaperSettings(
                         onClick = {
                             onBuiltInIdChange(wallpaper.id)
                             onBackpaperTypeChange(BackpaperType.BUILT_IN)
-                        }
+                        },
                     )
                 }
             }
-            
+
             Spacer(modifier = Modifier.height(8.dp))
-            
+
             // Custom photo button
             Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp)
-                    .clip(RoundedCornerShape(12.dp))
-                    .background(MaterialTheme.colorScheme.primaryContainer)
-                    .clickable { 
-                        // Launch cropper
-                        val options = CropImageContractOptions(
-                            uri = null, // null means pick image from gallery first
-                            cropImageOptions = CropImageOptions(
-                                imageSourceIncludeGallery = true,
-                                imageSourceIncludeCamera = false,
-                                outputCompressFormat = android.graphics.Bitmap.CompressFormat.PNG,
-                                guidelines = CropImageView.Guidelines.ON,
-                                fixAspectRatio = false 
-                            )
-                        )
-                        imageCropperLauncher.launch(options)
-                    }
-                    .padding(16.dp),
-                contentAlignment = Alignment.Center
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp)
+                        .clip(RoundedCornerShape(12.dp))
+                        .background(MaterialTheme.colorScheme.primaryContainer)
+                        .clickable {
+                            // Launch cropper
+                            val options =
+                                CropImageContractOptions(
+                                    uri = null, // null means pick image from gallery first
+                                    cropImageOptions =
+                                        CropImageOptions(
+                                            imageSourceIncludeGallery = true,
+                                            imageSourceIncludeCamera = false,
+                                            outputCompressFormat = android.graphics.Bitmap.CompressFormat.PNG,
+                                            guidelines = CropImageView.Guidelines.ON,
+                                            fixAspectRatio = false,
+                                        ),
+                                )
+                            imageCropperLauncher.launch(options)
+                        }
+                        .padding(16.dp),
+                contentAlignment = Alignment.Center,
             ) {
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
                     Icon(
                         painter = painterResource(R.drawable.add_photo_alternate),
                         contentDescription = null,
-                        tint = MaterialTheme.colorScheme.onPrimaryContainer
+                        tint = MaterialTheme.colorScheme.onPrimaryContainer,
                     )
                     Text(
                         text = stringResource(R.string.choose_custom_photo),
                         color = MaterialTheme.colorScheme.onPrimaryContainer,
-                        fontWeight = FontWeight.Medium
+                        fontWeight = FontWeight.Medium,
                     )
                 }
             }
-            
+
             Spacer(modifier = Modifier.height(24.dp))
-            
+
             // Apply to screens
             Text(
                 text = stringResource(R.string.apply_to_screens),
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.SemiBold,
                 color = MaterialTheme.colorScheme.onSurface,
-                modifier = Modifier.padding(horizontal = 16.dp)
+                modifier = Modifier.padding(horizontal = 16.dp),
             )
-            
+
             SwitchPreference(
                 title = { Text(stringResource(R.string.home)) },
                 checked = applyToHome,
-                onCheckedChange = onApplyToHomeChange
+                onCheckedChange = onApplyToHomeChange,
             )
             SwitchPreference(
                 title = { Text(stringResource(R.string.explore)) },
                 checked = applyToExplore,
-                onCheckedChange = onApplyToExploreChange
+                onCheckedChange = onApplyToExploreChange,
             )
             SwitchPreference(
                 title = { Text(stringResource(R.string.library)) },
                 checked = applyToLibrary,
-                onCheckedChange = onApplyToLibraryChange
+                onCheckedChange = onApplyToLibraryChange,
             )
             SwitchPreference(
                 title = { Text(stringResource(R.string.player)) },
                 checked = applyToPlayer,
-                onCheckedChange = onApplyToPlayerChange
+                onCheckedChange = onApplyToPlayerChange,
             )
             SwitchPreference(
                 title = { Text(stringResource(R.string.lyrics)) },
                 checked = applyToLyrics,
-                onCheckedChange = onApplyToLyricsChange
+                onCheckedChange = onApplyToLyricsChange,
             )
             SwitchPreference(
                 title = { Text(stringResource(R.string.settings)) },
                 checked = applyToSettings,
-                onCheckedChange = onApplyToSettingsChange
+                onCheckedChange = onApplyToSettingsChange,
             )
             SwitchPreference(
                 title = { Text(stringResource(R.string.search)) },
                 checked = applyToSearch,
-                onCheckedChange = onApplyToSearchChange
+                onCheckedChange = onApplyToSearchChange,
             )
-            
+
             Spacer(modifier = Modifier.height(32.dp))
         }
-        }
     }
-
+}
 
 @Composable
 private fun WallpaperGridItem(
     wallpaper: BuiltInWallpaper,
     isSelected: Boolean,
-    onClick: () -> Unit
+    onClick: () -> Unit,
 ) {
     Box(
-        modifier = Modifier
-            .aspectRatio(1f)
-            .clip(RoundedCornerShape(12.dp))
-            .then(
-                if (isSelected)
-                    Modifier.border(3.dp, MaterialTheme.colorScheme.primary, RoundedCornerShape(12.dp))
-                else Modifier
-            )
-            .clickable(onClick = onClick)
+        modifier =
+            Modifier
+                .aspectRatio(1f)
+                .clip(RoundedCornerShape(12.dp))
+                .then(
+                    if (isSelected) {
+                        Modifier.border(3.dp, MaterialTheme.colorScheme.primary, RoundedCornerShape(12.dp))
+                    } else {
+                        Modifier
+                    },
+                )
+                .clickable(onClick = onClick),
     ) {
         Image(
             painter = painterResource(id = wallpaper.resourceId),
             contentDescription = wallpaper.name,
             contentScale = ContentScale.Crop,
-            modifier = Modifier.fillMaxSize()
+            modifier = Modifier.fillMaxSize(),
         )
-        
+
         if (isSelected) {
             Box(
-                modifier = Modifier
-                    .align(Alignment.BottomEnd)
-                    .padding(4.dp)
-                    .size(24.dp)
-                    .clip(CircleShape)
-                    .background(MaterialTheme.colorScheme.primary),
-                contentAlignment = Alignment.Center
+                modifier =
+                    Modifier
+                        .align(Alignment.BottomEnd)
+                        .padding(4.dp)
+                        .size(24.dp)
+                        .clip(CircleShape)
+                        .background(MaterialTheme.colorScheme.primary),
+                contentAlignment = Alignment.Center,
             ) {
                 Icon(
                     painter = painterResource(R.drawable.done),
                     contentDescription = null,
                     tint = MaterialTheme.colorScheme.onPrimary,
-                    modifier = Modifier.size(16.dp)
+                    modifier = Modifier.size(16.dp),
                 )
             }
         }

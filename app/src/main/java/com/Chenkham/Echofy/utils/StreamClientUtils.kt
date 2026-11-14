@@ -7,7 +7,6 @@ import okhttp3.Request
 import java.util.Locale
 
 object StreamClientUtils {
-
     data class StreamRequestProfile(
         val requestedClientName: String,
         val requestedClientVersion: String,
@@ -105,11 +104,12 @@ object StreamClientUtils {
 
     fun isWebClient(requestProfile: StreamRequestProfile): Boolean = requestProfile.requiresPlaybackProbeRanges
 
-    internal fun buildClientKey(client: YouTubeClient): String =
-        normalizeClientKey("${client.clientName}@${client.clientVersion}")
+    internal fun buildClientKey(client: YouTubeClient): String = normalizeClientKey("${client.clientName}@${client.clientVersion}")
 
-    internal fun buildClientKey(clientName: String, clientVersion: String): String =
-        normalizeClientKey("$clientName@$clientVersion")
+    internal fun buildClientKey(
+        clientName: String,
+        clientVersion: String,
+    ): String = normalizeClientKey("$clientName@$clientVersion")
 
     internal fun normalizeClientKey(clientKey: String?): String =
         clientKey?.trim()?.takeIf { it.isNotBlank() }?.uppercase(Locale.US).orEmpty()
@@ -122,7 +122,10 @@ object StreamClientUtils {
      * @param clientVersion the client version string that was used for the player request
      * @return the patched URL, or the original URL if no patching was needed
      */
-    fun patchClientVersion(url: String, clientVersion: String): String {
+    fun patchClientVersion(
+        url: String,
+        clientVersion: String,
+    ): String {
         if (!url.contains("cver=")) return url
         return url.replace(Regex("cver=[^&]+"), "cver=$clientVersion")
     }
@@ -134,7 +137,10 @@ object StreamClientUtils {
      * @param poToken  the token to append
      * @return the URL with the `pot` parameter appended
      */
-    fun appendPoToken(url: String, poToken: String): String {
+    fun appendPoToken(
+        url: String,
+        poToken: String,
+    ): String {
         if (url.contains("pot=")) return url
         val separator = if (url.contains("?")) "&" else "?"
         return "$url${separator}pot=$poToken"
@@ -197,10 +203,10 @@ object StreamClientUtils {
     private fun isWebMusicClient(client: YouTubeClient): Boolean {
         val clientName = client.clientName.uppercase(Locale.US)
         return clientName == "WEB" ||
-                clientName == "WEB_REMIX" ||
-                clientName == "WEB_CREATOR" ||
-                clientName == "MWEB" ||
-                clientName == "WEB_EMBEDDED_PLAYER"
+            clientName == "WEB_REMIX" ||
+            clientName == "WEB_CREATOR" ||
+            clientName == "MWEB" ||
+            clientName == "WEB_EMBEDDED_PLAYER"
     }
 
     private fun String?.normalizedOrEmpty(): String = this?.trim().orEmpty()

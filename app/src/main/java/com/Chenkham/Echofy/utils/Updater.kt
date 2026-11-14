@@ -8,11 +8,8 @@ package com.Chenkham.Echofy.utils
 
 import android.content.Context
 import android.content.Intent
-import android.net.Uri
-import android.os.Build
 import androidx.core.content.FileProvider
 import androidx.datastore.preferences.core.edit
-import com.Chenkham.Echofy.BuildConfig
 import com.Chenkham.Echofy.App
 import com.Chenkham.Echofy.constants.GitHubReleasesEtagKey
 import com.Chenkham.Echofy.constants.GitHubReleasesFingerprintKey
@@ -37,7 +34,6 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.withContext
 import org.json.JSONArray
 import org.json.JSONObject
 import java.io.File
@@ -48,7 +44,7 @@ data class GitCommit(
     val message: String,
     val author: String,
     val date: String,
-    val url: String
+    val url: String,
 )
 
 data class ReleaseInfo(
@@ -56,7 +52,7 @@ data class ReleaseInfo(
     val name: String,
     val body: String?,
     val publishedAt: String,
-    val htmlUrl: String
+    val htmlUrl: String,
 ) {
     val releaseNotes: String? get() = body
 }
@@ -65,7 +61,7 @@ data class NightlyInfo(
     val versionName: String,
     val apkUrl: String,
     val changelog: String?,
-    val publishedAt: String
+    val publishedAt: String,
 )
 
 data class UpdateInfo(
@@ -186,14 +182,17 @@ object Updater {
     private fun parseReleaseSemVerOrNull(release: ReleaseInfo): SemVer? =
         parseSemVerOrNull(release.tagName) ?: parseSemVerOrNull(release.name)
 
-    internal fun isSameVersion(a: String, b: String): Boolean {
+    internal fun isSameVersion(
+        a: String,
+        b: String,
+    ): Boolean {
         val aSemVer = parseSemVerOrNull(a)
         val bSemVer = parseSemVerOrNull(b)
         return if (aSemVer != null && bSemVer != null) {
             aSemVer.major == bSemVer.major &&
-                    aSemVer.minor == bSemVer.minor &&
-                    aSemVer.patch == bSemVer.patch &&
-                    aSemVer.preRelease == bSemVer.preRelease
+                aSemVer.minor == bSemVer.minor &&
+                aSemVer.patch == bSemVer.patch &&
+                aSemVer.preRelease == bSemVer.preRelease
         } else {
             a.trim() == b.trim()
         }
@@ -213,8 +212,7 @@ object Updater {
         return candidates.maxWithOrNull(compareBy({ it.first }, { it.second.publishedAt }))?.second
     }
 
-    private fun preferredReleaseVersionNameOrNull(release: ReleaseInfo): String? =
-        parseReleaseSemVerOrNull(release)?.normalizedName()
+    private fun preferredReleaseVersionNameOrNull(release: ReleaseInfo): String? = parseReleaseSemVerOrNull(release)?.normalizedName()
 
     private fun parseReleasesJson(json: String): List<ReleaseInfo> {
         val jsonArray = JSONArray(json)
@@ -227,8 +225,8 @@ object Updater {
                     name = item.optString("name", ""),
                     body = if (item.has("body")) item.optString("body") else null,
                     publishedAt = item.optString("published_at", ""),
-                    htmlUrl = item.optString("html_url", "")
-                )
+                    htmlUrl = item.optString("html_url", ""),
+                ),
             )
         }
         return releases
@@ -283,31 +281,35 @@ object Updater {
         return runCatching { UpdateChannel.valueOf(channelName) }.getOrDefault(UpdateChannel.STABLE)
     }
 
-    private suspend fun fetchNightlyJson(): Result<NightlyInfo> = runCatching {
-        val response = client.get(NIGHTLY_JSON_URL) {
-            headers {
-                append("Accept", "application/json")
-                append("User-Agent", "Echofy")
-            }
-        }.bodyAsText()
-        val json = JSONObject(response)
+    private suspend fun fetchNightlyJson(): Result<NightlyInfo> =
+        runCatching {
+            val response =
+                client.get(NIGHTLY_JSON_URL) {
+                    headers {
+                        append("Accept", "application/json")
+                        append("User-Agent", "Echofy")
+                    }
+                }.bodyAsText()
+            val json = JSONObject(response)
 
-        // El JSON est├í en /nightly/update.json pero el APK debe servirse sin /nightly/
-        val rawApkUrl = json.optString("apkUrl", "")
-        val fixedApkUrl = rawApkUrl.replace(
-            "https://pub-2218e6bbd5b948e1b5d882cf4d92086d.r2.dev/",
-            "https://pub-2218e6bbd5b948e1b5d882cf4d92086d.r2.dev/"
-        )
+            // El JSON est├í en /nightly/update.json pero el APK debe servirse sin /nightly/
+            val rawApkUrl = json.optString("apkUrl", "")
+            val fixedApkUrl =
+                rawApkUrl.replace(
+                    "https://pub-2218e6bbd5b948e1b5d882cf4d92086d.r2.dev/",
+                    "https://pub-2218e6bbd5b948e1b5d882cf4d92086d.r2.dev/",
+                )
 
-        NightlyInfo(
-            versionName = json.optString("versionName", "unknown"),
-            apkUrl = fixedApkUrl.ifEmpty {
-                "https://pub-2218e6bbd5b948e1b5d882cf4d92086d.r2.dev/app-universal-release.apk"
-            },
-            changelog = json.optString("changelog", "").takeIf { it.isNotEmpty() },
-            publishedAt = json.optString("publishedAt", "")
-        )
-    }
+            NightlyInfo(
+                versionName = json.optString("versionName", "unknown"),
+                apkUrl =
+                    fixedApkUrl.ifEmpty {
+                        "https://pub-2218e6bbd5b948e1b5d882cf4d92086d.r2.dev/app-universal-release.apk"
+                    },
+                changelog = json.optString("changelog", "").takeIf { it.isNotEmpty() },
+                publishedAt = json.optString("publishedAt", ""),
+            )
+        }
 
     // ÔöÇÔöÇÔöÇ Funciones p├║blicas (compatibilidad obligatoria) ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ
 
@@ -320,47 +322,51 @@ object Updater {
             ?: emptyList()
     }
 
-    suspend fun getLatestVersionName(): Result<String> = runCatching {
-        when (getCurrentUpdateChannel()) {
-            UpdateChannel.STABLE -> {
-                val latest = getLatestReleaseInfo().getOrThrow()
-                preferredReleaseVersionNameOrNull(latest) ?: latest.name.ifBlank { latest.tagName }
-            }
-            UpdateChannel.NIGHTLY -> {
-                fetchNightlyJson().getOrThrow().versionName
+    suspend fun getLatestVersionName(): Result<String> =
+        runCatching {
+            when (getCurrentUpdateChannel()) {
+                UpdateChannel.STABLE -> {
+                    val latest = getLatestReleaseInfo().getOrThrow()
+                    preferredReleaseVersionNameOrNull(latest) ?: latest.name.ifBlank { latest.tagName }
+                }
+                UpdateChannel.NIGHTLY -> {
+                    fetchNightlyJson().getOrThrow().versionName
+                }
             }
         }
-    }
 
-    suspend fun getLatestReleaseNotes(): Result<String?> = runCatching {
-        when (getCurrentUpdateChannel()) {
-            UpdateChannel.STABLE -> getLatestReleaseInfo().getOrThrow().body
-            UpdateChannel.NIGHTLY -> fetchNightlyJson().getOrThrow().changelog
+    suspend fun getLatestReleaseNotes(): Result<String?> =
+        runCatching {
+            when (getCurrentUpdateChannel()) {
+                UpdateChannel.STABLE -> getLatestReleaseInfo().getOrThrow().body
+                UpdateChannel.NIGHTLY -> fetchNightlyJson().getOrThrow().changelog
+            }
         }
-    }
 
-    suspend fun getLatestReleaseInfo(): Result<ReleaseInfo> = runCatching {
-        when (getCurrentUpdateChannel()) {
-            UpdateChannel.STABLE -> {
-                val releases = getAllReleases().getOrThrow()
-                val latest = findLatestRelease(releases)
-                    ?: throw IllegalStateException("No releases found")
-                lastCheckTime = System.currentTimeMillis()
-                latest
-            }
-            UpdateChannel.NIGHTLY -> {
-                val nightly = fetchNightlyJson().getOrThrow()
-                cachedNightlyInfo = nightly
-                ReleaseInfo(
-                    tagName = nightly.versionName,
-                    name = nightly.versionName,
-                    body = nightly.changelog,
-                    publishedAt = nightly.publishedAt,
-                    htmlUrl = nightly.apkUrl
-                )
+    suspend fun getLatestReleaseInfo(): Result<ReleaseInfo> =
+        runCatching {
+            when (getCurrentUpdateChannel()) {
+                UpdateChannel.STABLE -> {
+                    val releases = getAllReleases().getOrThrow()
+                    val latest =
+                        findLatestRelease(releases)
+                            ?: throw IllegalStateException("No releases found")
+                    lastCheckTime = System.currentTimeMillis()
+                    latest
+                }
+                UpdateChannel.NIGHTLY -> {
+                    val nightly = fetchNightlyJson().getOrThrow()
+                    cachedNightlyInfo = nightly
+                    ReleaseInfo(
+                        tagName = nightly.versionName,
+                        name = nightly.versionName,
+                        body = nightly.changelog,
+                        publishedAt = nightly.publishedAt,
+                        htmlUrl = nightly.apkUrl,
+                    )
+                }
             }
         }
-    }
 
     // ÔöÇÔöÇÔöÇ Comprobaci├│n de actualizaci├│n ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ
 
@@ -386,12 +392,12 @@ object Updater {
         val downloadUrl = resolveApkDownloadUrl(latest.tagName)
 
         return UpdateInfo(
-            tagName        = latest.tagName,
-            versionName    = latestVersionName,
-            downloadUrl    = downloadUrl,
+            tagName = latest.tagName,
+            versionName = latestVersionName,
+            downloadUrl = downloadUrl,
             releasePageUrl = latest.htmlUrl,
-            releaseNotes   = latest.body,
-            publishedAt    = latest.publishedAt,
+            releaseNotes = latest.body,
+            publishedAt = latest.publishedAt,
         )
     }
 
@@ -402,12 +408,12 @@ object Updater {
         } else {
             cachedNightlyInfo = nightly
             UpdateInfo(
-                tagName        = nightly.versionName,
-                versionName    = nightly.versionName,
-                downloadUrl    = nightly.apkUrl,
+                tagName = nightly.versionName,
+                versionName = nightly.versionName,
+                downloadUrl = nightly.apkUrl,
                 releasePageUrl = nightly.apkUrl,
-                releaseNotes   = nightly.changelog,
-                publishedAt    = nightly.publishedAt,
+                releaseNotes = nightly.changelog,
+                publishedAt = nightly.publishedAt,
             )
         }
     }
@@ -417,14 +423,15 @@ object Updater {
             "https://github.com/Arturo254/Echofy/releases/download/$tagName/$APK_ASSET_NAME"
 
         return runCatching {
-            val response = client.get(
-                "https://api.github.com/repos/Arturo254/Echofy/releases/tags/$tagName"
-            ) {
-                headers {
-                    append("Accept", "application/vnd.github+json")
-                    append("User-Agent", "Echofy")
-                }
-            }.bodyAsText()
+            val response =
+                client.get(
+                    "https://api.github.com/repos/Arturo254/Echofy/releases/tags/$tagName",
+                ) {
+                    headers {
+                        append("Accept", "application/vnd.github+json")
+                        append("User-Agent", "Echofy")
+                    }
+                }.bodyAsText()
 
             val assets = JSONObject(response).optJSONArray("assets") ?: return@runCatching fallback
 
@@ -438,50 +445,61 @@ object Updater {
         }.getOrDefault(fallback)
     }
 
+    fun downloadApk(
+        url: String,
+        destinationFile: File,
+    ): Flow<Float> =
+        flow {
+            client.prepareGet(url).execute { response ->
+                val totalBytes = response.contentLength() ?: -1L
+                val channel: ByteReadChannel = response.bodyAsChannel()
+                var downloadedBytes = 0L
+                val buffer = ByteArray(1024 * 8)
 
-    fun downloadApk(url: String, destinationFile: File): Flow<Float> = flow {
-        client.prepareGet(url).execute { response ->
-            val totalBytes = response.contentLength() ?: -1L
-            val channel: ByteReadChannel = response.bodyAsChannel()
-            var downloadedBytes = 0L
-            val buffer = ByteArray(1024 * 8)
-
-            // Elimina withContext(Dispatchers.IO) - ya estamos en el contexto correcto
-            destinationFile.parentFile?.mkdirs()
-            FileOutputStream(destinationFile).use { output ->
-                while (!channel.isClosedForRead) {
-                    val read = channel.readAvailable(buffer)
-                    if (read == -1) break
-                    output.write(buffer, 0, read)
-                    downloadedBytes += read
-                    if (totalBytes > 0) {
-                        emit(downloadedBytes.toFloat() / totalBytes)
-                    } else {
-                        emit(-1f)
+                // Elimina withContext(Dispatchers.IO) - ya estamos en el contexto correcto
+                destinationFile.parentFile?.mkdirs()
+                FileOutputStream(destinationFile).use { output ->
+                    while (!channel.isClosedForRead) {
+                        val read = channel.readAvailable(buffer)
+                        if (read == -1) break
+                        output.write(buffer, 0, read)
+                        downloadedBytes += read
+                        if (totalBytes > 0) {
+                            emit(downloadedBytes.toFloat() / totalBytes)
+                        } else {
+                            emit(-1f)
+                        }
                     }
                 }
             }
-        }
-    }.flowOn(Dispatchers.IO)
+        }.flowOn(Dispatchers.IO)
 
-    fun installApk(context: Context, apkFile: File) {
-        val uri = FileProvider.getUriForFile(
-            context,
-            "${context.packageName}.FileProvider",
-            apkFile
-        )
+    fun installApk(
+        context: Context,
+        apkFile: File,
+    ) {
+        val uri =
+            FileProvider.getUriForFile(
+                context,
+                "${context.packageName}.FileProvider",
+                apkFile,
+            )
 
-        val intent = Intent(Intent.ACTION_VIEW).apply {
-            setDataAndType(uri, "application/vnd.android.package-archive")
-            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-        }
+        val intent =
+            Intent(Intent.ACTION_VIEW).apply {
+                setDataAndType(uri, "application/vnd.android.package-archive")
+                addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            }
         context.startActivity(intent)
     }
 
     // ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ
 
-    suspend fun getCommitHistory(count: Int = 20, branch: String = "master"): Result<List<GitCommit>> =
+    suspend fun getCommitHistory(
+        count: Int = 20,
+        branch: String = "master",
+    ): Result<List<GitCommit>> =
         runCatching {
             val response =
                 client.get("https://api.github.com/repos/Arturo254/Echofy/commits?sha=$branch&per_page=$count") {
@@ -502,17 +520,18 @@ object Updater {
                         message = commit.optString("message", "").lines().firstOrNull() ?: "",
                         author = authorObj?.optString("name", "Unknown") ?: "Unknown",
                         date = authorObj?.optString("date", "") ?: "",
-                        url = commitObj.optString("html_url", "")
-                    )
+                        url = commitObj.optString("html_url", ""),
+                    ),
                 )
             }
             commits
         }
 
     fun getLatestDownloadUrl(): String {
-        val channel = runBlocking {
-            kotlin.runCatching { getCurrentUpdateChannel() }.getOrDefault(UpdateChannel.STABLE)
-        }
+        val channel =
+            runBlocking {
+                kotlin.runCatching { getCurrentUpdateChannel() }.getOrDefault(UpdateChannel.STABLE)
+            }
         return when (channel) {
             UpdateChannel.STABLE -> {
                 "https://github.com/Arturo254/Echofy/releases/latest/download/$APK_ASSET_NAME"
@@ -552,9 +571,10 @@ object Updater {
                 return@runCatching cachedReleases ?: emptyList()
             }
 
-            val networkResult = runCatching {
-                fetchReleasesNetwork(perPage = perPage, cachedEtag = cachedEtag)
-            }.getOrNull()
+            val networkResult =
+                runCatching {
+                    fetchReleasesNetwork(perPage = perPage, cachedEtag = cachedEtag)
+                }.getOrNull()
 
             if (networkResult == null) {
                 val fallback = cachedReleases

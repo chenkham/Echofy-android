@@ -4,8 +4,6 @@
  * Licensed Under GPL-3.0 | see git history for contributors
  */
 
-
-
 package com.Chenkham.Echofy.ui.component
 
 import androidx.compose.foundation.clickable
@@ -50,11 +48,11 @@ import com.Chenkham.Echofy.db.MusicDatabase
 fun AssignTagsDialog(
     database: MusicDatabase,
     playlistId: String,
-    onDismiss: () -> Unit
+    onDismiss: () -> Unit,
 ) {
     val allTags by database.allTags().collectAsState(initial = emptyList())
     val currentTags by database.playlistTags(playlistId).collectAsState(initial = emptyList())
-    
+
     val currentTagIds = remember(currentTags) { currentTags.map { it.id }.toSet() }
     var selectedTagIds by remember(currentTagIds) { mutableStateOf(currentTagIds) }
     var showManageTagsDialog by remember { mutableStateOf(false) }
@@ -63,7 +61,7 @@ fun AssignTagsDialog(
     if (showManageTagsDialog) {
         TagsManagementDialog(
             database = database,
-            onDismiss = { showManageTagsDialog = false }
+            onDismiss = { showManageTagsDialog = false },
         )
     }
 
@@ -78,23 +76,24 @@ fun AssignTagsDialog(
 
     Dialog(
         onDismissRequest = onDismiss,
-        properties = DialogProperties(usePlatformDefaultWidth = false)
+        properties = DialogProperties(usePlatformDefaultWidth = false),
     ) {
         Surface(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(24.dp),
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .padding(24.dp),
             shape = AlertDialogDefaults.shape,
             color = AlertDialogDefaults.containerColor,
-            tonalElevation = AlertDialogDefaults.TonalElevation
+            tonalElevation = AlertDialogDefaults.TonalElevation,
         ) {
             Column(
-                modifier = Modifier.padding(24.dp)
+                modifier = Modifier.padding(24.dp),
             ) {
                 Text(
                     text = stringResource(R.string.assign_tags),
                     style = MaterialTheme.typography.headlineSmall,
-                    color = MaterialTheme.colorScheme.onSurface
+                    color = MaterialTheme.colorScheme.onSurface,
                 )
 
                 Spacer(modifier = Modifier.height(16.dp))
@@ -104,28 +103,30 @@ fun AssignTagsDialog(
                         text = stringResource(R.string.no_tags_available),
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.padding(vertical = 16.dp)
+                        modifier = Modifier.padding(vertical = 16.dp),
                     )
                 } else {
                     FlowRow(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .weight(1f, fill = false)
-                            .verticalScroll(rememberScrollState()),
+                        modifier =
+                            Modifier
+                                .fillMaxWidth()
+                                .weight(1f, fill = false)
+                                .verticalScroll(rememberScrollState()),
                         horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                        verticalArrangement = Arrangement.spacedBy(8.dp),
                     ) {
                         allTags.forEach { tag ->
                             TagChip(
                                 tag = tag,
                                 selected = tag.id in selectedTagIds,
                                 onClick = {
-                                    selectedTagIds = if (tag.id in selectedTagIds) {
-                                        selectedTagIds - tag.id
-                                    } else {
-                                        selectedTagIds + tag.id
-                                    }
-                                }
+                                    selectedTagIds =
+                                        if (tag.id in selectedTagIds) {
+                                            selectedTagIds - tag.id
+                                        } else {
+                                            selectedTagIds + tag.id
+                                        }
+                                },
                             )
                         }
                     }
@@ -172,7 +173,7 @@ fun AssignTagsDialog(
                                     }
                                 }
                                 onDismiss()
-                            }
+                            },
                         ) {
                             Text(stringResource(R.string.save))
                         }
@@ -199,23 +200,24 @@ private fun AssignTagsToPlaylistsDialog(
 
     Dialog(
         onDismissRequest = onDismiss,
-        properties = DialogProperties(usePlatformDefaultWidth = false)
+        properties = DialogProperties(usePlatformDefaultWidth = false),
     ) {
         Surface(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(24.dp),
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .padding(24.dp),
             shape = AlertDialogDefaults.shape,
             color = AlertDialogDefaults.containerColor,
-            tonalElevation = AlertDialogDefaults.TonalElevation
+            tonalElevation = AlertDialogDefaults.TonalElevation,
         ) {
             Column(
-                modifier = Modifier.padding(24.dp)
+                modifier = Modifier.padding(24.dp),
             ) {
                 Text(
                     text = stringResource(R.string.assign_tags_to_playlists),
                     style = MaterialTheme.typography.headlineSmall,
-                    color = MaterialTheme.colorScheme.onSurface
+                    color = MaterialTheme.colorScheme.onSurface,
                 )
 
                 Spacer(modifier = Modifier.height(16.dp))
@@ -225,28 +227,30 @@ private fun AssignTagsToPlaylistsDialog(
                         text = stringResource(R.string.no_tags_available),
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.padding(vertical = 16.dp)
+                        modifier = Modifier.padding(vertical = 16.dp),
                     )
                 } else {
                     FlowRow(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .heightIn(max = 200.dp)
-                            .verticalScroll(rememberScrollState()),
+                        modifier =
+                            Modifier
+                                .fillMaxWidth()
+                                .heightIn(max = 200.dp)
+                                .verticalScroll(rememberScrollState()),
                         horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                        verticalArrangement = Arrangement.spacedBy(8.dp),
                     ) {
                         allTags.forEach { tag ->
                             TagChip(
                                 tag = tag,
                                 selected = tag.id in selectedTagIds,
                                 onClick = {
-                                    selectedTagIds = if (tag.id in selectedTagIds) {
-                                        selectedTagIds - tag.id
-                                    } else {
-                                        selectedTagIds + tag.id
-                                    }
-                                }
+                                    selectedTagIds =
+                                        if (tag.id in selectedTagIds) {
+                                            selectedTagIds - tag.id
+                                        } else {
+                                            selectedTagIds + tag.id
+                                        }
+                                },
                             )
                         }
                     }
@@ -256,28 +260,30 @@ private fun AssignTagsToPlaylistsDialog(
                     Spacer(modifier = Modifier.height(16.dp))
 
                     LazyColumn(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .heightIn(max = 360.dp),
+                        modifier =
+                            Modifier
+                                .fillMaxWidth()
+                                .heightIn(max = 360.dp),
                     ) {
                         items(playlists.asReversed(), key = { it.id }) { playlist ->
                             val isSelected = playlist.id in selectedPlaylistIds
                             Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .clickable {
-                                        selectedPlaylistIds =
-                                            if (isSelected) {
-                                                selectedPlaylistIds - playlist.id
-                                            } else {
-                                                selectedPlaylistIds + playlist.id
-                                            }
-                                    },
-                                verticalAlignment = Alignment.CenterVertically
+                                modifier =
+                                    Modifier
+                                        .fillMaxWidth()
+                                        .clickable {
+                                            selectedPlaylistIds =
+                                                if (isSelected) {
+                                                    selectedPlaylistIds - playlist.id
+                                                } else {
+                                                    selectedPlaylistIds + playlist.id
+                                                }
+                                        },
+                                verticalAlignment = Alignment.CenterVertically,
                             ) {
                                 PlaylistListItem(
                                     playlist = playlist,
-                                    modifier = Modifier.weight(1f)
+                                    modifier = Modifier.weight(1f),
                                 )
 
                                 Checkbox(
@@ -289,7 +295,7 @@ private fun AssignTagsToPlaylistsDialog(
                                             } else {
                                                 selectedPlaylistIds - playlist.id
                                             }
-                                    }
+                                    },
                                 )
                             }
                         }
@@ -316,7 +322,7 @@ private fun AssignTagsToPlaylistsDialog(
                                 )
                             }
                             onDismiss()
-                        }
+                        },
                     ) {
                         Text(stringResource(R.string.save))
                     }

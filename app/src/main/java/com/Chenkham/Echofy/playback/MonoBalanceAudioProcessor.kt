@@ -1,8 +1,8 @@
 package com.Chenkham.Echofy.playback
 
+import androidx.media3.common.C
 import androidx.media3.common.audio.AudioProcessor
 import androidx.media3.common.audio.BaseAudioProcessor
-import androidx.media3.common.C
 import java.nio.ByteBuffer
 
 /**
@@ -16,7 +16,6 @@ import java.nio.ByteBuffer
  * The processor is a no-op unless the user turns one of the options on.
  */
 class MonoBalanceAudioProcessor : BaseAudioProcessor() {
-
     @Volatile
     var monoEnabled: Boolean = false
 
@@ -39,9 +38,7 @@ class MonoBalanceAudioProcessor : BaseAudioProcessor() {
     private val isNoOp: Boolean
         get() = !monoEnabled && balance == 0f && vocalSuppression == 0f
 
-    override fun onConfigure(
-        inputAudioFormat: AudioProcessor.AudioFormat,
-    ): AudioProcessor.AudioFormat {
+    override fun onConfigure(inputAudioFormat: AudioProcessor.AudioFormat): AudioProcessor.AudioFormat {
         // Only 16-bit stereo PCM is handled; anything else passes through untouched.
         if (inputAudioFormat.encoding != C.ENCODING_PCM_16BIT ||
             inputAudioFormat.channelCount != 2

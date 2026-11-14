@@ -7,7 +7,6 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkOut
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.focusable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.fillMaxSize
@@ -19,14 +18,12 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
 import androidx.navigation.NavController
@@ -36,12 +33,12 @@ import com.Chenkham.Echofy.constants.ListThumbnailSize
 import com.Chenkham.Echofy.constants.ThumbnailCornerRadius
 import com.Chenkham.Echofy.db.entities.Playlist
 import com.Chenkham.Echofy.db.entities.PlaylistEntity
-import com.arturo254.opentune.spotify.SpotifyMapper
-import com.arturo254.opentune.spotify.models.SpotifyPlaylist
-import com.arturo254.opentune.spotify.models.SpotifyTrack
 import com.Chenkham.Echofy.ui.utils.resize
 import com.Chenkham.Echofy.utils.joinByBullet
 import com.Chenkham.Echofy.utils.makeTimeString
+import com.arturo254.opentune.spotify.SpotifyMapper
+import com.arturo254.opentune.spotify.models.SpotifyPlaylist
+import com.arturo254.opentune.spotify.models.SpotifyTrack
 
 @Composable
 fun SpotifyLibraryPlaylistListItem(
@@ -57,9 +54,10 @@ fun SpotifyLibraryPlaylistListItem(
 
     PlaylistListItem(
         playlist = libraryPlaylist,
-        modifier = modifier
-            .fillMaxWidth()
-            .clickable(onClick = openPlaylist),
+        modifier =
+            modifier
+                .fillMaxWidth()
+                .clickable(onClick = openPlaylist),
     )
 }
 
@@ -77,15 +75,16 @@ fun SpotifyLibraryPlaylistGridItem(
     GridItem(
         modifier = modifier.clickable(onClick = openPlaylist),
         title = playlist.name,
-        subtitle = playlist.tracks?.total?.let { "${it} songs" } ?: "Spotify",
+        subtitle = playlist.tracks?.total?.let { "$it songs" } ?: "Spotify",
         thumbnailShape = RoundedCornerShape(ThumbnailCornerRadius),
         thumbnailContent = {
             AsyncImage(
                 model = SpotifyMapper.getPlaylistThumbnail(playlist)?.resize(400, 400),
                 contentDescription = null,
-                modifier = Modifier
-                    .fillMaxSize()
-                    .clip(RoundedCornerShape(ThumbnailCornerRadius)),
+                modifier =
+                    Modifier
+                        .fillMaxSize()
+                        .clip(RoundedCornerShape(ThumbnailCornerRadius)),
             )
         },
         fillMaxWidth = fillMaxWidth,
@@ -155,11 +154,12 @@ fun SpotifyTrackListItem(
                     if (isSelected) {
                         Box(
                             contentAlignment = Alignment.Center,
-                            modifier = Modifier
-                                .fillMaxSize()
-                                .zIndex(1000f)
-                                .clip(RoundedCornerShape(ThumbnailCornerRadius))
-                                .background(Color.Black.copy(alpha = 0.5f)),
+                            modifier =
+                                Modifier
+                                    .fillMaxSize()
+                                    .zIndex(1000f)
+                                    .clip(RoundedCornerShape(ThumbnailCornerRadius))
+                                    .background(Color.Black.copy(alpha = 0.5f)),
                         ) {
                             Icon(
                                 painter = painterResource(R.drawable.done),
@@ -171,9 +171,10 @@ fun SpotifyTrackListItem(
                     AsyncImage(
                         model = SpotifyMapper.getTrackThumbnail(track)?.resize(200, 200),
                         contentDescription = null,
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .clip(RoundedCornerShape(ThumbnailCornerRadius)),
+                        modifier =
+                            Modifier
+                                .fillMaxSize()
+                                .clip(RoundedCornerShape(ThumbnailCornerRadius)),
                     )
                 }
 
@@ -181,12 +182,13 @@ fun SpotifyTrackListItem(
                     isActive = isActive,
                     playWhenReady = isPlaying,
                     color = if (albumIndex != null) MaterialTheme.colorScheme.onBackground else Color.White,
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .background(
-                            color = if (albumIndex != null) Color.Transparent else Color.Black.copy(alpha = 0.4f),
-                            shape = RoundedCornerShape(ThumbnailCornerRadius),
-                        ),
+                    modifier =
+                        Modifier
+                            .fillMaxSize()
+                            .background(
+                                color = if (albumIndex != null) Color.Transparent else Color.Black.copy(alpha = 0.4f),
+                                shape = RoundedCornerShape(ThumbnailCornerRadius),
+                            ),
                 )
             }
         },

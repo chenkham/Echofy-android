@@ -101,7 +101,9 @@ object AppModule {
 
     @Singleton
     @Provides
-    fun provideDataStore(@ApplicationContext context: Context): androidx.datastore.core.DataStore<androidx.datastore.preferences.core.Preferences> {
+    fun provideDataStore(
+        @ApplicationContext context: Context,
+    ): androidx.datastore.core.DataStore<androidx.datastore.preferences.core.Preferences> {
         return context.dataStore
     }
 }

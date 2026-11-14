@@ -11,13 +11,13 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
-import androidx.compose.ui.graphics.Color
 import androidx.compose.material3.TopAppBarScrollBehavior
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.painterResource
@@ -90,52 +90,54 @@ fun AccountScreen(
 
         items(
             items = albums.orEmpty(),
-            key = { it.id }
+            key = { it.id },
         ) { item ->
             YouTubeGridItem(
                 item = item,
                 fillMaxWidth = true,
-                modifier = Modifier
-                    .combinedClickable(
-                        onClick = {
-                            navController.navigate("album/${item.id}")
-                        },
-                        onLongClick = {
-                            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                            menuState.show {
-                                YouTubeAlbumMenu(
-                                    albumItem = item,
-                                    navController = navController,
-                                    onDismiss = menuState::dismiss
-                                )
-                            }
-                        }
-                    )
+                modifier =
+                    Modifier
+                        .combinedClickable(
+                            onClick = {
+                                navController.navigate("album/${item.id}")
+                            },
+                            onLongClick = {
+                                haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                menuState.show {
+                                    YouTubeAlbumMenu(
+                                        albumItem = item,
+                                        navController = navController,
+                                        onDismiss = menuState::dismiss,
+                                    )
+                                }
+                            },
+                        ),
             )
         }
 
         items(
             items = artists.orEmpty(),
-            key = { it.id }
+            key = { it.id },
         ) { item ->
             YouTubeGridItem(
                 item = item,
                 fillMaxWidth = true,
-                modifier = Modifier
-                    .combinedClickable(
-                        onClick = {
-                            navController.navigate("artist/${item.id}")
-                        },
-                        onLongClick = {
-                            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                            menuState.show {
-                                YouTubeArtistMenu(
-                                    artist = item,
-                                    onDismiss = menuState::dismiss
-                                )
-                            }
-                        }
-                    )
+                modifier =
+                    Modifier
+                        .combinedClickable(
+                            onClick = {
+                                navController.navigate("artist/${item.id}")
+                            },
+                            onLongClick = {
+                                haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                menuState.show {
+                                    YouTubeArtistMenu(
+                                        artist = item,
+                                        onDismiss = menuState::dismiss,
+                                    )
+                                }
+                            },
+                        ),
             )
         }
 
@@ -149,7 +151,7 @@ fun AccountScreen(
     }
 
     TopAppBar(
-            colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent, scrolledContainerColor = Color.Transparent),
+        colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent, scrolledContainerColor = Color.Transparent),
         title = { Text(stringResource(R.string.account)) },
         navigationIcon = {
             IconButton(

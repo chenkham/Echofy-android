@@ -27,7 +27,6 @@ import timber.log.Timber
  * only supported way to hold the microphone in the background.
  */
 class WakeWordService : Service() {
-
     private val aiManager by lazy { EchofyAiManager.getInstance(applicationContext) }
 
     /** Drives the notification wording so the user always sees the real state. */
@@ -40,7 +39,11 @@ class WakeWordService : Service() {
         createNotificationChannel()
     }
 
-    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+    override fun onStartCommand(
+        intent: Intent?,
+        flags: Int,
+        startId: Int,
+    ): Int {
         when (intent?.action) {
             ACTION_STOP -> {
                 Timber.d("WakeWordService stop requested")
@@ -83,43 +86,46 @@ class WakeWordService : Service() {
     }
 
     private fun startAsForeground() {
-        val contentIntent = PendingIntent.getActivity(
-            this,
-            0,
-            Intent(this, MainActivity::class.java).apply {
-                flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
-            },
-            PendingIntent.FLAG_IMMUTABLE
-        )
-
-        val stopIntent = PendingIntent.getService(
-            this,
-            1,
-            Intent(this, WakeWordService::class.java).setAction(ACTION_STOP),
-            PendingIntent.FLAG_IMMUTABLE
-        )
-
-        val notification: Notification = NotificationCompat.Builder(this, CHANNEL_ID)
-            .setContentTitle(if (drivingMode) "Driving Mode On" else "Hey Jarvis is listening")
-            .setContentText(
-                if (drivingMode) {
-                    "Listening for commands \u2014 no wake word needed"
-                } else {
-                    "Say \"Hey Jarvis\" to control playback"
-                }
+        val contentIntent =
+            PendingIntent.getActivity(
+                this,
+                0,
+                Intent(this, MainActivity::class.java).apply {
+                    flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
+                },
+                PendingIntent.FLAG_IMMUTABLE,
             )
-            .setSmallIcon(R.drawable.auto_awesome)
-            .setPriority(NotificationCompat.PRIORITY_LOW)
-            .setOngoing(true)
-            .setContentIntent(contentIntent)
-            .addAction(0, if (drivingMode) "Turn off" else "Stop", stopIntent)
-            .build()
+
+        val stopIntent =
+            PendingIntent.getService(
+                this,
+                1,
+                Intent(this, WakeWordService::class.java).setAction(ACTION_STOP),
+                PendingIntent.FLAG_IMMUTABLE,
+            )
+
+        val notification: Notification =
+            NotificationCompat.Builder(this, CHANNEL_ID)
+                .setContentTitle(if (drivingMode) "Driving Mode On" else "Hey Jarvis is listening")
+                .setContentText(
+                    if (drivingMode) {
+                        "Listening for commands \u2014 no wake word needed"
+                    } else {
+                        "Say \"Hey Jarvis\" to control playback"
+                    },
+                )
+                .setSmallIcon(R.drawable.auto_awesome)
+                .setPriority(NotificationCompat.PRIORITY_LOW)
+                .setOngoing(true)
+                .setContentIntent(contentIntent)
+                .addAction(0, if (drivingMode) "Turn off" else "Stop", stopIntent)
+                .build()
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
             startForeground(
                 NOTIFICATION_ID,
                 notification,
-                ServiceInfo.FOREGROUND_SERVICE_TYPE_MICROPHONE
+                ServiceInfo.FOREGROUND_SERVICE_TYPE_MICROPHONE,
             )
         } else {
             startForeground(NOTIFICATION_ID, notification)
@@ -128,14 +134,15 @@ class WakeWordService : Service() {
 
     private fun createNotificationChannel() {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) return
-        val channel = NotificationChannel(
-            CHANNEL_ID,
-            "Wake Word",
-            NotificationManager.IMPORTANCE_LOW
-        ).apply {
-            description = "Shown while Echofy listens for the \"Hey Jarvis\" wake word"
-            setShowBadge(false)
-        }
+        val channel =
+            NotificationChannel(
+                CHANNEL_ID,
+                "Wake Word",
+                NotificationManager.IMPORTANCE_LOW,
+            ).apply {
+                description = "Shown while Echofy listens for the \"Hey Jarvis\" wake word"
+                setShowBadge(false)
+            }
         getSystemService(NotificationManager::class.java)?.createNotificationChannel(channel)
     }
 
@@ -157,9 +164,13 @@ class WakeWordService : Service() {
          * [drivingMode] re-runs onStartCommand and refreshes the notification, which
          * is how the "Driving Mode On" text stays in sync with the toggle.
          */
-        fun start(context: Context, drivingMode: Boolean = false) {
-            val intent = Intent(context, WakeWordService::class.java)
-                .putExtra(EXTRA_DRIVING_MODE, drivingMode)
+        fun start(
+            context: Context,
+            drivingMode: Boolean = false,
+        ) {
+            val intent =
+                Intent(context, WakeWordService::class.java)
+                    .putExtra(EXTRA_DRIVING_MODE, drivingMode)
             try {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                     context.startForegroundService(intent)

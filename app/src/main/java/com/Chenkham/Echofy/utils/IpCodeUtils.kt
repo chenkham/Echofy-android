@@ -5,7 +5,6 @@ import android.net.wifi.WifiManager
 import java.util.Locale
 
 object IpCodeUtils {
-
     /**
      * Helper to get the local WiFi IP address as a string.
      */
@@ -21,7 +20,7 @@ object IpCodeUtils {
             ipAddress and 0xff,
             ipAddress shr 8 and 0xff,
             ipAddress shr 16 and 0xff,
-            ipAddress shr 24 and 0xff
+            ipAddress shr 24 and 0xff,
         )
     }
 

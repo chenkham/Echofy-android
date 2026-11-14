@@ -7,7 +7,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -24,11 +23,9 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.painter.Painter
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.Chenkham.Echofy.constants.GridThumbnailHeight
 
 @Composable
@@ -37,28 +34,30 @@ fun SmartPlaylistListItem(
     icon: Painter,
     gradientColors: List<Color>,
     onClick: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
 ) {
     Row(
         verticalAlignment = Alignment.CenterVertically,
-        modifier = modifier
-            .fillMaxWidth()
-            .clickable(onClick = onClick)
-            .padding(horizontal = 16.dp, vertical = 8.dp)
+        modifier =
+            modifier
+                .fillMaxWidth()
+                .clickable(onClick = onClick)
+                .padding(horizontal = 16.dp, vertical = 8.dp),
     ) {
         // Gradient Icon Box
         Box(
             contentAlignment = Alignment.Center,
-            modifier = Modifier
-                .size(56.dp)
-                .clip(RoundedCornerShape(8.dp))
-                .background(Brush.linearGradient(gradientColors))
+            modifier =
+                Modifier
+                    .size(56.dp)
+                    .clip(RoundedCornerShape(8.dp))
+                    .background(Brush.linearGradient(gradientColors)),
         ) {
             Icon(
                 painter = icon,
                 contentDescription = null,
                 tint = Color.White,
-                modifier = Modifier.size(24.dp)
+                modifier = Modifier.size(24.dp),
             )
         }
 
@@ -71,7 +70,7 @@ fun SmartPlaylistListItem(
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
             fontWeight = FontWeight.SemiBold,
-            modifier = Modifier.weight(1f)
+            modifier = Modifier.weight(1f),
         )
     }
 }
@@ -83,28 +82,30 @@ fun SmartPlaylistGridItem(
     gradientColors: List<Color>,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
-    fillMaxWidth: Boolean = false
+    fillMaxWidth: Boolean = false,
 ) {
     Column(
-        modifier = modifier
-            .padding(8.dp)
-            .clickable(onClick = onClick)
-            .then(if (fillMaxWidth) Modifier.fillMaxWidth() else Modifier.width(GridThumbnailHeight))
+        modifier =
+            modifier
+                .padding(8.dp)
+                .clickable(onClick = onClick)
+                .then(if (fillMaxWidth) Modifier.fillMaxWidth() else Modifier.width(GridThumbnailHeight)),
     ) {
         // Gradient Icon Box
         Box(
             contentAlignment = Alignment.Center,
-            modifier = Modifier
-                .fillMaxWidth()
-                .aspectRatio(1f)
-                .clip(RoundedCornerShape(12.dp))
-                .background(Brush.linearGradient(gradientColors))
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .aspectRatio(1f)
+                    .clip(RoundedCornerShape(12.dp))
+                    .background(Brush.linearGradient(gradientColors)),
         ) {
             Icon(
                 painter = icon,
                 contentDescription = null,
                 tint = Color.White,
-                modifier = Modifier.size(48.dp) // Larger icon for grid
+                modifier = Modifier.size(48.dp), // Larger icon for grid
             )
         }
 
@@ -116,7 +117,7 @@ fun SmartPlaylistGridItem(
             color = MaterialTheme.colorScheme.onSurface,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
-            fontWeight = FontWeight.Medium
+            fontWeight = FontWeight.Medium,
         )
     }
 }

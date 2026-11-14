@@ -17,12 +17,13 @@ import okio.ByteString.Companion.toByteString
 fun parseChallengeData(rawChallengeData: String): String {
     val scrambled = Json.parseToJsonElement(rawChallengeData).jsonArray
 
-    val challengeData = if (scrambled.size > 1 && scrambled[1].jsonPrimitive.isString) {
-        val descrambled = descramble(scrambled[1].jsonPrimitive.content)
-        Json.parseToJsonElement(descrambled).jsonArray
-    } else {
-        scrambled[1].jsonArray
-    }
+    val challengeData =
+        if (scrambled.size > 1 && scrambled[1].jsonPrimitive.isString) {
+            val descrambled = descramble(scrambled[1].jsonPrimitive.content)
+            Json.parseToJsonElement(descrambled).jsonArray
+        } else {
+            scrambled[1].jsonArray
+        }
 
     val messageId = challengeData[0].jsonPrimitive.content
     val interpreterHash = challengeData[3].jsonPrimitive.content
@@ -30,33 +31,41 @@ fun parseChallengeData(rawChallengeData: String): String {
     val globalName = challengeData[5].jsonPrimitive.content
     val clientExperimentsStateBlob = challengeData[7].jsonPrimitive.content
 
-    val privateDoNotAccessOrElseSafeScriptWrappedValue = challengeData[1]
-        .takeIf { it !is JsonNull }
-        ?.jsonArray
-        ?.find { it.jsonPrimitive.isString }
-    val privateDoNotAccessOrElseTrustedResourceUrlWrappedValue = challengeData[2]
-        .takeIf { it !is JsonNull }
-        ?.jsonArray
-        ?.find { it.jsonPrimitive.isString }
+    val privateDoNotAccessOrElseSafeScriptWrappedValue =
+        challengeData[1]
+            .takeIf { it !is JsonNull }
+            ?.jsonArray
+            ?.find { it.jsonPrimitive.isString }
+    val privateDoNotAccessOrElseTrustedResourceUrlWrappedValue =
+        challengeData[2]
+            .takeIf { it !is JsonNull }
+            ?.jsonArray
+            ?.find { it.jsonPrimitive.isString }
 
     return Json.encodeToString(
-        JsonObject.serializer(), JsonObject(
+        JsonObject.serializer(),
+        JsonObject(
             mapOf(
                 "messageId" to JsonPrimitive(messageId),
-                "interpreterJavascript" to JsonObject(
-                    mapOf(
-                        "privateDoNotAccessOrElseSafeScriptWrappedValue" to (privateDoNotAccessOrElseSafeScriptWrappedValue
-                            ?: JsonNull),
-                        "privateDoNotAccessOrElseTrustedResourceUrlWrappedValue" to (privateDoNotAccessOrElseTrustedResourceUrlWrappedValue
-                            ?: JsonNull)
-                    )
-                ),
+                "interpreterJavascript" to
+                    JsonObject(
+                        mapOf(
+                            "privateDoNotAccessOrElseSafeScriptWrappedValue" to (
+                                privateDoNotAccessOrElseSafeScriptWrappedValue
+                                    ?: JsonNull
+                            ),
+                            "privateDoNotAccessOrElseTrustedResourceUrlWrappedValue" to (
+                                privateDoNotAccessOrElseTrustedResourceUrlWrappedValue
+                                    ?: JsonNull
+                            ),
+                        ),
+                    ),
                 "interpreterHash" to JsonPrimitive(interpreterHash),
                 "program" to JsonPrimitive(program),
                 "globalName" to JsonPrimitive(globalName),
-                "clientExperimentsStateBlob" to JsonPrimitive(clientExperimentsStateBlob)
-            )
-        )
+                "clientExperimentsStateBlob" to JsonPrimitive(clientExperimentsStateBlob),
+            ),
+        ),
     )
 }
 
@@ -117,9 +126,10 @@ private fun base64ToU8(base64: String): String {
 }
 
 private fun newUint8Array(contents: ByteArray): String {
-    return "new Uint8Array([" + contents.joinToString(separator = ",") {
-        it.toUByte().toString()
-    } + "])"
+    return "new Uint8Array([" +
+        contents.joinToString(separator = ",") {
+            it.toUByte().toString()
+        } + "])"
 }
 
 /**
@@ -127,10 +137,11 @@ private fun newUint8Array(contents: ByteArray): String {
  * used by YouTube.
  */
 private fun base64ToByteString(base64: String): ByteArray {
-    val base64Mod = base64
-        .replace('-', '+')
-        .replace('_', '/')
-        .replace('.', '=')
+    val base64Mod =
+        base64
+            .replace('-', '+')
+            .replace('_', '/')
+            .replace('.', '=')
 
     return (base64Mod.decodeBase64() ?: throw PoTokenException("Cannot base64 decode"))
         .toByteArray()

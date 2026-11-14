@@ -12,7 +12,6 @@ import kotlin.math.sqrt
  * Used for the Shake to Skip premium feature.
  */
 class ShakeDetector(private val onShake: () -> Unit) : SensorEventListener {
-
     private var lastShakeTime = 0L
     private val SHAKE_THRESHOLD_GRAVITY = 2.7f
     private val SHAKE_SLOP_TIME_MS = 500L // Min time between shakes
@@ -33,23 +32,34 @@ class ShakeDetector(private val onShake: () -> Unit) : SensorEventListener {
         }
     }
 
-    override fun onAccuracyChanged(sensor: Sensor?, accuracy: Int) {}
+    override fun onAccuracyChanged(
+        sensor: Sensor?,
+        accuracy: Int,
+    ) {}
 
     companion object {
-        fun register(context: Context, detector: ShakeDetector): Boolean {
-            val sensorManager = context.getSystemService(Context.SENSOR_SERVICE) as? SensorManager
-                ?: return false
-            val accelerometer = sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER)
-                ?: return false
+        fun register(
+            context: Context,
+            detector: ShakeDetector,
+        ): Boolean {
+            val sensorManager =
+                context.getSystemService(Context.SENSOR_SERVICE) as? SensorManager
+                    ?: return false
+            val accelerometer =
+                sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER)
+                    ?: return false
             sensorManager.registerListener(
                 detector,
                 accelerometer,
-                SensorManager.SENSOR_DELAY_UI
+                SensorManager.SENSOR_DELAY_UI,
             )
             return true
         }
 
-        fun unregister(context: Context, detector: ShakeDetector) {
+        fun unregister(
+            context: Context,
+            detector: ShakeDetector,
+        ) {
             val sensorManager = context.getSystemService(Context.SENSOR_SERVICE) as? SensorManager
             sensorManager?.unregisterListener(detector)
         }

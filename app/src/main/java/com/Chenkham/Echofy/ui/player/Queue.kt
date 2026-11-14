@@ -1,7 +1,6 @@
 package com.Chenkham.Echofy.ui.player
 
 import android.annotation.SuppressLint
-import android.text.format.Formatter
 import android.widget.Toast
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateContentSize
@@ -21,7 +20,6 @@ import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
-import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -37,17 +35,13 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.sizeIn
 import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.HorizontalDivider
@@ -62,10 +56,8 @@ import androidx.compose.material3.SnackbarResult
 import androidx.compose.material3.SwipeToDismissBox
 import androidx.compose.material3.SwipeToDismissBoxValue
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberSwipeToDismissBoxState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -80,26 +72,24 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.scale
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
 import androidx.compose.ui.input.nestedscroll.NestedScrollSource
 import androidx.compose.ui.input.nestedscroll.nestedScroll
-import androidx.compose.ui.unit.Velocity
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Velocity
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.window.DialogProperties
 import androidx.media3.common.Player
 import androidx.media3.common.Timeline
 import androidx.media3.exoplayer.source.ShuffleOrder.DefaultShuffleOrder
@@ -111,7 +101,6 @@ import com.Chenkham.Echofy.constants.QueueEditLockKey
 import com.Chenkham.Echofy.constants.ShowLyricsKey
 import com.Chenkham.Echofy.extensions.metadata
 import com.Chenkham.Echofy.extensions.move
-import com.Chenkham.Echofy.extensions.togglePlayPause
 import com.Chenkham.Echofy.extensions.toggleRepeatMode
 import com.Chenkham.Echofy.models.MediaMetadata
 import com.Chenkham.Echofy.ui.component.BottomSheet
@@ -128,7 +117,6 @@ import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import sh.calvin.reorderable.ReorderableItem
 import sh.calvin.reorderable.rememberReorderableLazyListState
-
 
 @SuppressLint("UnrememberedMutableState", "StringFormatInvalid")
 @OptIn(ExperimentalFoundationApi::class)
@@ -175,22 +163,24 @@ fun Queue(
 
     var showSleepTimerDialog by remember { mutableStateOf(false) }
     var sleepTimerValue by remember { mutableStateOf(30f) }
-    val sleepTimerEnabled = remember(
-        playerConnection.service.sleepTimer.triggerTime,
-        playerConnection.service.sleepTimer.pauseWhenSongEnd
-    ) {
-        playerConnection.service.sleepTimer.isActive
-    }
+    val sleepTimerEnabled =
+        remember(
+            playerConnection.service.sleepTimer.triggerTime,
+            playerConnection.service.sleepTimer.pauseWhenSongEnd,
+        ) {
+            playerConnection.service.sleepTimer.isActive
+        }
     var sleepTimerTimeLeft by remember { mutableStateOf(0L) }
 
     LaunchedEffect(sleepTimerEnabled) {
         if (sleepTimerEnabled) {
             while (isActive) {
-                sleepTimerTimeLeft = if (playerConnection.service.sleepTimer.pauseWhenSongEnd) {
-                    playerConnection.player.duration - playerConnection.player.currentPosition
-                } else {
-                    playerConnection.service.sleepTimer.triggerTime - System.currentTimeMillis()
-                }
+                sleepTimerTimeLeft =
+                    if (playerConnection.service.sleepTimer.pauseWhenSongEnd) {
+                        playerConnection.player.duration - playerConnection.player.currentPosition
+                    } else {
+                        playerConnection.service.sleepTimer.triggerTime - System.currentTimeMillis()
+                    }
                 delay(1000L)
             }
         }
@@ -199,7 +189,7 @@ fun Queue(
     if (showDetailsDialog) {
         com.Chenkham.Echofy.ui.utils.ShowMediaInfo(
             mediaMetadata = mediaMetadata,
-            onDismiss = { showDetailsDialog = false }
+            onDismiss = { showDetailsDialog = false },
         )
     }
 
@@ -209,7 +199,7 @@ fun Queue(
             Box(
                 Modifier
                     .fillMaxSize()
-                    .background(backgroundColor)
+                    .background(backgroundColor),
             )
         },
         modifier = modifier,
@@ -245,47 +235,49 @@ fun Queue(
             }
 
         // Show all songs in the queue, including currently playing
-        val filteredQueueWindows = remember(mutableQueueWindows.toList(), currentWindowIndex) {
-            mutableQueueWindows.toList()
-        }
+        val filteredQueueWindows =
+            remember(mutableQueueWindows.toList(), currentWindowIndex) {
+                mutableQueueWindows.toList()
+            }
 
         val coroutineScope = rememberCoroutineScope()
 
         val headerItems = 1
         val lazyListState = rememberLazyListState()
-        val reorderableState = rememberReorderableLazyListState(
-            lazyListState = lazyListState,
-            onMove = { from, to ->
-                if (to.index >= headerItems && from.index >= headerItems) {
-                    val adjustedFrom = from.index - headerItems
-                    val adjustedTo = to.index - headerItems
+        val reorderableState =
+            rememberReorderableLazyListState(
+                lazyListState = lazyListState,
+                onMove = { from, to ->
+                    if (to.index >= headerItems && from.index >= headerItems) {
+                        val adjustedFrom = from.index - headerItems
+                        val adjustedTo = to.index - headerItems
 
-                    mutableQueueWindows.move(
-                        adjustedFrom,
-                        adjustedTo,
-                    )
-
-                    // Mover la lógica de onDragEnd aquí
-                    val safeFrom = adjustedFrom.coerceIn(0, mutableQueueWindows.lastIndex)
-                    val safeTo = adjustedTo.coerceIn(0, mutableQueueWindows.lastIndex)
-
-                    if (!playerConnection.player.shuffleModeEnabled) {
-                        playerConnection.player.moveMediaItem(safeFrom, safeTo)
-                    } else {
-                        playerConnection.player.setShuffleOrder(
-                            DefaultShuffleOrder(
-                                queueWindows
-                                    .map { it.firstPeriodIndex }
-                                    .toMutableList()
-                                    .move(safeFrom, safeTo)
-                                    .toIntArray(),
-                                System.currentTimeMillis(),
-                            ),
+                        mutableQueueWindows.move(
+                            adjustedFrom,
+                            adjustedTo,
                         )
+
+                        // Mover la lógica de onDragEnd aquí
+                        val safeFrom = adjustedFrom.coerceIn(0, mutableQueueWindows.lastIndex)
+                        val safeTo = adjustedTo.coerceIn(0, mutableQueueWindows.lastIndex)
+
+                        if (!playerConnection.player.shuffleModeEnabled) {
+                            playerConnection.player.moveMediaItem(safeFrom, safeTo)
+                        } else {
+                            playerConnection.player.setShuffleOrder(
+                                DefaultShuffleOrder(
+                                    queueWindows
+                                        .map { it.firstPeriodIndex }
+                                        .toMutableList()
+                                        .move(safeFrom, safeTo)
+                                        .toIntArray(),
+                                    System.currentTimeMillis(),
+                                ),
+                            )
+                        }
                     }
-                }
-            }
-        )
+                },
+            )
 
         LaunchedEffect(queueWindows) {
             mutableQueueWindows.apply {
@@ -301,23 +293,27 @@ fun Queue(
         }
 
         // Custom nested scroll connection to consume post-scroll overflow and prevent vibration
-        val consumeOverflowNestedScrollConnection = remember {
-            object : NestedScrollConnection {
-                override suspend fun onPostFling(consumed: Velocity, available: Velocity): Velocity {
-                    // Consume all remaining velocity to prevent propagation
-                    return available
-                }
+        val consumeOverflowNestedScrollConnection =
+            remember {
+                object : NestedScrollConnection {
+                    override suspend fun onPostFling(
+                        consumed: Velocity,
+                        available: Velocity,
+                    ): Velocity {
+                        // Consume all remaining velocity to prevent propagation
+                        return available
+                    }
 
-                override fun onPostScroll(
-                    consumed: Offset,
-                    available: Offset,
-                    source: NestedScrollSource
-                ): Offset {
-                    // Consume all remaining scroll delta to prevent propagation
-                    return available
+                    override fun onPostScroll(
+                        consumed: Offset,
+                        available: Offset,
+                        source: NestedScrollSource,
+                    ): Offset {
+                        // Consume all remaining scroll delta to prevent propagation
+                        return available
+                    }
                 }
             }
-        }
 
         Box(
             modifier =
@@ -356,7 +352,7 @@ fun Queue(
                 ) { displayIndex, window ->
                     // Calculate the actual index in the original queue
                     val actualIndex = displayIndex
-                    
+
                     ReorderableItem(
                         state = reorderableState, // Cambiar reorderableState por state
                         key = window.uid.hashCode(),
@@ -423,16 +419,18 @@ fun Queue(
                                         }
                                         IconButton(
                                             onClick = {
-                                                val songsToShow = if (selectedSongs.isEmpty()) {
-                                                    listOf(window.mediaItem.metadata!!)
-                                                } else {
-                                                    selectedSongs.toList()
-                                                }
-                                                val itemsToShow = if (selectedItems.isEmpty()) {
-                                                    listOf(currentItem)
-                                                } else {
-                                                    selectedItems.toList()
-                                                }
+                                                val songsToShow =
+                                                    if (selectedSongs.isEmpty()) {
+                                                        listOf(window.mediaItem.metadata!!)
+                                                    } else {
+                                                        selectedSongs.toList()
+                                                    }
+                                                val itemsToShow =
+                                                    if (selectedItems.isEmpty()) {
+                                                        listOf(currentItem)
+                                                    } else {
+                                                        selectedItems.toList()
+                                                    }
                                                 menuState.show {
                                                     SelectionMediaMetadataMenu(
                                                         songSelection = songsToShow,
@@ -610,7 +608,10 @@ fun Queue(
                     exit = fadeOut() + slideOutVertically { it },
                 ) {
                     Row {
-                        val queueDeduplicatorEnabled by rememberPreference(com.Chenkham.Echofy.constants.QueueDeduplicatorEnabledKey, defaultValue = false)
+                        val queueDeduplicatorEnabled by rememberPreference(
+                            com.Chenkham.Echofy.constants.QueueDeduplicatorEnabledKey,
+                            defaultValue = false,
+                        )
                         if (queueDeduplicatorEnabled) {
                             IconButton(
                                 onClick = {
@@ -631,9 +632,13 @@ fun Queue(
                                             if (title.isNotBlank()) seenTitles.add(title)
                                         }
                                     }
-                                    android.widget.Toast.makeText(context, if (removedCount > 0) "🧹 Removed $removedCount duplicate tracks" else "✨ No duplicate tracks in queue", android.widget.Toast.LENGTH_SHORT).show()
+                                    android.widget.Toast.makeText(
+                                        context,
+                                        if (removedCount > 0) "🧹 Removed $removedCount duplicate tracks" else "✨ No duplicate tracks in queue",
+                                        android.widget.Toast.LENGTH_SHORT,
+                                    ).show()
                                 },
-                                modifier = Modifier.padding(horizontal = 2.dp)
+                                modifier = Modifier.padding(horizontal = 2.dp),
                             ) {
                                 Icon(
                                     painter = painterResource(R.drawable.clear_all),
@@ -661,11 +666,12 @@ fun Queue(
                     horizontalAlignment = Alignment.End,
                 ) {
                     Text(
-                        text = pluralStringResource(
-                            R.plurals.n_song,
-                            filteredQueueWindows.size,
-                            filteredQueueWindows.size
-                        ),
+                        text =
+                            pluralStringResource(
+                                R.plurals.n_song,
+                                filteredQueueWindows.size,
+                                filteredQueueWindows.size,
+                            ),
                         style = MaterialTheme.typography.bodyMedium,
                         color = onBackgroundColor.copy(alpha = 0.75f),
                     )
@@ -702,7 +708,7 @@ fun Queue(
                     }
                     Text(
                         text = stringResource(R.string.elements_selected, count),
-                        modifier = Modifier.weight(1f)
+                        modifier = Modifier.weight(1f),
                     )
                     IconButton(
                         onClick = {
@@ -767,9 +773,9 @@ fun Queue(
                     .fillMaxWidth()
                     .height(
                         ListItemHeight +
-                                WindowInsets.systemBars
-                                    .asPaddingValues()
-                                    .calculateBottomPadding(),
+                            WindowInsets.systemBars
+                                .asPaddingValues()
+                                .calculateBottomPadding(),
                     )
                     .align(Alignment.BottomCenter)
                     .clickable {
@@ -789,9 +795,9 @@ fun Queue(
                             if (playerConnection.player.shuffleModeEnabled) playerConnection.player.currentMediaItemIndex else 0,
                         )
                     }.invokeOnCompletion {
-                            playerConnection.player.shuffleModeEnabled =
-                                !playerConnection.player.shuffleModeEnabled
-                        }
+                        playerConnection.player.shuffleModeEnabled =
+                            !playerConnection.player.shuffleModeEnabled
+                    }
                 },
             ) {
                 Icon(
@@ -833,9 +839,9 @@ fun Queue(
                     .padding(
                         bottom =
                             ListItemHeight +
-                                    WindowInsets.systemBars
-                                        .asPaddingValues()
-                                        .calculateBottomPadding(),
+                                WindowInsets.systemBars
+                                    .asPaddingValues()
+                                    .calculateBottomPadding(),
                     )
                     .align(Alignment.BottomCenter),
         )
@@ -849,43 +855,50 @@ fun ItemWithGlowingIcon() {
     val scale by infiniteTransition.animateFloat(
         initialValue = 1f,
         targetValue = 1.15f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(2000, easing = FastOutSlowInEasing),
-            repeatMode = RepeatMode.Reverse
-        ), label = ""
+        animationSpec =
+            infiniteRepeatable(
+                animation = tween(2000, easing = FastOutSlowInEasing),
+                repeatMode = RepeatMode.Reverse,
+            ),
+        label = "",
     )
 
     val alpha by infiniteTransition.animateFloat(
         initialValue = 0.3f,
         targetValue = 0.7f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(2000, easing = FastOutSlowInEasing),
-            repeatMode = RepeatMode.Reverse
-        ), label = ""
+        animationSpec =
+            infiniteRepeatable(
+                animation = tween(2000, easing = FastOutSlowInEasing),
+                repeatMode = RepeatMode.Reverse,
+            ),
+        label = "",
     )
 
     Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 8.dp),
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 8.dp),
         shape = RoundedCornerShape(28.dp),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
     ) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier
-                .padding(16.dp)
-                .fillMaxWidth()
+            modifier =
+                Modifier
+                    .padding(16.dp)
+                    .fillMaxWidth(),
         ) {
             Box {
                 Icon(
                     painter = painterResource(R.drawable.ia_icon),
                     contentDescription = null,
                     tint = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier
-                        .size(30.dp)
-                        .scale(scale)
-                        .alpha(alpha)
+                    modifier =
+                        Modifier
+                            .size(30.dp)
+                            .scale(scale)
+                            .alpha(alpha),
                 )
             }
 
@@ -897,7 +910,7 @@ fun ItemWithGlowingIcon() {
                 style = MaterialTheme.typography.bodyLarge,
                 fontWeight = FontWeight.Medium,
                 fontFamily = FontFamily.SansSerif,
-                color = MaterialTheme.colorScheme.onSurface
+                color = MaterialTheme.colorScheme.onSurface,
             )
         }
     }

@@ -12,17 +12,14 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -74,19 +71,21 @@ fun FolderFilterBottomSheet(
     var tempSelectedFolders by remember { mutableStateOf(selectedFolders) }
     var searchQuery by remember { mutableStateOf("") }
 
-    val filteredFolders = remember(availableFolders, searchQuery) {
-        if (searchQuery.isBlank()) {
-            availableFolders.sorted()
-        } else {
-            availableFolders.filter {
-                it.contains(searchQuery, ignoreCase = true)
-            }.sorted()
+    val filteredFolders =
+        remember(availableFolders, searchQuery) {
+            if (searchQuery.isBlank()) {
+                availableFolders.sorted()
+            } else {
+                availableFolders.filter {
+                    it.contains(searchQuery, ignoreCase = true)
+                }.sorted()
+            }
         }
-    }
 
-    val isAllSelected = remember(tempSelectedFolders, availableFolders) {
-        availableFolders.isNotEmpty() && tempSelectedFolders.size >= availableFolders.size
-    }
+    val isAllSelected =
+        remember(tempSelectedFolders, availableFolders) {
+            availableFolders.isNotEmpty() && tempSelectedFolders.size >= availableFolders.size
+        }
 
     ModalBottomSheet(
         onDismissRequest = onDismiss,
@@ -95,46 +94,52 @@ fun FolderFilterBottomSheet(
         tonalElevation = 0.dp,
         dragHandle = {
             Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(top = 16.dp, bottom = 8.dp),
-                contentAlignment = Alignment.Center
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .padding(top = 16.dp, bottom = 8.dp),
+                contentAlignment = Alignment.Center,
             ) {
                 Surface(
-                    modifier = Modifier
-                        .width(48.dp)
-                        .height(4.dp),
+                    modifier =
+                        Modifier
+                            .width(48.dp)
+                            .height(4.dp),
                     color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f),
-                    shape = CircleShape
+                    shape = CircleShape,
                 ) {}
             }
-        }
+        },
     ) {
         Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 24.dp)
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 24.dp),
         ) {
             // Header Expressive
             Text(
                 text = stringResource(R.string.filter_folders),
-                style = MaterialTheme.typography.headlineMedium.copy(
-                    fontWeight = FontWeight.Black,
-                    letterSpacing = (-0.5).sp
-                ),
-                color = MaterialTheme.colorScheme.onSurface
+                style =
+                    MaterialTheme.typography.headlineMedium.copy(
+                        fontWeight = FontWeight.Black,
+                        letterSpacing = (-0.5).sp,
+                    ),
+                color = MaterialTheme.colorScheme.onSurface,
             )
 
             Spacer(modifier = Modifier.height(8.dp))
 
             Text(
-                text = if (isAllSelected)
-                    stringResource(R.string.all_folders_visible)
-                else
-                    "${tempSelectedFolders.size} ${stringResource(R.string.folders_selected)}",
+                text =
+                    if (isAllSelected) {
+                        stringResource(R.string.all_folders_visible)
+                    } else {
+                        "${tempSelectedFolders.size} ${stringResource(R.string.folders_selected)}"
+                    },
                 style = MaterialTheme.typography.titleMedium,
                 color = MaterialTheme.colorScheme.primary,
-                fontWeight = FontWeight.Bold
+                fontWeight = FontWeight.Bold,
             )
 
             Spacer(modifier = Modifier.height(24.dp))
@@ -149,7 +154,7 @@ fun FolderFilterBottomSheet(
                     Icon(
                         painter = painterResource(R.drawable.search),
                         contentDescription = null,
-                        modifier = Modifier.size(20.dp)
+                        modifier = Modifier.size(20.dp),
                     )
                 },
                 trailingIcon = {
@@ -158,20 +163,21 @@ fun FolderFilterBottomSheet(
                             Icon(
                                 painter = painterResource(R.drawable.close),
                                 contentDescription = null,
-                                modifier = Modifier.size(20.dp)
+                                modifier = Modifier.size(20.dp),
                             )
                         }
                     }
                 },
                 shape = RoundedCornerShape(24.dp),
-                colors = OutlinedTextFieldDefaults.colors(
-                    focusedBorderColor = MaterialTheme.colorScheme.primary,
-                    unfocusedBorderColor = MaterialTheme.colorScheme.outlineVariant,
-                    focusedContainerColor = MaterialTheme.colorScheme.surfaceContainerLowest,
-                    unfocusedContainerColor = MaterialTheme.colorScheme.surfaceContainerLowest
-                ),
+                colors =
+                    OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = MaterialTheme.colorScheme.primary,
+                        unfocusedBorderColor = MaterialTheme.colorScheme.outlineVariant,
+                        focusedContainerColor = MaterialTheme.colorScheme.surfaceContainerLowest,
+                        unfocusedContainerColor = MaterialTheme.colorScheme.surfaceContainerLowest,
+                    ),
                 singleLine = true,
-                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search)
+                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
             )
 
             Spacer(modifier = Modifier.height(16.dp))
@@ -184,27 +190,27 @@ fun FolderFilterBottomSheet(
                 },
                 shape = RoundedCornerShape(20.dp),
                 color = if (isAllSelected) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceContainerLowest,
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth(),
             ) {
                 Row(
                     modifier = Modifier.padding(16.dp),
-                    verticalAlignment = Alignment.CenterVertically
+                    verticalAlignment = Alignment.CenterVertically,
                 ) {
                     Icon(
                         painter = painterResource(if (isAllSelected) R.drawable.check_box else R.drawable.check),
                         contentDescription = null,
-                        tint = if (isAllSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
+                        tint = if (isAllSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                     Spacer(modifier = Modifier.width(16.dp))
                     Text(
                         text = stringResource(R.string.all_folders),
                         style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Bold),
-                        modifier = Modifier.weight(1f)
+                        modifier = Modifier.weight(1f),
                     )
                     Checkbox(
                         checked = isAllSelected,
                         onCheckedChange = null,
-                        colors = CheckboxDefaults.colors(checkedColor = MaterialTheme.colorScheme.primary)
+                        colors = CheckboxDefaults.colors(checkedColor = MaterialTheme.colorScheme.primary),
                     )
                 }
             }
@@ -213,13 +219,14 @@ fun FolderFilterBottomSheet(
 
             // Folders List
             LazyColumn(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(300.dp)
-                    .clip(RoundedCornerShape(24.dp))
-                    .background(MaterialTheme.colorScheme.surfaceContainerLowest),
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .height(300.dp)
+                        .clip(RoundedCornerShape(24.dp))
+                        .background(MaterialTheme.colorScheme.surfaceContainerLowest),
                 contentPadding = PaddingValues(8.dp),
-                verticalArrangement = Arrangement.spacedBy(4.dp)
+                verticalArrangement = Arrangement.spacedBy(4.dp),
             ) {
                 items(filteredFolders, key = { it }) { folder ->
                     val isSelected = tempSelectedFolders.contains(folder)
@@ -227,27 +234,29 @@ fun FolderFilterBottomSheet(
                         name = folder,
                         isSelected = isSelected,
                         onClick = {
-                            tempSelectedFolders = if (isSelected) {
-                                tempSelectedFolders - folder
-                            } else {
-                                tempSelectedFolders + folder
-                            }
-                        }
+                            tempSelectedFolders =
+                                if (isSelected) {
+                                    tempSelectedFolders - folder
+                                } else {
+                                    tempSelectedFolders + folder
+                                }
+                        },
                     )
                 }
 
                 if (filteredFolders.isEmpty()) {
                     item {
                         Column(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(32.dp),
-                            horizontalAlignment = Alignment.CenterHorizontally
+                            modifier =
+                                Modifier
+                                    .fillMaxWidth()
+                                    .padding(32.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally,
                         ) {
                             Text(
                                 stringResource(R.string.no_folders_found),
                                 style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
                             )
                         }
                     }
@@ -258,20 +267,23 @@ fun FolderFilterBottomSheet(
 
             // Action Buttons Expressive
             Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(bottom = 24.dp),
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .padding(bottom = 24.dp),
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
             ) {
                 Button(
                     onClick = onDismiss,
-                    modifier = Modifier
-                        .weight(1f)
-                        .height(56.dp),
+                    modifier =
+                        Modifier
+                            .weight(1f)
+                            .height(56.dp),
                     shape = RoundedCornerShape(28.dp),
-                    colors = ButtonDefaults.filledTonalButtonColors(
-                        containerColor = MaterialTheme.colorScheme.surfaceContainerHighest
-                    )
+                    colors =
+                        ButtonDefaults.filledTonalButtonColors(
+                            containerColor = MaterialTheme.colorScheme.surfaceContainerHighest,
+                        ),
                 ) {
                     Text(stringResource(R.string.cancel), fontWeight = FontWeight.Bold)
                 }
@@ -280,13 +292,15 @@ fun FolderFilterBottomSheet(
                     onClick = {
                         onApply(tempSelectedFolders)
                     },
-                    modifier = Modifier
-                        .weight(1f)
-                        .height(56.dp),
+                    modifier =
+                        Modifier
+                            .weight(1f)
+                            .height(56.dp),
                     shape = RoundedCornerShape(28.dp),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = MaterialTheme.colorScheme.primary
-                    )
+                    colors =
+                        ButtonDefaults.buttonColors(
+                            containerColor = MaterialTheme.colorScheme.primary,
+                        ),
                 ) {
                     Text(stringResource(R.string.apply_filter), fontWeight = FontWeight.Bold)
                 }
@@ -299,45 +313,46 @@ fun FolderFilterBottomSheet(
 fun FolderItemExpressive(
     name: String,
     isSelected: Boolean,
-    onClick: () -> Unit
+    onClick: () -> Unit,
 ) {
     Surface(
         onClick = onClick,
         shape = RoundedCornerShape(16.dp),
         color = if (isSelected) MaterialTheme.colorScheme.primary.copy(alpha = 0.12f) else MaterialTheme.colorScheme.surfaceContainerLowest,
-        modifier = Modifier.fillMaxWidth()
+        modifier = Modifier.fillMaxWidth(),
     ) {
         Row(
             modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
-            verticalAlignment = Alignment.CenterVertically
+            verticalAlignment = Alignment.CenterVertically,
         ) {
             Icon(
                 painter = painterResource(R.drawable.folder),
                 contentDescription = null,
                 modifier = Modifier.size(24.dp),
-                tint = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
+                tint = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
             )
             Spacer(modifier = Modifier.width(16.dp))
             Text(
                 text = name,
-                style = MaterialTheme.typography.bodyMedium.copy(
-                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
-                ),
+                style =
+                    MaterialTheme.typography.bodyMedium.copy(
+                        fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
+                    ),
                 color = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
-                modifier = Modifier.weight(1f)
+                modifier = Modifier.weight(1f),
             )
             AnimatedVisibility(
                 visible = isSelected,
                 enter = fadeIn() + expandVertically(),
-                exit = fadeOut() + shrinkVertically()
+                exit = fadeOut() + shrinkVertically(),
             ) {
                 Icon(
                     painter = painterResource(R.drawable.check),
                     contentDescription = null,
                     tint = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.size(18.dp)
+                    modifier = Modifier.size(18.dp),
                 )
             }
         }

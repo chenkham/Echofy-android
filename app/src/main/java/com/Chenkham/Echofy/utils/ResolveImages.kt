@@ -4,18 +4,14 @@
  * Licensed Under GPL-3.0 | see git history for contributors
  */
 
-
-
 package com.Chenkham.Echofy.utils
 
 import android.content.Context
+import com.Chenkham.Echofy.constants.*
+import com.Chenkham.Echofy.db.entities.Song
 import com.my.kizzy.repository.KizzyRepository
 import kotlinx.coroutines.withTimeoutOrNull
-import com.Chenkham.Echofy.utils.dataStore
-import com.Chenkham.Echofy.constants.*
 import timber.log.Timber
-import com.Chenkham.Echofy.db.entities.Song
-import com.my.kizzy.rpc.RpcImage
 
 private const val TAG = "ResolveImages"
 
@@ -23,7 +19,11 @@ private const val TAG = "ResolveImages"
  * Resolve (and persist) large (thumbnail) and small (artist) image external URLs for a song.
  * Returns pair of (largeUrl, smallUrl) where each value is an external HTTP URL or null.
  */
-suspend fun resolveAndPersistImages(context: Context, song: Song, isPaused: Boolean): Pair<String?, String?> {
+suspend fun resolveAndPersistImages(
+    context: Context,
+    song: Song,
+    isPaused: Boolean,
+): Pair<String?, String?> {
     val repo = KizzyRepository()
 
     try {
@@ -61,12 +61,13 @@ suspend fun resolveAndPersistImages(context: Context, song: Song, isPaused: Bool
             val url = candidate?.trim()?.takeIf { it.isNotBlank() } ?: return null
             // check repo cache first
             val cached = repo.peekCache(url)
-            val resolved = withTimeoutOrNull(4000L) {
-                when {
-                    !cached.isNullOrBlank() -> cached
-                    else -> repo.getImage(url) ?: url
+            val resolved =
+                withTimeoutOrNull(4000L) {
+                    when {
+                        !cached.isNullOrBlank() -> cached
+                        else -> repo.getImage(url) ?: url
+                    }
                 }
-            }
             return when {
                 !resolved.isNullOrBlank() -> resolved
                 url.startsWith("http://") || url.startsWith("https://") -> url
@@ -75,64 +76,70 @@ suspend fun resolveAndPersistImages(context: Context, song: Song, isPaused: Bool
         }
 
         // Choose original candidate URLs based on prefs
-        val originalLargeCandidate = when (largeImageTypePref.lowercase()) {
-            "thumbnail" -> song.song.thumbnailUrl
-            "artist" -> song.artists.firstOrNull()?.thumbnailUrl
-            "appicon" -> null
-            "custom" -> largeImageCustomPref.takeIf { it.isNotBlank() } ?: song.song.thumbnailUrl
-            else -> song.song.thumbnailUrl
-        }
+        val originalLargeCandidate =
+            when (largeImageTypePref.lowercase()) {
+                "thumbnail" -> song.song.thumbnailUrl
+                "artist" -> song.artists.firstOrNull()?.thumbnailUrl
+                "appicon" -> null
+                "custom" -> largeImageCustomPref.takeIf { it.isNotBlank() } ?: song.song.thumbnailUrl
+                else -> song.song.thumbnailUrl
+            }
 
         // --- small image resolution ---
-        val originalSmallCandidate = when {
-            // user explicitly disabled small image
-            smallImageTypePref.lowercase() in listOf("none", "dontshow") -> null
-            // Ô£à only override the small image when paused; keep large image untouched
-            isPaused -> PAUSE_IMAGE_URL
-            // song cover as small image
-            smallImageTypePref.lowercase() == "song" -> song.song.thumbnailUrl
-            // artist profile picture
-            smallImageTypePref.lowercase() == "artist" -> song.artists.firstOrNull()?.thumbnailUrl
-            // album cover
-            smallImageTypePref.lowercase() == "thumbnail" || smallImageTypePref.lowercase() == "album" -> song.song.thumbnailUrl
-            // app icon (handled later as Discord internal asset, so no HTTP here)
-            smallImageTypePref.lowercase() == "appicon" || smallImageTypePref.lowercase() == "app" -> null
-            // Ô£à handle custom URLs correctly
-            smallImageTypePref.lowercase() == "custom" ->
-                smallImageCustomPref.takeIf { it.isNotBlank() } ?: song.artists.firstOrNull()?.thumbnailUrl
-            // fallback: artist image
-            else -> song.artists.firstOrNull()?.thumbnailUrl
-        }
-
+        val originalSmallCandidate =
+            when {
+                // user explicitly disabled small image
+                smallImageTypePref.lowercase() in listOf("none", "dontshow") -> null
+                // Ô£à only override the small image when paused; keep large image untouched
+                isPaused -> PAUSE_IMAGE_URL
+                // song cover as small image
+                smallImageTypePref.lowercase() == "song" -> song.song.thumbnailUrl
+                // artist profile picture
+                smallImageTypePref.lowercase() == "artist" -> song.artists.firstOrNull()?.thumbnailUrl
+                // album cover
+                smallImageTypePref.lowercase() == "thumbnail" || smallImageTypePref.lowercase() == "album" -> song.song.thumbnailUrl
+                // app icon (handled later as Discord internal asset, so no HTTP here)
+                smallImageTypePref.lowercase() == "appicon" || smallImageTypePref.lowercase() == "app" -> null
+                // Ô£à handle custom URLs correctly
+                smallImageTypePref.lowercase() == "custom" ->
+                    smallImageCustomPref.takeIf { it.isNotBlank() } ?: song.artists.firstOrNull()?.thumbnailUrl
+                // fallback: artist image
+                else -> song.artists.firstOrNull()?.thumbnailUrl
+            }
 
         // Determine which saved field to use based on what type of source the large image is
         val largePrefLower = largeImageTypePref.lowercase()
         val isLargeFromArtist = largePrefLower == "artist"
-        val resolvedLargeFromSaved = when {
-            isLargeFromArtist -> saved?.artist?.asHttp()?.takeIf { it != PAUSE_IMAGE_URL }
-            else -> saved?.thumbnail?.asHttp()?.takeIf { it != PAUSE_IMAGE_URL }
-        }
-        
+        val resolvedLargeFromSaved =
+            when {
+                isLargeFromArtist -> saved?.artist?.asHttp()?.takeIf { it != PAUSE_IMAGE_URL }
+                else -> saved?.thumbnail?.asHttp()?.takeIf { it != PAUSE_IMAGE_URL }
+            }
+
         val smallPrefLower = smallImageTypePref.lowercase()
-        val allowSavedSmall = when {
-            smallPrefLower in listOf("none", "dontshow", "appicon", "app") -> false
-            isPaused -> false
-            smallPrefLower in listOf("song", "artist", "thumbnail", "album") -> true
-            else -> true
-        }
+        val allowSavedSmall =
+            when {
+                smallPrefLower in listOf("none", "dontshow", "appicon", "app") -> false
+                isPaused -> false
+                smallPrefLower in listOf("song", "artist", "thumbnail", "album") -> true
+                else -> true
+            }
 
         // Determine which saved field to use based on what type of source the small image is
         val isSmallFromArtist = smallPrefLower == "artist"
-        val resolvedSmallFromSaved = if (allowSavedSmall) {
-            when {
-                isSmallFromArtist -> saved?.artist?.asHttp()?.takeIf { it != PAUSE_IMAGE_URL }
-                else -> saved?.thumbnail?.asHttp()?.takeIf { it != PAUSE_IMAGE_URL }
+        val resolvedSmallFromSaved =
+            if (allowSavedSmall) {
+                when {
+                    isSmallFromArtist -> saved?.artist?.asHttp()?.takeIf { it != PAUSE_IMAGE_URL }
+                    else -> saved?.thumbnail?.asHttp()?.takeIf { it != PAUSE_IMAGE_URL }
+                }
+            } else {
+                null
             }
-        } else null
 
         var finalLarge: String? = null
         var finalSmall: String? = null
-        
+
         // Track current saved values to ensure we don't lose data when saving both images
         var currentSavedThumbnail = saved?.thumbnail
         var currentSavedArtist = saved?.artist

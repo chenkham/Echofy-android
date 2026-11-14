@@ -6,22 +6,20 @@ package com.Chenkham.Echofy.utils
 
 import android.content.Context
 import com.Chenkham.Echofy.R
-import com.Chenkham.Echofy.db.entities.Song
 import com.Chenkham.Echofy.constants.*
+import com.Chenkham.Echofy.db.entities.Song
 import com.my.kizzy.rpc.KizzyRPC
 import com.my.kizzy.rpc.RpcImage
-import timber.log.Timber
 
 class DiscordRPC(
     val context: Context,
     token: String,
 ) : KizzyRPC(token) {
-
     companion object {
         private const val APPLICATION_ID = "1411019391843172514"
         private const val PAUSE_IMAGE_URL =
             "https://raw.githubusercontent.com/koiverse/ArchiveTune/main/fastlane/metadata/android/en-US/images/RPC/pause_icon.png"
-        private const val APP_ICON_URL = 
+        private const val APP_ICON_URL =
             "https://raw.githubusercontent.com/Arturo254/Echofy/refs/heads/master/assets/icon.png"
         private const val logtag = "DiscordRPC"
     }
@@ -45,11 +43,12 @@ class DiscordRPC(
         val adjustedPlaybackTime = (currentPlaybackTimeMillis / playbackSpeed).toLong()
         val calculatedStartTime = currentTime - adjustedPlaybackTime
 
-        val songTitleWithRate = if (playbackSpeed != 1.0f) {
-            "${song.song.title} [${String.format("%.2fx", playbackSpeed)}]"
-        } else {
-            song.song.title
-        }
+        val songTitleWithRate =
+            if (playbackSpeed != 1.0f) {
+                "${song.song.title} [${String.format("%.2fx", playbackSpeed)}]"
+            } else {
+                song.song.title
+            }
 
         val remainingDuration = song.song.duration * 1000L - currentPlaybackTimeMillis
         val adjustedRemainingDuration = (remainingDuration / playbackSpeed).toLong()
@@ -58,24 +57,26 @@ class DiscordRPC(
         val statusPref = context.dataStore[DiscordPresenceStatusKey] ?: "ONLINE"
 
         val activityTypePref = (context.dataStore[DiscordActivityTypeKey] ?: "LISTENING").uppercase()
-        val resolvedType = when (activityTypePref) {
-            "PLAYING" -> Type.PLAYING
-            "STREAMING" -> Type.STREAMING
-            "WATCHING" -> Type.WATCHING
-            "COMPETING" -> Type.COMPETING
-            else -> Type.LISTENING
-        }
+        val resolvedType =
+            when (activityTypePref) {
+                "PLAYING" -> Type.PLAYING
+                "STREAMING" -> Type.STREAMING
+                "WATCHING" -> Type.WATCHING
+                "COMPETING" -> Type.COMPETING
+                else -> Type.LISTENING
+            }
 
         val activityName = (context.dataStore[DiscordActivityNameKey] ?: context.getString(R.string.app_name)).trim()
         val activityDetails = (context.dataStore[DiscordActivityDetailsKey] ?: songTitleWithRate).trim()
         val activityState = (context.dataStore[DiscordActivityStateKey] ?: song.artists.joinToString { it.name }).trim()
 
         val largeImage = song.song.thumbnailUrl?.let { RpcImage.ExternalImage(it) }
-        val smallImage = if (isPaused) {
-            RpcImage.ExternalImage(PAUSE_IMAGE_URL)
-        } else {
-            song.artists.firstOrNull()?.thumbnailUrl?.let { RpcImage.ExternalImage(it) }
-        }
+        val smallImage =
+            if (isPaused) {
+                RpcImage.ExternalImage(PAUSE_IMAGE_URL)
+            } else {
+                song.artists.firstOrNull()?.thumbnailUrl?.let { RpcImage.ExternalImage(it) }
+            }
 
         val buttons = mutableListOf<Pair<String, String>>()
         val btn1Enabled = context.dataStore[DiscordActivityButton1EnabledKey] ?: true
@@ -135,7 +136,7 @@ class DiscordRPC(
             startTime = sendStartTime,
             endTime = sendEndTime,
             applicationId = APPLICATION_ID,
-            status = statusPref.lowercase()
+            status = statusPref.lowercase(),
         )
     }
 
@@ -147,10 +148,14 @@ class DiscordRPC(
         song = song,
         currentPlaybackTimeMillis = currentPlaybackTimeMillis,
         playbackSpeed = 1.0f,
-        isPaused = isPaused
+        isPaused = isPaused,
     )
 
-    suspend fun refreshActivity(song: Song, currentPlaybackTimeMillis: Long, isPaused: Boolean = false) = runCatching {
+    suspend fun refreshActivity(
+        song: Song,
+        currentPlaybackTimeMillis: Long,
+        isPaused: Boolean = false,
+    ) = runCatching {
         updateSong(song, currentPlaybackTimeMillis, isPaused).getOrThrow()
     }
 }

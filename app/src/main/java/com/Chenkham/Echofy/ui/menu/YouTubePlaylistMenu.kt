@@ -7,13 +7,10 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -46,10 +43,6 @@ import androidx.media3.exoplayer.offline.Download
 import androidx.media3.exoplayer.offline.DownloadRequest
 import androidx.media3.exoplayer.offline.DownloadService
 import coil.compose.AsyncImage
-import com.arturo254.opentune.innertube.YouTube
-import com.arturo254.opentune.innertube.models.PlaylistItem
-import com.arturo254.opentune.innertube.models.SongItem
-import com.arturo254.opentune.innertube.utils.completed
 import com.Chenkham.Echofy.LocalDatabase
 import com.Chenkham.Echofy.LocalDownloadUtil
 import com.Chenkham.Echofy.LocalPlayerConnection
@@ -67,19 +60,22 @@ import com.Chenkham.Echofy.playback.ExoDownloadService
 import com.Chenkham.Echofy.playback.queues.YouTubeQueue
 import com.Chenkham.Echofy.ui.component.DefaultDialog
 import com.Chenkham.Echofy.ui.component.DownloadGridMenu
-import com.Chenkham.Echofy.ui.component.GridMenu
 import com.Chenkham.Echofy.ui.component.GridMenuItem
 import com.Chenkham.Echofy.ui.component.ListDialog
 import com.Chenkham.Echofy.ui.component.ListItem
+import com.Chenkham.Echofy.ui.component.LocalAdManager
 import com.Chenkham.Echofy.ui.component.YouTubeListItem
 import com.Chenkham.Echofy.utils.joinByBullet
 import com.Chenkham.Echofy.utils.makeTimeString
+import com.arturo254.opentune.innertube.YouTube
+import com.arturo254.opentune.innertube.models.PlaylistItem
+import com.arturo254.opentune.innertube.models.SongItem
+import com.arturo254.opentune.innertube.utils.completed
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import kotlinx.coroutines.flow.collect
-import com.Chenkham.Echofy.ui.component.LocalAdManager
 
 @OptIn(ExperimentalMaterial3Api::class)
 @SuppressLint("MutableCollectionMutableState")
@@ -97,8 +93,8 @@ fun YouTubePlaylistMenu(
     val downloadUtil = LocalDownloadUtil.current
     val adManager = LocalAdManager.current
     val playerConnection = LocalPlayerConnection.current ?: return
-    val dbPlaylist by remember(playlist.id) { 
-        database.playlistByBrowseId(playlist.id) 
+    val dbPlaylist by remember(playlist.id) {
+        database.playlistByBrowseId(playlist.id)
     }.collectAsState(initial = null)
 
     var showChoosePlaylistDialog by rememberSaveable { mutableStateOf(false) }
@@ -115,12 +111,13 @@ fun YouTubePlaylistMenu(
     AddToPlaylistDialog(
         isVisible = showChoosePlaylistDialog,
         onGetSong = { targetPlaylist ->
-            val allSongs = songs
-                .ifEmpty {
-                    YouTube.playlist(targetPlaylist.id).completed().getOrNull()?.songs.orEmpty()
-                }.map {
-                    it.toMediaMetadata()
-                }
+            val allSongs =
+                songs
+                    .ifEmpty {
+                        YouTube.playlist(targetPlaylist.id).completed().getOrNull()?.songs.orEmpty()
+                    }.map {
+                        it.toMediaMetadata()
+                    }
             database.transaction {
                 allSongs.forEach(::insert)
             }
@@ -133,7 +130,7 @@ fun YouTubePlaylistMenu(
         },
         onDismiss = { showChoosePlaylistDialog = false },
     )
-    
+
     var downloadState by remember {
         mutableStateOf(Download.STATE_STOPPED)
     }
@@ -141,18 +138,21 @@ fun YouTubePlaylistMenu(
         if (songs.isEmpty()) return@LaunchedEffect
         downloadUtil.downloads
             .collect { downloads ->
-                downloadState = withContext(Dispatchers.Default) {
-                    if (songs.all { downloads[it.id]?.state == Download.STATE_COMPLETED })
-                        Download.STATE_COMPLETED
-                    else if (songs.all {
-                            downloads[it.id]?.state == Download.STATE_QUEUED
-                                    || downloads[it.id]?.state == Download.STATE_DOWNLOADING
-                                    || downloads[it.id]?.state == Download.STATE_COMPLETED
-                        })
-                        Download.STATE_DOWNLOADING
-                    else
-                        Download.STATE_STOPPED
-                }
+                downloadState =
+                    withContext(Dispatchers.Default) {
+                        if (songs.all { downloads[it.id]?.state == Download.STATE_COMPLETED }) {
+                            Download.STATE_COMPLETED
+                        } else if (songs.all {
+                                downloads[it.id]?.state == Download.STATE_QUEUED ||
+                                    downloads[it.id]?.state == Download.STATE_DOWNLOADING ||
+                                    downloads[it.id]?.state == Download.STATE_COMPLETED
+                            }
+                        ) {
+                            Download.STATE_DOWNLOADING
+                        } else {
+                            Download.STATE_STOPPED
+                        }
+                    }
             }
     }
     var showRemoveDownloadDialog by remember {
@@ -163,19 +163,20 @@ fun YouTubePlaylistMenu(
             onDismiss = { showRemoveDownloadDialog = false },
             content = {
                 Text(
-                    text = stringResource(
-                        R.string.remove_download_playlist_confirm,
-                        playlist.title
-                    ),
+                    text =
+                        stringResource(
+                            R.string.remove_download_playlist_confirm,
+                            playlist.title,
+                        ),
                     style = MaterialTheme.typography.bodyLarge,
-                    modifier = Modifier.padding(horizontal = 18.dp)
+                    modifier = Modifier.padding(horizontal = 18.dp),
                 )
             },
             buttons = {
                 TextButton(
                     onClick = {
                         showRemoveDownloadDialog = false
-                    }
+                    },
                 ) {
                     Text(text = stringResource(android.R.string.cancel))
                 }
@@ -187,33 +188,34 @@ fun YouTubePlaylistMenu(
                                 context,
                                 ExoDownloadService::class.java,
                                 song.id,
-                                false
+                                false,
                             )
                         }
-                    }
+                    },
                 ) {
                     Text(text = stringResource(android.R.string.ok))
                 }
-            }
+            },
         )
     }
 
     ImportPlaylistDialog(
         isVisible = showImportPlaylistDialog,
         onGetSong = {
-            val allSongs = songs
-                .ifEmpty {
-                    YouTube.playlist(playlist.id).completed().getOrNull()?.songs.orEmpty()
-                }.map {
-                    it.toMediaMetadata()
-                }
+            val allSongs =
+                songs
+                    .ifEmpty {
+                        YouTube.playlist(playlist.id).completed().getOrNull()?.songs.orEmpty()
+                    }.map {
+                        it.toMediaMetadata()
+                    }
             database.transaction {
                 allSongs.forEach(::insert)
             }
             allSongs.map { it.id }
         },
         playlistTitle = playlist.title,
-        onDismiss = { showImportPlaylistDialog = false }
+        onDismiss = { showImportPlaylistDialog = false },
     )
 
     if (showErrorPlaylistAddDialog) {
@@ -270,7 +272,7 @@ fun YouTubePlaylistMenu(
 
     LazyColumn(
         modifier = Modifier.fillMaxWidth(),
-        contentPadding = PaddingValues(bottom = 16.dp)
+        contentPadding = PaddingValues(bottom = 16.dp),
     ) {
         item {
             Column {
@@ -282,19 +284,21 @@ fun YouTubePlaylistMenu(
                                 onClick = {
                                     if (dbPlaylist?.playlist == null) {
                                         database.transaction {
-                                            val playlistEntity = PlaylistEntity(
-                                                name = playlist.title,
-                                                browseId = playlist.id,
-                                                isEditable = false,
-                                                remoteSongCount = playlist.songCountText?.let {
-                                                    Regex("""\d+""").find(
-                                                        it
-                                                    )?.value?.toIntOrNull()
-                                                },
-                                                playEndpointParams = playlist.playEndpoint?.params,
-                                                shuffleEndpointParams = playlist.shuffleEndpoint?.params,
-                                                radioEndpointParams = playlist.radioEndpoint?.params
-                                            ).toggleLike()
+                                            val playlistEntity =
+                                                PlaylistEntity(
+                                                    name = playlist.title,
+                                                    browseId = playlist.id,
+                                                    isEditable = false,
+                                                    remoteSongCount =
+                                                        playlist.songCountText?.let {
+                                                            Regex("""\d+""").find(
+                                                                it,
+                                                            )?.value?.toIntOrNull()
+                                                        },
+                                                    playEndpointParams = playlist.playEndpoint?.params,
+                                                    shuffleEndpointParams = playlist.shuffleEndpoint?.params,
+                                                    radioEndpointParams = playlist.radioEndpoint?.params,
+                                                ).toggleLike()
                                             insert(playlistEntity)
                                             coroutineScope.launch(Dispatchers.IO) {
                                                 songs.ifEmpty {
@@ -306,7 +310,7 @@ fun YouTubePlaylistMenu(
                                                         PlaylistSongMap(
                                                             songId = song.id,
                                                             playlistId = playlistEntity.id,
-                                                            position = index
+                                                            position = index,
                                                         )
                                                     }
                                                     .forEach(::insert)
@@ -317,16 +321,19 @@ fun YouTubePlaylistMenu(
                                             update(dbPlaylist!!.playlist.toggleLike())
                                         }
                                     }
-                                }
+                                },
                             ) {
                                 Icon(
-                                    painter = painterResource(if (dbPlaylist?.playlist?.bookmarkedAt != null) R.drawable.favorite else R.drawable.favorite_border),
+                                    painter =
+                                        painterResource(
+                                            if (dbPlaylist?.playlist?.bookmarkedAt != null) R.drawable.favorite else R.drawable.favorite_border,
+                                        ),
                                     tint = if (dbPlaylist?.playlist?.bookmarkedAt != null) MaterialTheme.colorScheme.error else LocalContentColor.current,
-                                    contentDescription = null
+                                    contentDescription = null,
                                 )
                             }
                         }
-                    }
+                    },
                 )
                 HorizontalDivider()
             }
@@ -345,7 +352,7 @@ fun YouTubePlaylistMenu(
         playlist.shuffleEndpoint?.let { shuffleEndpoint ->
             GridMenuItem(
                 icon = R.drawable.shuffle,
-                title = R.string.shuffle
+                title = R.string.shuffle,
             ) {
                 println("Shuffle: id: ${shuffleEndpoint.playlistId}, params: ${shuffleEndpoint.params}")
                 playerConnection.playQueue(YouTubeQueue(shuffleEndpoint))
@@ -355,7 +362,7 @@ fun YouTubePlaylistMenu(
         playlist.radioEndpoint?.let { radioEndpoint ->
             GridMenuItem(
                 icon = R.drawable.radio,
-                title = R.string.start_radio
+                title = R.string.start_radio,
             ) {
                 println("Radio: ${radioEndpoint.playlistId}, ${radioEndpoint.params}")
                 playerConnection.playQueue(YouTubeQueue(radioEndpoint))
@@ -404,7 +411,7 @@ fun YouTubePlaylistMenu(
             }
             onDismiss()
         }
-        
+
         GridMenuItem(
             icon = R.drawable.playlist_add,
             title = R.string.add_to_playlist,
@@ -417,21 +424,22 @@ fun YouTubePlaylistMenu(
                 state = downloadState,
                 onDownload = {
                     songs.forEach { song ->
-                        val downloadRequest = DownloadRequest.Builder(song.id, song.id.toUri())
-                            .setCustomCacheKey(song.id)
-                            .setData(song.title.toByteArray())
-                            .build()
+                        val downloadRequest =
+                            DownloadRequest.Builder(song.id, song.id.toUri())
+                                .setCustomCacheKey(song.id)
+                                .setData(song.title.toByteArray())
+                                .build()
                         DownloadService.sendAddDownload(
                             context,
                             ExoDownloadService::class.java,
                             downloadRequest,
-                            false
+                            false,
                         )
                     }
                 },
                 onRemoveDownload = {
                     showRemoveDownloadDialog = true
-                }
+                },
             )
         }
 
@@ -448,8 +456,8 @@ fun YouTubePlaylistMenu(
                         com.Chenkham.Echofy.utils.ShareUtils.buildPlaylistShareText(
                             context = context,
                             playlistId = playlist.id,
-                            title = playlist.title
-                        )
+                            title = playlist.title,
+                        ),
                     )
                 }
             context.startActivity(Intent.createChooser(intent, null))

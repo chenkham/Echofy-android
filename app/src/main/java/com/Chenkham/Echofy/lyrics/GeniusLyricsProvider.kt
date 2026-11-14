@@ -40,8 +40,9 @@ object GeniusLyricsProvider : LyricsProvider {
         artist: String,
         duration: Int,
     ): Result<String> {
-        val token = cachedToken
-            ?: return Result.failure(IllegalStateException("Genius access token not configured"))
+        val token =
+            cachedToken
+                ?: return Result.failure(IllegalStateException("Genius access token not configured"))
 
         Timber.d("Genius: searching for '$title' by '$artist'")
 

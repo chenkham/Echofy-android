@@ -39,8 +39,7 @@ object SpotifyMapper {
             0.75f,
             true,
         ) {
-            override fun removeEldestEntry(eldest: MutableMap.MutableEntry<String, String>?): Boolean =
-                size > NORM_CACHE_MAX_SIZE
+            override fun removeEldestEntry(eldest: MutableMap.MutableEntry<String, String>?): Boolean = size > NORM_CACHE_MAX_SIZE
         }
 
     /**
@@ -53,8 +52,7 @@ object SpotifyMapper {
             0.75f,
             true,
         ) {
-            override fun removeEldestEntry(eldest: MutableMap.MutableEntry<String, Set<String>>?): Boolean =
-                size > NORM_CACHE_MAX_SIZE
+            override fun removeEldestEntry(eldest: MutableMap.MutableEntry<String, Set<String>>?): Boolean = size > NORM_CACHE_MAX_SIZE
         }
 
     /**

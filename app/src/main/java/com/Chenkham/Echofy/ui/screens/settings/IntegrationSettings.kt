@@ -20,8 +20,8 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedCard
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.OutlinedCard
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarScrollBehavior
 import androidx.compose.runtime.Composable
@@ -45,9 +45,9 @@ import com.Chenkham.Echofy.constants.ArtistInfoShowGenresKey
 import com.Chenkham.Echofy.constants.ArtistInfoShowLinksKey
 import com.Chenkham.Echofy.constants.BandsintownAppIdKey
 import com.Chenkham.Echofy.constants.ConcertsEnabledKey
+import com.Chenkham.Echofy.constants.CustomShareDomainKey
 import com.Chenkham.Echofy.constants.DiscogsEnabledKey
 import com.Chenkham.Echofy.constants.DiscogsTokenKey
-import com.Chenkham.Echofy.constants.CustomShareDomainKey
 import com.Chenkham.Echofy.constants.EnableGeniusKey
 import com.Chenkham.Echofy.constants.FreesoundApiKeyKey
 import com.Chenkham.Echofy.constants.GeniusAccessTokenKey
@@ -73,273 +73,299 @@ fun IntegrationSettings(
     navController: NavController,
     scrollBehavior: TopAppBarScrollBehavior,
 ) {
-    val (artistInfoEnabled, onArtistInfoEnabledChange) = rememberPreference(
-        key = ArtistInfoEnabledKey,
-        defaultValue = true
-    )
-    val (artistInfoShowGenres, onArtistInfoShowGenresChange) = rememberPreference(
-        key = ArtistInfoShowGenresKey,
-        defaultValue = true
-    )
-    val (artistInfoShowLinks, onArtistInfoShowLinksChange) = rememberPreference(
-        key = ArtistInfoShowLinksKey,
-        defaultValue = true
-    )
-    val (artistBioEnabled, onArtistBioEnabledChange) = rememberPreference(
-        key = ArtistBioEnabledKey,
-        defaultValue = true
-    )
-    val (theAudioDbApiKey, onTheAudioDbApiKeyChange) = rememberPreference(
-        key = TheAudioDbApiKeyKey,
-        defaultValue = ""
-    )
-    val (concertsEnabled, onConcertsEnabledChange) = rememberPreference(
-        key = ConcertsEnabledKey,
-        defaultValue = false
-    )
-    val (bandsintownAppId, onBandsintownAppIdChange) = rememberPreference(
-        key = BandsintownAppIdKey,
-        defaultValue = ""
-    )
-    val (similarArtistsEnabled, onSimilarArtistsEnabledChange) = rememberPreference(
-        key = SimilarArtistsEnabledKey,
-        defaultValue = false
-    )
-    val (tasteDiveApiKey, onTasteDiveApiKeyChange) = rememberPreference(
-        key = TasteDiveApiKeyKey,
-        defaultValue = ""
-    )
-    val (geniusEnabled, onGeniusEnabledChange) = rememberPreference(
-        key = EnableGeniusKey,
-        defaultValue = false
-    )
-    val (geniusAccessToken, onGeniusAccessTokenChange) = rememberPreference(
-        key = GeniusAccessTokenKey,
-        defaultValue = ""
-    )
-    val (discogsEnabled, onDiscogsEnabledChange) = rememberPreference(
-        key = DiscogsEnabledKey,
-        defaultValue = false
-    )
-    val (discogsToken, onDiscogsTokenChange) = rememberPreference(
-        key = DiscogsTokenKey,
-        defaultValue = ""
-    )
-    val (songlinkEnabled, onSonglinkEnabledChange) = rememberPreference(
-        key = SonglinkEnabledKey,
-        defaultValue = false
-    )
-    val (mixcloudEnabled, onMixcloudEnabledChange) = rememberPreference(
-        key = MixcloudEnabledKey,
-        defaultValue = false
-    )
-    val (ambientEnabled, onAmbientEnabledChange) = rememberPreference(
-        key = AmbientSoundsEnabledKey,
-        defaultValue = false
-    )
-    val (freesoundApiKey, onFreesoundApiKeyChange) = rememberPreference(
-        key = FreesoundApiKeyKey,
-        defaultValue = ""
-    )
-    val (customShareDomain, onCustomShareDomainChange) = rememberPreference(
-        key = CustomShareDomainKey,
-        defaultValue = ""
-    )
+    val (artistInfoEnabled, onArtistInfoEnabledChange) =
+        rememberPreference(
+            key = ArtistInfoEnabledKey,
+            defaultValue = true,
+        )
+    val (artistInfoShowGenres, onArtistInfoShowGenresChange) =
+        rememberPreference(
+            key = ArtistInfoShowGenresKey,
+            defaultValue = true,
+        )
+    val (artistInfoShowLinks, onArtistInfoShowLinksChange) =
+        rememberPreference(
+            key = ArtistInfoShowLinksKey,
+            defaultValue = true,
+        )
+    val (artistBioEnabled, onArtistBioEnabledChange) =
+        rememberPreference(
+            key = ArtistBioEnabledKey,
+            defaultValue = true,
+        )
+    val (theAudioDbApiKey, onTheAudioDbApiKeyChange) =
+        rememberPreference(
+            key = TheAudioDbApiKeyKey,
+            defaultValue = "",
+        )
+    val (concertsEnabled, onConcertsEnabledChange) =
+        rememberPreference(
+            key = ConcertsEnabledKey,
+            defaultValue = false,
+        )
+    val (bandsintownAppId, onBandsintownAppIdChange) =
+        rememberPreference(
+            key = BandsintownAppIdKey,
+            defaultValue = "",
+        )
+    val (similarArtistsEnabled, onSimilarArtistsEnabledChange) =
+        rememberPreference(
+            key = SimilarArtistsEnabledKey,
+            defaultValue = false,
+        )
+    val (tasteDiveApiKey, onTasteDiveApiKeyChange) =
+        rememberPreference(
+            key = TasteDiveApiKeyKey,
+            defaultValue = "",
+        )
+    val (geniusEnabled, onGeniusEnabledChange) =
+        rememberPreference(
+            key = EnableGeniusKey,
+            defaultValue = false,
+        )
+    val (geniusAccessToken, onGeniusAccessTokenChange) =
+        rememberPreference(
+            key = GeniusAccessTokenKey,
+            defaultValue = "",
+        )
+    val (discogsEnabled, onDiscogsEnabledChange) =
+        rememberPreference(
+            key = DiscogsEnabledKey,
+            defaultValue = false,
+        )
+    val (discogsToken, onDiscogsTokenChange) =
+        rememberPreference(
+            key = DiscogsTokenKey,
+            defaultValue = "",
+        )
+    val (songlinkEnabled, onSonglinkEnabledChange) =
+        rememberPreference(
+            key = SonglinkEnabledKey,
+            defaultValue = false,
+        )
+    val (mixcloudEnabled, onMixcloudEnabledChange) =
+        rememberPreference(
+            key = MixcloudEnabledKey,
+            defaultValue = false,
+        )
+    val (ambientEnabled, onAmbientEnabledChange) =
+        rememberPreference(
+            key = AmbientSoundsEnabledKey,
+            defaultValue = false,
+        )
+    val (freesoundApiKey, onFreesoundApiKeyChange) =
+        rememberPreference(
+            key = FreesoundApiKeyKey,
+            defaultValue = "",
+        )
+    val (customShareDomain, onCustomShareDomainChange) =
+        rememberPreference(
+            key = CustomShareDomainKey,
+            defaultValue = "",
+        )
 
     SettingsPage(
         title = stringResource(R.string.integrations),
         navController = navController,
-        scrollBehavior = scrollBehavior
+        scrollBehavior = scrollBehavior,
     ) {
         SettingsGeneralCategory(
             title = stringResource(R.string.integrations_artist),
-            items = listOf(
-                {
-                    SwitchPreference(
-                        title = { Text(stringResource(R.string.integration_artist_details)) },
-                        description = stringResource(R.string.integration_artist_details_desc),
-                        icon = { Icon(painterResource(R.drawable.info), null) },
-                        checked = artistInfoEnabled,
-                        onCheckedChange = onArtistInfoEnabledChange,
-                    )
-                },
-                {
-                    SwitchPreference(
-                        title = { Text(stringResource(R.string.integration_artist_genres)) },
-                        icon = { Icon(painterResource(R.drawable.music_note), null) },
-                        checked = artistInfoShowGenres,
-                        onCheckedChange = onArtistInfoShowGenresChange,
-                        isEnabled = artistInfoEnabled,
-                    )
-                },
-                {
-                    SwitchPreference(
-                        title = { Text(stringResource(R.string.integration_artist_links)) },
-                        description = stringResource(R.string.integration_artist_links_desc),
-                        icon = { Icon(painterResource(R.drawable.link), null) },
-                        checked = artistInfoShowLinks,
-                        onCheckedChange = onArtistInfoShowLinksChange,
-                        isEnabled = artistInfoEnabled,
-                    )
-                },
-                {
-                    SwitchPreference(
-                        title = { Text(stringResource(R.string.integration_artist_bio)) },
-                        description = stringResource(R.string.integration_artist_bio_desc),
-                        icon = { Icon(painterResource(R.drawable.person), null) },
-                        checked = artistBioEnabled,
-                        onCheckedChange = onArtistBioEnabledChange,
-                    )
-                },
-                {
-                    EditTextPreference(
-                        title = { Text(stringResource(R.string.integration_theaudiodb_key)) },
-                        icon = { Icon(painterResource(R.drawable.token), null) },
-                        value = theAudioDbApiKey,
-                        onValueChange = onTheAudioDbApiKeyChange,
-                        isInputValid = { true },
-                        isEnabled = artistBioEnabled,
-                    )
-                },
-                {
-                    KeyRequiredIntegrationCard(
-                        title = stringResource(R.string.integration_concerts),
-                        description = stringResource(R.string.integration_concerts_desc),
-                        icon = R.drawable.event,
-                        enabled = concertsEnabled,
-                        onEnabledChange = onConcertsEnabledChange,
-                        keyValue = bandsintownAppId,
-                        onKeyValueChange = onBandsintownAppIdChange,
-                        keyTitle = stringResource(R.string.integration_bandsintown_id),
-                        websiteUrl = "https://manager.bandsintown.com",
-                        steps = listOf(
-                            "Visit manager.bandsintown.com or API developer docs.",
-                            "Sign up or log in to your developer account.",
-                            "Copy your assigned App ID and paste it above."
+            items =
+                listOf(
+                    {
+                        SwitchPreference(
+                            title = { Text(stringResource(R.string.integration_artist_details)) },
+                            description = stringResource(R.string.integration_artist_details_desc),
+                            icon = { Icon(painterResource(R.drawable.info), null) },
+                            checked = artistInfoEnabled,
+                            onCheckedChange = onArtistInfoEnabledChange,
                         )
-                    )
-                },
-                {
-                    KeyRequiredIntegrationCard(
-                        title = stringResource(R.string.integration_similar_artists),
-                        description = stringResource(R.string.integration_similar_artists_desc),
-                        icon = R.drawable.discover_tune,
-                        enabled = similarArtistsEnabled,
-                        onEnabledChange = onSimilarArtistsEnabledChange,
-                        keyValue = tasteDiveApiKey,
-                        onKeyValueChange = onTasteDiveApiKeyChange,
-                        keyTitle = stringResource(R.string.integration_tastedive_key),
-                        websiteUrl = "https://tastedive.com/account/api_access",
-                        steps = listOf(
-                            "Create or log in to your TasteDive account.",
-                            "Navigate to Account -> API Access.",
-                            "Copy your free API Key and paste it above."
+                    },
+                    {
+                        SwitchPreference(
+                            title = { Text(stringResource(R.string.integration_artist_genres)) },
+                            icon = { Icon(painterResource(R.drawable.music_note), null) },
+                            checked = artistInfoShowGenres,
+                            onCheckedChange = onArtistInfoShowGenresChange,
+                            isEnabled = artistInfoEnabled,
                         )
-                    )
-                },
-            )
+                    },
+                    {
+                        SwitchPreference(
+                            title = { Text(stringResource(R.string.integration_artist_links)) },
+                            description = stringResource(R.string.integration_artist_links_desc),
+                            icon = { Icon(painterResource(R.drawable.link), null) },
+                            checked = artistInfoShowLinks,
+                            onCheckedChange = onArtistInfoShowLinksChange,
+                            isEnabled = artistInfoEnabled,
+                        )
+                    },
+                    {
+                        SwitchPreference(
+                            title = { Text(stringResource(R.string.integration_artist_bio)) },
+                            description = stringResource(R.string.integration_artist_bio_desc),
+                            icon = { Icon(painterResource(R.drawable.person), null) },
+                            checked = artistBioEnabled,
+                            onCheckedChange = onArtistBioEnabledChange,
+                        )
+                    },
+                    {
+                        EditTextPreference(
+                            title = { Text(stringResource(R.string.integration_theaudiodb_key)) },
+                            icon = { Icon(painterResource(R.drawable.token), null) },
+                            value = theAudioDbApiKey,
+                            onValueChange = onTheAudioDbApiKeyChange,
+                            isInputValid = { true },
+                            isEnabled = artistBioEnabled,
+                        )
+                    },
+                    {
+                        KeyRequiredIntegrationCard(
+                            title = stringResource(R.string.integration_concerts),
+                            description = stringResource(R.string.integration_concerts_desc),
+                            icon = R.drawable.event,
+                            enabled = concertsEnabled,
+                            onEnabledChange = onConcertsEnabledChange,
+                            keyValue = bandsintownAppId,
+                            onKeyValueChange = onBandsintownAppIdChange,
+                            keyTitle = stringResource(R.string.integration_bandsintown_id),
+                            websiteUrl = "https://manager.bandsintown.com",
+                            steps =
+                                listOf(
+                                    "Visit manager.bandsintown.com or API developer docs.",
+                                    "Sign up or log in to your developer account.",
+                                    "Copy your assigned App ID and paste it above.",
+                                ),
+                        )
+                    },
+                    {
+                        KeyRequiredIntegrationCard(
+                            title = stringResource(R.string.integration_similar_artists),
+                            description = stringResource(R.string.integration_similar_artists_desc),
+                            icon = R.drawable.discover_tune,
+                            enabled = similarArtistsEnabled,
+                            onEnabledChange = onSimilarArtistsEnabledChange,
+                            keyValue = tasteDiveApiKey,
+                            onKeyValueChange = onTasteDiveApiKeyChange,
+                            keyTitle = stringResource(R.string.integration_tastedive_key),
+                            websiteUrl = "https://tastedive.com/account/api_access",
+                            steps =
+                                listOf(
+                                    "Create or log in to your TasteDive account.",
+                                    "Navigate to Account -> API Access.",
+                                    "Copy your free API Key and paste it above.",
+                                ),
+                        )
+                    },
+                ),
         )
 
         SettingsGeneralCategory(
             title = stringResource(R.string.integrations_music),
-            items = listOf(
-                {
-                    KeyRequiredIntegrationCard(
-                        title = stringResource(R.string.integration_genius),
-                        description = stringResource(R.string.integration_genius_desc),
-                        icon = R.drawable.lyrics,
-                        enabled = geniusEnabled,
-                        onEnabledChange = onGeniusEnabledChange,
-                        keyValue = geniusAccessToken,
-                        onKeyValueChange = onGeniusAccessTokenChange,
-                        keyTitle = stringResource(R.string.integration_genius_token),
-                        websiteUrl = "https://genius.com/api-clients",
-                        steps = listOf(
-                            "Sign in to genius.com.",
-                            "Go to API Clients (genius.com/api-clients) and create a client.",
-                            "Click 'Generate Access Token' and paste it above."
+            items =
+                listOf(
+                    {
+                        KeyRequiredIntegrationCard(
+                            title = stringResource(R.string.integration_genius),
+                            description = stringResource(R.string.integration_genius_desc),
+                            icon = R.drawable.lyrics,
+                            enabled = geniusEnabled,
+                            onEnabledChange = onGeniusEnabledChange,
+                            keyValue = geniusAccessToken,
+                            onKeyValueChange = onGeniusAccessTokenChange,
+                            keyTitle = stringResource(R.string.integration_genius_token),
+                            websiteUrl = "https://genius.com/api-clients",
+                            steps =
+                                listOf(
+                                    "Sign in to genius.com.",
+                                    "Go to API Clients (genius.com/api-clients) and create a client.",
+                                    "Click 'Generate Access Token' and paste it above.",
+                                ),
                         )
-                    )
-                },
-                {
-                    KeyRequiredIntegrationCard(
-                        title = stringResource(R.string.integration_discogs),
-                        description = stringResource(R.string.integration_discogs_desc),
-                        icon = R.drawable.album,
-                        enabled = discogsEnabled,
-                        onEnabledChange = onDiscogsEnabledChange,
-                        keyValue = discogsToken,
-                        onKeyValueChange = onDiscogsTokenChange,
-                        keyTitle = stringResource(R.string.integration_discogs_token),
-                        websiteUrl = "https://www.discogs.com/settings/developers",
-                        steps = listOf(
-                            "Log in to your Discogs account.",
-                            "Go to Settings -> Developers.",
-                            "Click 'Generate new token' and paste it above."
+                    },
+                    {
+                        KeyRequiredIntegrationCard(
+                            title = stringResource(R.string.integration_discogs),
+                            description = stringResource(R.string.integration_discogs_desc),
+                            icon = R.drawable.album,
+                            enabled = discogsEnabled,
+                            onEnabledChange = onDiscogsEnabledChange,
+                            keyValue = discogsToken,
+                            onKeyValueChange = onDiscogsTokenChange,
+                            keyTitle = stringResource(R.string.integration_discogs_token),
+                            websiteUrl = "https://www.discogs.com/settings/developers",
+                            steps =
+                                listOf(
+                                    "Log in to your Discogs account.",
+                                    "Go to Settings -> Developers.",
+                                    "Click 'Generate new token' and paste it above.",
+                                ),
                         )
-                    )
-                },
-                {
-                    SwitchPreference(
-                        title = { Text(stringResource(R.string.integration_songlink)) },
-                        description = stringResource(R.string.integration_songlink_desc),
-                        icon = { Icon(painterResource(R.drawable.share), null) },
-                        checked = songlinkEnabled,
-                        onCheckedChange = onSonglinkEnabledChange,
-                    )
-                },
-                {
-                    EditTextPreference(
-                        title = {
-                            Column {
-                                Text("Echofy Share Domain")
-                                Text(
-                                    text = if (customShareDomain.isBlank()) "Default: https://chenkham.github.io" else customShareDomain,
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                                )
-                            }
-                        },
-                        icon = { Icon(painterResource(R.drawable.link), null) },
-                        value = customShareDomain,
-                        onValueChange = onCustomShareDomainChange,
-                        isInputValid = { true },
-                    )
-                },
-            )
+                    },
+                    {
+                        SwitchPreference(
+                            title = { Text(stringResource(R.string.integration_songlink)) },
+                            description = stringResource(R.string.integration_songlink_desc),
+                            icon = { Icon(painterResource(R.drawable.share), null) },
+                            checked = songlinkEnabled,
+                            onCheckedChange = onSonglinkEnabledChange,
+                        )
+                    },
+                    {
+                        EditTextPreference(
+                            title = {
+                                Column {
+                                    Text("Echofy Share Domain")
+                                    Text(
+                                        text = if (customShareDomain.isBlank()) "Default: https://chenkham.github.io" else customShareDomain,
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    )
+                                }
+                            },
+                            icon = { Icon(painterResource(R.drawable.link), null) },
+                            value = customShareDomain,
+                            onValueChange = onCustomShareDomainChange,
+                            isInputValid = { true },
+                        )
+                    },
+                ),
         )
 
         SettingsGeneralCategory(
             title = stringResource(R.string.integrations_explore),
-            items = listOf(
-                {
-                    SwitchPreference(
-                        title = { Text(stringResource(R.string.integration_mixcloud)) },
-                        description = stringResource(R.string.integration_mixcloud_desc),
-                        icon = { Icon(painterResource(R.drawable.graphic_eq), null) },
-                        checked = mixcloudEnabled,
-                        onCheckedChange = onMixcloudEnabledChange,
-                    )
-                },
-                {
-                    KeyRequiredIntegrationCard(
-                        title = stringResource(R.string.integration_ambient),
-                        description = stringResource(R.string.integration_ambient_desc),
-                        icon = R.drawable.music_note,
-                        enabled = ambientEnabled,
-                        onEnabledChange = onAmbientEnabledChange,
-                        keyValue = freesoundApiKey,
-                        onKeyValueChange = onFreesoundApiKeyChange,
-                        keyTitle = stringResource(R.string.integration_freesound_key),
-                        websiteUrl = "https://freesound.org/apiv2/apply",
-                        steps = listOf(
-                            "Log in or register at freesound.org.",
-                            "Go to API -> Apply for API key.",
-                            "Copy your API Key and paste it above."
+            items =
+                listOf(
+                    {
+                        SwitchPreference(
+                            title = { Text(stringResource(R.string.integration_mixcloud)) },
+                            description = stringResource(R.string.integration_mixcloud_desc),
+                            icon = { Icon(painterResource(R.drawable.graphic_eq), null) },
+                            checked = mixcloudEnabled,
+                            onCheckedChange = onMixcloudEnabledChange,
                         )
-                    )
-                },
-            )
+                    },
+                    {
+                        KeyRequiredIntegrationCard(
+                            title = stringResource(R.string.integration_ambient),
+                            description = stringResource(R.string.integration_ambient_desc),
+                            icon = R.drawable.music_note,
+                            enabled = ambientEnabled,
+                            onEnabledChange = onAmbientEnabledChange,
+                            keyValue = freesoundApiKey,
+                            onKeyValueChange = onFreesoundApiKeyChange,
+                            keyTitle = stringResource(R.string.integration_freesound_key),
+                            websiteUrl = "https://freesound.org/apiv2/apply",
+                            steps =
+                                listOf(
+                                    "Log in or register at freesound.org.",
+                                    "Go to API -> Apply for API key.",
+                                    "Copy your API Key and paste it above.",
+                                ),
+                        )
+                    },
+                ),
         )
     }
 }
@@ -366,18 +392,25 @@ private fun KeyRequiredIntegrationCard(
     val hasKey = keyValue.isNotBlank()
 
     OutlinedCard(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 6.dp),
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 6.dp),
         shape = RoundedCornerShape(16.dp),
-        border = BorderStroke(
-            width = 1.dp,
-            color = if (hasKey) MaterialTheme.colorScheme.primary.copy(alpha = 0.5f)
-            else MaterialTheme.colorScheme.outlineVariant
-        ),
-        colors = CardDefaults.outlinedCardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceContainerLow
-        )
+        border =
+            BorderStroke(
+                width = 1.dp,
+                color =
+                    if (hasKey) {
+                        MaterialTheme.colorScheme.primary.copy(alpha = 0.5f)
+                    } else {
+                        MaterialTheme.colorScheme.outlineVariant
+                    },
+            ),
+        colors =
+            CardDefaults.outlinedCardColors(
+                containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
+            ),
     ) {
         Column(modifier = Modifier.padding(vertical = 8.dp)) {
             // Feature Switch (GATED: Disabled until API Key is provided)
@@ -411,17 +444,18 @@ private fun KeyRequiredIntegrationCard(
 
             // Expandable Guide Section Toggle
             Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clickable { guideExpanded = !guideExpanded }
-                    .padding(horizontal = 16.dp, vertical = 8.dp),
-                verticalAlignment = Alignment.CenterVertically
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .clickable { guideExpanded = !guideExpanded }
+                        .padding(horizontal = 16.dp, vertical = 8.dp),
+                verticalAlignment = Alignment.CenterVertically,
             ) {
                 Icon(
                     painter = painterResource(R.drawable.info),
                     contentDescription = null,
                     tint = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.size(18.dp)
+                    modifier = Modifier.size(18.dp),
                 )
                 Spacer(Modifier.size(8.dp))
                 Text(
@@ -429,15 +463,16 @@ private fun KeyRequiredIntegrationCard(
                     style = MaterialTheme.typography.labelMedium,
                     color = MaterialTheme.colorScheme.primary,
                     fontWeight = FontWeight.SemiBold,
-                    modifier = Modifier.weight(1f)
+                    modifier = Modifier.weight(1f),
                 )
                 Icon(
-                    painter = painterResource(
-                        if (guideExpanded) R.drawable.expand_less else R.drawable.expand_more
-                    ),
+                    painter =
+                        painterResource(
+                            if (guideExpanded) R.drawable.expand_less else R.drawable.expand_more,
+                        ),
                     contentDescription = null,
                     tint = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.size(18.dp)
+                    modifier = Modifier.size(18.dp),
                 )
             }
 
@@ -445,18 +480,19 @@ private fun KeyRequiredIntegrationCard(
             AnimatedVisibility(
                 visible = guideExpanded,
                 enter = expandVertically() + fadeIn(),
-                exit = shrinkVertically() + fadeOut()
+                exit = shrinkVertically() + fadeOut(),
             ) {
                 Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 16.dp, vertical = 6.dp)
+                    modifier =
+                        Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp, vertical = 6.dp),
                 ) {
                     Text(
                         text = "Follow these steps to obtain your key:",
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        fontWeight = FontWeight.Bold
+                        fontWeight = FontWeight.Bold,
                     )
                     Spacer(Modifier.height(4.dp))
                     steps.forEachIndexed { index, step ->
@@ -464,7 +500,7 @@ private fun KeyRequiredIntegrationCard(
                             text = "${index + 1}. $step",
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            modifier = Modifier.padding(vertical = 2.dp)
+                            modifier = Modifier.padding(vertical = 2.dp),
                         )
                     }
                     Spacer(Modifier.height(8.dp))
@@ -472,14 +508,15 @@ private fun KeyRequiredIntegrationCard(
                         onClick = { uriHandler.openUri(websiteUrl) },
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(12.dp),
-                        colors = ButtonDefaults.outlinedButtonColors(
-                            contentColor = MaterialTheme.colorScheme.primary
-                        )
+                        colors =
+                            ButtonDefaults.outlinedButtonColors(
+                                contentColor = MaterialTheme.colorScheme.primary,
+                            ),
                     ) {
                         Icon(
                             painter = painterResource(R.drawable.link),
                             contentDescription = null,
-                            modifier = Modifier.size(16.dp)
+                            modifier = Modifier.size(16.dp),
                         )
                         Spacer(Modifier.size(8.dp))
                         Text("Open Key Website", style = MaterialTheme.typography.labelMedium)
@@ -489,4 +526,3 @@ private fun KeyRequiredIntegrationCard(
         }
     }
 }
-

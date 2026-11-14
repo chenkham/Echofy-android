@@ -33,26 +33,25 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
-import androidx.compose.ui.graphics.Color
 import androidx.compose.material3.TopAppBarScrollBehavior
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.toMutableStateList
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.toMutableStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
@@ -92,8 +91,8 @@ import com.Chenkham.Echofy.ui.component.AutoResizeText
 import com.Chenkham.Echofy.ui.component.FontSizeRange
 import com.Chenkham.Echofy.ui.component.LocalMenuState
 import com.Chenkham.Echofy.ui.component.NavigationTitle
-import com.Chenkham.Echofy.ui.component.ReleaseInfoCard
 import com.Chenkham.Echofy.ui.component.PrefetchOnVisible
+import com.Chenkham.Echofy.ui.component.ReleaseInfoCard
 import com.Chenkham.Echofy.ui.component.SongListItem
 import com.Chenkham.Echofy.ui.component.YouTubeGridItem
 import com.Chenkham.Echofy.ui.component.shimmer.ButtonPlaceholder
@@ -136,9 +135,10 @@ fun AlbumScreen(
     val otherVersions by viewModel.otherVersions.collectAsState()
     val releaseInfo by viewModel.releaseInfo.collectAsState()
 
-    val wrappedSongs = remember(albumWithSongs) {
-        albumWithSongs?.songs?.map { item -> ItemWrapper(item) }?.toMutableStateList()
-    }
+    val wrappedSongs =
+        remember(albumWithSongs) {
+            albumWithSongs?.songs?.map { item -> ItemWrapper(item) }?.toMutableStateList()
+        }
     var selection by remember {
         mutableStateOf(false)
     }
@@ -158,8 +158,8 @@ fun AlbumScreen(
                     Download.STATE_COMPLETED
                 } else if (songs.all {
                         downloads[it]?.state == Download.STATE_QUEUED ||
-                                downloads[it]?.state == Download.STATE_DOWNLOADING ||
-                                downloads[it]?.state == Download.STATE_COMPLETED
+                            downloads[it]?.state == Download.STATE_DOWNLOADING ||
+                            downloads[it]?.state == Download.STATE_COMPLETED
                     }
                 ) {
                     Download.STATE_DOWNLOADING
@@ -182,16 +182,17 @@ fun AlbumScreen(
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
                         Box(
-                            modifier = Modifier
-                                .size(AlbumThumbnailSize)
-                                .clip(RoundedCornerShape(ThumbnailCornerRadius))
+                            modifier =
+                                Modifier
+                                    .size(AlbumThumbnailSize)
+                                    .clip(RoundedCornerShape(ThumbnailCornerRadius)),
                         ) {
                             // Mostrar la imagen del álbum
                             AsyncImage(
                                 model = albumWithSongs.album.thumbnailUrl,
                                 contentDescription = null,
                                 modifier = Modifier.fillMaxSize(),
-                                contentScale = ContentScale.Crop
+                                contentScale = ContentScale.Crop,
                             )
 
                             // Botón de descarga superpuesto
@@ -203,28 +204,28 @@ fun AlbumScreen(
                                             saveAlbumImageToGallery(
                                                 context,
                                                 it,
-                                                albumWithSongs.album.title
+                                                albumWithSongs.album.title,
                                             )
                                         }
                                     }
                                 },
-                                modifier = Modifier
-                                    .align(Alignment.BottomEnd) // Ubicar el botón en la esquina inferior derecha
-                                    .padding(8.dp) // Margen desde el borde
-                                    .size(40.dp) // Hacerlo más pequeño
-                                    .clip(RoundedCornerShape(24.dp)) // Bordes redondeados
-                                    .background(
-                                        MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.6f) // Fondo semitransparente
-                                    )
+                                modifier =
+                                    Modifier
+                                        .align(Alignment.BottomEnd) // Ubicar el botón en la esquina inferior derecha
+                                        .padding(8.dp) // Margen desde el borde
+                                        .size(40.dp) // Hacerlo más pequeño
+                                        .clip(RoundedCornerShape(24.dp)) // Bordes redondeados
+                                        .background(
+                                            MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.6f), // Fondo semitransparente
+                                        ),
                             ) {
                                 Icon(
                                     painter = painterResource(R.drawable.download),
                                     contentDescription = "Guardar imagen en galería",
-                                    tint = MaterialTheme.colorScheme.onSecondaryContainer // Color del ícono
+                                    tint = MaterialTheme.colorScheme.onSecondaryContainer, // Color del ícono
                                 )
                             }
                         }
-
 
                         Spacer(Modifier.width(16.dp))
 
@@ -378,17 +379,22 @@ fun AlbumScreen(
                                     onClick = {
                                         menuState.show {
                                             AlbumMenu(
-                                                originalAlbum = Album(
-                                                    albumWithSongs.album,
-                                                    albumWithSongs.artists
-                                                ),
+                                                originalAlbum =
+                                                    Album(
+                                                        albumWithSongs.album,
+                                                        albumWithSongs.artists,
+                                                    ),
                                                 navController = navController,
                                                 onDismiss = menuState::dismiss,
                                             )
                                         }
-                                    }
+                                    },
                                 ) {
-                                    Icon(painter = painterResource(R.drawable.more_vert), tint = MaterialTheme.colorScheme.onSurface, contentDescription = null)
+                                    Icon(
+                                        painter = painterResource(R.drawable.more_vert),
+                                        tint = MaterialTheme.colorScheme.onSurface,
+                                        contentDescription = null,
+                                    )
                                 }
                             }
                         }
@@ -455,7 +461,7 @@ fun AlbumScreen(
                 ) { index, songWrapper ->
                     // INSTANT PLAYBACK: Prefetch URL when song becomes visible
                     PrefetchOnVisible(mediaId = songWrapper.item.id)
-                    
+
                     SongListItem(
                         song = songWrapper.item,
                         albumIndex = index + 1,
@@ -474,7 +480,11 @@ fun AlbumScreen(
                                     }
                                 },
                             ) {
-                                Icon(painter = painterResource(R.drawable.more_vert), tint = MaterialTheme.colorScheme.onSurface, contentDescription = null)
+                                Icon(
+                                    painter = painterResource(R.drawable.more_vert),
+                                    tint = MaterialTheme.colorScheme.onSurface,
+                                    contentDescription = null,
+                                )
                             }
                         },
                         isSelected = songWrapper.isSelected && selection,
@@ -491,7 +501,7 @@ fun AlbumScreen(
                                                 playerConnection.playQueue(
                                                     LocalAlbumRadio(
                                                         albumWithSongs,
-                                                        startIndex = index
+                                                        startIndex = index,
                                                     ),
                                                 )
                                             }
@@ -596,20 +606,20 @@ fun AlbumScreen(
     }
 
     TopAppBar(
-            colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent, scrolledContainerColor = Color.Transparent),
+        colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent, scrolledContainerColor = Color.Transparent),
         title = {
             if (selection) {
                 val count = wrappedSongs?.count { it.isSelected } ?: 0
                 Text(
                     text = pluralStringResource(R.plurals.n_song, count, count),
-                    style = MaterialTheme.typography.titleLarge
+                    style = MaterialTheme.typography.titleLarge,
                 )
             } else {
                 Text(
                     text = albumWithSongs?.album?.title.orEmpty(),
                     style = MaterialTheme.typography.titleLarge,
                     maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
+                    overflow = TextOverflow.Ellipsis,
                 )
             }
         },
@@ -624,10 +634,11 @@ fun AlbumScreen(
                 },
             ) {
                 Icon(
-                    painter = painterResource(
-                        if (selection) R.drawable.close else R.drawable.arrow_back
-                    ),
-                    contentDescription = null
+                    painter =
+                        painterResource(
+                            if (selection) R.drawable.close else R.drawable.arrow_back,
+                        ),
+                    contentDescription = null,
                 )
             }
         },
@@ -644,10 +655,11 @@ fun AlbumScreen(
                     },
                 ) {
                     Icon(
-                        painter = painterResource(
-                            if (count == wrappedSongs?.size) R.drawable.deselect else R.drawable.select_all
-                        ),
-                        contentDescription = null
+                        painter =
+                            painterResource(
+                                if (count == wrappedSongs?.size) R.drawable.deselect else R.drawable.select_all,
+                            ),
+                        contentDescription = null,
                     )
                 }
 
@@ -655,28 +667,38 @@ fun AlbumScreen(
                     onClick = {
                         menuState.show {
                             SelectionSongMenu(
-                                songSelection = wrappedSongs?.filter { it.isSelected }
-                                    ?.map { it.item } ?: emptyList(),
+                                songSelection =
+                                    wrappedSongs?.filter { it.isSelected }
+                                        ?.map { it.item } ?: emptyList(),
                                 onDismiss = menuState::dismiss,
-                                clearAction = { selection = false }
+                                clearAction = { selection = false },
                             )
                         }
                     },
                 ) {
-                    Icon(painter = painterResource(R.drawable.more_vert), tint = MaterialTheme.colorScheme.onSurface, contentDescription = null)
+                    Icon(
+                        painter = painterResource(R.drawable.more_vert),
+                        tint = MaterialTheme.colorScheme.onSurface,
+                        contentDescription = null,
+                    )
                 }
             } else {
             }
-        }
+        },
     )
 }
 
-suspend fun saveAlbumImageToGallery(context: Context, imageUrl: String, albumTitle: String) {
+suspend fun saveAlbumImageToGallery(
+    context: Context,
+    imageUrl: String,
+    albumTitle: String,
+) {
     try {
         // Cargar la imagen usando Coil
-        val request = ImageRequest.Builder(context)
-            .data(imageUrl)
-            .build()
+        val request =
+            ImageRequest.Builder(context)
+                .data(imageUrl)
+                .build()
 
         val drawable = context.imageLoader.execute(request).drawable
 
@@ -687,18 +709,19 @@ suspend fun saveAlbumImageToGallery(context: Context, imageUrl: String, albumTit
             val displayName = "${albumTitle.replace(" ", "_")}.png"
             val mimeType = "image/png" // Tipo MIME para PNG
 
-
-            val contentValues = ContentValues().apply {
-                put(MediaStore.Images.Media.DISPLAY_NAME, displayName)
-                put(MediaStore.Images.Media.MIME_TYPE, mimeType)
-                put(MediaStore.Images.Media.RELATIVE_PATH, Environment.DIRECTORY_PICTURES)
-            }
+            val contentValues =
+                ContentValues().apply {
+                    put(MediaStore.Images.Media.DISPLAY_NAME, displayName)
+                    put(MediaStore.Images.Media.MIME_TYPE, mimeType)
+                    put(MediaStore.Images.Media.RELATIVE_PATH, Environment.DIRECTORY_PICTURES)
+                }
 
             val contentResolver = context.contentResolver
-            val uri = contentResolver.insert(
-                MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
-                contentValues
-            )
+            val uri =
+                contentResolver.insert(
+                    MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
+                    contentValues,
+                )
 
             uri?.let {
                 contentResolver.openOutputStream(it)?.use { outputStream ->
@@ -710,7 +733,7 @@ suspend fun saveAlbumImageToGallery(context: Context, imageUrl: String, albumTit
                     Toast.makeText(
                         context,
                         "Save Picture Success",
-                        Toast.LENGTH_SHORT
+                        Toast.LENGTH_SHORT,
                     ).show()
                 }
             }
@@ -720,7 +743,7 @@ suspend fun saveAlbumImageToGallery(context: Context, imageUrl: String, albumTit
             Toast.makeText(
                 context,
                 "X",
-                Toast.LENGTH_SHORT
+                Toast.LENGTH_SHORT,
             ).show()
         }
     }

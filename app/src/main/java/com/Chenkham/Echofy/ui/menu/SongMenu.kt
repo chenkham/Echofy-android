@@ -1,14 +1,7 @@
 package com.Chenkham.Echofy.ui.menu
 
-import com.Chenkham.Echofy.db.update
-import com.Chenkham.Echofy.ui.component.LocalAdManager
-
 import android.content.Intent
-import androidx.compose.ui.text.input.TextFieldValue
-import androidx.compose.ui.text.style.TextOverflow
-import android.graphics.Bitmap
 import android.widget.Toast
-import java.io.File
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
@@ -17,31 +10,30 @@ import androidx.compose.foundation.basicMarquee
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.systemBars
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.ripple.RippleAlpha
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.LocalContentColor
+import androidx.compose.material3.LocalRippleConfiguration
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.RippleConfiguration
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
@@ -53,6 +45,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalContext
@@ -60,11 +53,9 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.TextFieldValue
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import com.Chenkham.Echofy.constants.ThumbnailCornerRadius
-import com.Chenkham.Echofy.db.entities.SongEntity
-import com.Chenkham.Echofy.db.update
-import com.Chenkham.Echofy.extensions.toMediaItem
 import androidx.compose.ui.unit.sp
 import androidx.core.net.toUri
 import androidx.media3.exoplayer.offline.Download
@@ -72,40 +63,33 @@ import androidx.media3.exoplayer.offline.DownloadRequest
 import androidx.media3.exoplayer.offline.DownloadService
 import androidx.navigation.NavController
 import coil.compose.AsyncImage
-import com.arturo254.opentune.innertube.YouTube
 import com.Chenkham.Echofy.LocalDatabase
 import com.Chenkham.Echofy.LocalDownloadUtil
 import com.Chenkham.Echofy.LocalPlayerConnection
 import com.Chenkham.Echofy.LocalSyncUtils
 import com.Chenkham.Echofy.R
+import com.Chenkham.Echofy.ads.AdManager
 import com.Chenkham.Echofy.constants.ListItemHeight
 import com.Chenkham.Echofy.constants.ListThumbnailSize
+import com.Chenkham.Echofy.constants.SonglinkEnabledKey
 import com.Chenkham.Echofy.db.entities.Event
 import com.Chenkham.Echofy.db.entities.PlaylistSong
 import com.Chenkham.Echofy.db.entities.Song
+import com.Chenkham.Echofy.db.update
 import com.Chenkham.Echofy.extensions.toMediaItem
 import com.Chenkham.Echofy.models.toMediaMetadata
 import com.Chenkham.Echofy.playback.ExoDownloadService
 import com.Chenkham.Echofy.playback.queues.YouTubeQueue
+import com.Chenkham.Echofy.ui.component.ListDialog
+import com.Chenkham.Echofy.ui.component.LocalAdManager
 import com.Chenkham.Echofy.ui.component.LocalBottomSheetPageState
 import com.Chenkham.Echofy.ui.component.SongListItem
 import com.Chenkham.Echofy.ui.component.SonglinkShareDialog
-import com.Chenkham.Echofy.constants.SonglinkEnabledKey
-import com.Chenkham.Echofy.utils.rememberPreference
 import com.Chenkham.Echofy.ui.component.TextFieldDialog
-import com.Chenkham.Echofy.ui.component.ListDialog
-import com.Chenkham.Echofy.ads.AdManager
-import android.app.Activity
-import androidx.compose.material.ripple.RippleAlpha
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.LocalRippleConfiguration
-import androidx.compose.material3.RippleConfiguration
-import androidx.compose.material3.RippleDefaults
-import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.ui.graphics.Color
+import com.Chenkham.Echofy.utils.rememberPreference
+import com.arturo254.opentune.innertube.YouTube
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 
 @OptIn(ExperimentalMaterial3Api::class, androidx.compose.foundation.ExperimentalFoundationApi::class)
 @Composable
@@ -125,18 +109,18 @@ fun SongMenu(
     val playerConnection = LocalPlayerConnection.current ?: return
     val isJamActive = playerConnection.service.isJamSessionActive()
     // Optimized: use remember to avoid recomposition lag
-    val songState = remember(originalSong.id) { 
-        database.song(originalSong.id) 
-    }.collectAsState(initial = originalSong)
+    val songState =
+        remember(originalSong.id) {
+            database.song(originalSong.id)
+        }.collectAsState(initial = originalSong)
     val song = songState.value ?: originalSong
-    val download by remember(originalSong.id) { 
-        downloadUtil.getDownload(originalSong.id) 
+    val download by remember(originalSong.id) {
+        downloadUtil.getDownload(originalSong.id)
     }.collectAsState(initial = null)
     val coroutineScope = rememberCoroutineScope()
     val syncUtils = LocalSyncUtils.current
     val scope = rememberCoroutineScope()
     var refetchIconDegree by remember { mutableFloatStateOf(0f) }
-
 
     val rotationAnimation by animateFloatAsState(
         targetValue = refetchIconDegree,
@@ -147,15 +131,15 @@ fun SongMenu(
     var showEditDialog by rememberSaveable {
         mutableStateOf(false)
     }
-    
+
     var showDetailsDialog by rememberSaveable {
         mutableStateOf(false)
     }
-    
+
     if (showDetailsDialog) {
         com.Chenkham.Echofy.ui.utils.ShowMediaInfo(
             songId = song.id,
-            onDismiss = { showDetailsDialog = false }
+            onDismiss = { showDetailsDialog = false },
         )
     }
 
@@ -164,10 +148,11 @@ fun SongMenu(
             icon = { Icon(painter = painterResource(R.drawable.edit), contentDescription = null) },
             title = { Text(text = stringResource(R.string.edit_song)) },
             onDismiss = { showEditDialog = false },
-            initialTextFieldValue = TextFieldValue(
-                song.song.title,
-                TextRange(song.song.title.length)
-            ),
+            initialTextFieldValue =
+                TextFieldValue(
+                    song.song.title,
+                    TextRange(song.song.title.length),
+                ),
             onDone = { title ->
                 onDismiss()
                 database.query {
@@ -237,7 +222,7 @@ fun SongMenu(
 
             items(
                 items = listOf(song),
-                key = { it.id }
+                key = { it.id },
             ) { song ->
                 SongListItem(song = song)
             }
@@ -258,14 +243,15 @@ fun SongMenu(
             ) { artist ->
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier
-                        .height(ListItemHeight)
-                        .clickable {
-                            navController.navigate("artist/${artist.id}")
-                            showSelectArtistDialog = false
-                            onDismiss()
-                        }
-                        .padding(horizontal = 12.dp),
+                    modifier =
+                        Modifier
+                            .height(ListItemHeight)
+                            .clickable {
+                                navController.navigate("artist/${artist.id}")
+                                showSelectArtistDialog = false
+                                onDismiss()
+                            }
+                            .padding(horizontal = 12.dp),
                 ) {
                     Box(
                         modifier = Modifier.padding(8.dp),
@@ -274,9 +260,10 @@ fun SongMenu(
                         AsyncImage(
                             model = artist.thumbnailUrl,
                             contentDescription = null,
-                            modifier = Modifier
-                                .size(ListThumbnailSize)
-                                .clip(CircleShape),
+                            modifier =
+                                Modifier
+                                    .size(ListThumbnailSize)
+                                    .clip(CircleShape),
                         )
                     }
                     Text(
@@ -285,9 +272,10 @@ fun SongMenu(
                         fontWeight = FontWeight.Bold,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
-                        modifier = Modifier
-                            .weight(1f)
-                            .padding(horizontal = 8.dp),
+                        modifier =
+                            Modifier
+                                .weight(1f)
+                                .padding(horizontal = 8.dp),
                     )
                 }
             }
@@ -296,28 +284,31 @@ fun SongMenu(
 
     val bottomSheetPageState = LocalBottomSheetPageState.current
 
-    val ghostRippleConfig = RippleConfiguration(
-        color = Color.White,
-        rippleAlpha = RippleAlpha(
-            pressedAlpha = 0.0f,
-            draggedAlpha = 0.0f,
-            focusedAlpha = 0.0f,
-            hoveredAlpha = 0.0f
+    val ghostRippleConfig =
+        RippleConfiguration(
+            color = Color.White,
+            rippleAlpha =
+                RippleAlpha(
+                    pressedAlpha = 0.0f,
+                    draggedAlpha = 0.0f,
+                    focusedAlpha = 0.0f,
+                    hoveredAlpha = 0.0f,
+                ),
         )
-    )
 
     // LazyListState to track scroll position for nested scroll handling
     val lazyListState = androidx.compose.foundation.lazy.rememberLazyListState()
 
     CompositionLocalProvider(
-        LocalRippleConfiguration provides ghostRippleConfig
+        LocalRippleConfiguration provides ghostRippleConfig,
     ) {
         LazyColumn(
             state = lazyListState,
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(8.dp),
-            userScrollEnabled = true
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .padding(8.dp),
+            userScrollEnabled = true,
         ) {
             item {
                 SongListItem(
@@ -349,7 +340,7 @@ fun SongMenu(
             item {
                 HorizontalDivider()
             }
-            
+
             item {
                 Spacer(modifier = Modifier.height(12.dp))
             }
@@ -357,25 +348,27 @@ fun SongMenu(
             item {
                 // Quick action buttons row (4 buttons)
                 Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(start = 24.dp, end = 24.dp, top = 8.dp, bottom = 8.dp),
+                    modifier =
+                        Modifier
+                            .fillMaxWidth()
+                            .padding(start = 24.dp, end = 24.dp, top = 8.dp, bottom = 8.dp),
                     horizontalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(8.dp),
                 ) {
                     // Play next button
                     Column(
-                        modifier = Modifier
-                            .weight(1f)
-                            .background(
-                                color = MaterialTheme.colorScheme.surfaceVariant,
-                                shape = RoundedCornerShape(8.dp)
-                            )
-                            .clip(RoundedCornerShape(8.dp))
-                            .clickable {
-                                onDismiss()
-                                playerConnection.playNext(song.toMediaItem())
-                            }
-                            .padding(12.dp),
+                        modifier =
+                            Modifier
+                                .weight(1f)
+                                .background(
+                                    color = MaterialTheme.colorScheme.surfaceVariant,
+                                    shape = RoundedCornerShape(8.dp),
+                                )
+                                .clip(RoundedCornerShape(8.dp))
+                                .clickable {
+                                    onDismiss()
+                                    playerConnection.playNext(song.toMediaItem())
+                                }
+                                .padding(12.dp),
                         horizontalAlignment = Alignment.CenterHorizontally,
                     ) {
                         Icon(
@@ -387,25 +380,27 @@ fun SongMenu(
                             text = stringResource(R.string.play_next),
                             style = MaterialTheme.typography.labelMedium,
                             textAlign = androidx.compose.ui.text.style.TextAlign.Center,
-                            modifier = Modifier
-                                .basicMarquee()
-                                .padding(top = 4.dp),
+                            modifier =
+                                Modifier
+                                    .basicMarquee()
+                                    .padding(top = 4.dp),
                         )
                     }
 
                     // Add to playlist button
                     Column(
-                        modifier = Modifier
-                            .weight(1f)
-                            .background(
-                                color = MaterialTheme.colorScheme.surfaceVariant,
-                                shape = RoundedCornerShape(8.dp)
-                            )
-                            .clip(RoundedCornerShape(8.dp))
-                            .clickable {
-                                showChoosePlaylistDialog = true
-                            }
-                            .padding(12.dp),
+                        modifier =
+                            Modifier
+                                .weight(1f)
+                                .background(
+                                    color = MaterialTheme.colorScheme.surfaceVariant,
+                                    shape = RoundedCornerShape(8.dp),
+                                )
+                                .clip(RoundedCornerShape(8.dp))
+                                .clickable {
+                                    showChoosePlaylistDialog = true
+                                }
+                                .padding(12.dp),
                         horizontalAlignment = Alignment.CenterHorizontally,
                     ) {
                         Icon(
@@ -417,45 +412,48 @@ fun SongMenu(
                             text = stringResource(R.string.add_to_playlist),
                             style = MaterialTheme.typography.labelMedium,
                             textAlign = androidx.compose.ui.text.style.TextAlign.Center,
-                            modifier = Modifier
-                                .basicMarquee()
-                                .padding(top = 4.dp),
+                            modifier =
+                                Modifier
+                                    .basicMarquee()
+                                    .padding(top = 4.dp),
                         )
                     }
 
                     // Share button
                     Column(
-                        modifier = Modifier
-                            .weight(1f)
-                            .background(
-                                color = MaterialTheme.colorScheme.surfaceVariant,
-                                shape = RoundedCornerShape(8.dp)
-                            )
-                            .clip(RoundedCornerShape(8.dp))
-                            .clickable {
-                                // With Songlink enabled the user picks a target
-                                // service first; otherwise share the plain link.
-                                if (songlinkEnabled) {
-                                    showSonglinkDialog = true
-                                } else {
-                                    onDismiss()
-                                    val shareIntent = Intent().apply {
-                                        action = Intent.ACTION_SEND
-                                        type = "text/plain"
-                                        putExtra(
-                                            Intent.EXTRA_TEXT,
-                                            com.Chenkham.Echofy.utils.ShareUtils.buildTrackShareText(
-                                                context = context,
-                                                songId = song.id,
-                                                title = song.title,
-                                                artist = song.artists.joinToString { it.name }
-                                            )
-                                        )
+                        modifier =
+                            Modifier
+                                .weight(1f)
+                                .background(
+                                    color = MaterialTheme.colorScheme.surfaceVariant,
+                                    shape = RoundedCornerShape(8.dp),
+                                )
+                                .clip(RoundedCornerShape(8.dp))
+                                .clickable {
+                                    // With Songlink enabled the user picks a target
+                                    // service first; otherwise share the plain link.
+                                    if (songlinkEnabled) {
+                                        showSonglinkDialog = true
+                                    } else {
+                                        onDismiss()
+                                        val shareIntent =
+                                            Intent().apply {
+                                                action = Intent.ACTION_SEND
+                                                type = "text/plain"
+                                                putExtra(
+                                                    Intent.EXTRA_TEXT,
+                                                    com.Chenkham.Echofy.utils.ShareUtils.buildTrackShareText(
+                                                        context = context,
+                                                        songId = song.id,
+                                                        title = song.title,
+                                                        artist = song.artists.joinToString { it.name },
+                                                    ),
+                                                )
+                                            }
+                                        context.startActivity(Intent.createChooser(shareIntent, "Share via"))
                                     }
-                                    context.startActivity(Intent.createChooser(shareIntent, "Share via"))
                                 }
-                            }
-                            .padding(12.dp),
+                                .padding(12.dp),
                         horizontalAlignment = Alignment.CenterHorizontally,
                     ) {
                         Icon(
@@ -467,9 +465,10 @@ fun SongMenu(
                             text = stringResource(R.string.share),
                             style = MaterialTheme.typography.labelMedium,
                             textAlign = androidx.compose.ui.text.style.TextAlign.Center,
-                            modifier = Modifier
-                                .basicMarquee()
-                                .padding(top = 4.dp),
+                            modifier =
+                                Modifier
+                                    .basicMarquee()
+                                    .padding(top = 4.dp),
                         )
                     }
                 }
@@ -484,13 +483,14 @@ fun SongMenu(
                             contentDescription = null,
                         )
                     },
-                    modifier = Modifier.clickable {
-                        onDismiss()
-                        playerConnection.playQueue(YouTubeQueue.radio(song.toMediaMetadata()))
-                    }
+                    modifier =
+                        Modifier.clickable {
+                            onDismiss()
+                            playerConnection.playQueue(YouTubeQueue.radio(song.toMediaMetadata()))
+                        },
                 )
             }
-            
+
             item {
                 ListItem(
                     headlineContent = { Text(text = stringResource(R.string.edit)) },
@@ -500,9 +500,10 @@ fun SongMenu(
                             contentDescription = null,
                         )
                     },
-                    modifier = Modifier.clickable {
-                        showEditDialog = true
-                    }
+                    modifier =
+                        Modifier.clickable {
+                            showEditDialog = true
+                        },
                 )
             }
 
@@ -510,11 +511,12 @@ fun SongMenu(
                 ListItem(
                     headlineContent = {
                         Text(
-                            text = if (isJamActive) {
-                                "Add to Together queue"
-                            } else {
-                                stringResource(R.string.add_to_queue)
-                            },
+                            text =
+                                if (isJamActive) {
+                                    "Add to Together queue"
+                                } else {
+                                    stringResource(R.string.add_to_queue)
+                                },
                         )
                     },
                     leadingContent = {
@@ -523,10 +525,11 @@ fun SongMenu(
                             contentDescription = null,
                         )
                     },
-                    modifier = Modifier.clickable {
-                        onDismiss()
-                        playerConnection.addToQueue(song.toMediaItem())
-                    }
+                    modifier =
+                        Modifier.clickable {
+                            onDismiss()
+                            playerConnection.addToQueue(song.toMediaItem())
+                        },
                 )
             }
 
@@ -534,26 +537,35 @@ fun SongMenu(
                 ListItem(
                     headlineContent = {
                         Text(
-                            text = stringResource(
-                                if (song.song.inLibrary == null) R.string.add_to_library
-                                else R.string.remove_from_library
-                            )
+                            text =
+                                stringResource(
+                                    if (song.song.inLibrary == null) {
+                                        R.string.add_to_library
+                                    } else {
+                                        R.string.remove_from_library
+                                    },
+                                ),
                         )
                     },
                     leadingContent = {
                         Icon(
-                            painter = painterResource(
-                                if (song.song.inLibrary == null) R.drawable.library_add
-                                else R.drawable.library_add_check
-                            ),
+                            painter =
+                                painterResource(
+                                    if (song.song.inLibrary == null) {
+                                        R.drawable.library_add
+                                    } else {
+                                        R.drawable.library_add_check
+                                    },
+                                ),
                             contentDescription = null,
                         )
                     },
-                    modifier = Modifier.clickable {
-                        database.query {
-                            update(song.song.toggleLibrary())
-                        }
-                    }
+                    modifier =
+                        Modifier.clickable {
+                            database.query {
+                                update(song.song.toggleLibrary())
+                            }
+                        },
                 )
             }
 
@@ -567,12 +579,13 @@ fun SongMenu(
                                 contentDescription = null,
                             )
                         },
-                        modifier = Modifier.clickable {
-                            onDismiss()
-                            database.query {
-                                delete(event)
-                            }
-                        }
+                        modifier =
+                            Modifier.clickable {
+                                onDismiss()
+                                database.query {
+                                    delete(event)
+                                }
+                            },
                     )
                 }
             }
@@ -587,28 +600,29 @@ fun SongMenu(
                                 contentDescription = null,
                             )
                         },
-                        modifier = Modifier.clickable {
-                            database.transaction {
-                                coroutineScope.launch {
-                                    playlistBrowseId?.let { playlistId ->
-                                        if (playlistSong.map.setVideoId != null) {
-                                            YouTube.removeFromPlaylist(
-                                                playlistId,
-                                                playlistSong.map.songId,
-                                                playlistSong.map.setVideoId
-                                            )
+                        modifier =
+                            Modifier.clickable {
+                                database.transaction {
+                                    coroutineScope.launch {
+                                        playlistBrowseId?.let { playlistId ->
+                                            if (playlistSong.map.setVideoId != null) {
+                                                YouTube.removeFromPlaylist(
+                                                    playlistId,
+                                                    playlistSong.map.songId,
+                                                    playlistSong.map.setVideoId,
+                                                )
+                                            }
                                         }
                                     }
+                                    move(
+                                        playlistSong.map.playlistId,
+                                        playlistSong.map.position,
+                                        Int.MAX_VALUE,
+                                    )
+                                    delete(playlistSong.map.copy(position = Int.MAX_VALUE))
                                 }
-                                move(
-                                    playlistSong.map.playlistId,
-                                    playlistSong.map.position,
-                                    Int.MAX_VALUE
-                                )
-                                delete(playlistSong.map.copy(position = Int.MAX_VALUE))
-                            }
-                            onDismiss()
-                        }
+                                onDismiss()
+                            },
                     )
                 }
             }
@@ -620,7 +634,7 @@ fun SongMenu(
                             headlineContent = {
                                 Text(
                                     text = stringResource(R.string.remove_download),
-                                    color = MaterialTheme.colorScheme.error
+                                    color = MaterialTheme.colorScheme.error,
                                 )
                             },
                             leadingContent = {
@@ -629,14 +643,15 @@ fun SongMenu(
                                     contentDescription = null,
                                 )
                             },
-                            modifier = Modifier.clickable {
-                                DownloadService.sendRemoveDownload(
-                                    context,
-                                    ExoDownloadService::class.java,
-                                    song.id,
-                                    false,
-                                )
-                            }
+                            modifier =
+                                Modifier.clickable {
+                                    DownloadService.sendRemoveDownload(
+                                        context,
+                                        ExoDownloadService::class.java,
+                                        song.id,
+                                        false,
+                                    )
+                                },
                         )
                     }
 
@@ -646,17 +661,18 @@ fun SongMenu(
                             leadingContent = {
                                 CircularProgressIndicator(
                                     modifier = Modifier.size(24.dp),
-                                    strokeWidth = 2.dp
+                                    strokeWidth = 2.dp,
                                 )
                             },
-                            modifier = Modifier.clickable {
-                                DownloadService.sendRemoveDownload(
-                                    context,
-                                    ExoDownloadService::class.java,
-                                    song.id,
-                                    false,
-                                )
-                            }
+                            modifier =
+                                Modifier.clickable {
+                                    DownloadService.sendRemoveDownload(
+                                        context,
+                                        ExoDownloadService::class.java,
+                                        song.id,
+                                        false,
+                                    )
+                                },
                         )
                     }
 
@@ -670,21 +686,22 @@ fun SongMenu(
                                     contentDescription = null,
                                 )
                             },
-                            modifier = Modifier.clickable {
-                                val downloadRequest =
-                                    DownloadRequest
-                                        .Builder(song.id, song.id.toUri())
-                                        .setCustomCacheKey(song.id)
-                                        .setData(song.song.title.toByteArray())
-                                        .build()
-                                DownloadService.sendAddDownload(
-                                    context,
-                                    ExoDownloadService::class.java,
-                                    downloadRequest,
-                                    false,
-                                )
-                                android.widget.Toast.makeText(context, "Download started", android.widget.Toast.LENGTH_SHORT).show()
-                            }
+                            modifier =
+                                Modifier.clickable {
+                                    val downloadRequest =
+                                        DownloadRequest
+                                            .Builder(song.id, song.id.toUri())
+                                            .setCustomCacheKey(song.id)
+                                            .setData(song.song.title.toByteArray())
+                                            .build()
+                                    DownloadService.sendAddDownload(
+                                        context,
+                                        ExoDownloadService::class.java,
+                                        downloadRequest,
+                                        false,
+                                    )
+                                    android.widget.Toast.makeText(context, "Download started", android.widget.Toast.LENGTH_SHORT).show()
+                                },
                         )
                     }
                 }
@@ -699,14 +716,15 @@ fun SongMenu(
                             contentDescription = null,
                         )
                     },
-                    modifier = Modifier.clickable {
-                        if (song.artists.size == 1) {
-                            navController.navigate("artist/${song.artists[0].id}")
-                            onDismiss()
-                        } else {
-                            showSelectArtistDialog = true
-                        }
-                    }
+                    modifier =
+                        Modifier.clickable {
+                            if (song.artists.size == 1) {
+                                navController.navigate("artist/${song.artists[0].id}")
+                                onDismiss()
+                            } else {
+                                showSelectArtistDialog = true
+                            }
+                        },
                 )
             }
 
@@ -720,10 +738,11 @@ fun SongMenu(
                                 contentDescription = null,
                             )
                         },
-                        modifier = Modifier.clickable {
-                            onDismiss()
-                            navController.navigate("album/${song.song.albumId}")
-                        }
+                        modifier =
+                            Modifier.clickable {
+                                onDismiss()
+                                navController.navigate("album/${song.song.albumId}")
+                            },
                     )
                 }
             }
@@ -738,19 +757,20 @@ fun SongMenu(
                             modifier = Modifier.graphicsLayer(rotationZ = rotationAnimation),
                         )
                     },
-                    modifier = Modifier.clickable {
-                        refetchIconDegree -= 360
-                        scope.launch(Dispatchers.IO) {
-                            YouTube.queue(listOf(song.id)).onSuccess {
-                                val newSong = it.firstOrNull()
-                                if (newSong != null) {
-                                    database.transaction {
-                                        update(song, newSong.toMediaMetadata())
+                    modifier =
+                        Modifier.clickable {
+                            refetchIconDegree -= 360
+                            scope.launch(Dispatchers.IO) {
+                                YouTube.queue(listOf(song.id)).onSuccess {
+                                    val newSong = it.firstOrNull()
+                                    if (newSong != null) {
+                                        database.transaction {
+                                            update(song, newSong.toMediaMetadata())
+                                        }
                                     }
                                 }
                             }
-                        }
-                    }
+                        },
                 )
             }
 
@@ -763,9 +783,10 @@ fun SongMenu(
                             contentDescription = null,
                         )
                     },
-                    modifier = Modifier.clickable {
-                        showDetailsDialog = true
-                    }
+                    modifier =
+                        Modifier.clickable {
+                            showDetailsDialog = true
+                        },
                 )
             }
         }

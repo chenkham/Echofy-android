@@ -10,7 +10,6 @@ import javax.inject.Singleton
 @Module
 @InstallIn(SingletonComponent::class)
 object YTMusicModule {
-
     @Provides
     @Singleton
     fun provideYTMusicApi(): YTMusicApi {

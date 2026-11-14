@@ -26,15 +26,18 @@ data class AlbumEntity(
     val likedDate: LocalDateTime? = null,
     val inLibrary: LocalDateTime? = null,
 ) {
-    fun localToggleLike() = copy(
-        bookmarkedAt = if (bookmarkedAt != null) null else LocalDateTime.now()
-    )
+    fun localToggleLike() =
+        copy(
+            bookmarkedAt = if (bookmarkedAt != null) null else LocalDateTime.now(),
+        )
 
-    fun toggleLike() = localToggleLike().also {
-        CoroutineScope(Dispatchers.IO).launch {
-            if (playlistId != null)
-                YouTube.likePlaylist(playlistId, bookmarkedAt == null)
-            this.cancel()
+    fun toggleLike() =
+        localToggleLike().also {
+            CoroutineScope(Dispatchers.IO).launch {
+                if (playlistId != null) {
+                    YouTube.likePlaylist(playlistId, bookmarkedAt == null)
+                }
+                this.cancel()
+            }
         }
-    }
 }

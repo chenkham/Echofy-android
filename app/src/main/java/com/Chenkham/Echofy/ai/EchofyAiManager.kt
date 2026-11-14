@@ -16,38 +16,30 @@ import android.speech.tts.UtteranceProgressListener
 import com.Chenkham.Echofy.db.InternalDatabase
 import com.Chenkham.Echofy.db.entities.PlaylistEntity
 import com.Chenkham.Echofy.db.entities.PlaylistSongMap
+import com.Chenkham.Echofy.models.toMediaMetadata
 import com.Chenkham.Echofy.playback.PlayerConnection
 import com.Chenkham.Echofy.playback.queues.YouTubeQueue
-import com.Chenkham.Echofy.models.toMediaMetadata
 import com.arturo254.opentune.innertube.YouTube
 import com.arturo254.opentune.innertube.models.SongItem
 import com.arturo254.opentune.innertube.models.WatchEndpoint
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.isActive
-import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import org.json.JSONArray
 import org.json.JSONObject
-import java.io.BufferedReader
-import java.io.InputStreamReader
-import java.io.OutputStreamWriter
-import java.net.HttpURLConnection
-import java.net.URL
-import java.net.URLEncoder
-import java.time.LocalDateTime
-import java.time.ZoneOffset
+import timber.log.Timber
 import java.util.Locale
 import java.util.UUID
-import timber.log.Timber
 
 enum class InputSource { TEXT, VOICE, HEY_COMMAND }
 
@@ -57,31 +49,31 @@ enum class AiCallState {
     CONNECTED_IDLE,
     LISTENING,
     THINKING,
-    SPEAKING
+    SPEAKING,
 }
 
 enum class AiModelOption(
     val displayName: String,
     val modelId: String,
     val contextWindow: String,
-    val description: String
+    val description: String,
 ) {
     DEFAULT("Default", "default", "128K", "Free & Unlimited Cloud Agent"),
     FAST("Fast", "openai", "128K", "Fast conversational model"),
-    LLAMA("Llama", "llama", "128K", "High precision music reasoning")
+    LLAMA("Llama", "llama", "128K", "High precision music reasoning"),
 }
 
 enum class AiModelStatus {
     NOT_DOWNLOADED,
     DOWNLOADING,
-    READY
+    READY,
 }
 
 data class ChatMessage(
     val id: String = UUID.randomUUID().toString(),
     val text: String,
     val isUser: Boolean,
-    val timestamp: Long = System.currentTimeMillis()
+    val timestamp: Long = System.currentTimeMillis(),
 )
 
 data class AgentAction(
@@ -89,7 +81,7 @@ data class AgentAction(
     val actionType: String,
     val query: String = "",
     val playlistName: String = "",
-    val volumeLevel: Int = 70
+    val volumeLevel: Int = 70,
 )
 
 class EchofyAiManager private constructor(private val context: Context) {
@@ -160,12 +152,14 @@ class EchofyAiManager private constructor(private val context: Context) {
             val prefs = context.getSharedPreferences("echofy_ai_chat_prefs", Context.MODE_PRIVATE)
             val arr = JSONArray()
             history.forEach { msg ->
-                arr.put(JSONObject().apply {
-                    put("id", msg.id)
-                    put("text", msg.text)
-                    put("isUser", msg.isUser)
-                    put("timestamp", msg.timestamp)
-                })
+                arr.put(
+                    JSONObject().apply {
+                        put("id", msg.id)
+                        put("text", msg.text)
+                        put("isUser", msg.isUser)
+                        put("timestamp", msg.timestamp)
+                    },
+                )
             }
             prefs.edit().putString("chat_history_json", arr.toString()).apply()
         }
@@ -184,8 +178,8 @@ class EchofyAiManager private constructor(private val context: Context) {
                         id = obj.optString("id", UUID.randomUUID().toString()),
                         text = obj.optString("text", ""),
                         isUser = obj.optBoolean("isUser", false),
-                        timestamp = obj.optLong("timestamp", System.currentTimeMillis())
-                    )
+                        timestamp = obj.optLong("timestamp", System.currentTimeMillis()),
+                    ),
                 )
             }
             _chatHistory.value = list
@@ -193,12 +187,13 @@ class EchofyAiManager private constructor(private val context: Context) {
     }
 
     private fun initTts() {
-        textToSpeech = TextToSpeech(context) { status ->
-            if (status == TextToSpeech.SUCCESS) {
-                textToSpeech?.language = Locale.US
-                isTtsInitialized = true
+        textToSpeech =
+            TextToSpeech(context) { status ->
+                if (status == TextToSpeech.SUCCESS) {
+                    textToSpeech?.language = Locale.US
+                    isTtsInitialized = true
+                }
             }
-        }
     }
 
     fun startAiCall() {
@@ -298,38 +293,40 @@ class EchofyAiManager private constructor(private val context: Context) {
             return
         }
 
-        drivingModeJob = scope.launch(Dispatchers.Main) {
-            Timber.d("Driving mode listening loop started")
-            while (isActive && _isDrivingMode.value) {
-                _liveTranscript.value = ""
-                _isAwaitingCommand.value = true
-                _callState.value = AiCallState.LISTENING
+        drivingModeJob =
+            scope.launch(Dispatchers.Main) {
+                Timber.d("Driving mode listening loop started")
+                while (isActive && _isDrivingMode.value) {
+                    _liveTranscript.value = ""
+                    _isAwaitingCommand.value = true
+                    _callState.value = AiCallState.LISTENING
 
-                val spoken = suspendCancellableCoroutine<String> { cont ->
-                    startSingleListening { text ->
-                        if (cont.isActive) cont.resume(text) {}
+                    val spoken =
+                        suspendCancellableCoroutine<String> { cont ->
+                            startSingleListening { text ->
+                                if (cont.isActive) cont.resume(text) {}
+                            }
+                        }
+
+                    if (!isActive || !_isDrivingMode.value) break
+
+                    if (spoken.isNotBlank()) {
+                        _liveTranscript.value = spoken
+                        // Driving mode always speaks its reply; the driver cannot look.
+                        processUserVoiceInput(spoken, activePlayerConnection, InputSource.HEY_COMMAND)
+                        // Let the response play out before reopening the microphone,
+                        // otherwise the recognizer transcribes our own TTS.
+                        kotlinx.coroutines.delay(DRIVING_MODE_RESPONSE_GRACE_MS)
+                    } else {
+                        // Silence is normal while driving; just cycle again.
+                        kotlinx.coroutines.delay(DRIVING_MODE_IDLE_GAP_MS)
                     }
                 }
 
-                if (!isActive || !_isDrivingMode.value) break
-
-                if (spoken.isNotBlank()) {
-                    _liveTranscript.value = spoken
-                    // Driving mode always speaks its reply; the driver cannot look.
-                    processUserVoiceInput(spoken, activePlayerConnection, InputSource.HEY_COMMAND)
-                    // Let the response play out before reopening the microphone,
-                    // otherwise the recognizer transcribes our own TTS.
-                    kotlinx.coroutines.delay(DRIVING_MODE_RESPONSE_GRACE_MS)
-                } else {
-                    // Silence is normal while driving; just cycle again.
-                    kotlinx.coroutines.delay(DRIVING_MODE_IDLE_GAP_MS)
-                }
+                _isAwaitingCommand.value = false
+                _liveTranscript.value = ""
+                Timber.d("Driving mode listening loop ended")
             }
-
-            _isAwaitingCommand.value = false
-            _liveTranscript.value = ""
-            Timber.d("Driving mode listening loop ended")
-        }
     }
 
     private fun stopDrivingModeLoop() {
@@ -356,39 +353,41 @@ class EchofyAiManager private constructor(private val context: Context) {
 
     private fun requestAudioFocusForVoice(): Boolean {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            audioFocusRequest = AudioFocusRequest.Builder(AudioManager.AUDIOFOCUS_GAIN_TRANSIENT_MAY_DUCK)
-                .setAudioAttributes(
-                    android.media.AudioAttributes.Builder()
-                        .setUsage(android.media.AudioAttributes.USAGE_ASSISTANCE_ACCESSIBILITY)
-                        .setContentType(android.media.AudioAttributes.CONTENT_TYPE_SPEECH)
-                        .build()
-                )
-                .setAcceptsDelayedFocusGain(false)
-                .setWillPauseWhenDucked(false)
-                .setOnAudioFocusChangeListener { focusChange ->
-                    when (focusChange) {
-                        AudioManager.AUDIOFOCUS_LOSS, AudioManager.AUDIOFOCUS_LOSS_TRANSIENT -> {
-                            Timber.d("Audio focus lost for Hey Jarvis listener")
+            audioFocusRequest =
+                AudioFocusRequest.Builder(AudioManager.AUDIOFOCUS_GAIN_TRANSIENT_MAY_DUCK)
+                    .setAudioAttributes(
+                        android.media.AudioAttributes.Builder()
+                            .setUsage(android.media.AudioAttributes.USAGE_ASSISTANCE_ACCESSIBILITY)
+                            .setContentType(android.media.AudioAttributes.CONTENT_TYPE_SPEECH)
+                            .build(),
+                    )
+                    .setAcceptsDelayedFocusGain(false)
+                    .setWillPauseWhenDucked(false)
+                    .setOnAudioFocusChangeListener { focusChange ->
+                        when (focusChange) {
+                            AudioManager.AUDIOFOCUS_LOSS, AudioManager.AUDIOFOCUS_LOSS_TRANSIENT -> {
+                                Timber.d("Audio focus lost for Hey Jarvis listener")
+                            }
                         }
                     }
-                }
-                .build()
+                    .build()
 
             val result = audioManager.requestAudioFocus(audioFocusRequest!!)
             return result == AudioManager.AUDIOFOCUS_REQUEST_GRANTED
         } else {
             @Suppress("DEPRECATION")
-            val result = audioManager.requestAudioFocus(
-                { focusChange ->
-                    when (focusChange) {
-                        AudioManager.AUDIOFOCUS_LOSS, AudioManager.AUDIOFOCUS_LOSS_TRANSIENT -> {
-                            Timber.d("Audio focus lost for Hey Jarvis listener")
+            val result =
+                audioManager.requestAudioFocus(
+                    { focusChange ->
+                        when (focusChange) {
+                            AudioManager.AUDIOFOCUS_LOSS, AudioManager.AUDIOFOCUS_LOSS_TRANSIENT -> {
+                                Timber.d("Audio focus lost for Hey Jarvis listener")
+                            }
                         }
-                    }
-                },
-                AudioManager.STREAM_MUSIC,
-                AudioManager.AUDIOFOCUS_GAIN_TRANSIENT_MAY_DUCK
-            )
+                    },
+                    AudioManager.STREAM_MUSIC,
+                    AudioManager.AUDIOFOCUS_GAIN_TRANSIENT_MAY_DUCK,
+                )
             return result == AudioManager.AUDIOFOCUS_REQUEST_GRANTED
         }
     }
@@ -418,7 +417,7 @@ class EchofyAiManager private constructor(private val context: Context) {
     private fun hasRecordAudioPermission(): Boolean =
         androidx.core.content.ContextCompat.checkSelfPermission(
             context,
-            android.Manifest.permission.RECORD_AUDIO
+            android.Manifest.permission.RECORD_AUDIO,
         ) == android.content.pm.PackageManager.PERMISSION_GRANTED
 
     fun startHeyCommandListener(playerConnection: PlayerConnection? = null) {
@@ -451,65 +450,66 @@ class EchofyAiManager private constructor(private val context: Context) {
                     }
 
                     if (openWakeWordDetector == null) {
-                        openWakeWordDetector = OpenWakeWordDetector(context) {
-                            Timber.i("Hey Jarvis wake word triggered via ONNX engine")
+                        openWakeWordDetector =
+                            OpenWakeWordDetector(context) {
+                                Timber.i("Hey Jarvis wake word triggered via ONNX engine")
 
-                            scope.launch(Dispatchers.Main) {
-                                // The detector owns the microphone. SpeechRecognizer
-                                // cannot capture anything until it is fully released,
-                                // so wait for teardown before listening for a command.
-                                openWakeWordDetector?.stopListeningAndAwait()
+                                scope.launch(Dispatchers.Main) {
+                                    // The detector owns the microphone. SpeechRecognizer
+                                    // cannot capture anything until it is fully released,
+                                    // so wait for teardown before listening for a command.
+                                    openWakeWordDetector?.stopListeningAndAwait()
 
-                                // Duck music only for the command utterance, not while
-                                // passively waiting for the wake word.
-                                requestAudioFocusForVoice()
+                                    // Duck music only for the command utterance, not while
+                                    // passively waiting for the wake word.
+                                    requestAudioFocusForVoice()
 
-                                // Show the assistant overlay and beep so the user knows
-                                // exactly when to speak their command.
-                                _liveTranscript.value = ""
-                                _isAwaitingCommand.value = true
-                                _callState.value = AiCallState.LISTENING
-                                playWakeAcknowledgementTone()
+                                    // Show the assistant overlay and beep so the user knows
+                                    // exactly when to speak their command.
+                                    _liveTranscript.value = ""
+                                    _isAwaitingCommand.value = true
+                                    _callState.value = AiCallState.LISTENING
+                                    playWakeAcknowledgementTone()
 
-                                // Let the tone finish and AudioFlinger actually free the
-                                // input. Starting the recognizer immediately makes it hear
-                                // the beep as speech onset, or get no audio at all.
-                                kotlinx.coroutines.delay(MIC_SETTLE_DELAY_MS)
+                                    // Let the tone finish and AudioFlinger actually free the
+                                    // input. Starting the recognizer immediately makes it hear
+                                    // the beep as speech onset, or get no audio at all.
+                                    kotlinx.coroutines.delay(MIC_SETTLE_DELAY_MS)
 
-                                startSingleListening { spokenText ->
-                                    abandonAudioFocusForVoice()
+                                    startSingleListening { spokenText ->
+                                        abandonAudioFocusForVoice()
 
-                                    if (spokenText.isNotBlank()) {
-                                        // Keep the final text on screen briefly so the
-                                        // user can read what was understood.
-                                        _liveTranscript.value = spokenText
-                                        scope.launch {
-                                            kotlinx.coroutines.delay(1200)
+                                        if (spokenText.isNotBlank()) {
+                                            // Keep the final text on screen briefly so the
+                                            // user can read what was understood.
+                                            _liveTranscript.value = spokenText
+                                            scope.launch {
+                                                kotlinx.coroutines.delay(1200)
+                                                _isAwaitingCommand.value = false
+                                                _liveTranscript.value = ""
+                                            }
+                                            processUserVoiceInput(
+                                                spokenText,
+                                                activePlayerConnection,
+                                                InputSource.HEY_COMMAND,
+                                            )
+                                        } else {
+                                            Timber.d("No command heard after wake word")
                                             _isAwaitingCommand.value = false
                                             _liveTranscript.value = ""
+                                            _callState.value = AiCallState.CONNECTED_IDLE
                                         }
-                                        processUserVoiceInput(
-                                            spokenText,
-                                            activePlayerConnection,
-                                            InputSource.HEY_COMMAND
-                                        )
-                                    } else {
-                                        Timber.d("No command heard after wake word")
-                                        _isAwaitingCommand.value = false
-                                        _liveTranscript.value = ""
-                                        _callState.value = AiCallState.CONNECTED_IDLE
-                                    }
 
-                                    // Resume wake word listening after command completes
-                                    scope.launch {
-                                        kotlinx.coroutines.delay(1000)
-                                        if (_isHeyListening.value && !_isDrivingMode.value) {
-                                            openWakeWordDetector?.startListening()
+                                        // Resume wake word listening after command completes
+                                        scope.launch {
+                                            kotlinx.coroutines.delay(1000)
+                                            if (_isHeyListening.value && !_isDrivingMode.value) {
+                                                openWakeWordDetector?.startListening()
+                                            }
                                         }
                                     }
                                 }
                             }
-                        }
                     }
 
                     // In driving mode the recognizer owns the microphone continuously,
@@ -559,23 +559,24 @@ class EchofyAiManager private constructor(private val context: Context) {
 
             try {
                 val singleRecognizer = SpeechRecognizer.createSpeechRecognizer(context)
-                val intent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
-                    putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
-                    putExtra(RecognizerIntent.EXTRA_LANGUAGE, Locale.getDefault())
-                    putExtra(RecognizerIntent.EXTRA_MAX_RESULTS, 1)
-                    // Required by several recognizer implementations; without it they
-                    // reject the request outright with ERROR_CLIENT.
-                    putExtra(RecognizerIntent.EXTRA_CALLING_PACKAGE, context.packageName)
-                    // Stream words to the UI as they are recognised, like Assistant.
-                    putExtra(RecognizerIntent.EXTRA_PARTIAL_RESULTS, true)
-                    // Give the user a real window to start talking. The previous
-                    // 1.2 s budget expired before many users said their first word,
-                    // which surfaced as ERROR_SPEECH_TIMEOUT and a dropped command.
-                    // Note: these extras are advisory and some recognizers clamp them.
-                    putExtra(RecognizerIntent.EXTRA_SPEECH_INPUT_COMPLETE_SILENCE_LENGTH_MILLIS, 5000L)
-                    putExtra(RecognizerIntent.EXTRA_SPEECH_INPUT_POSSIBLY_COMPLETE_SILENCE_LENGTH_MILLIS, 3000L)
-                    putExtra(RecognizerIntent.EXTRA_SPEECH_INPUT_MINIMUM_LENGTH_MILLIS, 5000L)
-                }
+                val intent =
+                    Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
+                        putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
+                        putExtra(RecognizerIntent.EXTRA_LANGUAGE, Locale.getDefault())
+                        putExtra(RecognizerIntent.EXTRA_MAX_RESULTS, 1)
+                        // Required by several recognizer implementations; without it they
+                        // reject the request outright with ERROR_CLIENT.
+                        putExtra(RecognizerIntent.EXTRA_CALLING_PACKAGE, context.packageName)
+                        // Stream words to the UI as they are recognised, like Assistant.
+                        putExtra(RecognizerIntent.EXTRA_PARTIAL_RESULTS, true)
+                        // Give the user a real window to start talking. The previous
+                        // 1.2 s budget expired before many users said their first word,
+                        // which surfaced as ERROR_SPEECH_TIMEOUT and a dropped command.
+                        // Note: these extras are advisory and some recognizers clamp them.
+                        putExtra(RecognizerIntent.EXTRA_SPEECH_INPUT_COMPLETE_SILENCE_LENGTH_MILLIS, 5000L)
+                        putExtra(RecognizerIntent.EXTRA_SPEECH_INPUT_POSSIBLY_COMPLETE_SILENCE_LENGTH_MILLIS, 3000L)
+                        putExtra(RecognizerIntent.EXTRA_SPEECH_INPUT_MINIMUM_LENGTH_MILLIS, 5000L)
+                    }
 
                 // Guarantees onResult runs exactly once, whichever path completes first.
                 var delivered = false
@@ -592,76 +593,88 @@ class EchofyAiManager private constructor(private val context: Context) {
                     }
                 }
 
-                singleRecognizer.setRecognitionListener(object : RecognitionListener {
-                    override fun onReadyForSpeech(params: Bundle?) {
-                        Timber.d("Recognizer ready; waiting for command")
-                    }
-
-                    override fun onBeginningOfSpeech() {
-                        sawSpeech = true
-                        Timber.d("Command speech started")
-                    }
-
-                    override fun onRmsChanged(rmsdB: Float) {
-                        if (rmsdB > peakRms) peakRms = rmsdB
-                    }
-
-                    override fun onBufferReceived(buffer: ByteArray?) {}
-
-                    override fun onEndOfSpeech() {
-                        Timber.d("Command speech ended")
-                    }
-
-                    override fun onError(error: Int) {
-                        val reason = when (error) {
-                            SpeechRecognizer.ERROR_AUDIO -> "audio recording error"
-                            SpeechRecognizer.ERROR_CLIENT -> "client side error"
-                            SpeechRecognizer.ERROR_INSUFFICIENT_PERMISSIONS -> "missing RECORD_AUDIO permission"
-                            SpeechRecognizer.ERROR_NETWORK -> "network error"
-                            SpeechRecognizer.ERROR_NETWORK_TIMEOUT -> "network timeout"
-                            SpeechRecognizer.ERROR_NO_MATCH -> "no match"
-                            SpeechRecognizer.ERROR_RECOGNIZER_BUSY -> "recognizer busy"
-                            SpeechRecognizer.ERROR_SERVER -> "server error"
-                            SpeechRecognizer.ERROR_SPEECH_TIMEOUT -> "no speech detected"
-                            else -> "unknown error $error"
+                singleRecognizer.setRecognitionListener(
+                    object : RecognitionListener {
+                        override fun onReadyForSpeech(params: Bundle?) {
+                            Timber.d("Recognizer ready; waiting for command")
                         }
-                        Timber.w(
-                            "Command recognition failed: %s (code %d) | peakRms=%.1f dB, speechDetected=%b, partial=\"%s\"",
-                            reason, error, peakRms, sawSpeech, lastPartial
-                        )
-                        if (!sawSpeech && peakRms < 0f) {
-                            // Strong signal that the mic never actually delivered audio,
-                            // rather than the user simply staying silent.
-                            Timber.w("Recognizer received no usable audio; microphone may still be held elsewhere")
+
+                        override fun onBeginningOfSpeech() {
+                            sawSpeech = true
+                            Timber.d("Command speech started")
                         }
-                        // Partial text is often correct even when the final pass
-                        // reports NO_MATCH, so prefer it over discarding the command.
-                        deliver(lastPartial)
-                    }
 
-                    override fun onResults(results: Bundle?) {
-                        val text = results
-                            ?.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION)
-                            ?.firstOrNull()
-                            .orEmpty()
-                            .ifBlank { lastPartial }
-                        Timber.d("Command recognised: \"$text\"")
-                        deliver(text)
-                    }
-
-                    override fun onPartialResults(partialResults: Bundle?) {
-                        val text = partialResults
-                            ?.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION)
-                            ?.firstOrNull()
-                            .orEmpty()
-                        if (text.isNotBlank()) {
-                            lastPartial = text
-                            _liveTranscript.value = text
+                        override fun onRmsChanged(rmsdB: Float) {
+                            if (rmsdB > peakRms) peakRms = rmsdB
                         }
-                    }
 
-                    override fun onEvent(eventType: Int, params: Bundle?) {}
-                })
+                        override fun onBufferReceived(buffer: ByteArray?) {}
+
+                        override fun onEndOfSpeech() {
+                            Timber.d("Command speech ended")
+                        }
+
+                        override fun onError(error: Int) {
+                            val reason =
+                                when (error) {
+                                    SpeechRecognizer.ERROR_AUDIO -> "audio recording error"
+                                    SpeechRecognizer.ERROR_CLIENT -> "client side error"
+                                    SpeechRecognizer.ERROR_INSUFFICIENT_PERMISSIONS -> "missing RECORD_AUDIO permission"
+                                    SpeechRecognizer.ERROR_NETWORK -> "network error"
+                                    SpeechRecognizer.ERROR_NETWORK_TIMEOUT -> "network timeout"
+                                    SpeechRecognizer.ERROR_NO_MATCH -> "no match"
+                                    SpeechRecognizer.ERROR_RECOGNIZER_BUSY -> "recognizer busy"
+                                    SpeechRecognizer.ERROR_SERVER -> "server error"
+                                    SpeechRecognizer.ERROR_SPEECH_TIMEOUT -> "no speech detected"
+                                    else -> "unknown error $error"
+                                }
+                            Timber.w(
+                                "Command recognition failed: %s (code %d) | peakRms=%.1f dB, speechDetected=%b, partial=\"%s\"",
+                                reason,
+                                error,
+                                peakRms,
+                                sawSpeech,
+                                lastPartial,
+                            )
+                            if (!sawSpeech && peakRms < 0f) {
+                                // Strong signal that the mic never actually delivered audio,
+                                // rather than the user simply staying silent.
+                                Timber.w("Recognizer received no usable audio; microphone may still be held elsewhere")
+                            }
+                            // Partial text is often correct even when the final pass
+                            // reports NO_MATCH, so prefer it over discarding the command.
+                            deliver(lastPartial)
+                        }
+
+                        override fun onResults(results: Bundle?) {
+                            val text =
+                                results
+                                    ?.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION)
+                                    ?.firstOrNull()
+                                    .orEmpty()
+                                    .ifBlank { lastPartial }
+                            Timber.d("Command recognised: \"$text\"")
+                            deliver(text)
+                        }
+
+                        override fun onPartialResults(partialResults: Bundle?) {
+                            val text =
+                                partialResults
+                                    ?.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION)
+                                    ?.firstOrNull()
+                                    .orEmpty()
+                            if (text.isNotBlank()) {
+                                lastPartial = text
+                                _liveTranscript.value = text
+                            }
+                        }
+
+                        override fun onEvent(
+                            eventType: Int,
+                            params: Bundle?,
+                        ) {}
+                    },
+                )
 
                 singleRecognizer.startListening(intent)
 
@@ -693,45 +706,56 @@ class EchofyAiManager private constructor(private val context: Context) {
                     speechRecognizer = SpeechRecognizer.createSpeechRecognizer(context)
                 }
 
-                val intent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
-                    putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
-                    putExtra(RecognizerIntent.EXTRA_LANGUAGE, Locale.getDefault())
-                    putExtra(RecognizerIntent.EXTRA_MAX_RESULTS, 1)
-                }
-
-                speechRecognizer?.setRecognitionListener(object : RecognitionListener {
-                    override fun onReadyForSpeech(params: Bundle?) {}
-                    override fun onBeginningOfSpeech() {}
-                    override fun onRmsChanged(rmsdB: Float) {}
-                    override fun onBufferReceived(buffer: ByteArray?) {}
-                    override fun onEndOfSpeech() {
-                        _callState.value = AiCallState.THINKING
+                val intent =
+                    Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
+                        putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
+                        putExtra(RecognizerIntent.EXTRA_LANGUAGE, Locale.getDefault())
+                        putExtra(RecognizerIntent.EXTRA_MAX_RESULTS, 1)
                     }
 
-                    override fun onError(error: Int) {
-                        if (isCallActive) {
-                            scope.launch {
-                                kotlinx.coroutines.delay(1000)
-                                if (isCallActive && _callState.value != AiCallState.SPEAKING) {
-                                    startListeningLoop()
+                speechRecognizer?.setRecognitionListener(
+                    object : RecognitionListener {
+                        override fun onReadyForSpeech(params: Bundle?) {}
+
+                        override fun onBeginningOfSpeech() {}
+
+                        override fun onRmsChanged(rmsdB: Float) {}
+
+                        override fun onBufferReceived(buffer: ByteArray?) {}
+
+                        override fun onEndOfSpeech() {
+                            _callState.value = AiCallState.THINKING
+                        }
+
+                        override fun onError(error: Int) {
+                            if (isCallActive) {
+                                scope.launch {
+                                    kotlinx.coroutines.delay(1000)
+                                    if (isCallActive && _callState.value != AiCallState.SPEAKING) {
+                                        startListeningLoop()
+                                    }
                                 }
                             }
                         }
-                    }
 
-                    override fun onResults(results: Bundle?) {
-                        val spokenText = results?.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION)?.firstOrNull()
-                        if (!spokenText.isNullOrEmpty()) {
-                            _lastSpokenText.value = spokenText
-                            processUserVoiceInput(spokenText)
-                        } else if (isCallActive) {
-                            startListeningLoop()
+                        override fun onResults(results: Bundle?) {
+                            val spokenText = results?.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION)?.firstOrNull()
+                            if (!spokenText.isNullOrEmpty()) {
+                                _lastSpokenText.value = spokenText
+                                processUserVoiceInput(spokenText)
+                            } else if (isCallActive) {
+                                startListeningLoop()
+                            }
                         }
-                    }
 
-                    override fun onPartialResults(partialResults: Bundle?) {}
-                    override fun onEvent(eventType: Int, params: Bundle?) {}
-                })
+                        override fun onPartialResults(partialResults: Bundle?) {}
+
+                        override fun onEvent(
+                            eventType: Int,
+                            params: Bundle?,
+                        ) {}
+                    },
+                )
 
                 speechRecognizer?.startListening(intent)
             } catch (e: Exception) {
@@ -746,7 +770,9 @@ class EchofyAiManager private constructor(private val context: Context) {
             speechRecognizer?.cancel()
             speechRecognizer?.destroy()
             speechRecognizer = null
-        } catch (e: Exception) { Timber.w(e, "Ignored exception") }
+        } catch (e: Exception) {
+            Timber.w(e, "Ignored exception")
+        }
     }
 
     /**
@@ -771,22 +797,30 @@ class EchofyAiManager private constructor(private val context: Context) {
         }
     }
 
-    fun sendTextMessage(textInput: String, playerConnection: PlayerConnection? = null) {
+    fun sendTextMessage(
+        textInput: String,
+        playerConnection: PlayerConnection? = null,
+    ) {
         if (textInput.isBlank()) return
         processUserVoiceInput(textInput, playerConnection, InputSource.TEXT)
     }
 
-    fun processUserVoiceInput(userInput: String, playerConnection: PlayerConnection? = null, source: InputSource = InputSource.VOICE) {
+    fun processUserVoiceInput(
+        userInput: String,
+        playerConnection: PlayerConnection? = null,
+        source: InputSource = InputSource.VOICE,
+    ) {
         // Voice commands arriving from WakeWordService carry no player, so fall back
         // to the connection MainActivity attached. Without this, PLAY_SONG and the
         // other playback actions silently no-op on a null player.
         val player = playerConnection ?: activePlayerConnection
         if (playerConnection != null) activePlayerConnection = playerConnection
 
-        val cleanInput = userInput
-            .replace(Regex("(?i)^hey\\s+jarvis\\b[,.]?\\s*"), "")
-            .trim()
-            .ifEmpty { userInput }
+        val cleanInput =
+            userInput
+                .replace(Regex("(?i)^hey\\s+jarvis\\b[,.]?\\s*"), "")
+                .trim()
+                .ifEmpty { userInput }
         _callState.value = AiCallState.THINKING
         _lastSpokenText.value = cleanInput
 
@@ -799,9 +833,10 @@ class EchofyAiManager private constructor(private val context: Context) {
 
             val userContext = withContext(Dispatchers.IO) { buildUserContext(player) }
 
-            val agentAction = withContext(Dispatchers.IO) {
-                queryAiAgent(cleanInput, _chatHistory.value, userContext, source)
-            }
+            val agentAction =
+                withContext(Dispatchers.IO) {
+                    queryAiAgent(cleanInput, _chatHistory.value, userContext, source)
+                }
 
             executeAgentAction(agentAction, player, source)
         }
@@ -816,7 +851,9 @@ class EchofyAiManager private constructor(private val context: Context) {
                 val artistNames = metadata.artists.joinToString(", ") { it.name }
                 sb.appendLine("[Now Playing] \"${metadata.title}\" by $artistNames")
             }
-        } catch (e: Exception) { Timber.w(e, "Ignored exception") }
+        } catch (e: Exception) {
+            Timber.w(e, "Ignored exception")
+        }
 
         try {
             val events = database.events().first().take(6)
@@ -826,7 +863,9 @@ class EchofyAiManager private constructor(private val context: Context) {
                     sb.appendLine("- \"${ev.song.song.title}\" (${ev.song.artists.firstOrNull()?.name.orEmpty()})")
                 }
             }
-        } catch (e: Exception) { Timber.w(e, "Ignored exception") }
+        } catch (e: Exception) {
+            Timber.w(e, "Ignored exception")
+        }
 
         try {
             val liked = database.likedSongsByRowIdAsc().first().take(6)
@@ -836,7 +875,9 @@ class EchofyAiManager private constructor(private val context: Context) {
                     sb.appendLine("- \"${s.song.title}\"")
                 }
             }
-        } catch (e: Exception) { Timber.w(e, "Ignored exception") }
+        } catch (e: Exception) {
+            Timber.w(e, "Ignored exception")
+        }
 
         return sb.toString().take(1000)
     }
@@ -848,14 +889,15 @@ class EchofyAiManager private constructor(private val context: Context) {
         userPrompt: String,
         history: List<ChatMessage>,
         userContext: String,
-        source: InputSource = InputSource.VOICE
+        source: InputSource = InputSource.VOICE,
     ): AgentAction {
         val rawLower = userPrompt.lowercase(Locale.getDefault()).trim()
         // Only strip a leading wake word, not any word starting with "hey", so
         // requests like "play Hey Jude" keep their song title intact.
-        val cmd = rawLower.replace(Regex("^hey\\s+jarvis\\b[,.]?\\s*"), "")
-            .replace(Regex("^hey\\b[,.]?\\s*"), "")
-            .trim()
+        val cmd =
+            rawLower.replace(Regex("^hey\\s+jarvis\\b[,.]?\\s*"), "")
+                .replace(Regex("^hey\\b[,.]?\\s*"), "")
+                .trim()
 
         if (source == InputSource.HEY_COMMAND && cmd.isEmpty()) {
             return AgentAction("", "WAKE_ACK")
@@ -874,13 +916,15 @@ class EchofyAiManager private constructor(private val context: Context) {
             return AgentAction("Paused playback!", "PAUSE")
         }
         // Strip an optional leading verb plus filler words ("play the song X").
-        val playMatch = Regex(
-            "^(?:play|put on|start|listen to)\\s+(?:me\\s+)?(?:the\\s+)?(?:song\\s+|track\\s+|music\\s+)?(.+)$"
-        ).find(cmd)
+        val playMatch =
+            Regex(
+                "^(?:play|put on|start|listen to)\\s+(?:me\\s+)?(?:the\\s+)?(?:song\\s+|track\\s+|music\\s+)?(.+)$",
+            ).find(cmd)
         if (playMatch != null) {
-            val songName = playMatch.groupValues[1]
-                .replace(Regex("\\s+(?:please|now|for me)$"), "")
-                .trim()
+            val songName =
+                playMatch.groupValues[1]
+                    .replace(Regex("\\s+(?:please|now|for me)$"), "")
+                    .trim()
             if (songName.isNotBlank()) {
                 return AgentAction("Playing $songName for you!", "PLAY_SONG", query = songName)
             }
@@ -917,7 +961,7 @@ class EchofyAiManager private constructor(private val context: Context) {
         if (activeProfile == null) {
             return AgentAction(
                 speakResponse = "Please configure your AI Provider Profile in Settings to chat with Echofy Buddy.",
-                actionType = "CHAT"
+                actionType = "CHAT",
             )
         }
 
@@ -926,28 +970,32 @@ class EchofyAiManager private constructor(private val context: Context) {
         if (keysList.isEmpty() && activeProfile.baseUrl != "http://localhost:11434/v1") {
             return AgentAction(
                 speakResponse = "Please add your API key for profile \"${activeProfile.name}\" in AI Settings.",
-                actionType = "CHAT"
+                actionType = "CHAT",
             )
         }
 
-        val result = universalAiEngine.query(
-            baseUrl = activeProfile.baseUrl,
-            apiKeys = if (keysList.isNotEmpty()) keysList else listOf("local"),
-            modelName = activeProfile.modelName,
-            userPrompt = userPrompt,
-            chatHistory = history,
-            userContext = userContext
-        )
+        val result =
+            universalAiEngine.query(
+                baseUrl = activeProfile.baseUrl,
+                apiKeys = if (keysList.isNotEmpty()) keysList else listOf("local"),
+                modelName = activeProfile.modelName,
+                userPrompt = userPrompt,
+                chatHistory = history,
+                userContext = userContext,
+            )
 
         return AgentAction(
             speakResponse = result.speakResponse,
             actionType = result.actionType,
             query = result.query,
-            playlistName = result.playlistName
+            playlistName = result.playlistName,
         )
     }
 
-    private fun fuzzyMatch(s1: String, s2: String): Float {
+    private fun fuzzyMatch(
+        s1: String,
+        s2: String,
+    ): Float {
         val a = s1.lowercase(Locale.getDefault()).trim()
         val b = s2.lowercase(Locale.getDefault()).trim()
         if (a == b) return 1.0f
@@ -987,7 +1035,11 @@ class EchofyAiManager private constructor(private val context: Context) {
         }
     }
 
-    private suspend fun executeAgentAction(action: AgentAction, playerConnection: PlayerConnection?, source: InputSource = InputSource.TEXT) {
+    private suspend fun executeAgentAction(
+        action: AgentAction,
+        playerConnection: PlayerConnection?,
+        source: InputSource = InputSource.TEXT,
+    ) {
         when (action.actionType) {
             "WAKE_ACK" -> {
                 // Reached when the wake word fired but the follow-up utterance was
@@ -1033,11 +1085,12 @@ class EchofyAiManager private constructor(private val context: Context) {
             "REPEAT" -> {
                 withContext(Dispatchers.Main) {
                     playerConnection?.player?.let {
-                        it.repeatMode = when (it.repeatMode) {
-                            androidx.media3.common.Player.REPEAT_MODE_OFF -> androidx.media3.common.Player.REPEAT_MODE_ALL
-                            androidx.media3.common.Player.REPEAT_MODE_ALL -> androidx.media3.common.Player.REPEAT_MODE_ONE
-                            else -> androidx.media3.common.Player.REPEAT_MODE_OFF
-                        }
+                        it.repeatMode =
+                            when (it.repeatMode) {
+                                androidx.media3.common.Player.REPEAT_MODE_OFF -> androidx.media3.common.Player.REPEAT_MODE_ALL
+                                androidx.media3.common.Player.REPEAT_MODE_ALL -> androidx.media3.common.Player.REPEAT_MODE_ONE
+                                else -> androidx.media3.common.Player.REPEAT_MODE_OFF
+                            }
                     }
                 }
                 respondAndContinue(action.speakResponse, source)
@@ -1070,7 +1123,7 @@ class EchofyAiManager private constructor(private val context: Context) {
             "CREATE_PLAYLIST" -> {
                 val playlistTitle = action.playlistName.ifEmpty { "AI Mix" }
                 val songIds = mutableListOf<String>()
-                
+
                 // Search for songs if query is provided
                 if (action.query.isNotEmpty()) {
                     withContext(Dispatchers.IO) {
@@ -1087,7 +1140,7 @@ class EchofyAiManager private constructor(private val context: Context) {
                         }
                     }
                 }
-                
+
                 // Fall back to history/liked if no songs found from search
                 if (songIds.isEmpty()) {
                     withContext(Dispatchers.IO) {
@@ -1101,7 +1154,7 @@ class EchofyAiManager private constructor(private val context: Context) {
                         }
                     }
                 }
-                
+
                 // Actually create the playlist with songs
                 withContext(Dispatchers.IO) {
                     runCatching {
@@ -1116,13 +1169,14 @@ class EchofyAiManager private constructor(private val context: Context) {
                         }
                     }
                 }
-                
+
                 val count = songIds.distinct().size
-                val finalMessage = if (action.speakResponse.isNotBlank() && !action.speakResponse.startsWith("Created playlist")) {
-                    "${action.speakResponse}\n\nCreated your playlist \"$playlistTitle\" with $count songs in your Library!"
-                } else {
-                    "Created your playlist \"$playlistTitle\" with $count songs! Check your Library to see it."
-                }
+                val finalMessage =
+                    if (action.speakResponse.isNotBlank() && !action.speakResponse.startsWith("Created playlist")) {
+                        "${action.speakResponse}\n\nCreated your playlist \"$playlistTitle\" with $count songs in your Library!"
+                    } else {
+                        "Created your playlist \"$playlistTitle\" with $count songs! Check your Library to see it."
+                    }
                 respondAndContinue(finalMessage, source)
             }
             "PLAY_SONG" -> {
@@ -1138,21 +1192,28 @@ class EchofyAiManager private constructor(private val context: Context) {
         }
     }
 
-    private suspend fun executePlaySongAction(query: String, speakText: String, playerConnection: PlayerConnection?, source: InputSource = InputSource.TEXT) {
-        val songResult = withContext(Dispatchers.IO) {
-            val songSearch = runCatching {
-                YouTube.search(query, YouTube.SearchFilter.FILTER_SONG).getOrNull()?.items?.firstOrNull() as? SongItem
-            }.getOrNull()
+    private suspend fun executePlaySongAction(
+        query: String,
+        speakText: String,
+        playerConnection: PlayerConnection?,
+        source: InputSource = InputSource.TEXT,
+    ) {
+        val songResult =
+            withContext(Dispatchers.IO) {
+                val songSearch =
+                    runCatching {
+                        YouTube.search(query, YouTube.SearchFilter.FILTER_SONG).getOrNull()?.items?.firstOrNull() as? SongItem
+                    }.getOrNull()
 
-            if (songSearch != null) {
-                songSearch
-            } else {
-                runCatching {
-                    YouTube.searchSummary(query).getOrNull()?.summaries
-                        ?.firstOrNull()?.items?.firstOrNull()
-                }.getOrNull()
+                if (songSearch != null) {
+                    songSearch
+                } else {
+                    runCatching {
+                        YouTube.searchSummary(query).getOrNull()?.summaries
+                            ?.firstOrNull()?.items?.firstOrNull()
+                    }.getOrNull()
+                }
             }
-        }
 
         if (songResult != null) {
             val videoId = songResult.id
@@ -1160,7 +1221,7 @@ class EchofyAiManager private constructor(private val context: Context) {
 
             withContext(Dispatchers.Main) {
                 playerConnection?.playQueue(
-                    YouTubeQueue(WatchEndpoint(videoId = videoId))
+                    YouTubeQueue(WatchEndpoint(videoId = videoId)),
                 )
             }
             respondAndContinue("Playing \"$title\" on Echofy now! 🎵", source)
@@ -1170,24 +1231,29 @@ class EchofyAiManager private constructor(private val context: Context) {
     }
 
     private fun addUserMessage(text: String) {
-        val updated = _chatHistory.value.toMutableList().apply {
-            add(ChatMessage(text = text, isUser = true))
-        }
+        val updated =
+            _chatHistory.value.toMutableList().apply {
+                add(ChatMessage(text = text, isUser = true))
+            }
         val list = updated.takeLast(50)
         _chatHistory.value = list
         saveChatHistoryToDisk(list)
     }
 
     private fun addAiMessage(text: String) {
-        val updated = _chatHistory.value.toMutableList().apply {
-            add(ChatMessage(text = text, isUser = false))
-        }
+        val updated =
+            _chatHistory.value.toMutableList().apply {
+                add(ChatMessage(text = text, isUser = false))
+            }
         val list = updated.takeLast(50)
         _chatHistory.value = list
         saveChatHistoryToDisk(list)
     }
 
-    private fun respondAndContinue(aiResponse: String, source: InputSource = InputSource.TEXT) {
+    private fun respondAndContinue(
+        aiResponse: String,
+        source: InputSource = InputSource.TEXT,
+    ) {
         _aiResponseText.value = aiResponse
         addAiMessage(aiResponse)
 
@@ -1202,7 +1268,10 @@ class EchofyAiManager private constructor(private val context: Context) {
         }
     }
 
-    private fun speakHumanVoice(text: String, onComplete: () -> Unit) {
+    private fun speakHumanVoice(
+        text: String,
+        onComplete: () -> Unit,
+    ) {
         scope.launch(Dispatchers.Main) {
             var completed = false
             val safeOnComplete = {
@@ -1226,15 +1295,19 @@ class EchofyAiManager private constructor(private val context: Context) {
 
             if (isTtsInitialized && textToSpeech != null) {
                 val utteranceId = "ECHO_TTS_${System.currentTimeMillis()}"
-                textToSpeech?.setOnUtteranceProgressListener(object : UtteranceProgressListener() {
-                    override fun onStart(utteranceId: String?) {}
-                    override fun onDone(utteranceId: String?) {
-                        safeOnComplete()
-                    }
-                    override fun onError(utteranceId: String?) {
-                        safeOnComplete()
-                    }
-                })
+                textToSpeech?.setOnUtteranceProgressListener(
+                    object : UtteranceProgressListener() {
+                        override fun onStart(utteranceId: String?) {}
+
+                        override fun onDone(utteranceId: String?) {
+                            safeOnComplete()
+                        }
+
+                        override fun onError(utteranceId: String?) {
+                            safeOnComplete()
+                        }
+                    },
+                )
                 val result = textToSpeech?.speak(cleanText, TextToSpeech.QUEUE_FLUSH, null, utteranceId)
                 if (result == TextToSpeech.ERROR) {
                     safeOnComplete()
@@ -1251,7 +1324,9 @@ class EchofyAiManager private constructor(private val context: Context) {
             mediaPlayer?.stop()
             mediaPlayer?.release()
             mediaPlayer = null
-        } catch (e: Exception) { Timber.w(e, "Ignored exception") }
+        } catch (e: Exception) {
+            Timber.w(e, "Ignored exception")
+        }
     }
 
     companion object {

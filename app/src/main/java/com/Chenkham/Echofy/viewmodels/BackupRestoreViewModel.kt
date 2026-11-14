@@ -9,15 +9,15 @@ package com.Chenkham.Echofy.viewmodels
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
-import androidx.core.net.toUri
 import android.widget.Toast
+import androidx.core.net.toUri
 import androidx.datastore.preferences.core.booleanPreferencesKey
+import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.floatPreferencesKey
 import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.longPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.core.stringSetPreferencesKey
-import androidx.datastore.preferences.core.edit
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.Chenkham.Echofy.MainActivity
@@ -44,11 +44,10 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import okhttp3.MediaType.Companion.toMediaType
-import okhttp3.MultipartBody
 import okhttp3.OkHttpClient
 import okhttp3.Request
-import okhttp3.RequestBody.Companion.asRequestBody
 import org.json.JSONObject
+import org.xmlpull.v1.XmlPullParser
 import java.io.File
 import java.io.FileInputStream
 import java.io.FileOutputStream
@@ -59,9 +58,8 @@ import java.io.StringReader
 import java.util.concurrent.TimeUnit
 import java.util.zip.ZipEntry
 import javax.inject.Inject
-import kotlin.system.exitProcess
 import kotlin.math.roundToInt
-import org.xmlpull.v1.XmlPullParser
+import kotlin.system.exitProcess
 
 data class BackupRestoreProgressUi(
     val title: String,
@@ -69,7 +67,6 @@ data class BackupRestoreProgressUi(
     val percent: Int,
     val indeterminate: Boolean,
 )
-
 
 // Clave para DataStore
 private val CLOUD_BACKUP_ENABLED_KEY = booleanPreferencesKey("cloud_backup_enabled")
@@ -152,774 +149,819 @@ internal fun readCsvRecords(reader: Reader): Sequence<List<String>> =
     }
 
 @HiltViewModel
-class BackupRestoreViewModel @Inject constructor(
-    val database: MusicDatabase,
-) : ViewModel() {
-    private val _backupRestoreProgress = MutableStateFlow<BackupRestoreProgressUi?>(null)
-    val backupRestoreProgress: StateFlow<BackupRestoreProgressUi?> = _backupRestoreProgress.asStateFlow()
+class BackupRestoreViewModel
+    @Inject
+    constructor(
+        val database: MusicDatabase,
+    ) : ViewModel() {
+        private val _backupRestoreProgress = MutableStateFlow<BackupRestoreProgressUi?>(null)
+        val backupRestoreProgress: StateFlow<BackupRestoreProgressUi?> = _backupRestoreProgress.asStateFlow()
 
-    private val _cloudUploadState = MutableStateFlow(CloudUploadState())
-    val cloudUploadState: StateFlow<CloudUploadState> = _cloudUploadState.asStateFlow()
+        private val _cloudUploadState = MutableStateFlow(CloudUploadState())
+        val cloudUploadState: StateFlow<CloudUploadState> = _cloudUploadState.asStateFlow()
 
-    private fun emitProgress(
-        title: String,
-        step: String,
-        percent: Int,
-        indeterminate: Boolean,
-    ) {
-        _backupRestoreProgress.value =
-            BackupRestoreProgressUi(
-                title = title,
-                step = step,
-                percent = percent.coerceIn(0, 100),
-                indeterminate = indeterminate,
-            )
-    }
+        private fun emitProgress(
+            title: String,
+            step: String,
+            percent: Int,
+            indeterminate: Boolean,
+        ) {
+            _backupRestoreProgress.value =
+                BackupRestoreProgressUi(
+                    title = title,
+                    step = step,
+                    percent = percent.coerceIn(0, 100),
+                    indeterminate = indeterminate,
+                )
+        }
 
-    fun backup(context: Context, uri: Uri) {
-        viewModelScope.launch(Dispatchers.IO) {
-            val title = context.getString(R.string.backup_in_progress)
-            try {
-                val dbFile = context.getDatabasePath(InternalDatabase.DB_NAME)
-                val dbFiles =
-                    listOf(
-                        dbFile,
-                        dbFile.resolveSibling("${InternalDatabase.DB_NAME}-wal"),
-                        dbFile.resolveSibling("${InternalDatabase.DB_NAME}-shm"),
-                        dbFile.resolveSibling("${InternalDatabase.DB_NAME}-journal"),
-                    ).filter { it.exists() }
+        fun backup(
+            context: Context,
+            uri: Uri,
+        ) {
+            viewModelScope.launch(Dispatchers.IO) {
+                val title = context.getString(R.string.backup_in_progress)
+                try {
+                    val dbFile = context.getDatabasePath(InternalDatabase.DB_NAME)
+                    val dbFiles =
+                        listOf(
+                            dbFile,
+                            dbFile.resolveSibling("${InternalDatabase.DB_NAME}-wal"),
+                            dbFile.resolveSibling("${InternalDatabase.DB_NAME}-shm"),
+                            dbFile.resolveSibling("${InternalDatabase.DB_NAME}-journal"),
+                        ).filter { it.exists() }
 
-                val totalUnits = 2 + dbFiles.size
-                val unitSpan = 100f / totalUnits.coerceAtLeast(1)
-                var completedUnits = 0
-                var lastPercent = -1
-                var lastStep = ""
+                    val totalUnits = 2 + dbFiles.size
+                    val unitSpan = 100f / totalUnits.coerceAtLeast(1)
+                    var completedUnits = 0
+                    var lastPercent = -1
+                    var lastStep = ""
 
-                fun emit(step: String, unitFraction: Float = 0f, indeterminate: Boolean = false) {
-                    val p =
-                        ((completedUnits + unitFraction.coerceIn(0f, 1f)) * unitSpan)
-                            .roundToInt()
-                            .coerceIn(0, 100)
-                    if (p != lastPercent || step != lastStep) {
-                        lastPercent = p
-                        lastStep = step
-                        emitProgress(
-                            title = title,
-                            step = step,
-                            percent = p,
-                            indeterminate = indeterminate,
-                        )
-                    }
-                }
-
-                context.applicationContext.contentResolver.openOutputStream(uri)?.use { outputStream ->
-                    outputStream.buffered().zipOutputStream().use { zipStream ->
-                        emit(context.getString(R.string.backup_step_export_settings), indeterminate = true)
-                        zipStream.putNextEntry(ZipEntry(SETTINGS_XML_FILENAME))
-                        writeSettingsToXml(context, zipStream)
-                        zipStream.closeEntry()
-                        completedUnits++
-
-                        emit(context.getString(R.string.backup_step_checkpoint_database), indeterminate = true)
-                        database.awaitIdle()
-                        database.checkpoint()
-                        completedUnits++
-
-                        val buffer = ByteArray(DEFAULT_BUFFER_SIZE)
-                        dbFiles.forEach { file ->
-                            val fileSize = file.length().coerceAtLeast(1L)
-                            var bytesCopied = 0L
-                            emit(
-                                context.getString(R.string.backup_step_copying_file, file.name),
-                                unitFraction = 0f,
-                                indeterminate = false,
+                    fun emit(
+                        step: String,
+                        unitFraction: Float = 0f,
+                        indeterminate: Boolean = false,
+                    ) {
+                        val p =
+                            ((completedUnits + unitFraction.coerceIn(0f, 1f)) * unitSpan)
+                                .roundToInt()
+                                .coerceIn(0, 100)
+                        if (p != lastPercent || step != lastStep) {
+                            lastPercent = p
+                            lastStep = step
+                            emitProgress(
+                                title = title,
+                                step = step,
+                                percent = p,
+                                indeterminate = indeterminate,
                             )
-                            zipStream.putNextEntry(ZipEntry(file.name))
-                            FileInputStream(file).use { input ->
-                                while (true) {
-                                    val read = input.read(buffer)
-                                    if (read <= 0) break
-                                    zipStream.write(buffer, 0, read)
-                                    bytesCopied += read
-                                    emit(
-                                        context.getString(R.string.backup_step_copying_file, file.name),
-                                        unitFraction = bytesCopied.toFloat() / fileSize.toFloat(),
-                                        indeterminate = false,
-                                    )
-                                }
-                            }
+                        }
+                    }
+
+                    context.applicationContext.contentResolver.openOutputStream(uri)?.use { outputStream ->
+                        outputStream.buffered().zipOutputStream().use { zipStream ->
+                            emit(context.getString(R.string.backup_step_export_settings), indeterminate = true)
+                            zipStream.putNextEntry(ZipEntry(SETTINGS_XML_FILENAME))
+                            writeSettingsToXml(context, zipStream)
                             zipStream.closeEntry()
                             completedUnits++
+
+                            emit(context.getString(R.string.backup_step_checkpoint_database), indeterminate = true)
+                            database.awaitIdle()
+                            database.checkpoint()
+                            completedUnits++
+
+                            val buffer = ByteArray(DEFAULT_BUFFER_SIZE)
+                            dbFiles.forEach { file ->
+                                val fileSize = file.length().coerceAtLeast(1L)
+                                var bytesCopied = 0L
+                                emit(
+                                    context.getString(R.string.backup_step_copying_file, file.name),
+                                    unitFraction = 0f,
+                                    indeterminate = false,
+                                )
+                                zipStream.putNextEntry(ZipEntry(file.name))
+                                FileInputStream(file).use { input ->
+                                    while (true) {
+                                        val read = input.read(buffer)
+                                        if (read <= 0) break
+                                        zipStream.write(buffer, 0, read)
+                                        bytesCopied += read
+                                        emit(
+                                            context.getString(R.string.backup_step_copying_file, file.name),
+                                            unitFraction = bytesCopied.toFloat() / fileSize.toFloat(),
+                                            indeterminate = false,
+                                        )
+                                    }
+                                }
+                                zipStream.closeEntry()
+                                completedUnits++
+                            }
                         }
+                    } ?: throw IllegalStateException("Failed to open output stream")
+
+                    withContext(Dispatchers.Main) {
+                        Toast.makeText(context, R.string.backup_create_success, Toast.LENGTH_SHORT).show()
                     }
-                } ?: throw IllegalStateException("Failed to open output stream")
 
-                withContext(Dispatchers.Main) {
-                    Toast.makeText(context, R.string.backup_create_success, Toast.LENGTH_SHORT).show()
+                    // Subir a la nube automáticamente si está habilitado
+                    val isCloudEnabled = context.dataStore.data.first()[CLOUD_BACKUP_ENABLED_KEY] ?: false
+                    if (isCloudEnabled) {
+                        uploadBackupToCloudAfterCreation(context, uri)
+                    }
+                } catch (exception: Exception) {
+                    reportException(exception)
+                    withContext(Dispatchers.Main) {
+                        val msg = exception.message ?: context.getString(R.string.backup_create_failed)
+                        Toast.makeText(context, msg, Toast.LENGTH_LONG).show()
+                    }
+                } finally {
+                    _backupRestoreProgress.value = null
                 }
-
-                // Subir a la nube automáticamente si está habilitado
-                val isCloudEnabled = context.dataStore.data.first()[CLOUD_BACKUP_ENABLED_KEY] ?: false
-                if (isCloudEnabled) {
-                    uploadBackupToCloudAfterCreation(context, uri)
-                }
-
-            } catch (exception: Exception) {
-                reportException(exception)
-                withContext(Dispatchers.Main) {
-                    val msg = exception.message ?: context.getString(R.string.backup_create_failed)
-                    Toast.makeText(context, msg, Toast.LENGTH_LONG).show()
-                }
-            } finally {
-                _backupRestoreProgress.value = null
             }
         }
-    }
 
-    fun restore(context: Context, uri: Uri) {
-        viewModelScope.launch(Dispatchers.IO) {
-            val title = context.getString(R.string.restore_in_progress)
-            try {
-                emitProgress(
-                    title = title,
-                    step = context.getString(R.string.restore_step_verifying),
-                    percent = 0,
-                    indeterminate = true,
-                )
+        fun restore(
+            context: Context,
+            uri: Uri,
+        ) {
+            viewModelScope.launch(Dispatchers.IO) {
+                val title = context.getString(R.string.restore_in_progress)
+                try {
+                    emitProgress(
+                        title = title,
+                        step = context.getString(R.string.restore_step_verifying),
+                        percent = 0,
+                        indeterminate = true,
+                    )
 
-                val entryNames = ArrayList<String>()
-                var hasDb = false
-                context.applicationContext.contentResolver.openInputStream(uri)?.use { stream ->
-                    stream.zipInputStream().use { zip ->
-                        var entry = zip.nextEntry
-                        while (entry != null) {
-                            entryNames.add(entry.name)
-                            if (entry.name == InternalDatabase.DB_NAME) hasDb = true
-                            entry = zip.nextEntry
+                    val entryNames = ArrayList<String>()
+                    var hasDb = false
+                    context.applicationContext.contentResolver.openInputStream(uri)?.use { stream ->
+                        stream.zipInputStream().use { zip ->
+                            var entry = zip.nextEntry
+                            while (entry != null) {
+                                entryNames.add(entry.name)
+                                if (entry.name == InternalDatabase.DB_NAME) hasDb = true
+                                entry = zip.nextEntry
+                            }
                         }
                     }
-                }
-                if (!hasDb) throw IllegalStateException("Backup missing database")
+                    if (!hasDb) throw IllegalStateException("Backup missing database")
 
-                val restoreEntries =
-                    entryNames.filter { name ->
-                        name == SETTINGS_XML_FILENAME ||
+                    val restoreEntries =
+                        entryNames.filter { name ->
+                            name == SETTINGS_XML_FILENAME ||
                                 name == SETTINGS_FILENAME ||
                                 name == InternalDatabase.DB_NAME ||
                                 name == "${InternalDatabase.DB_NAME}-wal" ||
                                 name == "${InternalDatabase.DB_NAME}-shm" ||
                                 name == "${InternalDatabase.DB_NAME}-journal"
+                        }
+
+                    val totalUnits = 1 + 1 + restoreEntries.size
+                    val unitSpan = 100f / totalUnits.coerceAtLeast(1)
+                    var completedUnits = 0
+
+                    fun emit(
+                        step: String,
+                        indeterminate: Boolean,
+                    ) {
+                        val p = (completedUnits * unitSpan).roundToInt().coerceIn(0, 100)
+                        emitProgress(title = title, step = step, percent = p, indeterminate = indeterminate)
                     }
 
-                val totalUnits = 1 + 1 + restoreEntries.size
-                val unitSpan = 100f / totalUnits.coerceAtLeast(1)
-                var completedUnits = 0
+                    completedUnits++
+                    emit(context.getString(R.string.restore_step_stopping_playback), indeterminate = true)
+                    runCatching { context.stopService(Intent(context, MusicService::class.java)) }
+                    runCatching { database.awaitIdle() }
+                    runCatching { database.checkpoint() }
+                    runCatching { database.close() }
+                    completedUnits++
 
-                fun emit(step: String, indeterminate: Boolean) {
-                    val p = (completedUnits * unitSpan).roundToInt().coerceIn(0, 100)
-                    emitProgress(title = title, step = step, percent = p, indeterminate = indeterminate)
-                }
-
-                completedUnits++
-                emit(context.getString(R.string.restore_step_stopping_playback), indeterminate = true)
-                runCatching { context.stopService(Intent(context, MusicService::class.java)) }
-                runCatching { database.awaitIdle() }
-                runCatching { database.checkpoint() }
-                runCatching { database.close() }
-                completedUnits++
-
-                context.applicationContext.contentResolver.openInputStream(uri)?.use { stream ->
-                    stream.zipInputStream().use { zip ->
-                        var entry = zip.nextEntry
-                        while (entry != null) {
-                            val name = entry.name
-                            if (name !in restoreEntries) {
-                                entry = zip.nextEntry
-                                continue
-                            }
-                            when (name) {
-                                SETTINGS_XML_FILENAME -> {
-                                    emit(context.getString(R.string.restore_step_restoring_settings), indeterminate = true)
-                                    restoreSettingsFromXml(context, zip)
-                                }
-                                SETTINGS_FILENAME -> {
-                                    emit(context.getString(R.string.restore_step_restoring_settings), indeterminate = true)
-                                    val settingsDir = context.filesDir / "datastore"
-                                    if (!settingsDir.exists()) settingsDir.mkdirs()
-                                    (settingsDir / SETTINGS_FILENAME).outputStream().use { out ->
-                                        zip.copyTo(out)
-                                    }
-                                }
-                                InternalDatabase.DB_NAME,
-                                "${InternalDatabase.DB_NAME}-wal",
-                                "${InternalDatabase.DB_NAME}-shm",
-                                "${InternalDatabase.DB_NAME}-journal" -> {
-                                    emit(context.getString(R.string.restore_step_restoring_file, name), indeterminate = true)
-                                    val dbFile = context.getDatabasePath(name)
-                                    if (dbFile.exists()) {
-                                        dbFile.delete()
-                                    }
-                                    FileOutputStream(dbFile).use { out ->
-                                        zip.copyTo(out)
-                                    }
-                                }
-                            }
-                            completedUnits++
-                            entry = zip.nextEntry
-                        }
-                    }
-                }
-
-                emitProgress(
-                    title = title,
-                    step = context.getString(R.string.restore_step_restarting),
-                    percent = 100,
-                    indeterminate = true,
-                )
-
-                withContext(Dispatchers.Main) {
-                    Toast.makeText(context, R.string.restore_success, Toast.LENGTH_SHORT).show()
-                }
-
-                try { context.filesDir.resolve(PERSISTENT_QUEUE_FILE).delete() } catch (_: Exception) {}
-
-                _backupRestoreProgress.value = null
-                context.startActivity(Intent(context, MainActivity::class.java))
-                exitProcess(0)
-            } catch (e: Exception) {
-                reportException(e)
-                withContext(Dispatchers.Main) {
-                    Toast.makeText(context, e.message ?: context.getString(R.string.restore_failed), Toast.LENGTH_LONG).show()
-                }
-            } finally {
-                _backupRestoreProgress.value = null
-            }
-        }
-    }
-
-    private suspend fun writeSettingsToXml(context: Context, outputStream: java.io.OutputStream) {
-        val prefs = context.dataStore.data.first().asMap()
-        val serializer = android.util.Xml.newSerializer()
-        serializer.setOutput(outputStream, "UTF-8")
-        serializer.startDocument("UTF-8", true)
-        serializer.startTag(null, "EchofyBackup")
-        serializer.startTag(null, "Settings")
-
-        for ((key, value) in prefs) {
-            val tagName = when (value) {
-                is Boolean -> "boolean"
-                is Int -> "int"
-                is Long -> "long"
-                is Float -> "float"
-                is String -> "string"
-                is Set<*> -> "string-set"
-                else -> null
-            }
-            if (tagName != null) {
-                serializer.startTag(null, tagName)
-                serializer.attribute(null, "name", key.name)
-                if (value is Set<*>) {
-                    value.forEach { item ->
-                        serializer.startTag(null, "item")
-                        serializer.text(item.toString())
-                        serializer.endTag(null, "item")
-                    }
-                } else {
-                    serializer.attribute(null, "value", value.toString())
-                }
-                serializer.endTag(null, tagName)
-            }
-        }
-
-        serializer.endTag(null, "Settings")
-        serializer.endTag(null, "EchofyBackup")
-        serializer.endDocument()
-        serializer.flush()
-    }
-
-    private suspend fun restoreSettingsFromXml(context: Context, inputStream: java.io.InputStream) {
-        val content = inputStream.readBytes().toString(Charsets.UTF_8)
-        if (content.isBlank()) return
-
-        val parser = android.util.Xml.newPullParser()
-        parser.setInput(StringReader(content))
-
-        var eventType = parser.eventType
-        val booleans = LinkedHashMap<String, Boolean>()
-        val ints = LinkedHashMap<String, Int>()
-        val longs = LinkedHashMap<String, Long>()
-        val floats = LinkedHashMap<String, Float>()
-        val strings = LinkedHashMap<String, String>()
-        val stringSets = LinkedHashMap<String, Set<String>>()
-
-        while (eventType != XmlPullParser.END_DOCUMENT) {
-            if (eventType == XmlPullParser.START_TAG) {
-                val name = parser.name
-                val keyName = parser.getAttributeValue(null, "name")
-
-                if (keyName != null) {
-                    when (name) {
-                        "boolean" -> {
-                            val value = parser.getAttributeValue(null, "value")?.toBoolean()
-                            if (value != null) {
-                                booleans[keyName] = value
-                            }
-                        }
-                        "int" -> {
-                            val value = parser.getAttributeValue(null, "value")?.toIntOrNull()
-                            if (value != null) {
-                                ints[keyName] = value
-                            }
-                        }
-                        "long" -> {
-                            val value = parser.getAttributeValue(null, "value")?.toLongOrNull()
-                            if (value != null) {
-                                longs[keyName] = value
-                            }
-                        }
-                        "float" -> {
-                            val value = parser.getAttributeValue(null, "value")?.toFloatOrNull()
-                            if (value != null) {
-                                floats[keyName] = value
-                            }
-                        }
-                        "string" -> {
-                            val value = parser.getAttributeValue(null, "value")
-                            if (value != null) {
-                                strings[keyName] = value
-                            }
-                        }
-                        "string-set" -> {
-                            val values = LinkedHashSet<String>()
-                            while (true) {
-                                val next = parser.next()
-                                if (next == XmlPullParser.START_TAG && parser.name == "item") {
-                                    values.add(parser.nextText())
+                    context.applicationContext.contentResolver.openInputStream(uri)?.use { stream ->
+                        stream.zipInputStream().use { zip ->
+                            var entry = zip.nextEntry
+                            while (entry != null) {
+                                val name = entry.name
+                                if (name !in restoreEntries) {
+                                    entry = zip.nextEntry
                                     continue
                                 }
-                                if (next == XmlPullParser.END_TAG && parser.name == "string-set") {
-                                    break
+                                when (name) {
+                                    SETTINGS_XML_FILENAME -> {
+                                        emit(context.getString(R.string.restore_step_restoring_settings), indeterminate = true)
+                                        restoreSettingsFromXml(context, zip)
+                                    }
+                                    SETTINGS_FILENAME -> {
+                                        emit(context.getString(R.string.restore_step_restoring_settings), indeterminate = true)
+                                        val settingsDir = context.filesDir / "datastore"
+                                        if (!settingsDir.exists()) settingsDir.mkdirs()
+                                        (settingsDir / SETTINGS_FILENAME).outputStream().use { out ->
+                                            zip.copyTo(out)
+                                        }
+                                    }
+                                    InternalDatabase.DB_NAME,
+                                    "${InternalDatabase.DB_NAME}-wal",
+                                    "${InternalDatabase.DB_NAME}-shm",
+                                    "${InternalDatabase.DB_NAME}-journal",
+                                    -> {
+                                        emit(context.getString(R.string.restore_step_restoring_file, name), indeterminate = true)
+                                        val dbFile = context.getDatabasePath(name)
+                                        if (dbFile.exists()) {
+                                            dbFile.delete()
+                                        }
+                                        FileOutputStream(dbFile).use { out ->
+                                            zip.copyTo(out)
+                                        }
+                                    }
                                 }
-                                if (next == XmlPullParser.END_DOCUMENT) {
-                                    break
+                                completedUnits++
+                                entry = zip.nextEntry
+                            }
+                        }
+                    }
+
+                    emitProgress(
+                        title = title,
+                        step = context.getString(R.string.restore_step_restarting),
+                        percent = 100,
+                        indeterminate = true,
+                    )
+
+                    withContext(Dispatchers.Main) {
+                        Toast.makeText(context, R.string.restore_success, Toast.LENGTH_SHORT).show()
+                    }
+
+                    try {
+                        context.filesDir.resolve(PERSISTENT_QUEUE_FILE).delete()
+                    } catch (_: Exception) {
+                    }
+
+                    _backupRestoreProgress.value = null
+                    context.startActivity(Intent(context, MainActivity::class.java))
+                    exitProcess(0)
+                } catch (e: Exception) {
+                    reportException(e)
+                    withContext(Dispatchers.Main) {
+                        Toast.makeText(context, e.message ?: context.getString(R.string.restore_failed), Toast.LENGTH_LONG).show()
+                    }
+                } finally {
+                    _backupRestoreProgress.value = null
+                }
+            }
+        }
+
+        private suspend fun writeSettingsToXml(
+            context: Context,
+            outputStream: java.io.OutputStream,
+        ) {
+            val prefs = context.dataStore.data.first().asMap()
+            val serializer = android.util.Xml.newSerializer()
+            serializer.setOutput(outputStream, "UTF-8")
+            serializer.startDocument("UTF-8", true)
+            serializer.startTag(null, "EchofyBackup")
+            serializer.startTag(null, "Settings")
+
+            for ((key, value) in prefs) {
+                val tagName =
+                    when (value) {
+                        is Boolean -> "boolean"
+                        is Int -> "int"
+                        is Long -> "long"
+                        is Float -> "float"
+                        is String -> "string"
+                        is Set<*> -> "string-set"
+                        else -> null
+                    }
+                if (tagName != null) {
+                    serializer.startTag(null, tagName)
+                    serializer.attribute(null, "name", key.name)
+                    if (value is Set<*>) {
+                        value.forEach { item ->
+                            serializer.startTag(null, "item")
+                            serializer.text(item.toString())
+                            serializer.endTag(null, "item")
+                        }
+                    } else {
+                        serializer.attribute(null, "value", value.toString())
+                    }
+                    serializer.endTag(null, tagName)
+                }
+            }
+
+            serializer.endTag(null, "Settings")
+            serializer.endTag(null, "EchofyBackup")
+            serializer.endDocument()
+            serializer.flush()
+        }
+
+        private suspend fun restoreSettingsFromXml(
+            context: Context,
+            inputStream: java.io.InputStream,
+        ) {
+            val content = inputStream.readBytes().toString(Charsets.UTF_8)
+            if (content.isBlank()) return
+
+            val parser = android.util.Xml.newPullParser()
+            parser.setInput(StringReader(content))
+
+            var eventType = parser.eventType
+            val booleans = LinkedHashMap<String, Boolean>()
+            val ints = LinkedHashMap<String, Int>()
+            val longs = LinkedHashMap<String, Long>()
+            val floats = LinkedHashMap<String, Float>()
+            val strings = LinkedHashMap<String, String>()
+            val stringSets = LinkedHashMap<String, Set<String>>()
+
+            while (eventType != XmlPullParser.END_DOCUMENT) {
+                if (eventType == XmlPullParser.START_TAG) {
+                    val name = parser.name
+                    val keyName = parser.getAttributeValue(null, "name")
+
+                    if (keyName != null) {
+                        when (name) {
+                            "boolean" -> {
+                                val value = parser.getAttributeValue(null, "value")?.toBoolean()
+                                if (value != null) {
+                                    booleans[keyName] = value
                                 }
                             }
-                            stringSets[keyName] = values
+                            "int" -> {
+                                val value = parser.getAttributeValue(null, "value")?.toIntOrNull()
+                                if (value != null) {
+                                    ints[keyName] = value
+                                }
+                            }
+                            "long" -> {
+                                val value = parser.getAttributeValue(null, "value")?.toLongOrNull()
+                                if (value != null) {
+                                    longs[keyName] = value
+                                }
+                            }
+                            "float" -> {
+                                val value = parser.getAttributeValue(null, "value")?.toFloatOrNull()
+                                if (value != null) {
+                                    floats[keyName] = value
+                                }
+                            }
+                            "string" -> {
+                                val value = parser.getAttributeValue(null, "value")
+                                if (value != null) {
+                                    strings[keyName] = value
+                                }
+                            }
+                            "string-set" -> {
+                                val values = LinkedHashSet<String>()
+                                while (true) {
+                                    val next = parser.next()
+                                    if (next == XmlPullParser.START_TAG && parser.name == "item") {
+                                        values.add(parser.nextText())
+                                        continue
+                                    }
+                                    if (next == XmlPullParser.END_TAG && parser.name == "string-set") {
+                                        break
+                                    }
+                                    if (next == XmlPullParser.END_DOCUMENT) {
+                                        break
+                                    }
+                                }
+                                stringSets[keyName] = values
+                            }
                         }
                     }
                 }
+                eventType = parser.next()
             }
-            eventType = parser.next()
+
+            if (
+                booleans.isEmpty() &&
+                ints.isEmpty() &&
+                longs.isEmpty() &&
+                floats.isEmpty() &&
+                strings.isEmpty() &&
+                stringSets.isEmpty()
+            ) {
+                return
+            }
+
+            context.dataStore.edit { prefs ->
+                booleans.forEach { (k, v) -> prefs[booleanPreferencesKey(k)] = v }
+                ints.forEach { (k, v) -> prefs[intPreferencesKey(k)] = v }
+                longs.forEach { (k, v) -> prefs[longPreferencesKey(k)] = v }
+                floats.forEach { (k, v) -> prefs[floatPreferencesKey(k)] = v }
+                strings.forEach { (k, v) -> prefs[stringPreferencesKey(k)] = v }
+                stringSets.forEach { (k, v) -> prefs[stringSetPreferencesKey(k)] = v }
+            }
         }
 
-        if (
-            booleans.isEmpty() &&
-            ints.isEmpty() &&
-            longs.isEmpty() &&
-            floats.isEmpty() &&
-            strings.isEmpty() &&
-            stringSets.isEmpty()
-        ) {
-            return
-        }
+        private fun normalizeCsvHeaderCell(value: String): String =
+            value
+                .trim()
+                .trimStart('\uFEFF')
+                .lowercase()
+                .replace(" ", "")
+                .replace("_", "")
+                .replace("-", "")
 
-        context.dataStore.edit { prefs ->
-            booleans.forEach { (k, v) -> prefs[booleanPreferencesKey(k)] = v }
-            ints.forEach { (k, v) -> prefs[intPreferencesKey(k)] = v }
-            longs.forEach { (k, v) -> prefs[longPreferencesKey(k)] = v }
-            floats.forEach { (k, v) -> prefs[floatPreferencesKey(k)] = v }
-            strings.forEach { (k, v) -> prefs[stringPreferencesKey(k)] = v }
-            stringSets.forEach { (k, v) -> prefs[stringSetPreferencesKey(k)] = v }
-        }
-    }
+        suspend fun importPlaylistFromCsv(
+            context: Context,
+            uri: Uri,
+        ): ArrayList<Song> {
+            val songs =
+                withContext(Dispatchers.IO) {
+                    val out = arrayListOf<Song>()
 
-    private fun normalizeCsvHeaderCell(value: String): String =
-        value
-            .trim()
-            .trimStart('\uFEFF')
-            .lowercase()
-            .replace(" ", "")
-            .replace("_", "")
-            .replace("-", "")
+                    runCatching {
+                        context.contentResolver.openInputStream(uri)?.use { stream ->
+                            val reader = PushbackReader(InputStreamReader(stream, Charsets.UTF_8), 1)
+                            val iterator = readCsvRecords(reader).iterator()
+                            if (!iterator.hasNext()) return@use
 
-    suspend fun importPlaylistFromCsv(context: Context, uri: Uri): ArrayList<Song> {
-        val songs =
-            withContext(Dispatchers.IO) {
-                val out = arrayListOf<Song>()
+                            val firstRecord = iterator.next()
+                            val normalizedHeader = firstRecord.map(::normalizeCsvHeaderCell)
 
-                runCatching {
-                    context.contentResolver.openInputStream(uri)?.use { stream ->
-                        val reader = PushbackReader(InputStreamReader(stream, Charsets.UTF_8), 1)
-                        val iterator = readCsvRecords(reader).iterator()
-                        if (!iterator.hasNext()) return@use
+                            val titleIndex =
+                                normalizedHeader.indexOfFirst { it == "title" || it == "tracktitle" || it == "songtitle" }
+                            val artistIndex =
+                                normalizedHeader.indexOfFirst { it == "artist" || it == "artists" || it == "artistname" }
 
-                        val firstRecord = iterator.next()
-                        val normalizedHeader = firstRecord.map(::normalizeCsvHeaderCell)
+                            val hasHeader = titleIndex >= 0 && artistIndex >= 0
+                            val resolvedTitleIndex = if (hasHeader) titleIndex else 0
+                            val resolvedArtistIndex = if (hasHeader) artistIndex else 1
 
-                        val titleIndex =
-                            normalizedHeader.indexOfFirst { it == "title" || it == "tracktitle" || it == "songtitle" }
-                        val artistIndex =
-                            normalizedHeader.indexOfFirst { it == "artist" || it == "artists" || it == "artistname" }
+                            fun addFromRecord(record: List<String>) {
+                                val titleRaw = record.getOrNull(resolvedTitleIndex).orEmpty()
+                                val artistRaw = record.getOrNull(resolvedArtistIndex).orEmpty()
 
-                        val hasHeader = titleIndex >= 0 && artistIndex >= 0
-                        val resolvedTitleIndex = if (hasHeader) titleIndex else 0
-                        val resolvedArtistIndex = if (hasHeader) artistIndex else 1
+                                val title = titleRaw.trim().trimStart('\uFEFF')
+                                if (title.isBlank()) return
 
-                        fun addFromRecord(record: List<String>) {
-                            val titleRaw = record.getOrNull(resolvedTitleIndex).orEmpty()
-                            val artistRaw = record.getOrNull(resolvedArtistIndex).orEmpty()
+                                val artistStr = artistRaw.trim()
+                                val artists =
+                                    artistStr
+                                        .split(';', '|')
+                                        .map { it.trim() }
+                                        .filter { it.isNotEmpty() }
+                                        .map { ArtistEntity(id = "", name = it) }
 
-                            val title = titleRaw.trim().trimStart('\uFEFF')
-                            if (title.isBlank()) return
-
-                            val artistStr = artistRaw.trim()
-                            val artists =
-                                artistStr
-                                    .split(';', '|')
-                                    .map { it.trim() }
-                                    .filter { it.isNotEmpty() }
-                                    .map { ArtistEntity(id = "", name = it) }
-
-                            out.add(
-                                Song(
-                                    song = SongEntity(id = "", title = title),
-                                    artists = if (artists.isEmpty()) listOf(ArtistEntity("", "")) else artists,
+                                out.add(
+                                    Song(
+                                        song = SongEntity(id = "", title = title),
+                                        artists = if (artists.isEmpty()) listOf(ArtistEntity("", "")) else artists,
+                                    ),
                                 )
+                            }
+
+                            if (!hasHeader) {
+                                addFromRecord(firstRecord)
+                            }
+                            while (iterator.hasNext()) {
+                                addFromRecord(iterator.next())
+                            }
+                        }
+                    }.onFailure {
+                        reportException(it)
+                    }
+
+                    out
+                }
+
+            if (songs.isEmpty()) {
+                Toast.makeText(
+                    context,
+                    "No songs found. Invalid file, or perhaps no song matches were found.",
+                    Toast.LENGTH_SHORT,
+                ).show()
+            }
+
+            return songs
+        }
+
+        suspend fun loadM3UOnline(
+            context: Context,
+            uri: Uri,
+        ): ArrayList<Song> {
+            val songs =
+                withContext(Dispatchers.IO) {
+                    val out = ArrayList<Song>()
+
+                    runCatching {
+                        context.applicationContext.contentResolver.openInputStream(uri)?.use { stream ->
+                            val lines = stream.bufferedReader().readLines()
+                            if (lines.firstOrNull()?.startsWith("#EXTM3U") == true) {
+                                lines.forEach { rawLine ->
+                                    if (rawLine.startsWith("#EXTINF:")) {
+                                        val artists =
+                                            rawLine
+                                                .substringAfter("#EXTINF:")
+                                                .substringAfter(',')
+                                                .substringBefore(" - ")
+                                                .split(';')
+                                        val title =
+                                            rawLine
+                                                .substringAfter("#EXTINF:")
+                                                .substringAfter(',')
+                                                .substringAfter(" - ")
+
+                                        out.add(
+                                            Song(
+                                                song = SongEntity(id = "", title = title),
+                                                artists = artists.map { ArtistEntity("", it) },
+                                            ),
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                    }.onFailure {
+                        reportException(it)
+                    }
+
+                    out
+                }
+
+            if (songs.isEmpty()) {
+                Toast.makeText(
+                    context,
+                    "No songs found. Invalid file, or perhaps no song matches were found.",
+                    Toast.LENGTH_SHORT,
+                ).show()
+            }
+
+            return songs
+        }
+
+        // ──────────────────────────────────────────────────────────────────────────
+        // Cloud Backup Functions
+        // ──────────────────────────────────────────────────────────────────────────
+
+        fun setCloudBackupEnabled(
+            context: Context,
+            enabled: Boolean,
+        ) {
+            viewModelScope.launch {
+                context.dataStore.edit { prefs ->
+                    prefs[CLOUD_BACKUP_ENABLED_KEY] = enabled
+                }
+                _cloudUploadState.update { it.copy(isEnabled = enabled) }
+            }
+        }
+
+        suspend fun loadCloudBackupEnabled(context: Context): Boolean {
+            return context.dataStore.data.first()[CLOUD_BACKUP_ENABLED_KEY] ?: false
+        }
+
+        fun uploadExistingBackupToCloud(
+            context: Context,
+            backupUri: Uri,
+        ) {
+            viewModelScope.launch(Dispatchers.IO) {
+                _cloudUploadState.update { it.copy(isUploading = true, lastError = null, uploadProgress = 0) }
+
+                try {
+                    // Crear archivo temporal desde el URI
+                    val tempFile = File(context.cacheDir, "temp_backup_for_upload_${System.currentTimeMillis()}.backup")
+                    context.contentResolver.openInputStream(backupUri)?.use { input ->
+                        FileOutputStream(tempFile).use { output ->
+                            input.copyTo(output)
+                        }
+                    } ?: throw IllegalStateException("Failed to open backup file")
+
+                    // Subir a Filebin
+                    val result =
+                        uploadBackupToCloud(context, tempFile) { progress ->
+                            _cloudUploadState.update { it.copy(uploadProgress = progress) }
+                        }
+
+                    result.onSuccess { url ->
+                        _cloudUploadState.update {
+                            it.copy(
+                                isUploading = false,
+                                lastUploadUrl = url,
+                                lastError = null,
+                                uploadProgress = 100,
                             )
                         }
-
-                        if (!hasHeader) {
-                            addFromRecord(firstRecord)
+                        withContext(Dispatchers.Main) {
+                            Toast.makeText(
+                                context,
+                                context.getString(R.string.cloud_upload_success, url),
+                                Toast.LENGTH_LONG,
+                            ).show()
                         }
-                        while (iterator.hasNext()) {
-                            addFromRecord(iterator.next())
+                    }.onFailure { error ->
+                        _cloudUploadState.update {
+                            it.copy(
+                                isUploading = false,
+                                lastError = error.message,
+                                uploadProgress = 0,
+                            )
                         }
-                    }
-                }.onFailure {
-                    reportException(it)
-                }
-
-                out
-            }
-
-        if (songs.isEmpty()) {
-            Toast.makeText(
-                context,
-                "No songs found. Invalid file, or perhaps no song matches were found.",
-                Toast.LENGTH_SHORT
-            ).show()
-        }
-
-        return songs
-    }
-
-    suspend fun loadM3UOnline(
-        context: Context,
-        uri: Uri,
-    ): ArrayList<Song> {
-        val songs =
-            withContext(Dispatchers.IO) {
-                val out = ArrayList<Song>()
-
-                runCatching {
-                    context.applicationContext.contentResolver.openInputStream(uri)?.use { stream ->
-                        val lines = stream.bufferedReader().readLines()
-                        if (lines.firstOrNull()?.startsWith("#EXTM3U") == true) {
-                            lines.forEach { rawLine ->
-                                if (rawLine.startsWith("#EXTINF:")) {
-                                    val artists =
-                                        rawLine
-                                            .substringAfter("#EXTINF:")
-                                            .substringAfter(',')
-                                            .substringBefore(" - ")
-                                            .split(';')
-                                    val title =
-                                        rawLine
-                                            .substringAfter("#EXTINF:")
-                                            .substringAfter(',')
-                                            .substringAfter(" - ")
-
-                                    out.add(
-                                        Song(
-                                            song = SongEntity(id = "", title = title),
-                                            artists = artists.map { ArtistEntity("", it) },
-                                        )
-                                    )
-                                }
-                            }
+                        withContext(Dispatchers.Main) {
+                            Toast.makeText(
+                                context,
+                                context.getString(R.string.cloud_upload_failed, error.message),
+                                Toast.LENGTH_LONG,
+                            ).show()
                         }
                     }
-                }.onFailure {
-                    reportException(it)
+
+                    // Limpiar archivo temporal
+                    tempFile.delete()
+                } catch (e: Exception) {
+                    reportException(e)
+                    _cloudUploadState.update {
+                        it.copy(
+                            isUploading = false,
+                            lastError = e.message,
+                            uploadProgress = 0,
+                        )
+                    }
+                    withContext(Dispatchers.Main) {
+                        Toast.makeText(context, R.string.cloud_upload_error, Toast.LENGTH_LONG).show()
+                    }
                 }
-
-                out
             }
-
-        if (songs.isEmpty()) {
-            Toast.makeText(
-                context,
-                "No songs found. Invalid file, or perhaps no song matches were found.",
-                Toast.LENGTH_SHORT
-            ).show()
         }
 
-        return songs
-    }
-
-    // ──────────────────────────────────────────────────────────────────────────
-    // Cloud Backup Functions
-    // ──────────────────────────────────────────────────────────────────────────
-
-    fun setCloudBackupEnabled(context: Context, enabled: Boolean) {
-        viewModelScope.launch {
-            context.dataStore.edit { prefs ->
-                prefs[CLOUD_BACKUP_ENABLED_KEY] = enabled
-            }
-            _cloudUploadState.update { it.copy(isEnabled = enabled) }
-        }
-    }
-
-    suspend fun loadCloudBackupEnabled(context: Context): Boolean {
-        return context.dataStore.data.first()[CLOUD_BACKUP_ENABLED_KEY] ?: false
-    }
-
-    fun uploadExistingBackupToCloud(context: Context, backupUri: Uri) {
-        viewModelScope.launch(Dispatchers.IO) {
-            _cloudUploadState.update { it.copy(isUploading = true, lastError = null, uploadProgress = 0) }
-
+        private suspend fun uploadBackupToCloudAfterCreation(
+            context: Context,
+            backupUri: Uri,
+        ) {
             try {
-                // Crear archivo temporal desde el URI
-                val tempFile = File(context.cacheDir, "temp_backup_for_upload_${System.currentTimeMillis()}.backup")
+                // Pequeña pausa para asegurar que el archivo esté completamente escrito
+                kotlinx.coroutines.delay(500)
+
+                // Crear archivo temporal
+                val tempFile = File(context.cacheDir, "temp_backup_upload_${System.currentTimeMillis()}.backup")
                 context.contentResolver.openInputStream(backupUri)?.use { input ->
                     FileOutputStream(tempFile).use { output ->
                         input.copyTo(output)
                     }
-                } ?: throw IllegalStateException("Failed to open backup file")
+                } ?: return
 
-                // Subir a Filebin
-                val result = uploadBackupToCloud(context, tempFile) { progress ->
-                    _cloudUploadState.update { it.copy(uploadProgress = progress) }
-                }
+                val result =
+                    uploadBackupToCloud(context, tempFile) { progress ->
+                        _cloudUploadState.update { it.copy(uploadProgress = progress) }
+                    }
 
                 result.onSuccess { url ->
                     _cloudUploadState.update {
                         it.copy(
-                            isUploading = false,
                             lastUploadUrl = url,
                             lastError = null,
-                            uploadProgress = 100
                         )
-                    }
-                    withContext(Dispatchers.Main) {
-                        Toast.makeText(
-                            context,
-                            context.getString(R.string.cloud_upload_success, url),
-                            Toast.LENGTH_LONG
-                        ).show()
                     }
                 }.onFailure { error ->
                     _cloudUploadState.update {
                         it.copy(
-                            isUploading = false,
                             lastError = error.message,
-                            uploadProgress = 0
                         )
                     }
-                    withContext(Dispatchers.Main) {
-                        Toast.makeText(
-                            context,
-                            context.getString(R.string.cloud_upload_failed, error.message),
-                            Toast.LENGTH_LONG
-                        ).show()
-                    }
                 }
 
-                // Limpiar archivo temporal
                 tempFile.delete()
-
             } catch (e: Exception) {
                 reportException(e)
                 _cloudUploadState.update {
                     it.copy(
-                        isUploading = false,
                         lastError = e.message,
-                        uploadProgress = 0
                     )
-                }
-                withContext(Dispatchers.Main) {
-                    Toast.makeText(context, R.string.cloud_upload_error, Toast.LENGTH_LONG).show()
                 }
             }
         }
-    }
 
-    private suspend fun uploadBackupToCloudAfterCreation(context: Context, backupUri: Uri) {
-        try {
-            // Pequeña pausa para asegurar que el archivo esté completamente escrito
-            kotlinx.coroutines.delay(500)
+        private suspend fun uploadBackupToCloud(
+            context: Context,
+            file: File,
+            onProgress: (Int) -> Unit = {},
+        ): Result<String> =
+            withContext(Dispatchers.IO) {
+                val client =
+                    OkHttpClient.Builder()
+                        .connectTimeout(30, TimeUnit.SECONDS)
+                        .writeTimeout(60, TimeUnit.SECONDS)
+                        .readTimeout(60, TimeUnit.SECONDS)
+                        .build()
 
-            // Crear archivo temporal
-            val tempFile = File(context.cacheDir, "temp_backup_upload_${System.currentTimeMillis()}.backup")
-            context.contentResolver.openInputStream(backupUri)?.use { input ->
-                FileOutputStream(tempFile).use { output ->
-                    input.copyTo(output)
-                }
-            } ?: return
+                try {
+                    // Crear un bin name único basado en timestamp
+                    val binName = "opentune_backup_${System.currentTimeMillis()}"
+                    val fileName = file.name
 
-            val result = uploadBackupToCloud(context, tempFile) { progress ->
-                _cloudUploadState.update { it.copy(uploadProgress = progress) }
-            }
+                    // Crear el request body con progreso personalizado
+                    val mediaType = "application/octet-stream".toMediaType()
+                    val requestBody =
+                        object : okhttp3.RequestBody() {
+                            override fun contentType(): okhttp3.MediaType? = mediaType
 
-            result.onSuccess { url ->
-                _cloudUploadState.update {
-                    it.copy(
-                        lastUploadUrl = url,
-                        lastError = null
-                    )
-                }
-            }.onFailure { error ->
-                _cloudUploadState.update {
-                    it.copy(
-                        lastError = error.message
-                    )
-                }
-            }
+                            override fun contentLength(): Long = file.length()
 
-            tempFile.delete()
-        } catch (e: Exception) {
-            reportException(e)
-            _cloudUploadState.update {
-                it.copy(
-                    lastError = e.message
-                )
-            }
-        }
-    }
+                            override fun writeTo(sink: okio.BufferedSink) {
+                                val buffer = ByteArray(DEFAULT_BUFFER_SIZE)
+                                file.inputStream().use { input ->
+                                    var bytesRead: Int
+                                    var totalBytesRead = 0L
+                                    val fileSize = file.length()
 
-    private suspend fun uploadBackupToCloud(
-        context: Context,
-        file: File,
-        onProgress: (Int) -> Unit = {}
-    ): Result<String> = withContext(Dispatchers.IO) {
-        val client = OkHttpClient.Builder()
-            .connectTimeout(30, TimeUnit.SECONDS)
-            .writeTimeout(60, TimeUnit.SECONDS)
-            .readTimeout(60, TimeUnit.SECONDS)
-            .build()
-
-        try {
-            // Crear un bin name único basado en timestamp
-            val binName = "opentune_backup_${System.currentTimeMillis()}"
-            val fileName = file.name
-
-            // Crear el request body con progreso personalizado
-            val mediaType = "application/octet-stream".toMediaType()
-            val requestBody = object : okhttp3.RequestBody() {
-                override fun contentType(): okhttp3.MediaType? = mediaType
-
-                override fun contentLength(): Long = file.length()
-
-                override fun writeTo(sink: okio.BufferedSink) {
-                    val buffer = ByteArray(DEFAULT_BUFFER_SIZE)
-                    file.inputStream().use { input ->
-                        var bytesRead: Int
-                        var totalBytesRead = 0L
-                        val fileSize = file.length()
-
-                        while (input.read(buffer).also { bytesRead = it } != -1) {
-                            sink.write(buffer, 0, bytesRead)
-                            totalBytesRead += bytesRead
-                            if (fileSize > 0) {
-                                val progress = (totalBytesRead * 100 / fileSize).toInt()
-                                onProgress(progress)
+                                    while (input.read(buffer).also { bytesRead = it } != -1) {
+                                        sink.write(buffer, 0, bytesRead)
+                                        totalBytesRead += bytesRead
+                                        if (fileSize > 0) {
+                                            val progress = (totalBytesRead * 100 / fileSize).toInt()
+                                            onProgress(progress)
+                                        }
+                                    }
+                                }
                             }
                         }
+
+                    val request =
+                        Request.Builder()
+                            .url("https://filebin.net/$binName/$fileName")
+                            .post(requestBody)
+                            .addHeader("Content-Type", "application/octet-stream")
+                            .addHeader("Accept", "application/json")
+                            .build()
+
+                    val response = client.newCall(request).execute()
+
+                    if (!response.isSuccessful) {
+                        return@withContext Result.failure(
+                            Exception("Filebin error: ${response.code} - ${response.message}"),
+                        )
                     }
-                }
-            }
 
-            val request = Request.Builder()
-                .url("https://filebin.net/$binName/$fileName")
-                .post(requestBody)
-                .addHeader("Content-Type", "application/octet-stream")
-                .addHeader("Accept", "application/json")
-                .build()
-
-            val response = client.newCall(request).execute()
-
-            if (!response.isSuccessful) {
-                return@withContext Result.failure(
-                    Exception("Filebin error: ${response.code} - ${response.message}")
-                )
-            }
-
-            response.body?.string()?.let { responseBody ->
-                try {
-                    val json = JSONObject(responseBody)
-                    val binId = json.optJSONObject("bin")?.optString("id")
-                    val fileObj = json.optJSONObject("file")
-                    val fileFilename = fileObj?.optString("filename")
-                    if (!binId.isNullOrBlank() && !fileFilename.isNullOrBlank()) {
-                        Result.success("https://filebin.net/$binId/$fileFilename")
-                    } else {
-                        Result.success("https://filebin.net/$binName/$fileName")
-                    }
+                    response.body?.string()?.let { responseBody ->
+                        try {
+                            val json = JSONObject(responseBody)
+                            val binId = json.optJSONObject("bin")?.optString("id")
+                            val fileObj = json.optJSONObject("file")
+                            val fileFilename = fileObj?.optString("filename")
+                            if (!binId.isNullOrBlank() && !fileFilename.isNullOrBlank()) {
+                                Result.success("https://filebin.net/$binId/$fileFilename")
+                            } else {
+                                Result.success("https://filebin.net/$binName/$fileName")
+                            }
+                        } catch (e: Exception) {
+                            Result.success("https://filebin.net/$binName/$fileName")
+                        }
+                    } ?: Result.failure(Exception("Empty response from Filebin"))
                 } catch (e: Exception) {
-                    Result.success("https://filebin.net/$binName/$fileName")
+                    reportException(e)
+                    Result.failure(e)
+                } finally {
+                    client.dispatcher.executorService.shutdown()
+                    client.connectionPool.evictAll()
                 }
-            } ?: Result.failure(Exception("Empty response from Filebin"))
+            }
 
-        } catch (e: Exception) {
-            reportException(e)
-            Result.failure(e)
-        } finally {
-            client.dispatcher.executorService.shutdown()
-            client.connectionPool.evictAll()
-        }
-    }
-
-    fun restoreFromCloudUrl(context: Context, url: String) {
-        viewModelScope.launch(Dispatchers.IO) {
-            val title = context.getString(R.string.restore_in_progress)
-            try {
-                emitProgress(
-                    title = title,
-                    step = "Downloading backup from cloud...",
-                    percent = 0,
-                    indeterminate = true,
-                )
-                val cleanUrl = url.trim()
-                val client = OkHttpClient.Builder()
-                    .connectTimeout(30, TimeUnit.SECONDS)
-                    .readTimeout(60, TimeUnit.SECONDS)
-                    .build()
-                val request = Request.Builder().url(cleanUrl).build()
-                val response = client.newCall(request).execute()
-                if (!response.isSuccessful) {
-                    throw IllegalStateException("Failed to download cloud backup: HTTP ${response.code}")
-                }
-                val tempFile = File(context.cacheDir, "cloud_restore_${System.currentTimeMillis()}.backup")
-                response.body?.byteStream()?.use { input ->
-                    FileOutputStream(tempFile).use { output ->
-                        input.copyTo(output)
+        fun restoreFromCloudUrl(
+            context: Context,
+            url: String,
+        ) {
+            viewModelScope.launch(Dispatchers.IO) {
+                val title = context.getString(R.string.restore_in_progress)
+                try {
+                    emitProgress(
+                        title = title,
+                        step = "Downloading backup from cloud...",
+                        percent = 0,
+                        indeterminate = true,
+                    )
+                    val cleanUrl = url.trim()
+                    val client =
+                        OkHttpClient.Builder()
+                            .connectTimeout(30, TimeUnit.SECONDS)
+                            .readTimeout(60, TimeUnit.SECONDS)
+                            .build()
+                    val request = Request.Builder().url(cleanUrl).build()
+                    val response = client.newCall(request).execute()
+                    if (!response.isSuccessful) {
+                        throw IllegalStateException("Failed to download cloud backup: HTTP ${response.code}")
                     }
-                } ?: throw IllegalStateException("Empty body from cloud download")
+                    val tempFile = File(context.cacheDir, "cloud_restore_${System.currentTimeMillis()}.backup")
+                    response.body?.byteStream()?.use { input ->
+                        FileOutputStream(tempFile).use { output ->
+                            input.copyTo(output)
+                        }
+                    } ?: throw IllegalStateException("Empty body from cloud download")
 
-                restore(context, tempFile.toUri())
-            } catch (e: Exception) {
-                reportException(e)
-                withContext(Dispatchers.Main) {
-                    Toast.makeText(context, e.message ?: context.getString(R.string.restore_failed), Toast.LENGTH_LONG).show()
+                    restore(context, tempFile.toUri())
+                } catch (e: Exception) {
+                    reportException(e)
+                    withContext(Dispatchers.Main) {
+                        Toast.makeText(context, e.message ?: context.getString(R.string.restore_failed), Toast.LENGTH_LONG).show()
+                    }
+                    _backupRestoreProgress.value = null
                 }
-                _backupRestoreProgress.value = null
             }
         }
-    }
 
-    companion object {
-        const val SETTINGS_FILENAME = "settings.preferences_pb"
-        const val SETTINGS_XML_FILENAME = "settings.xml"
-        private const val DEFAULT_BUFFER_SIZE = 8192
+        companion object {
+            const val SETTINGS_FILENAME = "settings.preferences_pb"
+            const val SETTINGS_XML_FILENAME = "settings.xml"
+            private const val DEFAULT_BUFFER_SIZE = 8192
+        }
     }
-}

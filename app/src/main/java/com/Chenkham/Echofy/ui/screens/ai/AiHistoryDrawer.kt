@@ -49,7 +49,7 @@ fun ChatHistoryDrawer(
     onDismiss: () -> Unit,
     onSelectSession: (String) -> Unit,
     onNewChat: () -> Unit,
-    onDeleteSession: (String) -> Unit
+    onDeleteSession: (String) -> Unit,
 ) {
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -60,7 +60,7 @@ fun ChatHistoryDrawer(
                 Text(
                     "Chat Sessions",
                     style = TextStyle(fontSize = 17.sp, fontWeight = FontWeight.Bold, color = OnSurface),
-                    modifier = Modifier.weight(1f)
+                    modifier = Modifier.weight(1f),
                 )
                 Button(
                     onClick = {
@@ -69,7 +69,7 @@ fun ChatHistoryDrawer(
                     },
                     colors = ButtonDefaults.buttonColors(containerColor = Primary),
                     shape = RoundedCornerShape(10.dp),
-                    contentPadding = PaddingValues(horizontal = 12.dp, vertical = 4.dp)
+                    contentPadding = PaddingValues(horizontal = 12.dp, vertical = 4.dp),
                 ) {
                     Text("+ New", fontSize = 12.sp, color = OnPrimary, fontWeight = FontWeight.SemiBold)
                 }
@@ -78,27 +78,29 @@ fun ChatHistoryDrawer(
         text = {
             LazyColumn(
                 modifier = Modifier.fillMaxWidth().height(260.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
+                verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {
                 items(sessions) { session ->
                     val isActive = session.id == activeSessionId
-                    val dateStr = remember(session.timestamp) {
-                        SimpleDateFormat("MMM dd, HH:mm", Locale.getDefault()).format(Date(session.timestamp))
-                    }
+                    val dateStr =
+                        remember(session.timestamp) {
+                            SimpleDateFormat("MMM dd, HH:mm", Locale.getDefault()).format(Date(session.timestamp))
+                        }
 
                     Surface(
                         color = if (isActive) PrimaryContainer else SurfaceContainerHighest,
                         shape = RoundedCornerShape(12.dp),
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clickable {
-                                onSelectSession(session.id)
-                                onDismiss()
-                            }
+                        modifier =
+                            Modifier
+                                .fillMaxWidth()
+                                .clickable {
+                                    onSelectSession(session.id)
+                                    onDismiss()
+                                },
                     ) {
                         Row(
                             modifier = Modifier.padding(12.dp),
-                            verticalAlignment = Alignment.CenterVertically
+                            verticalAlignment = Alignment.CenterVertically,
                         ) {
                             Column(modifier = Modifier.weight(1f)) {
                                 Row(verticalAlignment = Alignment.CenterVertically) {
@@ -108,7 +110,7 @@ fun ChatHistoryDrawer(
                                         color = OnSurface,
                                         fontSize = 13.sp,
                                         maxLines = 1,
-                                        overflow = TextOverflow.Ellipsis
+                                        overflow = TextOverflow.Ellipsis,
                                     )
                                     if (isActive) {
                                         Spacer(Modifier.width(6.dp))
@@ -121,13 +123,13 @@ fun ChatHistoryDrawer(
                             if (sessions.size > 1) {
                                 IconButton(
                                     onClick = { onDeleteSession(session.id) },
-                                    modifier = Modifier.size(28.dp)
+                                    modifier = Modifier.size(28.dp),
                                 ) {
                                     Icon(
                                         painter = painterResource(R.drawable.delete),
                                         contentDescription = "Delete",
                                         tint = OnSurfaceVariant,
-                                        modifier = Modifier.size(14.dp)
+                                        modifier = Modifier.size(14.dp),
                                     )
                                 }
                             }
@@ -139,10 +141,10 @@ fun ChatHistoryDrawer(
         confirmButton = {
             Button(
                 onClick = onDismiss,
-                colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent)
+                colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent),
             ) {
                 Text("Close", color = OnSurfaceVariant)
             }
-        }
+        },
     )
 }

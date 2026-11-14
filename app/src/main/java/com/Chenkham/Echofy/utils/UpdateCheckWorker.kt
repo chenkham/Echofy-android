@@ -4,25 +4,22 @@
  * Licensed Under GPL-3.0 | see git history for contributors
  */
 
-
-
 package com.Chenkham.Echofy.utils
 
 import android.content.Context
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
-import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.map
 import com.Chenkham.Echofy.BuildConfig
 import com.Chenkham.Echofy.constants.EnableUpdateNotificationKey
 import com.Chenkham.Echofy.constants.UpdateChannel
 import com.Chenkham.Echofy.constants.UpdateChannelKey
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.map
 
 class UpdateCheckWorker(
     context: Context,
-    params: WorkerParameters
+    params: WorkerParameters,
 ) : CoroutineWorker(context, params) {
-
     override suspend fun doWork(): Result {
         return try {
             val dataStore = applicationContext.dataStore
@@ -30,11 +27,16 @@ class UpdateCheckWorker(
             val isEnabled = dataStore.data.map { it[EnableUpdateNotificationKey] ?: false }.first()
             if (!isEnabled) return Result.success()
 
-            val updateChannel = dataStore.data.map {
-                it[UpdateChannelKey]?.let { value ->
-                    try { UpdateChannel.valueOf(value) } catch (e: Exception) { UpdateChannel.STABLE }
-                } ?: UpdateChannel.STABLE
-            }.first()
+            val updateChannel =
+                dataStore.data.map {
+                    it[UpdateChannelKey]?.let { value ->
+                        try {
+                            UpdateChannel.valueOf(value)
+                        } catch (e: Exception) {
+                            UpdateChannel.STABLE
+                        }
+                    } ?: UpdateChannel.STABLE
+                }.first()
 
             if (updateChannel == UpdateChannel.NIGHTLY) return Result.success()
 

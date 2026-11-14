@@ -118,7 +118,6 @@ fun DefaultDialog(
     }
 }
 
-
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ActionPromptDialog(
@@ -128,7 +127,7 @@ fun ActionPromptDialog(
     onConfirm: () -> Unit,
     onReset: (() -> Unit)? = null,
     onCancel: (() -> Unit)? = null,
-    content: @Composable ColumnScope.() -> Unit = {}
+    content: @Composable ColumnScope.() -> Unit = {},
 ) {
     Dialog(
         onDismissRequest = onDismiss,
@@ -141,7 +140,7 @@ fun ActionPromptDialog(
             tonalElevation = AlertDialogDefaults.TonalElevation,
         ) {
             Column(
-                modifier = Modifier.padding(24.dp)
+                modifier = Modifier.padding(24.dp),
             ) {
                 Column(modifier = Modifier.padding(12.dp)) {
                     // title
@@ -164,7 +163,7 @@ fun ActionPromptDialog(
 
                 Row(
                     horizontalArrangement = Arrangement.End,
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier.fillMaxWidth(),
                 ) {
                     if (onReset != null) {
                         Row(modifier = Modifier.weight(1f)) {
@@ -178,14 +177,14 @@ fun ActionPromptDialog(
 
                     if (onCancel != null) {
                         TextButton(
-                            onClick = { onCancel() }
+                            onClick = { onCancel() },
                         ) {
                             Text(stringResource(android.R.string.cancel))
                         }
                     }
 
                     TextButton(
-                        onClick = { onConfirm() }
+                        onClick = { onConfirm() },
                     ) {
                         Text(stringResource(android.R.string.ok))
                     }
@@ -222,24 +221,23 @@ fun ListDialog(
 }
 
 @Composable
-fun InfoLabel(
-    text: String
-) = Row(
-    verticalAlignment = Alignment.CenterVertically,
-    modifier = Modifier.padding(horizontal = 8.dp)
-) {
-    Icon(
-        painter = painterResource(id = R.drawable.info),
-        contentDescription = null,
-        tint = MaterialTheme.colorScheme.secondary,
-        modifier = Modifier.padding(4.dp)
-    )
-    Text(
-        text = text,
-        style = MaterialTheme.typography.bodySmall,
-        modifier = Modifier.padding(horizontal = 4.dp)
-    )
-}
+fun InfoLabel(text: String) =
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier.padding(horizontal = 8.dp),
+    ) {
+        Icon(
+            painter = painterResource(id = R.drawable.info),
+            contentDescription = null,
+            tint = MaterialTheme.colorScheme.secondary,
+            modifier = Modifier.padding(4.dp),
+        )
+        Text(
+            text = text,
+            style = MaterialTheme.typography.bodySmall,
+            modifier = Modifier.padding(horizontal = 4.dp),
+        )
+    }
 
 @Composable
 fun TextFieldDialog(

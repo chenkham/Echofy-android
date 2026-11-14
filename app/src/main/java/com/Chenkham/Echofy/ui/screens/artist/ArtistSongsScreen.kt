@@ -29,8 +29,8 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.toMutableStateList
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.toMutableStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
@@ -87,14 +87,16 @@ fun ArtistSongsScreen(
     val isPlaying by playerConnection.isPlaying.collectAsState()
     val mediaMetadata by playerConnection.mediaMetadata.collectAsState()
 
-    val (sortType, onSortTypeChange) = rememberEnumPreference(
-        ArtistSongSortTypeKey,
-        ArtistSongSortType.CREATE_DATE
-    )
-    val (sortDescending, onSortDescendingChange) = rememberPreference(
-        ArtistSongSortDescendingKey,
-        true
-    )
+    val (sortType, onSortTypeChange) =
+        rememberEnumPreference(
+            ArtistSongSortTypeKey,
+            ArtistSongSortType.CREATE_DATE,
+        )
+    val (sortDescending, onSortDescendingChange) =
+        rememberPreference(
+            ArtistSongSortDescendingKey,
+            true,
+        )
     val artist by viewModel.artist.collectAsState()
     val songs by viewModel.songs.collectAsState()
     val lazyListState = rememberLazyListState()
@@ -109,21 +111,23 @@ fun ArtistSongsScreen(
     var selection by remember { mutableStateOf(false) }
 
     // Envolver canciones para selección
-    val wrappedSongs = remember(songs) {
-        songs.map { song -> ItemWrapper(song) }.toMutableStateList()
-    }
+    val wrappedSongs =
+        remember(songs) {
+            songs.map { song -> ItemWrapper(song) }.toMutableStateList()
+        }
 
     // Filtrar canciones por búsqueda
     val searchQueryStr = searchQuery.text.trim()
-    val filteredSongs = if (searchQueryStr.isEmpty()) {
-        wrappedSongs
-    } else {
-        wrappedSongs.filter { wrapper ->
-            wrapper.item.song.title.contains(searchQueryStr, ignoreCase = true) ||
+    val filteredSongs =
+        if (searchQueryStr.isEmpty()) {
+            wrappedSongs
+        } else {
+            wrappedSongs.filter { wrapper ->
+                wrapper.item.song.title.contains(searchQueryStr, ignoreCase = true) ||
                     wrapper.item.artists.joinToString("")
                         .contains(searchQueryStr, ignoreCase = true)
+            }
         }
-    }
 
     // Auto-focus cuando se activa búsqueda
     LaunchedEffect(isSearching) {
@@ -141,7 +145,7 @@ fun ArtistSongsScreen(
             listState = lazyListState,
             thumbColor = MaterialTheme.colorScheme.primary,
             topContentPadding = 0.dp,
-            endContentPadding = 8.dp
+            endContentPadding = 8.dp,
         ) {
             LazyColumn(
                 state = lazyListState,
@@ -173,11 +177,12 @@ fun ArtistSongsScreen(
                             Spacer(Modifier.weight(1f))
 
                             Text(
-                                text = pluralStringResource(
-                                    R.plurals.n_song,
-                                    filteredSongs.size,
-                                    filteredSongs.size
-                                ),
+                                text =
+                                    pluralStringResource(
+                                        R.plurals.n_song,
+                                        filteredSongs.size,
+                                        filteredSongs.size,
+                                    ),
                                 style = MaterialTheme.typography.titleSmall,
                                 color = MaterialTheme.colorScheme.secondary,
                             )
@@ -191,7 +196,7 @@ fun ArtistSongsScreen(
                 ) { index, songWrapper ->
                     // INSTANT PLAYBACK: Prefetch URL when song becomes visible
                     PrefetchOnVisible(mediaId = songWrapper.item.id)
-                    
+
                     SongListItem(
                         song = songWrapper.item,
                         showInLibraryIcon = true,
@@ -210,7 +215,11 @@ fun ArtistSongsScreen(
                                     }
                                 },
                             ) {
-                                Icon(painter = painterResource(R.drawable.more_vert), tint = MaterialTheme.colorScheme.onSurface, contentDescription = null)
+                                Icon(
+                                    painter = painterResource(R.drawable.more_vert),
+                                    tint = MaterialTheme.colorScheme.onSurface,
+                                    contentDescription = null,
+                                )
                             }
                         },
                         modifier =
@@ -257,7 +266,7 @@ fun ArtistSongsScreen(
                         val count = wrappedSongs.count { it.isSelected }
                         Text(
                             text = pluralStringResource(R.plurals.n_song, count, count),
-                            style = MaterialTheme.typography.titleLarge
+                            style = MaterialTheme.typography.titleLarge,
                         )
                     }
 
@@ -268,22 +277,24 @@ fun ArtistSongsScreen(
                             placeholder = {
                                 Text(
                                     text = stringResource(R.string.search),
-                                    style = MaterialTheme.typography.titleLarge
+                                    style = MaterialTheme.typography.titleLarge,
                                 )
                             },
                             singleLine = true,
                             textStyle = MaterialTheme.typography.titleLarge,
                             keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
-                            colors = TextFieldDefaults.colors(
-                                focusedContainerColor = Color.Transparent,
-                                unfocusedContainerColor = Color.Transparent,
-                                focusedIndicatorColor = Color.Transparent,
-                                unfocusedIndicatorColor = Color.Transparent,
-                                disabledIndicatorColor = Color.Transparent,
-                            ),
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .focusRequester(focusRequester)
+                            colors =
+                                TextFieldDefaults.colors(
+                                    focusedContainerColor = Color.Transparent,
+                                    unfocusedContainerColor = Color.Transparent,
+                                    focusedIndicatorColor = Color.Transparent,
+                                    unfocusedIndicatorColor = Color.Transparent,
+                                    disabledIndicatorColor = Color.Transparent,
+                                ),
+                            modifier =
+                                Modifier
+                                    .fillMaxWidth()
+                                    .focusRequester(focusRequester),
                         )
                     }
 
@@ -321,7 +332,7 @@ fun ArtistSongsScreen(
                                 isSearching -> R.drawable.close
                                 selection -> R.drawable.close
                                 else -> R.drawable.arrow_back
-                            }
+                            },
                         ),
                         contentDescription = null,
                     )
@@ -343,10 +354,11 @@ fun ArtistSongsScreen(
                             },
                         ) {
                             Icon(
-                                painter = painterResource(
-                                    if (count == wrappedSongs.size) R.drawable.deselect else R.drawable.select_all
-                                ),
-                                contentDescription = null
+                                painter =
+                                    painterResource(
+                                        if (count == wrappedSongs.size) R.drawable.deselect else R.drawable.select_all,
+                                    ),
+                                contentDescription = null,
                             )
                         }
 
@@ -355,8 +367,9 @@ fun ArtistSongsScreen(
                             onClick = {
                                 menuState.show {
                                     SelectionSongMenu(
-                                        songSelection = wrappedSongs.filter { it.isSelected }
-                                            .map { it.item },
+                                        songSelection =
+                                            wrappedSongs.filter { it.isSelected }
+                                                .map { it.item },
                                         onDismiss = menuState::dismiss,
                                         clearAction = {
                                             selection = false
@@ -366,18 +379,22 @@ fun ArtistSongsScreen(
                                 }
                             },
                         ) {
-                            Icon(painter = painterResource(R.drawable.more_vert), tint = MaterialTheme.colorScheme.onSurface, contentDescription = null)
+                            Icon(
+                                painter = painterResource(R.drawable.more_vert),
+                                tint = MaterialTheme.colorScheme.onSurface,
+                                contentDescription = null,
+                            )
                         }
                     }
 
                     !isSearching -> {
                         // Botón de búsqueda
                         IconButton(
-                            onClick = { isSearching = true }
+                            onClick = { isSearching = true },
                         ) {
                             Icon(
                                 painter = painterResource(R.drawable.search),
-                                contentDescription = null
+                                contentDescription = null,
                             )
                         }
                     }

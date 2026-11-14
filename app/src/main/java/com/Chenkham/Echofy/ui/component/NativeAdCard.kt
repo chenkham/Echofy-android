@@ -1,8 +1,6 @@
 package com.Chenkham.Echofy.ui.component
 
 import android.widget.Button
-import android.widget.ImageView
-import android.widget.RatingBar
 import android.widget.TextView
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -33,7 +31,7 @@ import com.google.android.gms.ads.nativead.NativeAdView
 fun NativeAdCard(
     adManager: AdManager,
     modifier: Modifier = Modifier,
-    slotId: String = "default"
+    slotId: String = "default",
 ) {
     if (!adManager.shouldShowAds()) return
 
@@ -56,53 +54,61 @@ fun NativeAdCard(
         val bodyColor = MaterialTheme.colorScheme.onSurfaceVariant.toArgb()
 
         Card(
-            modifier = modifier
-                .fillMaxWidth()
-                .padding(horizontal = 12.dp, vertical = 8.dp),
+            modifier =
+                modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 12.dp, vertical = 8.dp),
             shape = RoundedCornerShape(12.dp),
-            colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
-            )
+            colors =
+                CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
+                ),
         ) {
             AndroidView(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(8.dp),
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .padding(8.dp),
                 factory = { ctx ->
                     NativeAdView(ctx).apply {
-                        val adView = android.widget.LinearLayout(ctx).apply {
-                            orientation = android.widget.LinearLayout.VERTICAL
-                            setPadding(16, 8, 16, 8)
-                        }
-                        
-                        val adLabel = TextView(ctx).apply {
-                            text = "Ad"
-                            textSize = 10f
-                            setTextColor(bodyColor)
-                        }
+                        val adView =
+                            android.widget.LinearLayout(ctx).apply {
+                                orientation = android.widget.LinearLayout.VERTICAL
+                                setPadding(16, 8, 16, 8)
+                            }
+
+                        val adLabel =
+                            TextView(ctx).apply {
+                                text = "Ad"
+                                textSize = 10f
+                                setTextColor(bodyColor)
+                            }
                         adView.addView(adLabel)
-                        
-                        val headline = TextView(ctx).apply {
-                            textSize = 16f
-                            setTextColor(headlineColor)
-                        }
+
+                        val headline =
+                            TextView(ctx).apply {
+                                textSize = 16f
+                                setTextColor(headlineColor)
+                            }
                         headlineView = headline
                         adView.addView(headline)
-                        
-                        val body = TextView(ctx).apply {
-                            textSize = 14f
-                            setTextColor(bodyColor)
-                            maxLines = 2
-                        }
+
+                        val body =
+                            TextView(ctx).apply {
+                                textSize = 14f
+                                setTextColor(bodyColor)
+                                maxLines = 2
+                            }
                         bodyView = body
                         adView.addView(body)
-                        
-                        val cta = Button(ctx).apply {
-                            textSize = 12f
-                        }
+
+                        val cta =
+                            Button(ctx).apply {
+                                textSize = 12f
+                            }
                         callToActionView = cta
                         adView.addView(cta)
-                        
+
                         addView(adView)
                     }
                 },
@@ -116,7 +122,7 @@ fun NativeAdCard(
                         (adView.callToActionView as? Button)?.text = ad.callToAction
                         adView.setNativeAd(ad)
                     }
-                }
+                },
             )
         }
     }

@@ -44,18 +44,19 @@ object Freesound {
     private const val FIELDS = "id,name,description,username,duration,license,tags,previews,images"
 
     /** Curated categories surfaced in the Ambient Sounds screen. */
-    val CATEGORIES = linkedMapOf(
-        "rain" to "Rain",
-        "ocean waves" to "Ocean",
-        "forest birds" to "Forest",
-        "white noise" to "White Noise",
-        "thunderstorm" to "Thunder",
-        "fireplace" to "Fireplace",
-        "wind" to "Wind",
-        "cafe ambience" to "Cafe",
-        "night crickets" to "Night",
-        "stream water" to "Stream",
-    )
+    val CATEGORIES =
+        linkedMapOf(
+            "rain" to "Rain",
+            "ocean waves" to "Ocean",
+            "forest birds" to "Forest",
+            "white noise" to "White Noise",
+            "thunderstorm" to "Thunder",
+            "fireplace" to "Fireplace",
+            "wind" to "Wind",
+            "cafe ambience" to "Cafe",
+            "night crickets" to "Night",
+            "stream water" to "Stream",
+        )
 
     /**
      * Free-text search across Freesound.
@@ -98,9 +99,10 @@ object Freesound {
      * Drops results with no playable preview, since they cannot be used.
      */
     private fun FreesoundSound.toAmbientSound(): AmbientSound? {
-        val stream = previews?.previewHqMp3
-            ?: previews?.previewLqMp3
-            ?: return null
+        val stream =
+            previews?.previewHqMp3
+                ?: previews?.previewLqMp3
+                ?: return null
 
         return AmbientSound(
             id = id,

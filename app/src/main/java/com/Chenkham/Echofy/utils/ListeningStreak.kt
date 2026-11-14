@@ -17,7 +17,6 @@ import java.time.LocalDate
  * Nothing is tracked unless the user turns streaks on in settings.
  */
 object ListeningStreak {
-
     /**
      * Recalculates the streak from history and stores the result. Returns the current
      * streak length, or 0 when the feature is disabled.
@@ -29,8 +28,9 @@ object ListeningStreak {
         val enabled = context.dataStore.data.first()[ListeningStreakEnabledKey] ?: true
         if (!enabled) return 0
 
-        val days = dao.listeningDays(currentUtcOffsetSeconds())
-            .mapNotNull { runCatching { LocalDate.parse(it) }.getOrNull() }
+        val days =
+            dao.listeningDays(currentUtcOffsetSeconds())
+                .mapNotNull { runCatching { LocalDate.parse(it) }.getOrNull() }
         if (days.isEmpty()) return 0
 
         val today = LocalDate.now()

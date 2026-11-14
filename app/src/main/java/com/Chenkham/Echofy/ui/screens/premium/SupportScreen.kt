@@ -43,9 +43,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.Chenkham.Echofy.LocalPlayerAwareWindowInsets
+import com.Chenkham.Echofy.R
 import com.Chenkham.Echofy.ads.AdManager
 import com.Chenkham.Echofy.ui.component.BannerAdView
-import com.Chenkham.Echofy.R
 
 private const val INSTAGRAM_URL = "https://instagram.com/ech_ofy"
 private const val INSTAGRAM_HANDLE = "@ech_ofy"
@@ -59,44 +59,45 @@ fun SupportScreen(adManager: AdManager? = null) {
     Scaffold(
         topBar = {
             TopAppBar(
-            colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent, scrolledContainerColor = Color.Transparent),
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent, scrolledContainerColor = Color.Transparent),
                 title = { Text("Community & Support") },
             )
         },
     ) { paddingValues ->
         Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(
-                    Brush.verticalGradient(
-                        listOf(
-                            MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.60f),
-                            MaterialTheme.colorScheme.background,
-                            MaterialTheme.colorScheme.background,
+            modifier =
+                Modifier
+                    .fillMaxSize()
+                    .background(
+                        Brush.verticalGradient(
+                            listOf(
+                                MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.60f),
+                                MaterialTheme.colorScheme.background,
+                                MaterialTheme.colorScheme.background,
+                            ),
                         ),
-                    ),
-                )
-                .padding(paddingValues)
-                .padding(horizontal = 22.dp)
-                .padding(bottom = bottomPadding + 16.dp, top = 16.dp),
+                    )
+                    .padding(paddingValues)
+                    .padding(horizontal = 22.dp)
+                    .padding(bottom = bottomPadding + 16.dp, top = 16.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.SpaceEvenly
+            verticalArrangement = Arrangement.SpaceEvenly,
         ) {
             InstagramHeroCard(
-                onFollowClick = { context.openInstagramProfile() }
+                onFollowClick = { context.openInstagramProfile() },
             )
 
             // Information & Community Cards (2 columns)
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(16.dp)
+                horizontalArrangement = Arrangement.spacedBy(16.dp),
             ) {
                 CommunityFeatureCard(
                     modifier = Modifier.weight(1f),
                     title = "Direct Support",
                     description = "DM us for feedback or requests!",
                     iconRes = R.drawable.instagram,
-                    onClick = { context.openInstagramProfile() }
+                    onClick = { context.openInstagramProfile() },
                 )
 
                 CommunityFeatureCard(
@@ -104,7 +105,7 @@ fun SupportScreen(adManager: AdManager? = null) {
                     title = "Sneak Peeks",
                     description = "Early previews of updates!",
                     iconRes = R.drawable.explore,
-                    onClick = { context.openInstagramProfile() }
+                    onClick = { context.openInstagramProfile() },
                 )
             }
 
@@ -120,54 +121,58 @@ fun SupportScreen(adManager: AdManager? = null) {
 @Composable
 private fun InstagramHeroCard(onFollowClick: () -> Unit) {
     Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable { onFollowClick() },
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .clickable { onFollowClick() },
         shape = RoundedCornerShape(24.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.90f),
-        ),
+        colors =
+            CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.90f),
+            ),
         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
     ) {
         Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .background(
-                    Brush.radialGradient(
-                        listOf(
-                            Color(0xFFE1306C).copy(alpha = 0.20f),
-                            Color(0xFF833AB4).copy(alpha = 0.10f),
-                            MaterialTheme.colorScheme.surface.copy(alpha = 0.0f),
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .background(
+                        Brush.radialGradient(
+                            listOf(
+                                Color(0xFFE1306C).copy(alpha = 0.20f),
+                                Color(0xFF833AB4).copy(alpha = 0.10f),
+                                MaterialTheme.colorScheme.surface.copy(alpha = 0.0f),
+                            ),
                         ),
-                    ),
-                )
-                .padding(24.dp),
+                    )
+                    .padding(24.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(20.dp)
+            verticalArrangement = Arrangement.spacedBy(20.dp),
         ) {
             // Horizontal layout for Icon, Handle, and Button
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween
+                horizontalArrangement = Arrangement.SpaceBetween,
             ) {
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier.weight(1f)
+                    modifier = Modifier.weight(1f),
                 ) {
                     Box(
-                        modifier = Modifier
-                            .size(56.dp)
-                            .clip(CircleShape)
-                            .background(
-                                Brush.linearGradient(
-                                    listOf(
-                                        Color(0xFF833AB4),
-                                        Color(0xFFFD1D1D),
-                                        Color(0xFFF77737),
+                        modifier =
+                            Modifier
+                                .size(56.dp)
+                                .clip(CircleShape)
+                                .background(
+                                    Brush.linearGradient(
+                                        listOf(
+                                            Color(0xFF833AB4),
+                                            Color(0xFFFD1D1D),
+                                            Color(0xFFF77737),
+                                        ),
                                     ),
                                 ),
-                            ),
                         contentAlignment = Alignment.Center,
                     ) {
                         Icon(
@@ -183,27 +188,28 @@ private fun InstagramHeroCard(onFollowClick: () -> Unit) {
                             text = "Community",
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.ExtraBold,
-                            maxLines = 1
+                            maxLines = 1,
                         )
                         Text(
                             text = INSTAGRAM_HANDLE,
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.primary,
                             fontWeight = FontWeight.Bold,
-                            maxLines = 1
+                            maxLines = 1,
                         )
                     }
                 }
-                
+
                 Spacer(Modifier.width(12.dp))
 
                 Button(
                     onClick = onFollowClick,
                     shape = RoundedCornerShape(16.dp),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = Color(0xFFE1306C), // Official Instagram Accent
-                        contentColor = Color.White,
-                    ),
+                    colors =
+                        ButtonDefaults.buttonColors(
+                            containerColor = Color(0xFFE1306C), // Official Instagram Accent
+                            contentColor = Color.White,
+                        ),
                     contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
                     elevation = ButtonDefaults.buttonElevation(defaultElevation = 2.dp),
                 ) {
@@ -225,7 +231,7 @@ private fun InstagramHeroCard(onFollowClick: () -> Unit) {
             Row(
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
                 verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth(),
             ) {
                 MiniPill(Modifier.weight(1f), "Updates")
                 MiniPill(Modifier.weight(1f), "Feedback")
@@ -241,31 +247,35 @@ private fun CommunityFeatureCard(
     title: String,
     description: String,
     iconRes: Int,
-    onClick: () -> Unit
+    onClick: () -> Unit,
 ) {
     Card(
-        modifier = modifier
-            .fillMaxWidth()
-            .clickable(
-                onClickLabel = title,
-                onClick = onClick
-            ),
+        modifier =
+            modifier
+                .fillMaxWidth()
+                .clickable(
+                    onClickLabel = title,
+                    onClick = onClick,
+                ),
         shape = RoundedCornerShape(20.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceVariant,
-        ),
+        colors =
+            CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.surfaceVariant,
+            ),
     ) {
         Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp),
             horizontalAlignment = Alignment.Start,
         ) {
             Box(
-                modifier = Modifier
-                    .size(40.dp)
-                    .clip(CircleShape)
-                    .background(MaterialTheme.colorScheme.primaryContainer),
+                modifier =
+                    Modifier
+                        .size(40.dp)
+                        .clip(CircleShape)
+                        .background(MaterialTheme.colorScheme.primaryContainer),
                 contentAlignment = Alignment.Center,
             ) {
                 Icon(
@@ -295,13 +305,17 @@ private fun CommunityFeatureCard(
 }
 
 @Composable
-private fun MiniPill(modifier: Modifier = Modifier, text: String) {
+private fun MiniPill(
+    modifier: Modifier = Modifier,
+    text: String,
+) {
     Box(
-        modifier = modifier
-            .defaultMinSize(minHeight = 32.dp)
-            .clip(RoundedCornerShape(50))
-            .background(MaterialTheme.colorScheme.primaryContainer)
-            .padding(horizontal = 12.dp, vertical = 6.dp),
+        modifier =
+            modifier
+                .defaultMinSize(minHeight = 32.dp)
+                .clip(RoundedCornerShape(50))
+                .background(MaterialTheme.colorScheme.primaryContainer)
+                .padding(horizontal = 12.dp, vertical = 6.dp),
         contentAlignment = Alignment.Center,
     ) {
         Text(
@@ -309,17 +323,18 @@ private fun MiniPill(modifier: Modifier = Modifier, text: String) {
             style = MaterialTheme.typography.labelMedium,
             color = MaterialTheme.colorScheme.onPrimaryContainer,
             fontWeight = FontWeight.Bold,
-            maxLines = 1
+            maxLines = 1,
         )
     }
 }
 
 private fun android.content.Context.openInstagramProfile() {
-    val nativeIntent = Intent(Intent.ACTION_VIEW, Uri.parse("http://instagram.com/_u/ech_ofy")).apply {
-        setPackage("com.instagram.android")
-    }
+    val nativeIntent =
+        Intent(Intent.ACTION_VIEW, Uri.parse("http://instagram.com/_u/ech_ofy")).apply {
+            setPackage("com.instagram.android")
+        }
     val webIntent = Intent(Intent.ACTION_VIEW, Uri.parse(INSTAGRAM_URL))
-    
+
     runCatching {
         startActivity(nativeIntent)
     }.onFailure {

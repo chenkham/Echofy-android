@@ -12,7 +12,6 @@ import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import android.content.Intent
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -47,10 +46,11 @@ fun EchofyInsightDialog(
 ) {
     Dialog(
         onDismissRequest = onDismiss,
-        properties = DialogProperties(
-            usePlatformDefaultWidth = false,
-            decorFitsSystemWindows = false
-        )
+        properties =
+            DialogProperties(
+                usePlatformDefaultWidth = false,
+                decorFitsSystemWindows = false,
+            ),
     ) {
         val totalPages = 4
         val pagerState = rememberPagerState(pageCount = { totalPages })
@@ -64,7 +64,7 @@ fun EchofyInsightDialog(
             progress.snapTo(0f)
             progress.animateTo(
                 targetValue = 1f,
-                animationSpec = tween(durationMillis = 6500, easing = LinearEasing)
+                animationSpec = tween(durationMillis = 6500, easing = LinearEasing),
             )
             if (pagerState.currentPage < totalPages - 1) {
                 pagerState.animateScrollToPage(pagerState.currentPage + 1)
@@ -72,131 +72,139 @@ fun EchofyInsightDialog(
         }
 
         Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(
-                    Brush.verticalGradient(
-                        colors = listOf(
-                            Color(0xFF16062B),
-                            Color(0xFF38084B),
-                            Color(0xFF6B0E50),
-                            Color(0xFF28051E)
-                        )
+            modifier =
+                Modifier
+                    .fillMaxSize()
+                    .background(
+                        Brush.verticalGradient(
+                            colors =
+                                listOf(
+                                    Color(0xFF16062B),
+                                    Color(0xFF38084B),
+                                    Color(0xFF6B0E50),
+                                    Color(0xFF28051E),
+                                ),
+                        ),
                     )
-                )
-                .pointerInput(Unit) {
-                    detectTapGestures(
-                        onTap = { offset ->
-                            coroutineScope.launch {
-                                if (offset.x < size.width * 0.35f) {
-                                    if (pagerState.currentPage > 0) {
-                                        pagerState.animateScrollToPage(pagerState.currentPage - 1)
-                                    }
-                                } else {
-                                    if (pagerState.currentPage < totalPages - 1) {
-                                        pagerState.animateScrollToPage(pagerState.currentPage + 1)
+                    .pointerInput(Unit) {
+                        detectTapGestures(
+                            onTap = { offset ->
+                                coroutineScope.launch {
+                                    if (offset.x < size.width * 0.35f) {
+                                        if (pagerState.currentPage > 0) {
+                                            pagerState.animateScrollToPage(pagerState.currentPage - 1)
+                                        }
                                     } else {
-                                        onDismiss()
+                                        if (pagerState.currentPage < totalPages - 1) {
+                                            pagerState.animateScrollToPage(pagerState.currentPage + 1)
+                                        } else {
+                                            onDismiss()
+                                        }
                                     }
                                 }
-                            }
-                        }
-                    )
-                }
+                            },
+                        )
+                    },
         ) {
             Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .windowInsetsPadding(WindowInsets.systemBars)
-                    .padding(horizontal = 20.dp, vertical = 8.dp)
+                modifier =
+                    Modifier
+                        .fillMaxSize()
+                        .windowInsetsPadding(WindowInsets.systemBars)
+                        .padding(horizontal = 20.dp, vertical = 8.dp),
             ) {
                 // Top Progress Indicators (6 segments)
                 Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(top = 8.dp, bottom = 12.dp),
-                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                    modifier =
+                        Modifier
+                            .fillMaxWidth()
+                            .padding(top = 8.dp, bottom = 12.dp),
+                    horizontalArrangement = Arrangement.spacedBy(6.dp),
                 ) {
                     for (i in 0 until totalPages) {
-                        val currentProgress = when {
-                            i < pagerState.currentPage -> 1f
-                            i == pagerState.currentPage -> progress.value
-                            else -> 0f
-                        }
+                        val currentProgress =
+                            when {
+                                i < pagerState.currentPage -> 1f
+                                i == pagerState.currentPage -> progress.value
+                                else -> 0f
+                            }
                         LinearProgressIndicator(
                             progress = { currentProgress },
-                            modifier = Modifier
-                                .weight(1f)
-                                .height(3.5.dp)
-                                .clip(CircleShape),
+                            modifier =
+                                Modifier
+                                    .weight(1f)
+                                    .height(3.5.dp)
+                                    .clip(CircleShape),
                             color = Color.White,
-                            trackColor = Color.White.copy(alpha = 0.25f)
+                            trackColor = Color.White.copy(alpha = 0.25f),
                         )
                     }
                 }
 
                 // Top Bar: Back | Echofy Logo & Insight | Year Pill | Share Image Card
                 Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(vertical = 4.dp),
+                    modifier =
+                        Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 4.dp),
                     verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.SpaceBetween
+                    horizontalArrangement = Arrangement.SpaceBetween,
                 ) {
                     IconButton(
                         onClick = onDismiss,
-                        modifier = Modifier.size(36.dp)
+                        modifier = Modifier.size(36.dp),
                     ) {
                         Icon(
                             painter = painterResource(R.drawable.arrow_back),
                             contentDescription = "Back",
-                            tint = Color.White
+                            tint = Color.White,
                         )
                     }
 
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
                     ) {
                         androidx.compose.foundation.Image(
                             painter = painterResource(R.drawable.echofy),
                             contentDescription = "Echofy",
-                            modifier = Modifier
-                                .size(28.dp)
-                                .clip(CircleShape)
+                            modifier =
+                                Modifier
+                                    .size(28.dp)
+                                    .clip(CircleShape),
                         )
                         Column(horizontalAlignment = Alignment.Start) {
                             Text(
                                 text = "Echofy",
                                 fontSize = 12.sp,
                                 fontWeight = FontWeight.Medium,
-                                color = Color.White.copy(alpha = 0.65f)
+                                color = Color.White.copy(alpha = 0.65f),
                             )
                             Text(
                                 text = "Insight",
                                 fontSize = 17.sp,
                                 fontWeight = FontWeight.Bold,
-                                color = Color.White
+                                color = Color.White,
                             )
                         }
                     }
 
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
                     ) {
                         // Year Dropdown Pill
                         Surface(
                             shape = RoundedCornerShape(20.dp),
                             color = Color.White.copy(alpha = 0.18f),
-                            modifier = Modifier.clickable { }
+                            modifier = Modifier.clickable { },
                         ) {
                             Text(
                                 text = "$currentYear ⌵",
                                 fontSize = 14.sp,
                                 fontWeight = FontWeight.Bold,
                                 color = Color.White,
-                                modifier = Modifier.padding(horizontal = 14.dp, vertical = 6.dp)
+                                modifier = Modifier.padding(horizontal = 14.dp, vertical = 6.dp),
                             )
                         }
 
@@ -205,13 +213,13 @@ fun EchofyInsightDialog(
                             onClick = {
                                 showStatsShareDialog = true
                             },
-                            modifier = Modifier.size(36.dp)
+                            modifier = Modifier.size(36.dp),
                         ) {
                             Icon(
                                 painter = painterResource(R.drawable.share),
                                 contentDescription = "Share Insight Card",
                                 tint = Color.White,
-                                modifier = Modifier.size(20.dp)
+                                modifier = Modifier.size(20.dp),
                             )
                         }
                     }
@@ -220,25 +228,27 @@ fun EchofyInsightDialog(
                 // Story Pager
                 HorizontalPager(
                     state = pagerState,
-                    modifier = Modifier
-                        .weight(1f)
-                        .fillMaxWidth()
+                    modifier =
+                        Modifier
+                            .weight(1f)
+                            .fillMaxWidth(),
                 ) { page ->
                     when (page) {
                         0 -> {
                             // Cover Page (Exact match for media_1787641439230.png)
                             Column(
-                                modifier = Modifier
-                                    .fillMaxSize()
-                                    .padding(horizontal = 12.dp, vertical = 32.dp),
+                                modifier =
+                                    Modifier
+                                        .fillMaxSize()
+                                        .padding(horizontal = 12.dp, vertical = 32.dp),
                                 verticalArrangement = Arrangement.Center,
-                                horizontalAlignment = Alignment.Start
+                                horizontalAlignment = Alignment.Start,
                             ) {
                                 Text(
                                     text = "your",
                                     fontSize = 28.sp,
                                     fontWeight = FontWeight.Bold,
-                                    color = Color.White.copy(alpha = 0.9f)
+                                    color = Color.White.copy(alpha = 0.9f),
                                 )
 
                                 Text(
@@ -246,30 +256,31 @@ fun EchofyInsightDialog(
                                     fontSize = 62.sp,
                                     fontWeight = FontWeight.ExtraBold,
                                     color = Color.White,
-                                    letterSpacing = (-1).sp
+                                    letterSpacing = (-1).sp,
                                 )
 
                                 Spacer(modifier = Modifier.height(14.dp))
 
                                 // Pink/Magenta 2026 Badge
                                 Box(
-                                    modifier = Modifier
-                                        .clip(RoundedCornerShape(16.dp))
-                                        .background(
-                                            Brush.horizontalGradient(
-                                                listOf(
-                                                    Color(0xFFFF2A85),
-                                                    Color(0xFFFF4081)
-                                                )
+                                    modifier =
+                                        Modifier
+                                            .clip(RoundedCornerShape(16.dp))
+                                            .background(
+                                                Brush.horizontalGradient(
+                                                    listOf(
+                                                        Color(0xFFFF2A85),
+                                                        Color(0xFFFF4081),
+                                                    ),
+                                                ),
                                             )
-                                        )
-                                        .padding(horizontal = 22.dp, vertical = 8.dp)
+                                            .padding(horizontal = 22.dp, vertical = 8.dp),
                                 ) {
                                     Text(
                                         text = "$currentYear",
                                         fontSize = 28.sp,
                                         fontWeight = FontWeight.ExtraBold,
-                                        color = Color.White
+                                        color = Color.White,
                                     )
                                 }
 
@@ -280,7 +291,7 @@ fun EchofyInsightDialog(
                                     fontSize = 18.sp,
                                     color = Color.White.copy(alpha = 0.85f),
                                     lineHeight = 26.sp,
-                                    fontWeight = FontWeight.Medium
+                                    fontWeight = FontWeight.Medium,
                                 )
 
                                 Spacer(modifier = Modifier.weight(1f))
@@ -289,7 +300,7 @@ fun EchofyInsightDialog(
                                     text = "• • •  Swipe to explore",
                                     fontSize = 14.sp,
                                     fontWeight = FontWeight.Medium,
-                                    color = Color.White.copy(alpha = 0.5f)
+                                    color = Color.White.copy(alpha = 0.5f),
                                 )
                             }
                         }
@@ -298,18 +309,19 @@ fun EchofyInsightDialog(
                             // Top Artist Page
                             val topArtist = topArtists.firstOrNull()
                             Column(
-                                modifier = Modifier
-                                    .fillMaxSize()
-                                    .padding(24.dp),
+                                modifier =
+                                    Modifier
+                                        .fillMaxSize()
+                                        .padding(24.dp),
                                 verticalArrangement = Arrangement.Center,
-                                horizontalAlignment = Alignment.CenterHorizontally
+                                horizontalAlignment = Alignment.CenterHorizontally,
                             ) {
                                 Text(
                                     text = "YOUR TOP ARTIST",
                                     fontSize = 14.sp,
                                     fontWeight = FontWeight.Bold,
                                     color = Color(0xFFFF80AB),
-                                    letterSpacing = 1.sp
+                                    letterSpacing = 1.sp,
                                 )
                                 Spacer(modifier = Modifier.height(24.dp))
 
@@ -317,10 +329,11 @@ fun EchofyInsightDialog(
                                     model = topArtist?.artist?.thumbnailUrl,
                                     contentDescription = topArtist?.artist?.name,
                                     contentScale = ContentScale.Crop,
-                                    modifier = Modifier
-                                        .size(190.dp)
-                                        .clip(CircleShape)
-                                        .background(Color.White.copy(alpha = 0.1f))
+                                    modifier =
+                                        Modifier
+                                            .size(190.dp)
+                                            .clip(CircleShape)
+                                            .background(Color.White.copy(alpha = 0.1f)),
                                 )
 
                                 Spacer(modifier = Modifier.height(24.dp))
@@ -330,15 +343,17 @@ fun EchofyInsightDialog(
                                     fontSize = 34.sp,
                                     fontWeight = FontWeight.ExtraBold,
                                     color = Color.White,
-                                    textAlign = TextAlign.Center
+                                    textAlign = TextAlign.Center,
                                 )
 
                                 Spacer(modifier = Modifier.height(8.dp))
 
                                 Text(
-                                    text = "${topArtist?.songCount ?: 0} songs played • ${makeTimeString(topArtist?.timeListened?.toLong()?.times(1000L))}",
+                                    text = "${topArtist?.songCount ?: 0} songs played • ${makeTimeString(
+                                        topArtist?.timeListened?.toLong()?.times(1000L),
+                                    )}",
                                     fontSize = 16.sp,
-                                    color = Color.White.copy(alpha = 0.8f)
+                                    color = Color.White.copy(alpha = 0.8f),
                                 )
                             }
                         }
@@ -346,42 +361,45 @@ fun EchofyInsightDialog(
                         2 -> {
                             // Top Songs Page
                             Column(
-                                modifier = Modifier
-                                    .fillMaxSize()
-                                    .padding(20.dp),
-                                verticalArrangement = Arrangement.Center
+                                modifier =
+                                    Modifier
+                                        .fillMaxSize()
+                                        .padding(20.dp),
+                                verticalArrangement = Arrangement.Center,
                             ) {
                                 Text(
                                     text = "YOUR TOP TRACKS",
                                     fontSize = 14.sp,
                                     fontWeight = FontWeight.Bold,
                                     color = Color(0xFF80D8FF),
-                                    letterSpacing = 1.sp
+                                    letterSpacing = 1.sp,
                                 )
                                 Spacer(modifier = Modifier.height(20.dp))
 
                                 topSongs.take(5).forEachIndexed { index, song ->
                                     Row(
-                                        modifier = Modifier
-                                            .fillMaxWidth()
-                                            .padding(vertical = 8.dp),
-                                        verticalAlignment = Alignment.CenterVertically
+                                        modifier =
+                                            Modifier
+                                                .fillMaxWidth()
+                                                .padding(vertical = 8.dp),
+                                        verticalAlignment = Alignment.CenterVertically,
                                     ) {
                                         Text(
                                             text = "${index + 1}",
                                             fontSize = 22.sp,
                                             fontWeight = FontWeight.ExtraBold,
                                             color = Color.White.copy(alpha = 0.7f),
-                                            modifier = Modifier.width(36.dp)
+                                            modifier = Modifier.width(36.dp),
                                         )
 
                                         AsyncImage(
                                             model = song.thumbnailUrl,
                                             contentDescription = null,
                                             contentScale = ContentScale.Crop,
-                                            modifier = Modifier
-                                                .size(52.dp)
-                                                .clip(RoundedCornerShape(10.dp))
+                                            modifier =
+                                                Modifier
+                                                    .size(52.dp)
+                                                    .clip(RoundedCornerShape(10.dp)),
                                         )
 
                                         Spacer(modifier = Modifier.width(14.dp))
@@ -393,13 +411,13 @@ fun EchofyInsightDialog(
                                                 fontWeight = FontWeight.Bold,
                                                 color = Color.White,
                                                 maxLines = 1,
-                                                overflow = TextOverflow.Ellipsis
+                                                overflow = TextOverflow.Ellipsis,
                                             )
                                             Text(
                                                 text = "${song.songCountListened} plays • ${makeTimeString(song.timeListened)}",
                                                 fontSize = 13.sp,
                                                 color = Color.White.copy(alpha = 0.7f),
-                                                maxLines = 1
+                                                maxLines = 1,
                                             )
                                         }
                                     }
@@ -410,18 +428,19 @@ fun EchofyInsightDialog(
                         3 -> {
                             // Total Listening Time Page
                             Column(
-                                modifier = Modifier
-                                    .fillMaxSize()
-                                    .padding(24.dp),
+                                modifier =
+                                    Modifier
+                                        .fillMaxSize()
+                                        .padding(24.dp),
                                 verticalArrangement = Arrangement.Center,
-                                horizontalAlignment = Alignment.CenterHorizontally
+                                horizontalAlignment = Alignment.CenterHorizontally,
                             ) {
                                 Text(
                                     text = "TOTAL LISTENING TIME",
                                     fontSize = 14.sp,
                                     fontWeight = FontWeight.Bold,
                                     color = Color(0xFFB388FF),
-                                    letterSpacing = 1.sp
+                                    letterSpacing = 1.sp,
                                 )
                                 Spacer(modifier = Modifier.height(24.dp))
 
@@ -429,7 +448,7 @@ fun EchofyInsightDialog(
                                     text = makeTimeString(totalListenTimeMs),
                                     fontSize = 58.sp,
                                     fontWeight = FontWeight.ExtraBold,
-                                    color = Color(0xFF90CAF9)
+                                    color = Color(0xFF90CAF9),
                                 )
 
                                 Spacer(modifier = Modifier.height(14.dp))
@@ -438,14 +457,14 @@ fun EchofyInsightDialog(
                                     text = "Thank you for listening to music with Echofy!",
                                     fontSize = 16.sp,
                                     color = Color.White.copy(alpha = 0.85f),
-                                    textAlign = TextAlign.Center
+                                    textAlign = TextAlign.Center,
                                 )
 
                                 Spacer(modifier = Modifier.height(28.dp))
 
                                 Row(
                                     horizontalArrangement = Arrangement.spacedBy(12.dp),
-                                    verticalAlignment = Alignment.CenterVertically
+                                    verticalAlignment = Alignment.CenterVertically,
                                 ) {
                                     OutlinedButton(
                                         onClick = { showStatsShareDialog = true },
@@ -456,7 +475,7 @@ fun EchofyInsightDialog(
                                         Icon(
                                             painter = painterResource(R.drawable.share),
                                             contentDescription = null,
-                                            modifier = Modifier.size(18.dp)
+                                            modifier = Modifier.size(18.dp),
                                         )
                                         Spacer(Modifier.width(8.dp))
                                         Text(
@@ -475,7 +494,7 @@ fun EchofyInsightDialog(
                                             text = "Done",
                                             fontWeight = FontWeight.Bold,
                                             fontSize = 15.sp,
-                                            color = Color.White
+                                            color = Color.White,
                                         )
                                     }
                                 }
@@ -491,7 +510,7 @@ fun EchofyInsightDialog(
                     topArtists = topArtists,
                     totalListenTime = totalListenTimeMs,
                     periodText = "$currentYear Music Highlights",
-                    onDismiss = { showStatsShareDialog = false }
+                    onDismiss = { showStatsShareDialog = false },
                 )
             }
         }

@@ -24,22 +24,26 @@ import kotlinx.serialization.json.Json
  * Modified by Zion Huang
  */
 class ApiService {
-    private val client = HttpClient {
-        install(ContentNegotiation) {
-            json(Json {
-                ignoreUnknownKeys = true
-                encodeDefaults = true
-            })
+    private val client =
+        HttpClient {
+            install(ContentNegotiation) {
+                json(
+                    Json {
+                        ignoreUnknownKeys = true
+                        encodeDefaults = true
+                    },
+                )
+            }
+            install(HttpCache)
         }
-        install(HttpCache)
-    }
 
-    suspend fun getImage(url: String) = runCatching {
-         client.get {
-             url("$BASE_URL/image")
-             parameter("url", url)
-         }
-    }
+    suspend fun getImage(url: String) =
+        runCatching {
+            client.get {
+                url("$BASE_URL/image")
+                parameter("url", url)
+            }
+        }
 
     companion object {
         const val BASE_URL = "https://metrolist-discord-rpc-api.fullerbread2032.workers.dev"

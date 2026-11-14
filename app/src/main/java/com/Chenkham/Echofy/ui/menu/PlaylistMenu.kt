@@ -1,7 +1,6 @@
 package com.Chenkham.Echofy.ui.menu
 
 import android.content.Intent
-import com.Chenkham.Echofy.ui.component.LocalAdManager
 import android.widget.Toast
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.WindowInsets
@@ -10,8 +9,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.systemBars
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -35,13 +32,11 @@ import androidx.core.net.toUri
 import androidx.media3.exoplayer.offline.Download
 import androidx.media3.exoplayer.offline.DownloadRequest
 import androidx.media3.exoplayer.offline.DownloadService
-import com.arturo254.opentune.innertube.YouTube
 import com.Chenkham.Echofy.LocalDatabase
 import com.Chenkham.Echofy.LocalDownloadUtil
 import com.Chenkham.Echofy.LocalPlayerConnection
 import com.Chenkham.Echofy.R
 import com.Chenkham.Echofy.constants.InnerTubeCookieKey
-import com.arturo254.opentune.innertube.utils.parseCookieString
 import com.Chenkham.Echofy.db.entities.Playlist
 import com.Chenkham.Echofy.db.entities.PlaylistSong
 import com.Chenkham.Echofy.db.entities.Song
@@ -53,14 +48,16 @@ import com.Chenkham.Echofy.ui.component.DefaultDialog
 import com.Chenkham.Echofy.ui.component.DownloadGridMenu
 import com.Chenkham.Echofy.ui.component.GridMenu
 import com.Chenkham.Echofy.ui.component.GridMenuItem
+import com.Chenkham.Echofy.ui.component.LocalAdManager
 import com.Chenkham.Echofy.ui.component.TextFieldDialog
 import com.Chenkham.Echofy.utils.rememberPreference
+import com.arturo254.opentune.innertube.YouTube
+import com.arturo254.opentune.innertube.utils.parseCookieString
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.time.LocalDateTime
-
 
 @Composable
 fun PlaylistMenu(
@@ -77,9 +74,10 @@ fun PlaylistMenu(
     val playerConnection = LocalPlayerConnection.current ?: return
     val dbPlaylist by database.playlist(playlist.id).collectAsState(initial = playlist)
     val (innerTubeCookie) = rememberPreference(InnerTubeCookieKey, "")
-    val isLoggedIn = remember(innerTubeCookie) {
-        "SAPISID" in parseCookieString(innerTubeCookie)
-    }
+    val isLoggedIn =
+        remember(innerTubeCookie) {
+            "SAPISID" in parseCookieString(innerTubeCookie)
+        }
     var songs by remember {
         mutableStateOf(emptyList<Song>())
     }
@@ -110,8 +108,8 @@ fun PlaylistMenu(
                     Download.STATE_COMPLETED
                 } else if (songs.all {
                         downloads[it.id]?.state == Download.STATE_QUEUED ||
-                                downloads[it.id]?.state == Download.STATE_DOWNLOADING ||
-                                downloads[it.id]?.state == Download.STATE_COMPLETED
+                            downloads[it.id]?.state == Download.STATE_DOWNLOADING ||
+                            downloads[it.id]?.state == Download.STATE_COMPLETED
                     }
                 ) {
                     Download.STATE_DOWNLOADING
@@ -141,8 +139,8 @@ fun PlaylistMenu(
                     update(
                         playlist.playlist.copy(
                             name = name,
-                            lastUpdateTime = LocalDateTime.now()
-                        )
+                            lastUpdateTime = LocalDateTime.now(),
+                        ),
                     )
                 }
                 coroutineScope.launch(Dispatchers.IO) {
@@ -161,10 +159,11 @@ fun PlaylistMenu(
             onDismiss = { showRemoveDownloadDialog = false },
             content = {
                 Text(
-                    text = stringResource(
-                        R.string.remove_download_playlist_confirm,
-                        playlist.playlist.name
-                    ),
+                    text =
+                        stringResource(
+                            R.string.remove_download_playlist_confirm,
+                            playlist.playlist.name,
+                        ),
                     style = MaterialTheme.typography.bodyLarge,
                     modifier = Modifier.padding(horizontal = 18.dp),
                 )
@@ -208,14 +207,14 @@ fun PlaylistMenu(
                 Text(
                     text = stringResource(R.string.delete_playlist_confirm, playlist.playlist.name),
                     style = MaterialTheme.typography.bodyLarge,
-                    modifier = Modifier.padding(horizontal = 18.dp)
+                    modifier = Modifier.padding(horizontal = 18.dp),
                 )
             },
             buttons = {
                 TextButton(
                     onClick = {
                         showDeletePlaylistDialog = false
-                    }
+                    },
                 ) {
                     Text(text = stringResource(android.R.string.cancel))
                 }
@@ -237,11 +236,11 @@ fun PlaylistMenu(
                         coroutineScope.launch(Dispatchers.IO) {
                             playlist.playlist.browseId?.let { YouTube.deletePlaylist(it) }
                         }
-                    }
+                    },
                 ) {
                     Text(text = stringResource(android.R.string.ok))
                 }
-            }
+            },
         )
     }
 
@@ -265,7 +264,7 @@ fun PlaylistMenu(
             }
             songs.map { it.id }
         },
-        onDismiss = { showChoosePlaylistDialog = false }
+        onDismiss = { showChoosePlaylistDialog = false },
     )
 
     // Sync with YTM Dialog
@@ -273,9 +272,8 @@ fun PlaylistMenu(
         isVisible = showSyncWithYTMDialog,
         playlist = playlist,
         songs = songs,
-        onDismiss = { showSyncWithYTMDialog = false }
+        onDismiss = { showSyncWithYTMDialog = false },
     )
-
 
     HorizontalDivider()
 
@@ -318,7 +316,7 @@ fun PlaylistMenu(
         playlist.playlist.browseId?.let { browseId ->
             GridMenuItem(
                 icon = R.drawable.radio,
-                title = R.string.start_radio
+                title = R.string.start_radio,
             ) {
                 coroutineScope.launch(Dispatchers.IO) {
                     YouTube.playlist(browseId).getOrNull()?.playlist?.let { playlistItem ->
@@ -334,7 +332,7 @@ fun PlaylistMenu(
         }
         GridMenuItem(
             icon = R.drawable.playlist_play,
-            title = R.string.play_next
+            title = R.string.play_next,
         ) {
             coroutineScope.launch {
                 playerConnection.playNext(songs.map { it.toMediaItem() })
@@ -353,7 +351,7 @@ fun PlaylistMenu(
         if (editable && autoPlaylist != true) {
             GridMenuItem(
                 icon = R.drawable.edit,
-                title = R.string.edit
+                title = R.string.edit,
             ) {
                 showEditDialog = true
             }
@@ -406,20 +404,21 @@ fun PlaylistMenu(
 
         GridMenuItem(
             icon = R.drawable.share,
-            title = R.string.share
+            title = R.string.share,
         ) {
-            val intent = Intent().apply {
-                action = Intent.ACTION_SEND
-                type = "text/plain"
-                putExtra(
-                    Intent.EXTRA_TEXT,
-                    com.Chenkham.Echofy.utils.ShareUtils.buildPlaylistShareText(
-                        context = context,
-                        playlistId = playlist.id,
-                        title = playlist.playlist.name
+            val intent =
+                Intent().apply {
+                    action = Intent.ACTION_SEND
+                    type = "text/plain"
+                    putExtra(
+                        Intent.EXTRA_TEXT,
+                        com.Chenkham.Echofy.utils.ShareUtils.buildPlaylistShareText(
+                            context = context,
+                            playlistId = playlist.id,
+                            title = playlist.playlist.name,
+                        ),
                     )
-                )
-            }
+                }
             context.startActivity(Intent.createChooser(intent, null))
             onDismiss()
         }

@@ -1,8 +1,6 @@
 package com.Chenkham.Echofy.ui.screens.library
 
 import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -33,6 +31,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.painterResource
@@ -42,7 +41,6 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import androidx.navigation.compose.currentBackStackEntryAsState
-import com.arturo254.opentune.innertube.utils.parseCookieString
 import com.Chenkham.Echofy.LocalPlayerAwareWindowInsets
 import com.Chenkham.Echofy.R
 import com.Chenkham.Echofy.constants.CONTENT_TYPE_HEADER
@@ -64,15 +62,13 @@ import com.Chenkham.Echofy.ui.component.HideOnScrollFAB
 import com.Chenkham.Echofy.ui.component.LibraryPlaylistGridItem
 import com.Chenkham.Echofy.ui.component.LibraryPlaylistListItem
 import com.Chenkham.Echofy.ui.component.LocalMenuState
-import com.Chenkham.Echofy.ui.component.PlaylistGridItem
-import com.Chenkham.Echofy.ui.component.PlaylistListItem
-import com.Chenkham.Echofy.ui.component.SortHeader
-import com.Chenkham.Echofy.ui.component.SmartPlaylistListItem
 import com.Chenkham.Echofy.ui.component.SmartPlaylistGridItem
-import androidx.compose.ui.graphics.Color
+import com.Chenkham.Echofy.ui.component.SmartPlaylistListItem
+import com.Chenkham.Echofy.ui.component.SortHeader
 import com.Chenkham.Echofy.utils.rememberEnumPreference
 import com.Chenkham.Echofy.utils.rememberPreference
 import com.Chenkham.Echofy.viewmodels.LibraryPlaylistsViewModel
+import com.arturo254.opentune.innertube.utils.parseCookieString
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.util.UUID
@@ -86,22 +82,23 @@ fun LibraryPlaylistsScreen(
     spotifyViewModel: com.Chenkham.Echofy.spotify.SpotifyLibraryViewModel = hiltViewModel(),
     initialTextFieldValue: String? = null,
     allowSyncing: Boolean = true,
-
-    ) {
+) {
     val menuState = LocalMenuState.current
     LocalHapticFeedback.current
 
     val coroutineScope = rememberCoroutineScope()
 
     var viewType by rememberEnumPreference(PlaylistViewTypeKey, LibraryViewType.GRID)
-    val (sortType, onSortTypeChange) = rememberEnumPreference(
-        PlaylistSortTypeKey,
-        PlaylistSortType.CREATE_DATE
-    )
-    val (sortDescending, onSortDescendingChange) = rememberPreference(
-        PlaylistSortDescendingKey,
-        true
-    )
+    val (sortType, onSortTypeChange) =
+        rememberEnumPreference(
+            PlaylistSortTypeKey,
+            PlaylistSortType.CREATE_DATE,
+        )
+    val (sortDescending, onSortDescendingChange) =
+        rememberPreference(
+            PlaylistSortDescendingKey,
+            true,
+        )
     val gridItemSize by rememberEnumPreference(GridItemsSizeKey, GridItemSize.SMALL)
 
     val playlists by viewModel.allPlaylists.collectAsState()
@@ -111,40 +108,44 @@ fun LibraryPlaylistsScreen(
 
     val likedPlaylist =
         Playlist(
-            playlist = PlaylistEntity(
-                id = UUID.randomUUID().toString(),
-                name = stringResource(R.string.liked)
-            ),
+            playlist =
+                PlaylistEntity(
+                    id = UUID.randomUUID().toString(),
+                    name = stringResource(R.string.liked),
+                ),
             songCount = 0,
             thumbnails = emptyList(),
         )
 
     val downloadPlaylist =
         Playlist(
-            playlist = PlaylistEntity(
-                id = UUID.randomUUID().toString(),
-                name = stringResource(R.string.offline)
-            ),
+            playlist =
+                PlaylistEntity(
+                    id = UUID.randomUUID().toString(),
+                    name = stringResource(R.string.offline),
+                ),
             songCount = 0,
             thumbnails = emptyList(),
         )
 
     val topPlaylist =
         Playlist(
-            playlist = PlaylistEntity(
-                id = UUID.randomUUID().toString(),
-                name = stringResource(R.string.my_top) + " $topSize"
-            ),
+            playlist =
+                PlaylistEntity(
+                    id = UUID.randomUUID().toString(),
+                    name = stringResource(R.string.my_top) + " $topSize",
+                ),
             songCount = 0,
             thumbnails = emptyList(),
         )
 
     val cachePlaylist =
         Playlist(
-            playlist = PlaylistEntity(
-                id = UUID.randomUUID().toString(),
-                name = stringResource(R.string.cached_playlist)
-            ),
+            playlist =
+                PlaylistEntity(
+                    id = UUID.randomUUID().toString(),
+                    name = stringResource(R.string.cached_playlist),
+                ),
             songCount = 0,
             thumbnails = emptyList(),
         )
@@ -187,7 +188,7 @@ fun LibraryPlaylistsScreen(
         CreatePlaylistDialog(
             onDismiss = { showCreatePlaylistDialog = false },
             initialTextFieldValue = initialTextFieldValue,
-            allowSyncing = allowSyncing
+            allowSyncing = allowSyncing,
         )
     }
 
@@ -215,11 +216,12 @@ fun LibraryPlaylistsScreen(
             Spacer(Modifier.weight(1f))
 
             Text(
-                text = pluralStringResource(
-                    R.plurals.n_playlist,
-                    playlists.size,
-                    playlists.size
-                ),
+                text =
+                    pluralStringResource(
+                        R.plurals.n_playlist,
+                        playlists.size,
+                        playlists.size,
+                    ),
                 style = MaterialTheme.typography.titleSmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
@@ -277,7 +279,7 @@ fun LibraryPlaylistsScreen(
                             icon = painterResource(R.drawable.favorite),
                             gradientColors = listOf(Color(0xFF8E2DE2), Color(0xFF4A00E0)),
                             onClick = { navController.navigate("auto_playlist/liked") },
-                            modifier = Modifier.animateItem()
+                            modifier = Modifier.animateItem(),
                         )
                     }
 
@@ -290,7 +292,7 @@ fun LibraryPlaylistsScreen(
                             icon = painterResource(R.drawable.download),
                             gradientColors = listOf(Color(0xFF11998e), Color(0xFF38ef7d)),
                             onClick = { navController.navigate("auto_playlist/downloaded") },
-                            modifier = Modifier.animateItem()
+                            modifier = Modifier.animateItem(),
                         )
                     }
 
@@ -303,7 +305,7 @@ fun LibraryPlaylistsScreen(
                             icon = painterResource(R.drawable.trending_up),
                             gradientColors = listOf(Color(0xFF396afc), Color(0xFF2948ff)),
                             onClick = { navController.navigate("auto_playlist/never_played") },
-                            modifier = Modifier.animateItem()
+                            modifier = Modifier.animateItem(),
                         )
                     }
 
@@ -316,7 +318,7 @@ fun LibraryPlaylistsScreen(
                             icon = painterResource(R.drawable.history),
                             gradientColors = listOf(Color(0xFF11998e), Color(0xFF38ef7d)),
                             onClick = { navController.navigate("auto_playlist/recently_added") },
-                            modifier = Modifier.animateItem()
+                            modifier = Modifier.animateItem(),
                         )
                     }
 
@@ -329,7 +331,7 @@ fun LibraryPlaylistsScreen(
                             icon = painterResource(R.drawable.queue_music),
                             gradientColors = listOf(Color(0xFF8E2DE2), Color(0xFF4A00E0)),
                             onClick = { navController.navigate("auto_playlist/duplicates") },
-                            modifier = Modifier.animateItem()
+                            modifier = Modifier.animateItem(),
                         )
                     }
 
@@ -342,7 +344,7 @@ fun LibraryPlaylistsScreen(
                             icon = painterResource(R.drawable.trending_up),
                             gradientColors = listOf(Color(0xFFf12711), Color(0xFFf5af19)),
                             onClick = { navController.navigate("top_playlist/$topSize") },
-                            modifier = Modifier.animateItem()
+                            modifier = Modifier.animateItem(),
                         )
                     }
 
@@ -355,7 +357,7 @@ fun LibraryPlaylistsScreen(
                             icon = painterResource(R.drawable.cached),
                             gradientColors = listOf(Color(0xFF667eea), Color(0xFF764ba2)),
                             onClick = { navController.navigate("cache_playlist/cached") },
-                            modifier = Modifier.animateItem()
+                            modifier = Modifier.animateItem(),
                         )
                     }
 
@@ -375,7 +377,7 @@ fun LibraryPlaylistsScreen(
                                 menuState = menuState,
                                 coroutineScope = coroutineScope,
                                 playlist = playlist,
-                                modifier = Modifier.animateItem()
+                                modifier = Modifier.animateItem(),
                             )
                         }
 
@@ -439,7 +441,7 @@ fun LibraryPlaylistsScreen(
                             gradientColors = listOf(Color(0xFF8E2DE2), Color(0xFF4A00E0)),
                             onClick = { navController.navigate("auto_playlist/liked") },
                             fillMaxWidth = true,
-                            modifier = Modifier.animateItem()
+                            modifier = Modifier.animateItem(),
                         )
                     }
 
@@ -453,7 +455,7 @@ fun LibraryPlaylistsScreen(
                             gradientColors = listOf(Color(0xFF11998e), Color(0xFF38ef7d)),
                             onClick = { navController.navigate("auto_playlist/downloaded") },
                             fillMaxWidth = true,
-                            modifier = Modifier.animateItem()
+                            modifier = Modifier.animateItem(),
                         )
                     }
 
@@ -467,7 +469,7 @@ fun LibraryPlaylistsScreen(
                             gradientColors = listOf(Color(0xFF396afc), Color(0xFF2948ff)),
                             onClick = { navController.navigate("auto_playlist/never_played") },
                             fillMaxWidth = true,
-                            modifier = Modifier.animateItem()
+                            modifier = Modifier.animateItem(),
                         )
                     }
 
@@ -481,7 +483,7 @@ fun LibraryPlaylistsScreen(
                             gradientColors = listOf(Color(0xFF11998e), Color(0xFF38ef7d)),
                             onClick = { navController.navigate("auto_playlist/recently_added") },
                             fillMaxWidth = true,
-                            modifier = Modifier.animateItem()
+                            modifier = Modifier.animateItem(),
                         )
                     }
 
@@ -495,7 +497,7 @@ fun LibraryPlaylistsScreen(
                             gradientColors = listOf(Color(0xFF8E2DE2), Color(0xFF4A00E0)),
                             onClick = { navController.navigate("auto_playlist/duplicates") },
                             fillMaxWidth = true,
-                            modifier = Modifier.animateItem()
+                            modifier = Modifier.animateItem(),
                         )
                     }
 
@@ -509,7 +511,7 @@ fun LibraryPlaylistsScreen(
                             gradientColors = listOf(Color(0xFFf12711), Color(0xFFf5af19)),
                             onClick = { navController.navigate("top_playlist/$topSize") },
                             fillMaxWidth = true,
-                            modifier = Modifier.animateItem()
+                            modifier = Modifier.animateItem(),
                         )
                     }
 
@@ -523,7 +525,7 @@ fun LibraryPlaylistsScreen(
                             gradientColors = listOf(Color(0xFF667eea), Color(0xFF764ba2)),
                             onClick = { navController.navigate("cache_playlist/cached") },
                             fillMaxWidth = true,
-                            modifier = Modifier.animateItem()
+                            modifier = Modifier.animateItem(),
                         )
                     }
 
@@ -544,7 +546,7 @@ fun LibraryPlaylistsScreen(
                                 coroutineScope = coroutineScope,
                                 playlist = playlist,
                                 modifier = Modifier.animateItem(),
-                                context = LocalContext.current // Pasamos el contexto actual para obtener la URI de la miniatura
+                                context = LocalContext.current, // Pasamos el contexto actual para obtener la URI de la miniatura
                             )
                         }
 
@@ -558,7 +560,7 @@ fun LibraryPlaylistsScreen(
                                     playlist = playlist,
                                     navController = navController,
                                     fillMaxWidth = true,
-                                    modifier = Modifier.animateItem()
+                                    modifier = Modifier.animateItem(),
                                 )
                             }
                         }

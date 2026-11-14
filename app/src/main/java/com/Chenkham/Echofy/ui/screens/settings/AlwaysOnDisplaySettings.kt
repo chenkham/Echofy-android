@@ -31,10 +31,10 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.WindowInsetsSides
-import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -53,7 +53,6 @@ import androidx.compose.material3.ButtonGroupDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.Icon
-import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Slider
@@ -62,6 +61,7 @@ import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.ToggleButton
 import androidx.compose.material3.ToggleButtonDefaults
+import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.TopAppBarScrollBehavior
 import androidx.compose.runtime.Composable
@@ -92,10 +92,10 @@ import com.Chenkham.Echofy.R
 import com.Chenkham.Echofy.constants.AodArtShape
 import com.Chenkham.Echofy.constants.AodArtShapeKey
 import com.Chenkham.Echofy.constants.AodArtSizeKey
+import com.Chenkham.Echofy.constants.AodAutoActivationKey
 import com.Chenkham.Echofy.constants.AodClockFormatKey
 import com.Chenkham.Echofy.constants.AodControlStyle
 import com.Chenkham.Echofy.constants.AodControlStyleKey
-import com.Chenkham.Echofy.constants.AodAutoActivationKey
 import com.Chenkham.Echofy.constants.AodDarknessKey
 import com.Chenkham.Echofy.constants.AodFullscreenKey
 import com.Chenkham.Echofy.constants.AodShowArtistKey
@@ -123,84 +123,116 @@ import kotlin.math.sin
 
 // ÔöÇÔöÇ Shapes (mismos que ten├¡as, no cambian) ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ
 
-private val squircleShape: Shape = GenericShape { size, _ ->
-    val cx = size.width / 2.0; val cy = size.height / 2.0
-    val rx = size.width / 2.0; val ry = size.height / 2.0
-    val n = 4.0; val steps = 120
-    for (i in 0..steps) {
-        val t = 2.0 * PI * i / steps
-        val ct = cos(t); val st = sin(t)
-        val x = (cx + rx * (if (ct >= 0) 1.0 else -1.0) * ct.absoluteValue.pow(2.0 / n)).toFloat()
-        val y = (cy + ry * (if (st >= 0) 1.0 else -1.0) * st.absoluteValue.pow(2.0 / n)).toFloat()
-        if (i == 0) moveTo(x, y) else lineTo(x, y)
+private val squircleShape: Shape =
+    GenericShape { size, _ ->
+        val cx = size.width / 2.0
+        val cy = size.height / 2.0
+        val rx = size.width / 2.0
+        val ry = size.height / 2.0
+        val n = 4.0
+        val steps = 120
+        for (i in 0..steps) {
+            val t = 2.0 * PI * i / steps
+            val ct = cos(t)
+            val st = sin(t)
+            val x = (cx + rx * (if (ct >= 0) 1.0 else -1.0) * ct.absoluteValue.pow(2.0 / n)).toFloat()
+            val y = (cy + ry * (if (st >= 0) 1.0 else -1.0) * st.absoluteValue.pow(2.0 / n)).toFloat()
+            if (i == 0) moveTo(x, y) else lineTo(x, y)
+        }
+        close()
     }
-    close()
-}
 
-private val diamondShape: Shape = GenericShape { size, _ ->
-    moveTo(size.width / 2f, 0f); lineTo(size.width, size.height / 2f)
-    lineTo(size.width / 2f, size.height); lineTo(0f, size.height / 2f); close()
-}
-
-private val hexagonShape: Shape = GenericShape { size, _ ->
-    val cx = size.width / 2f; val cy = size.height / 2f
-    val r = minOf(cx, cy) * 0.96f
-    for (i in 0..5) {
-        val a = (PI / 180.0 * (60.0 * i - 30.0)).toFloat()
-        if (i == 0) moveTo(cx + r * cos(a), cy + r * sin(a))
-        else lineTo(cx + r * cos(a), cy + r * sin(a))
+private val diamondShape: Shape =
+    GenericShape { size, _ ->
+        moveTo(size.width / 2f, 0f)
+        lineTo(size.width, size.height / 2f)
+        lineTo(size.width / 2f, size.height)
+        lineTo(0f, size.height / 2f)
+        close()
     }
-    close()
-}
 
-private val starShape: Shape = GenericShape { size, _ ->
-    val cx = size.width / 2f; val cy = size.height / 2f
-    val outerR = minOf(cx, cy) * 0.96f; val innerR = outerR * 0.42f
-    for (i in 0 until 10) {
-        val a = (PI * i / 5.0 - PI / 2.0).toFloat()
-        val r = if (i % 2 == 0) outerR else innerR
-        if (i == 0) moveTo(cx + r * cos(a), cy + r * sin(a))
-        else lineTo(cx + r * cos(a), cy + r * sin(a))
+private val hexagonShape: Shape =
+    GenericShape { size, _ ->
+        val cx = size.width / 2f
+        val cy = size.height / 2f
+        val r = minOf(cx, cy) * 0.96f
+        for (i in 0..5) {
+            val a = (PI / 180.0 * (60.0 * i - 30.0)).toFloat()
+            if (i == 0) {
+                moveTo(cx + r * cos(a), cy + r * sin(a))
+            } else {
+                lineTo(cx + r * cos(a), cy + r * sin(a))
+            }
+        }
+        close()
     }
-    close()
-}
 
-private val archShape: Shape = GenericShape { size, _ ->
-    moveTo(0f, size.width / 2f)
-    arcTo(Rect(0f, 0f, size.width, size.width), 180f, 180f, false)
-    lineTo(size.width, size.height); lineTo(0f, size.height); close()
-}
-
-private val petalShape: Shape = GenericShape { size, _ ->
-    val cx = size.width / 2.0; val cy = size.height / 2.0
-    val r = minOf(size.width, size.height) / 2.0 * 0.92
-    var started = false
-    for (i in 0..240) {
-        val t = 2.0 * PI * i / 240
-        val rT = r * cos(2.0 * t).absoluteValue
-        val x = (cx + rT * cos(t)).toFloat(); val y = (cy + rT * sin(t)).toFloat()
-        if (!started) { moveTo(x, y); started = true } else lineTo(x, y)
+private val starShape: Shape =
+    GenericShape { size, _ ->
+        val cx = size.width / 2f
+        val cy = size.height / 2f
+        val outerR = minOf(cx, cy) * 0.96f
+        val innerR = outerR * 0.42f
+        for (i in 0 until 10) {
+            val a = (PI * i / 5.0 - PI / 2.0).toFloat()
+            val r = if (i % 2 == 0) outerR else innerR
+            if (i == 0) {
+                moveTo(cx + r * cos(a), cy + r * sin(a))
+            } else {
+                lineTo(cx + r * cos(a), cy + r * sin(a))
+            }
+        }
+        close()
     }
-    close()
-}
 
-fun AodArtShape.toShape(): Shape = when (this) {
-    AodArtShape.ROUNDED  -> RoundedCornerShape(24.dp)
-    AodArtShape.CIRCLE   -> CircleShape
-    AodArtShape.SQUIRCLE -> squircleShape
-    AodArtShape.DIAMOND  -> diamondShape
-    AodArtShape.HEXAGON  -> hexagonShape
-    AodArtShape.STAR     -> starShape
-    AodArtShape.ARCH     -> archShape
-    AodArtShape.PETAL    -> petalShape
-}
+private val archShape: Shape =
+    GenericShape { size, _ ->
+        moveTo(0f, size.width / 2f)
+        arcTo(Rect(0f, 0f, size.width, size.width), 180f, 180f, false)
+        lineTo(size.width, size.height)
+        lineTo(0f, size.height)
+        close()
+    }
+
+private val petalShape: Shape =
+    GenericShape { size, _ ->
+        val cx = size.width / 2.0
+        val cy = size.height / 2.0
+        val r = minOf(size.width, size.height) / 2.0 * 0.92
+        var started = false
+        for (i in 0..240) {
+            val t = 2.0 * PI * i / 240
+            val rT = r * cos(2.0 * t).absoluteValue
+            val x = (cx + rT * cos(t)).toFloat()
+            val y = (cy + rT * sin(t)).toFloat()
+            if (!started) {
+                moveTo(x, y)
+                started = true
+            } else {
+                lineTo(x, y)
+            }
+        }
+        close()
+    }
+
+fun AodArtShape.toShape(): Shape =
+    when (this) {
+        AodArtShape.ROUNDED -> RoundedCornerShape(24.dp)
+        AodArtShape.CIRCLE -> CircleShape
+        AodArtShape.SQUIRCLE -> squircleShape
+        AodArtShape.DIAMOND -> diamondShape
+        AodArtShape.HEXAGON -> hexagonShape
+        AodArtShape.STAR -> starShape
+        AodArtShape.ARCH -> archShape
+        AodArtShape.PETAL -> petalShape
+    }
 
 enum class AodAutoTimeout(val seconds: Int, val labelRes: Int) {
     NEVER(0, R.string.aod_auto_never),
     SECONDS_15(15, R.string.aod_auto_15s),
     SECONDS_30(30, R.string.aod_auto_30s),
     MINUTE_1(60, R.string.aod_auto_1m),
-    MINUTE_2(120, R.string.aod_auto_2m)
+    MINUTE_2(120, R.string.aod_auto_2m),
 }
 
 // ÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉ
@@ -228,40 +260,54 @@ fun AODSettings(
     val (spotlightInt, setSpotlightInt) = rememberPreference(AodSpotlightIntensityKey, 0.75f)
     val (spotlightPulse, setSpotlightPulse) = rememberPreference(AodSpotlightPulseKey, true)
     val (transitionDur, setTransitionDur) = rememberPreference(AodTransitionDurationKey, 700)
-    val (rawControlStyle, setRawControlStyle) = rememberPreference(
-        AodControlStyleKey,
-        AodControlStyle.ROUNDED.name
-    )
+    val (rawControlStyle, setRawControlStyle) =
+        rememberPreference(
+            AodControlStyleKey,
+            AodControlStyle.ROUNDED.name,
+        )
     val (textScale, setTextScale) = rememberPreference(AodTextScaleKey, 1.0f)
     val (showClock, setShowClock) = rememberPreference(AodShowClockKey, false)
     val (clockFormat24h, setClockFormat24h) = rememberPreference(AodClockFormatKey, true)
 
-    val currentStyle = remember(rawStyle) {
-        runCatching { AodStyle.valueOf(rawStyle) }.getOrDefault(AodStyle.CLASSIC)
-    }
-    val currentShape = remember(rawShape) {
-        runCatching { AodArtShape.valueOf(rawShape) }.getOrDefault(AodArtShape.ROUNDED)
-    }
-    val currentControlStyle = remember(rawControlStyle) {
-        runCatching { AodControlStyle.valueOf(rawControlStyle) }.getOrDefault(AodControlStyle.ROUNDED)
-    }
+    val currentStyle =
+        remember(rawStyle) {
+            runCatching { AodStyle.valueOf(rawStyle) }.getOrDefault(AodStyle.CLASSIC)
+        }
+    val currentShape =
+        remember(rawShape) {
+            runCatching { AodArtShape.valueOf(rawShape) }.getOrDefault(AodArtShape.ROUNDED)
+        }
+    val currentControlStyle =
+        remember(rawControlStyle) {
+            runCatching { AodControlStyle.valueOf(rawControlStyle) }.getOrDefault(AodControlStyle.ROUNDED)
+        }
 
     var autoTimeoutIndex by remember(autoTimeoutSecs) {
         mutableIntStateOf(
             when (autoTimeoutSecs) {
-                0 -> 0; 15 -> 1; 30 -> 2; 60 -> 3; 120 -> 4; else -> 2
-            }
+                0 -> 0
+                15 -> 1
+                30 -> 2
+                60 -> 3
+                120 -> 4
+                else -> 2
+            },
         )
     }
-    val autoTimeouts = listOf(
-        AodAutoTimeout.NEVER, AodAutoTimeout.SECONDS_15, AodAutoTimeout.SECONDS_30,
-        AodAutoTimeout.MINUTE_1, AodAutoTimeout.MINUTE_2
-    )
+    val autoTimeouts =
+        listOf(
+            AodAutoTimeout.NEVER,
+            AodAutoTimeout.SECONDS_15,
+            AodAutoTimeout.SECONDS_30,
+            AodAutoTimeout.MINUTE_1,
+            AodAutoTimeout.MINUTE_2,
+        )
 
     Scaffold(
-        modifier = Modifier
-            .fillMaxSize()
-            .nestedScroll(scrollBehavior.nestedScrollConnection),
+        modifier =
+            Modifier
+                .fillMaxSize()
+                .nestedScroll(scrollBehavior.nestedScrollConnection),
         containerColor = Color.Transparent,
         contentWindowInsets = WindowInsets(0, 0, 0, 0),
         topBar = {
@@ -275,29 +321,31 @@ fun AODSettings(
                         Icon(
                             painter = painterResource(R.drawable.arrow_back),
                             contentDescription = null,
-                            tint = MaterialTheme.colorScheme.onSurface
+                            tint = MaterialTheme.colorScheme.onSurface,
                         )
                     }
                 },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = Color.Transparent,
-                    scrolledContainerColor = Color.Transparent,
-                    titleContentColor = MaterialTheme.colorScheme.onSurface,
-                    navigationIconContentColor = MaterialTheme.colorScheme.onSurface,
-                ),
+                colors =
+                    TopAppBarDefaults.topAppBarColors(
+                        containerColor = Color.Transparent,
+                        scrolledContainerColor = Color.Transparent,
+                        titleContentColor = MaterialTheme.colorScheme.onSurface,
+                        navigationIconContentColor = MaterialTheme.colorScheme.onSurface,
+                    ),
                 scrollBehavior = scrollBehavior,
             )
         },
     ) { paddingValues ->
         Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(top = paddingValues.calculateTopPadding())
-                .windowInsetsPadding(
-                    LocalPlayerAwareWindowInsets.current.only(WindowInsetsSides.Horizontal + WindowInsetsSides.Bottom)
-                )
-                .verticalScroll(rememberScrollState())
-                .padding(bottom = 24.dp),
+            modifier =
+                Modifier
+                    .fillMaxSize()
+                    .padding(top = paddingValues.calculateTopPadding())
+                    .windowInsetsPadding(
+                        LocalPlayerAwareWindowInsets.current.only(WindowInsetsSides.Horizontal + WindowInsetsSides.Bottom),
+                    )
+                    .verticalScroll(rememberScrollState())
+                    .padding(bottom = 24.dp),
             verticalArrangement = Arrangement.spacedBy(24.dp),
         ) {
             AodOverviewCard(
@@ -324,21 +372,22 @@ fun AODSettings(
                 Column(modifier = Modifier.padding(horizontal = 16.dp)) {
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier.fillMaxWidth()
+                        modifier = Modifier.fillMaxWidth(),
                     ) {
                         Text(
                             text = stringResource(R.string.aod_auto_activation_label),
                             style = MaterialTheme.typography.bodyLarge,
-                            modifier = Modifier.weight(1f)
+                            modifier = Modifier.weight(1f),
                         )
                         ExpressivePill(text = stringResource(autoTimeouts[autoTimeoutIndex].labelRes))
                     }
                     Spacer(Modifier.height(10.dp))
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Text(
-                            " ", style = MaterialTheme.typography.labelSmall,
+                            " ",
+                            style = MaterialTheme.typography.labelSmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            modifier = Modifier.width(32.dp)
+                            modifier = Modifier.width(32.dp),
                         )
                         SquigglySlider(
                             value = autoTimeoutIndex.toFloat(),
@@ -348,21 +397,22 @@ fun AODSettings(
                                 setAutoTimeoutSecs(autoTimeouts[idx].seconds)
                             },
                             valueRange = 0f..4f,
-                            modifier = Modifier
-                                .weight(1f)
-                                .padding(horizontal = 8.dp)
+                            modifier =
+                                Modifier
+                                    .weight(1f)
+                                    .padding(horizontal = 8.dp),
                         )
                         Text(
                             stringResource(R.string.aod_auto_2m_short),
                             style = MaterialTheme.typography.labelSmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
                     }
                     Spacer(Modifier.height(4.dp))
                     Text(
                         stringResource(R.string.aod_auto_activation_description),
                         style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                 }
             }
@@ -371,15 +421,16 @@ fun AODSettings(
                 LazyRow(
                     contentPadding = PaddingValues(horizontal = 16.dp),
                     horizontalArrangement = Arrangement.spacedBy(12.dp),
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(176.dp)
+                    modifier =
+                        Modifier
+                            .fillMaxWidth()
+                            .height(176.dp),
                 ) {
                     items(AodStyle.entries) { style ->
                         AodStyleCard(
                             style = style,
                             selected = style == currentStyle,
-                            onClick = { setRawStyle(style.name) }
+                            onClick = { setRawStyle(style.name) },
                         )
                     }
                 }
@@ -416,15 +467,16 @@ fun AODSettings(
                     contentPadding = PaddingValues(horizontal = 16.dp, vertical = 12.dp),
                     horizontalArrangement = Arrangement.spacedBy(10.dp),
                     verticalArrangement = Arrangement.spacedBy(10.dp),
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(240.dp)
+                    modifier =
+                        Modifier
+                            .fillMaxWidth()
+                            .height(240.dp),
                 ) {
                     items(AodArtShape.entries) { shape ->
                         AodShapeCard(
                             artShape = shape,
                             selected = shape == currentShape,
-                            onClick = { setRawShape(shape.name) }
+                            onClick = { setRawShape(shape.name) },
                         )
                     }
                 }
@@ -434,7 +486,7 @@ fun AODSettings(
                 Column(modifier = Modifier.padding(horizontal = 16.dp)) {
                     Text(
                         stringResource(R.string.aod_controls_style_label),
-                        style = MaterialTheme.typography.bodyLarge
+                        style = MaterialTheme.typography.bodyLarge,
                     )
                     Spacer(Modifier.height(10.dp))
                     LazyRow(
@@ -445,7 +497,7 @@ fun AODSettings(
                             ControlStyleChip(
                                 style = cs,
                                 selected = cs == currentControlStyle,
-                                onClick = { setRawControlStyle(cs.name) }
+                                onClick = { setRawControlStyle(cs.name) },
                             )
                         }
                     }
@@ -579,42 +631,49 @@ private fun AodOverviewCard(
     showClock: Boolean,
     onShowClockChange: (Boolean) -> Unit,
 ) {
-    val heroBrush = Brush.linearGradient(
-        colors = listOf(
-            MaterialTheme.colorScheme.primary.copy(alpha = 0.18f),
-            MaterialTheme.colorScheme.tertiary.copy(alpha = 0.12f),
-            MaterialTheme.colorScheme.surfaceContainerHigh,
-        ),
-    )
-    val uncheckedColors = ToggleButtonDefaults.toggleButtonColors(
-        containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.72f),
-        contentColor = MaterialTheme.colorScheme.onSurface,
-    )
-    val checkedColors = ToggleButtonDefaults.toggleButtonColors(
-        checkedContainerColor = MaterialTheme.colorScheme.primary,
-        checkedContentColor = MaterialTheme.colorScheme.onPrimary,
-        containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.72f),
-        contentColor = MaterialTheme.colorScheme.onSurface,
-    )
-    val secondaryCheckedColors = ToggleButtonDefaults.toggleButtonColors(
-        checkedContainerColor = MaterialTheme.colorScheme.tertiaryContainer,
-        checkedContentColor = MaterialTheme.colorScheme.onTertiaryContainer,
-        containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.72f),
-        contentColor = MaterialTheme.colorScheme.onSurface,
-    )
+    val heroBrush =
+        Brush.linearGradient(
+            colors =
+                listOf(
+                    MaterialTheme.colorScheme.primary.copy(alpha = 0.18f),
+                    MaterialTheme.colorScheme.tertiary.copy(alpha = 0.12f),
+                    MaterialTheme.colorScheme.surfaceContainerHigh,
+                ),
+        )
+    val uncheckedColors =
+        ToggleButtonDefaults.toggleButtonColors(
+            containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.72f),
+            contentColor = MaterialTheme.colorScheme.onSurface,
+        )
+    val checkedColors =
+        ToggleButtonDefaults.toggleButtonColors(
+            checkedContainerColor = MaterialTheme.colorScheme.primary,
+            checkedContentColor = MaterialTheme.colorScheme.onPrimary,
+            containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.72f),
+            contentColor = MaterialTheme.colorScheme.onSurface,
+        )
+    val secondaryCheckedColors =
+        ToggleButtonDefaults.toggleButtonColors(
+            checkedContainerColor = MaterialTheme.colorScheme.tertiaryContainer,
+            checkedContentColor = MaterialTheme.colorScheme.onTertiaryContainer,
+            containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.72f),
+            contentColor = MaterialTheme.colorScheme.onSurface,
+        )
 
     Surface(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp),
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp),
         shape = RoundedCornerShape(32.dp),
         color = MaterialTheme.colorScheme.surfaceContainerHigh,
         tonalElevation = 6.dp,
     ) {
         Column(
-            modifier = Modifier
-                .background(heroBrush)
-                .padding(20.dp),
+            modifier =
+                Modifier
+                    .background(heroBrush)
+                    .padding(20.dp),
             verticalArrangement = Arrangement.spacedBy(18.dp),
         ) {
             Row(
@@ -627,10 +686,11 @@ private fun AodOverviewCard(
                     color = Color(0xFF070707),
                 ) {
                     Box(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .padding(12.dp)
-                            .clip(currentShape.toShape()),
+                        modifier =
+                            Modifier
+                                .fillMaxSize()
+                                .padding(12.dp)
+                                .clip(currentShape.toShape()),
                     ) {
                         AodStylePreview(style = currentStyle)
                     }
@@ -707,9 +767,10 @@ private fun AodHeroToggleLabel(
     text: String,
 ) {
     Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 8.dp, vertical = 12.dp),
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 8.dp, vertical = 12.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
@@ -726,33 +787,36 @@ private fun AodHeroToggleLabel(
 }
 
 @Composable
-private fun aodStyleLabel(style: AodStyle): String = when (style) {
-    AodStyle.CLASSIC -> stringResource(R.string.aod_style_classic)
-    AodStyle.BACKGROUND -> stringResource(R.string.aod_style_background)
-    AodStyle.MINIMAL -> stringResource(R.string.aod_style_minimal)
-    AodStyle.LARGE -> stringResource(R.string.aod_style_large)
-    AodStyle.SPOTLIGHT -> stringResource(R.string.aod_style_spotlight)
-}
+private fun aodStyleLabel(style: AodStyle): String =
+    when (style) {
+        AodStyle.CLASSIC -> stringResource(R.string.aod_style_classic)
+        AodStyle.BACKGROUND -> stringResource(R.string.aod_style_background)
+        AodStyle.MINIMAL -> stringResource(R.string.aod_style_minimal)
+        AodStyle.LARGE -> stringResource(R.string.aod_style_large)
+        AodStyle.SPOTLIGHT -> stringResource(R.string.aod_style_spotlight)
+    }
 
 @Composable
-private fun aodShapeLabel(shape: AodArtShape): String = when (shape) {
-    AodArtShape.ROUNDED -> stringResource(R.string.aod_shape_rounded)
-    AodArtShape.CIRCLE -> stringResource(R.string.aod_shape_circle)
-    AodArtShape.SQUIRCLE -> stringResource(R.string.aod_shape_squircle)
-    AodArtShape.DIAMOND -> stringResource(R.string.aod_shape_diamond)
-    AodArtShape.HEXAGON -> stringResource(R.string.aod_shape_hexagon)
-    AodArtShape.STAR -> stringResource(R.string.aod_shape_star)
-    AodArtShape.ARCH -> stringResource(R.string.aod_shape_arch)
-    AodArtShape.PETAL -> stringResource(R.string.aod_shape_petal)
-}
+private fun aodShapeLabel(shape: AodArtShape): String =
+    when (shape) {
+        AodArtShape.ROUNDED -> stringResource(R.string.aod_shape_rounded)
+        AodArtShape.CIRCLE -> stringResource(R.string.aod_shape_circle)
+        AodArtShape.SQUIRCLE -> stringResource(R.string.aod_shape_squircle)
+        AodArtShape.DIAMOND -> stringResource(R.string.aod_shape_diamond)
+        AodArtShape.HEXAGON -> stringResource(R.string.aod_shape_hexagon)
+        AodArtShape.STAR -> stringResource(R.string.aod_shape_star)
+        AodArtShape.ARCH -> stringResource(R.string.aod_shape_arch)
+        AodArtShape.PETAL -> stringResource(R.string.aod_shape_petal)
+    }
 
-private fun aodTimeoutLabelRes(seconds: Int): Int = when (seconds) {
-    15 -> R.string.aod_auto_15s
-    30 -> R.string.aod_auto_30s
-    60 -> R.string.aod_auto_1m
-    120 -> R.string.aod_auto_2m
-    else -> R.string.aod_auto_never
-}
+private fun aodTimeoutLabelRes(seconds: Int): Int =
+    when (seconds) {
+        15 -> R.string.aod_auto_15s
+        30 -> R.string.aod_auto_30s
+        60 -> R.string.aod_auto_1m
+        120 -> R.string.aod_auto_2m
+        else -> R.string.aod_auto_never
+    }
 
 // ÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉ
 //  COMPONENTES DE UI M3 Expressive
@@ -772,12 +836,12 @@ private fun AodSettingsSection(
             style = MaterialTheme.typography.labelLarge,
             color = MaterialTheme.colorScheme.primary,
             fontWeight = FontWeight.SemiBold,
-            modifier = Modifier.padding(bottom = 10.dp, start = 4.dp)
+            modifier = Modifier.padding(bottom = 10.dp, start = 4.dp),
         )
         Surface(
             shape = RoundedCornerShape(24.dp),
             color = MaterialTheme.colorScheme.surfaceContainer,
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier.fillMaxWidth(),
         ) {
             Column(modifier = Modifier.padding(vertical = 8.dp)) {
                 content()
@@ -800,26 +864,27 @@ private fun AodSwitchRow(
 ) {
     Row(
         verticalAlignment = Alignment.CenterVertically,
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable(
-                interactionSource = remember { MutableInteractionSource() },
-                indication = null,
-                onClick = { onChanged(!checked) }
-            )
-            .padding(horizontal = 16.dp, vertical = 12.dp)
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .clickable(
+                    interactionSource = remember { MutableInteractionSource() },
+                    indication = null,
+                    onClick = { onChanged(!checked) },
+                )
+                .padding(horizontal = 16.dp, vertical = 12.dp),
     ) {
         Surface(
             shape = RoundedCornerShape(12.dp),
             color = MaterialTheme.colorScheme.secondaryContainer,
-            modifier = Modifier.size(40.dp)
+            modifier = Modifier.size(40.dp),
         ) {
             Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize()) {
                 Icon(
                     painter = painterResource(icon),
                     contentDescription = null,
                     tint = MaterialTheme.colorScheme.onSecondaryContainer,
-                    modifier = Modifier.size(20.dp)
+                    modifier = Modifier.size(20.dp),
                 )
             }
         }
@@ -830,7 +895,7 @@ private fun AodSwitchRow(
                 Text(
                     description,
                     style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
         }
@@ -855,7 +920,7 @@ private fun AodSliderRow(
 ) {
     Row(
         verticalAlignment = Alignment.CenterVertically,
-        modifier = Modifier.fillMaxWidth()
+        modifier = Modifier.fillMaxWidth(),
     ) {
         Text(label, style = MaterialTheme.typography.bodyLarge, modifier = Modifier.weight(1f))
         ExpressivePill(text = valueLabel)
@@ -865,7 +930,7 @@ private fun AodSliderRow(
         Text(
             description,
             style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
     }
     Spacer(Modifier.height(6.dp))
@@ -874,20 +939,20 @@ private fun AodSliderRow(
             startLabel,
             style = MaterialTheme.typography.labelSmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.width(40.dp)
+            modifier = Modifier.width(40.dp),
         )
         Slider(
             value = value,
             onValueChange = onValueChange,
             valueRange = valueRange,
-            modifier = Modifier.weight(1f)
+            modifier = Modifier.weight(1f),
         )
         Text(
             endLabel,
             style = MaterialTheme.typography.labelSmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             textAlign = TextAlign.End,
-            modifier = Modifier.width(40.dp)
+            modifier = Modifier.width(40.dp),
         )
     }
 }
@@ -899,16 +964,17 @@ private fun AodSliderRow(
 private fun ExpressivePill(text: String) {
     Box(
         contentAlignment = Alignment.Center,
-        modifier = Modifier
-            .clip(RoundedCornerShape(50))
-            .background(MaterialTheme.colorScheme.primaryContainer)
-            .padding(horizontal = 10.dp, vertical = 3.dp)
+        modifier =
+            Modifier
+                .clip(RoundedCornerShape(50))
+                .background(MaterialTheme.colorScheme.primaryContainer)
+                .padding(horizontal = 10.dp, vertical = 3.dp),
     ) {
         Text(
             text = text,
             style = MaterialTheme.typography.labelMedium,
             color = MaterialTheme.colorScheme.onPrimaryContainer,
-            fontWeight = FontWeight.SemiBold
+            fontWeight = FontWeight.SemiBold,
         )
     }
 }
@@ -923,85 +989,103 @@ private fun ControlStyleChip(
     onClick: () -> Unit,
 ) {
     val borderColor by animateColorAsState(
-        targetValue = if (selected) MaterialTheme.colorScheme.primary
-        else MaterialTheme.colorScheme.outlineVariant,
+        targetValue =
+            if (selected) {
+                MaterialTheme.colorScheme.primary
+            } else {
+                MaterialTheme.colorScheme.outlineVariant
+            },
         animationSpec = tween(200),
-        label = "control_chip_border"
+        label = "control_chip_border",
     )
-    val bgColor = if (selected)
-        MaterialTheme.colorScheme.primaryContainer
-    else
-        MaterialTheme.colorScheme.surfaceVariant
+    val bgColor =
+        if (selected) {
+            MaterialTheme.colorScheme.primaryContainer
+        } else {
+            MaterialTheme.colorScheme.surfaceVariant
+        }
 
-    val label = when (style) {
-        AodControlStyle.ROUNDED -> stringResource(R.string.aod_control_style_rounded)
-        AodControlStyle.SQUARE -> stringResource(R.string.aod_control_style_square)
-        AodControlStyle.ACCENT -> stringResource(R.string.aod_control_style_accent)
-        AodControlStyle.MINIMAL_FLAT -> stringResource(R.string.aod_control_style_minimal_flat)
-    }
+    val label =
+        when (style) {
+            AodControlStyle.ROUNDED -> stringResource(R.string.aod_control_style_rounded)
+            AodControlStyle.SQUARE -> stringResource(R.string.aod_control_style_square)
+            AodControlStyle.ACCENT -> stringResource(R.string.aod_control_style_accent)
+            AodControlStyle.MINIMAL_FLAT -> stringResource(R.string.aod_control_style_minimal_flat)
+        }
 
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
-        modifier = Modifier
-            .clip(RoundedCornerShape(16.dp))
-            .border(
-                width = if (selected) 2.dp else 1.dp,
-                color = borderColor,
-                shape = RoundedCornerShape(16.dp)
-            )
-            .background(bgColor)
-            .clickable(
-                interactionSource = remember { MutableInteractionSource() },
-                indication = null,
-                onClick = onClick
-            )
-            .padding(horizontal = 12.dp, vertical = 10.dp)
-            .width(72.dp)
+        modifier =
+            Modifier
+                .clip(RoundedCornerShape(16.dp))
+                .border(
+                    width = if (selected) 2.dp else 1.dp,
+                    color = borderColor,
+                    shape = RoundedCornerShape(16.dp),
+                )
+                .background(bgColor)
+                .clickable(
+                    interactionSource = remember { MutableInteractionSource() },
+                    indication = null,
+                    onClick = onClick,
+                )
+                .padding(horizontal = 12.dp, vertical = 10.dp)
+                .width(72.dp),
     ) {
         // Mini preview del estilo de bot├│n
         Box(
             contentAlignment = Alignment.Center,
-            modifier = Modifier
-                .size(36.dp)
-                .then(
-                    when (style) {
-                        AodControlStyle.ROUNDED, AodControlStyle.ACCENT ->
-                            Modifier
-                                .clip(CircleShape)
-                                .background(
-                                    if (selected) MaterialTheme.colorScheme.primary
-                                    else MaterialTheme.colorScheme.onSurface.copy(0.18f)
-                                )
+            modifier =
+                Modifier
+                    .size(36.dp)
+                    .then(
+                        when (style) {
+                            AodControlStyle.ROUNDED, AodControlStyle.ACCENT ->
+                                Modifier
+                                    .clip(CircleShape)
+                                    .background(
+                                        if (selected) {
+                                            MaterialTheme.colorScheme.primary
+                                        } else {
+                                            MaterialTheme.colorScheme.onSurface.copy(0.18f)
+                                        },
+                                    )
 
-                        AodControlStyle.SQUARE ->
-                            Modifier
-                                .clip(RoundedCornerShape(10.dp))
-                                .background(
-                                    if (selected) MaterialTheme.colorScheme.primary
-                                    else MaterialTheme.colorScheme.onSurface.copy(0.18f)
-                                )
+                            AodControlStyle.SQUARE ->
+                                Modifier
+                                    .clip(RoundedCornerShape(10.dp))
+                                    .background(
+                                        if (selected) {
+                                            MaterialTheme.colorScheme.primary
+                                        } else {
+                                            MaterialTheme.colorScheme.onSurface.copy(0.18f)
+                                        },
+                                    )
 
-                        AodControlStyle.MINIMAL_FLAT ->
-                            Modifier
-                                .clip(CircleShape)
-                                .background(
-                                    MaterialTheme.colorScheme.onSurface.copy(0.06f)
-                                )
-                    }
-                )
+                            AodControlStyle.MINIMAL_FLAT ->
+                                Modifier
+                                    .clip(CircleShape)
+                                    .background(
+                                        MaterialTheme.colorScheme.onSurface.copy(0.06f),
+                                    )
+                        },
+                    ),
         ) {
             Icon(
                 painter = painterResource(R.drawable.play),
                 contentDescription = null,
-                tint = if (selected) {
-                    when (style) {
-                        AodControlStyle.MINIMAL_FLAT ->
-                            MaterialTheme.colorScheme.primary
+                tint =
+                    if (selected) {
+                        when (style) {
+                            AodControlStyle.MINIMAL_FLAT ->
+                                MaterialTheme.colorScheme.primary
 
-                        else -> MaterialTheme.colorScheme.onPrimary
-                    }
-                } else MaterialTheme.colorScheme.onSurface.copy(0.55f),
-                modifier = Modifier.size(18.dp)
+                            else -> MaterialTheme.colorScheme.onPrimary
+                        }
+                    } else {
+                        MaterialTheme.colorScheme.onSurface.copy(0.55f)
+                    },
+                modifier = Modifier.size(18.dp),
             )
         }
         Spacer(Modifier.height(6.dp))
@@ -1009,8 +1093,12 @@ private fun ControlStyleChip(
             text = label,
             style = MaterialTheme.typography.labelSmall,
             fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal,
-            color = if (selected) MaterialTheme.colorScheme.primary
-            else MaterialTheme.colorScheme.onSurfaceVariant,
+            color =
+                if (selected) {
+                    MaterialTheme.colorScheme.primary
+                } else {
+                    MaterialTheme.colorScheme.onSurfaceVariant
+                },
             textAlign = TextAlign.Center,
         )
     }
@@ -1028,60 +1116,71 @@ private fun AodStyleCard(
     modifier: Modifier = Modifier,
 ) {
     val borderColor by animateColorAsState(
-        targetValue = if (selected) MaterialTheme.colorScheme.primary
-        else MaterialTheme.colorScheme.outlineVariant,
+        targetValue =
+            if (selected) {
+                MaterialTheme.colorScheme.primary
+            } else {
+                MaterialTheme.colorScheme.outlineVariant
+            },
         animationSpec = tween(250),
-        label = "style_border"
+        label = "style_border",
     )
     val scale by animateFloatAsState(
         targetValue = if (selected) 1.04f else 1.0f,
         animationSpec = spring(stiffness = Spring.StiffnessMediumLow),
-        label = "style_scale"
+        label = "style_scale",
     )
 
-    val label = when (style) {
-        AodStyle.CLASSIC    -> stringResource(R.string.aod_style_classic)
-        AodStyle.BACKGROUND -> stringResource(R.string.aod_style_background)
-        AodStyle.MINIMAL    -> stringResource(R.string.aod_style_minimal)
-        AodStyle.LARGE      -> stringResource(R.string.aod_style_large)
-        AodStyle.SPOTLIGHT  -> stringResource(R.string.aod_style_spotlight)
-    }
-    val description = when (style) {
-        AodStyle.CLASSIC    -> stringResource(R.string.aod_style_classic_desc)
-        AodStyle.BACKGROUND -> stringResource(R.string.aod_style_background_desc)
-        AodStyle.MINIMAL    -> stringResource(R.string.aod_style_minimal_desc)
-        AodStyle.LARGE      -> stringResource(R.string.aod_style_large_desc)
-        AodStyle.SPOTLIGHT  -> stringResource(R.string.aod_style_spotlight_desc)
-    }
+    val label =
+        when (style) {
+            AodStyle.CLASSIC -> stringResource(R.string.aod_style_classic)
+            AodStyle.BACKGROUND -> stringResource(R.string.aod_style_background)
+            AodStyle.MINIMAL -> stringResource(R.string.aod_style_minimal)
+            AodStyle.LARGE -> stringResource(R.string.aod_style_large)
+            AodStyle.SPOTLIGHT -> stringResource(R.string.aod_style_spotlight)
+        }
+    val description =
+        when (style) {
+            AodStyle.CLASSIC -> stringResource(R.string.aod_style_classic_desc)
+            AodStyle.BACKGROUND -> stringResource(R.string.aod_style_background_desc)
+            AodStyle.MINIMAL -> stringResource(R.string.aod_style_minimal_desc)
+            AodStyle.LARGE -> stringResource(R.string.aod_style_large_desc)
+            AodStyle.SPOTLIGHT -> stringResource(R.string.aod_style_spotlight_desc)
+        }
 
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
-        modifier = modifier
-            .scale(scale)
-            .width(120.dp)
-            .clip(RoundedCornerShape(20.dp))
-            .border(
-                width = if (selected) 2.dp else 1.dp,
-                color = borderColor,
-                shape = RoundedCornerShape(20.dp)
-            )
-            .background(
-                if (selected) MaterialTheme.colorScheme.primaryContainer.copy(0.25f)
-                else MaterialTheme.colorScheme.surfaceContainerHigh
-            )
-            .clickable(
-                interactionSource = remember { MutableInteractionSource() },
-                indication = null,
-                onClick = onClick
-            )
+        modifier =
+            modifier
+                .scale(scale)
+                .width(120.dp)
+                .clip(RoundedCornerShape(20.dp))
+                .border(
+                    width = if (selected) 2.dp else 1.dp,
+                    color = borderColor,
+                    shape = RoundedCornerShape(20.dp),
+                )
+                .background(
+                    if (selected) {
+                        MaterialTheme.colorScheme.primaryContainer.copy(0.25f)
+                    } else {
+                        MaterialTheme.colorScheme.surfaceContainerHigh
+                    },
+                )
+                .clickable(
+                    interactionSource = remember { MutableInteractionSource() },
+                    indication = null,
+                    onClick = onClick,
+                ),
     ) {
         // Preview miniatura
         Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(106.dp)
-                .clip(RoundedCornerShape(topStart = 18.dp, topEnd = 18.dp))
-                .background(Color(0xFF070707))
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .height(106.dp)
+                    .clip(RoundedCornerShape(topStart = 18.dp, topEnd = 18.dp))
+                    .background(Color(0xFF070707)),
         ) {
             AodStylePreview(style = style)
         }
@@ -1089,14 +1188,18 @@ private fun AodStyleCard(
         // Nombre + descripci├│n
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
-            modifier = Modifier.padding(horizontal = 8.dp, vertical = 8.dp)
+            modifier = Modifier.padding(horizontal = 8.dp, vertical = 8.dp),
         ) {
             Text(
                 text = label,
                 style = MaterialTheme.typography.labelMedium,
                 fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal,
-                color = if (selected) MaterialTheme.colorScheme.primary
-                else MaterialTheme.colorScheme.onSurface,
+                color =
+                    if (selected) {
+                        MaterialTheme.colorScheme.primary
+                    } else {
+                        MaterialTheme.colorScheme.onSurface
+                    },
                 textAlign = TextAlign.Center,
             )
             Text(
@@ -1121,144 +1224,160 @@ private fun AodStylePreview(style: AodStyle) {
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.Center,
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(horizontal = 12.dp)
+                modifier =
+                    Modifier
+                        .fillMaxSize()
+                        .padding(horizontal = 12.dp),
             ) {
                 Box(contentAlignment = Alignment.Center) {
                     Canvas(modifier = Modifier.size(48.dp)) {
                         drawCircle(
-                            brush = Brush.radialGradient(
-                                listOf(Color(0xFF6650A4).copy(0.22f), Color.Transparent)
-                            )
+                            brush =
+                                Brush.radialGradient(
+                                    listOf(Color(0xFF6650A4).copy(0.22f), Color.Transparent),
+                                ),
                         )
                     }
                     Box(
-                        modifier = Modifier
-                            .size(36.dp)
-                            .clip(RoundedCornerShape(8.dp))
-                            .background(Color.White.copy(0.18f))
+                        modifier =
+                            Modifier
+                                .size(36.dp)
+                                .clip(RoundedCornerShape(8.dp))
+                                .background(Color.White.copy(0.18f)),
                     )
                 }
                 Spacer(Modifier.height(7.dp))
                 Box(
-                    modifier = Modifier
-                        .fillMaxWidth(0.72f)
-                        .height(4.dp)
-                        .clip(RoundedCornerShape(2.dp))
-                        .background(Color.White.copy(0.70f))
+                    modifier =
+                        Modifier
+                            .fillMaxWidth(0.72f)
+                            .height(4.dp)
+                            .clip(RoundedCornerShape(2.dp))
+                            .background(Color.White.copy(0.70f)),
                 )
                 Spacer(Modifier.height(3.dp))
                 Box(
-                    modifier = Modifier
-                        .fillMaxWidth(0.48f)
-                        .height(3.dp)
-                        .clip(RoundedCornerShape(2.dp))
-                        .background(Color.White.copy(0.30f))
+                    modifier =
+                        Modifier
+                            .fillMaxWidth(0.48f)
+                            .height(3.dp)
+                            .clip(RoundedCornerShape(2.dp))
+                            .background(Color.White.copy(0.30f)),
                 )
                 Spacer(Modifier.height(8.dp))
                 Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(1.5.dp)
-                        .clip(RoundedCornerShape(1.dp))
-                        .background(Color.White.copy(0.15f))
+                    modifier =
+                        Modifier
+                            .fillMaxWidth()
+                            .height(1.5.dp)
+                            .clip(RoundedCornerShape(1.dp))
+                            .background(Color.White.copy(0.15f)),
                 )
                 Box(
-                    modifier = Modifier
-                        .fillMaxWidth(0.55f)
-                        .height(1.5.dp)
-                        .clip(RoundedCornerShape(1.dp))
-                        .background(Color.White.copy(0.80f))
+                    modifier =
+                        Modifier
+                            .fillMaxWidth(0.55f)
+                            .height(1.5.dp)
+                            .clip(RoundedCornerShape(1.dp))
+                            .background(Color.White.copy(0.80f)),
                 )
             }
         }
 
         AodStyle.BACKGROUND -> {
             Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .background(
-                        Brush.radialGradient(
-                            listOf(
-                                Color(0xFF6A4C93).copy(0.8f),
-                                Color(0xFF1A237E).copy(0.5f),
-                                Color.Black
-                            )
-                        )
-                    )
+                modifier =
+                    Modifier
+                        .fillMaxSize()
+                        .background(
+                            Brush.radialGradient(
+                                listOf(
+                                    Color(0xFF6A4C93).copy(0.8f),
+                                    Color(0xFF1A237E).copy(0.5f),
+                                    Color.Black,
+                                ),
+                            ),
+                        ),
             )
             Box(modifier = Modifier.fillMaxSize()) {
                 Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(32.dp)
-                        .align(Alignment.TopCenter)
-                        .background(
-                            Brush.verticalGradient(
-                                listOf(
-                                    Color.Black.copy(0.7f),
-                                    Color.Transparent
-                                )
-                            )
-                        )
+                    modifier =
+                        Modifier
+                            .fillMaxWidth()
+                            .height(32.dp)
+                            .align(Alignment.TopCenter)
+                            .background(
+                                Brush.verticalGradient(
+                                    listOf(
+                                        Color.Black.copy(0.7f),
+                                        Color.Transparent,
+                                    ),
+                                ),
+                            ),
                 )
                 Column(
                     horizontalAlignment = Alignment.CenterHorizontally,
-                    modifier = Modifier
-                        .align(Alignment.BottomCenter)
-                        .fillMaxWidth()
-                        .background(
-                            Brush.verticalGradient(
-                                listOf(
-                                    Color.Transparent,
-                                    Color.Black.copy(0.85f)
-                                )
+                    modifier =
+                        Modifier
+                            .align(Alignment.BottomCenter)
+                            .fillMaxWidth()
+                            .background(
+                                Brush.verticalGradient(
+                                    listOf(
+                                        Color.Transparent,
+                                        Color.Black.copy(0.85f),
+                                    ),
+                                ),
                             )
-                        )
-                        .padding(bottom = 8.dp, top = 16.dp)
-                        .padding(horizontal = 10.dp)
+                            .padding(bottom = 8.dp, top = 16.dp)
+                            .padding(horizontal = 10.dp),
                 ) {
                     Box(
-                        modifier = Modifier
-                            .fillMaxWidth(0.65f)
-                            .height(3.dp)
-                            .clip(RoundedCornerShape(2.dp))
-                            .background(Color.White.copy(0.85f))
+                        modifier =
+                            Modifier
+                                .fillMaxWidth(0.65f)
+                                .height(3.dp)
+                                .clip(RoundedCornerShape(2.dp))
+                                .background(Color.White.copy(0.85f)),
                     )
                     Spacer(Modifier.height(3.dp))
                     Box(
-                        modifier = Modifier
-                            .fillMaxWidth(0.45f)
-                            .height(2.dp)
-                            .clip(RoundedCornerShape(2.dp))
-                            .background(Color.White.copy(0.40f))
+                        modifier =
+                            Modifier
+                                .fillMaxWidth(0.45f)
+                                .height(2.dp)
+                                .clip(RoundedCornerShape(2.dp))
+                                .background(Color.White.copy(0.40f)),
                     )
                     Spacer(Modifier.height(5.dp))
                     Row(
-                        horizontalArrangement = Arrangement.spacedBy(
-                            6.dp,
-                            Alignment.CenterHorizontally
-                        ),
-                        modifier = Modifier.fillMaxWidth()
+                        horizontalArrangement =
+                            Arrangement.spacedBy(
+                                6.dp,
+                                Alignment.CenterHorizontally,
+                            ),
+                        modifier = Modifier.fillMaxWidth(),
                     ) {
                         Box(
-                            modifier = Modifier
-                                .size(8.dp)
-                                .clip(CircleShape)
-                                .background(Color.White.copy(0.25f))
+                            modifier =
+                                Modifier
+                                    .size(8.dp)
+                                    .clip(CircleShape)
+                                    .background(Color.White.copy(0.25f)),
                         )
                         Box(
-                            modifier = Modifier
-                                .size(12.dp)
-                                .clip(CircleShape)
-                                .background(Color.White.copy(0.90f))
+                            modifier =
+                                Modifier
+                                    .size(12.dp)
+                                    .clip(CircleShape)
+                                    .background(Color.White.copy(0.90f)),
                         )
                         Box(
-                            modifier = Modifier
-                                .size(8.dp)
-                                .clip(CircleShape)
-                                .background(Color.White.copy(0.25f))
+                            modifier =
+                                Modifier
+                                    .size(8.dp)
+                                    .clip(CircleShape)
+                                    .background(Color.White.copy(0.25f)),
                         )
                     }
                 }
@@ -1269,70 +1388,80 @@ private fun AodStylePreview(style: AodStyle) {
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.Center,
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(horizontal = 10.dp)
+                modifier =
+                    Modifier
+                        .fillMaxSize()
+                        .padding(horizontal = 10.dp),
             ) {
                 Box(
-                    modifier = Modifier
-                        .fillMaxWidth(0.5f)
-                        .height(2.dp)
-                        .clip(RoundedCornerShape(1.dp))
-                        .background(Color.White.copy(0.30f))
+                    modifier =
+                        Modifier
+                            .fillMaxWidth(0.5f)
+                            .height(2.dp)
+                            .clip(RoundedCornerShape(1.dp))
+                            .background(Color.White.copy(0.30f)),
                 )
                 Spacer(Modifier.height(5.dp))
                 Box(
-                    modifier = Modifier
-                        .fillMaxWidth(0.85f)
-                        .height(0.5.dp)
-                        .background(Color.White.copy(0.15f))
+                    modifier =
+                        Modifier
+                            .fillMaxWidth(0.85f)
+                            .height(0.5.dp)
+                            .background(Color.White.copy(0.15f)),
                 )
                 Spacer(Modifier.height(5.dp))
                 Box(
-                    modifier = Modifier
-                        .fillMaxWidth(0.78f)
-                        .height(4.dp)
-                        .clip(RoundedCornerShape(2.dp))
-                        .background(Color.White.copy(0.75f))
+                    modifier =
+                        Modifier
+                            .fillMaxWidth(0.78f)
+                            .height(4.dp)
+                            .clip(RoundedCornerShape(2.dp))
+                            .background(Color.White.copy(0.75f)),
                 )
                 Spacer(Modifier.height(12.dp))
                 Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(1.dp)
-                        .background(Color.White.copy(0.12f))
+                    modifier =
+                        Modifier
+                            .fillMaxWidth()
+                            .height(1.dp)
+                            .background(Color.White.copy(0.12f)),
                 )
                 Box(
-                    modifier = Modifier
-                        .fillMaxWidth(0.40f)
-                        .height(1.dp)
-                        .background(Color.White.copy(0.65f))
+                    modifier =
+                        Modifier
+                            .fillMaxWidth(0.40f)
+                            .height(1.dp)
+                            .background(Color.White.copy(0.65f)),
                 )
                 Spacer(Modifier.height(10.dp))
                 Row(
-                    horizontalArrangement = Arrangement.spacedBy(
-                        10.dp,
-                        Alignment.CenterHorizontally
-                    ),
-                    modifier = Modifier.fillMaxWidth()
+                    horizontalArrangement =
+                        Arrangement.spacedBy(
+                            10.dp,
+                            Alignment.CenterHorizontally,
+                        ),
+                    modifier = Modifier.fillMaxWidth(),
                 ) {
                     Box(
-                        modifier = Modifier
-                            .size(7.dp)
-                            .clip(CircleShape)
-                            .background(Color.White.copy(0.20f))
+                        modifier =
+                            Modifier
+                                .size(7.dp)
+                                .clip(CircleShape)
+                                .background(Color.White.copy(0.20f)),
                     )
                     Box(
-                        modifier = Modifier
-                            .size(11.dp)
-                            .clip(CircleShape)
-                            .background(Color.White.copy(0.80f))
+                        modifier =
+                            Modifier
+                                .size(11.dp)
+                                .clip(CircleShape)
+                                .background(Color.White.copy(0.80f)),
                     )
                     Box(
-                        modifier = Modifier
-                            .size(7.dp)
-                            .clip(CircleShape)
-                            .background(Color.White.copy(0.20f))
+                        modifier =
+                            Modifier
+                                .size(7.dp)
+                                .clip(CircleShape)
+                                .background(Color.White.copy(0.20f)),
                     )
                 }
             }
@@ -1341,73 +1470,82 @@ private fun AodStylePreview(style: AodStyle) {
         AodStyle.LARGE -> {
             Box(modifier = Modifier.fillMaxSize()) {
                 Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .fillMaxSize(0.62f)
-                        .align(Alignment.TopCenter)
-                        .background(
-                            Brush.verticalGradient(
-                                listOf(
-                                    Color(0xFF8BC34A).copy(0.6f),
-                                    Color(0xFF388E3C).copy(0.4f),
-                                    Color(0xFF1B5E20).copy(0.2f)
-                                )
-                            )
-                        )
+                    modifier =
+                        Modifier
+                            .fillMaxWidth()
+                            .fillMaxSize(0.62f)
+                            .align(Alignment.TopCenter)
+                            .background(
+                                Brush.verticalGradient(
+                                    listOf(
+                                        Color(0xFF8BC34A).copy(0.6f),
+                                        Color(0xFF388E3C).copy(0.4f),
+                                        Color(0xFF1B5E20).copy(0.2f),
+                                    ),
+                                ),
+                            ),
                 )
                 Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .fillMaxSize(0.45f)
-                        .align(Alignment.Center)
-                        .background(Brush.verticalGradient(listOf(Color.Transparent, Color.Black)))
+                    modifier =
+                        Modifier
+                            .fillMaxWidth()
+                            .fillMaxSize(0.45f)
+                            .align(Alignment.Center)
+                            .background(Brush.verticalGradient(listOf(Color.Transparent, Color.Black))),
                 )
                 Column(
                     horizontalAlignment = Alignment.CenterHorizontally,
-                    modifier = Modifier
-                        .align(Alignment.BottomCenter)
-                        .padding(bottom = 8.dp)
-                        .padding(horizontal = 10.dp)
+                    modifier =
+                        Modifier
+                            .align(Alignment.BottomCenter)
+                            .padding(bottom = 8.dp)
+                            .padding(horizontal = 10.dp),
                 ) {
                     Box(
-                        modifier = Modifier
-                            .fillMaxWidth(0.65f)
-                            .height(3.dp)
-                            .clip(RoundedCornerShape(2.dp))
-                            .background(Color.White.copy(0.85f))
+                        modifier =
+                            Modifier
+                                .fillMaxWidth(0.65f)
+                                .height(3.dp)
+                                .clip(RoundedCornerShape(2.dp))
+                                .background(Color.White.copy(0.85f)),
                     )
                     Spacer(Modifier.height(2.dp))
                     Box(
-                        modifier = Modifier
-                            .fillMaxWidth(0.45f)
-                            .height(2.dp)
-                            .clip(RoundedCornerShape(2.dp))
-                            .background(Color.White.copy(0.35f))
+                        modifier =
+                            Modifier
+                                .fillMaxWidth(0.45f)
+                                .height(2.dp)
+                                .clip(RoundedCornerShape(2.dp))
+                                .background(Color.White.copy(0.35f)),
                     )
                     Spacer(Modifier.height(5.dp))
                     Row(
-                        horizontalArrangement = Arrangement.spacedBy(
-                            6.dp,
-                            Alignment.CenterHorizontally
-                        )
+                        horizontalArrangement =
+                            Arrangement.spacedBy(
+                                6.dp,
+                                Alignment.CenterHorizontally,
+                            ),
                     ) {
                         Box(
-                            modifier = Modifier
-                                .size(8.dp)
-                                .clip(CircleShape)
-                                .background(Color.White.copy(0.20f))
+                            modifier =
+                                Modifier
+                                    .size(8.dp)
+                                    .clip(CircleShape)
+                                    .background(Color.White.copy(0.20f)),
                         )
                         Box(
-                            modifier = Modifier
-                                .size(12.dp)
-                                .clip(CircleShape)
-                                .background(Color.White.copy(0.90f))
+                            modifier =
+                                Modifier
+                                    .size(12.dp)
+                                    .clip(CircleShape)
+                                    .background(Color.White.copy(0.90f)),
                         )
                         Box(
-                            modifier = Modifier
-                                .size(8.dp)
-                                .clip(CircleShape)
-                                .background(Color.White.copy(0.20f))
+                            modifier =
+                                Modifier
+                                    .size(8.dp)
+                                    .clip(CircleShape)
+                                    .background(Color.White.copy(0.20f)),
                         )
                     }
                 }
@@ -1420,63 +1558,76 @@ private fun AodStylePreview(style: AodStyle) {
                     val c = Offset(size.width / 2f, size.height * 0.40f)
                     // Glow exterior con tono violeta/azul para el preview
                     drawCircle(
-                        brush = Brush.radialGradient(
-                            colors = listOf(
-                                Color(0xFF7C4DFF).copy(0.35f),
-                                Color(0xFF448AFF).copy(0.12f),
-                                Color.Transparent
+                        brush =
+                            Brush.radialGradient(
+                                colors =
+                                    listOf(
+                                        Color(0xFF7C4DFF).copy(0.35f),
+                                        Color(0xFF448AFF).copy(0.12f),
+                                        Color.Transparent,
+                                    ),
+                                center = c,
+                                radius = size.minDimension * 0.60f,
                             ),
-                            center = c, radius = size.minDimension * 0.60f
-                        ),
-                        center = c, radius = size.minDimension * 0.60f
+                        center = c,
+                        radius = size.minDimension * 0.60f,
                     )
                     // Corona interior
                     drawCircle(
-                        brush = Brush.radialGradient(
-                            colors = listOf(
-                                Color.White.copy(0.40f),
-                                Color(0xFF7C4DFF).copy(0.55f),
-                                Color.Transparent
+                        brush =
+                            Brush.radialGradient(
+                                colors =
+                                    listOf(
+                                        Color.White.copy(0.40f),
+                                        Color(0xFF7C4DFF).copy(0.55f),
+                                        Color.Transparent,
+                                    ),
+                                center = c,
+                                radius = size.minDimension * 0.30f,
                             ),
-                            center = c, radius = size.minDimension * 0.30f
-                        ),
-                        center = c, radius = size.minDimension * 0.30f
+                        center = c,
+                        radius = size.minDimension * 0.30f,
                     )
                     // Anillo
                     drawCircle(
                         color = Color(0xFF7C4DFF).copy(0.40f),
-                        center = c, radius = size.minDimension * 0.34f,
-                        style = Stroke(width = 1.0f)
+                        center = c,
+                        radius = size.minDimension * 0.34f,
+                        style = Stroke(width = 1.0f),
                     )
                 }
                 Box(
-                    modifier = Modifier
-                        .size(24.dp)
-                        .align(Alignment.Center)
-                        .clip(RoundedCornerShape(5.dp))
-                        .background(Color.White.copy(0.30f))
+                    modifier =
+                        Modifier
+                            .size(24.dp)
+                            .align(Alignment.Center)
+                            .clip(RoundedCornerShape(5.dp))
+                            .background(Color.White.copy(0.30f)),
                 )
                 Column(
                     horizontalAlignment = Alignment.CenterHorizontally,
-                    modifier = Modifier
-                        .align(Alignment.BottomCenter)
-                        .padding(horizontal = 10.dp)
-                        .padding(bottom = 10.dp)
+                    modifier =
+                        Modifier
+                            .align(Alignment.BottomCenter)
+                            .padding(horizontal = 10.dp)
+                            .padding(bottom = 10.dp),
                 ) {
                     Box(
-                        modifier = Modifier
-                            .fillMaxWidth(0.60f)
-                            .height(3.dp)
-                            .clip(RoundedCornerShape(2.dp))
-                            .background(Color.White.copy(0.80f))
+                        modifier =
+                            Modifier
+                                .fillMaxWidth(0.60f)
+                                .height(3.dp)
+                                .clip(RoundedCornerShape(2.dp))
+                                .background(Color.White.copy(0.80f)),
                     )
                     Spacer(Modifier.height(2.dp))
                     Box(
-                        modifier = Modifier
-                            .fillMaxWidth(0.42f)
-                            .height(2.dp)
-                            .clip(RoundedCornerShape(2.dp))
-                            .background(Color.White.copy(0.32f))
+                        modifier =
+                            Modifier
+                                .fillMaxWidth(0.42f)
+                                .height(2.dp)
+                                .clip(RoundedCornerShape(2.dp))
+                                .background(Color.White.copy(0.32f)),
                     )
                 }
             } // end Box wrapper
@@ -1496,69 +1647,86 @@ private fun AodShapeCard(
     modifier: Modifier = Modifier,
 ) {
     val borderColor by animateColorAsState(
-        targetValue = if (selected) MaterialTheme.colorScheme.primary
-        else MaterialTheme.colorScheme.outlineVariant,
+        targetValue =
+            if (selected) {
+                MaterialTheme.colorScheme.primary
+            } else {
+                MaterialTheme.colorScheme.outlineVariant
+            },
         animationSpec = tween(250),
-        label = "shape_border"
+        label = "shape_border",
     )
     val scale by animateFloatAsState(
         targetValue = if (selected) 1.06f else 1.0f,
         animationSpec = spring(stiffness = Spring.StiffnessMediumLow),
-        label = "shape_scale"
+        label = "shape_scale",
     )
 
-    val label = when (artShape) {
-        AodArtShape.ROUNDED  -> stringResource(R.string.aod_shape_rounded)
-        AodArtShape.CIRCLE   -> stringResource(R.string.aod_shape_circle)
-        AodArtShape.SQUIRCLE -> stringResource(R.string.aod_shape_squircle)
-        AodArtShape.DIAMOND  -> stringResource(R.string.aod_shape_diamond)
-        AodArtShape.HEXAGON  -> stringResource(R.string.aod_shape_hexagon)
-        AodArtShape.STAR     -> stringResource(R.string.aod_shape_star)
-        AodArtShape.ARCH     -> stringResource(R.string.aod_shape_arch)
-        AodArtShape.PETAL    -> stringResource(R.string.aod_shape_petal)
-    }
+    val label =
+        when (artShape) {
+            AodArtShape.ROUNDED -> stringResource(R.string.aod_shape_rounded)
+            AodArtShape.CIRCLE -> stringResource(R.string.aod_shape_circle)
+            AodArtShape.SQUIRCLE -> stringResource(R.string.aod_shape_squircle)
+            AodArtShape.DIAMOND -> stringResource(R.string.aod_shape_diamond)
+            AodArtShape.HEXAGON -> stringResource(R.string.aod_shape_hexagon)
+            AodArtShape.STAR -> stringResource(R.string.aod_shape_star)
+            AodArtShape.ARCH -> stringResource(R.string.aod_shape_arch)
+            AodArtShape.PETAL -> stringResource(R.string.aod_shape_petal)
+        }
     val shape = artShape.toShape()
 
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(6.dp),
-        modifier = modifier
-            .scale(scale)
-            .clip(RoundedCornerShape(14.dp))
-            .border(
-                width = if (selected) 2.dp else 1.dp,
-                color = borderColor,
-                shape = RoundedCornerShape(14.dp)
-            )
-            .background(
-                if (selected) MaterialTheme.colorScheme.primaryContainer.copy(0.30f)
-                else MaterialTheme.colorScheme.surfaceContainerHigh
-            )
-            .clickable(
-                interactionSource = remember { MutableInteractionSource() },
-                indication = null,
-                onClick = onClick
-            )
-            .padding(vertical = 12.dp, horizontal = 4.dp)
+        modifier =
+            modifier
+                .scale(scale)
+                .clip(RoundedCornerShape(14.dp))
+                .border(
+                    width = if (selected) 2.dp else 1.dp,
+                    color = borderColor,
+                    shape = RoundedCornerShape(14.dp),
+                )
+                .background(
+                    if (selected) {
+                        MaterialTheme.colorScheme.primaryContainer.copy(0.30f)
+                    } else {
+                        MaterialTheme.colorScheme.surfaceContainerHigh
+                    },
+                )
+                .clickable(
+                    interactionSource = remember { MutableInteractionSource() },
+                    indication = null,
+                    onClick = onClick,
+                )
+                .padding(vertical = 12.dp, horizontal = 4.dp),
     ) {
         Box(
             contentAlignment = Alignment.Center,
-            modifier = Modifier
-                .size(54.dp)
-                .clip(shape)
-                .background(
-                    if (selected) MaterialTheme.colorScheme.primary.copy(0.20f)
-                    else MaterialTheme.colorScheme.surfaceVariant
-                )
-        ) {
-            Box(
-                modifier = Modifier
-                    .fillMaxSize(0.55f)
+            modifier =
+                Modifier
+                    .size(54.dp)
                     .clip(shape)
                     .background(
-                        if (selected) MaterialTheme.colorScheme.primary.copy(0.50f)
-                        else MaterialTheme.colorScheme.onSurface.copy(0.12f)
-                    )
+                        if (selected) {
+                            MaterialTheme.colorScheme.primary.copy(0.20f)
+                        } else {
+                            MaterialTheme.colorScheme.surfaceVariant
+                        },
+                    ),
+        ) {
+            Box(
+                modifier =
+                    Modifier
+                        .fillMaxSize(0.55f)
+                        .clip(shape)
+                        .background(
+                            if (selected) {
+                                MaterialTheme.colorScheme.primary.copy(0.50f)
+                            } else {
+                                MaterialTheme.colorScheme.onSurface.copy(0.12f)
+                            },
+                        ),
             )
         }
         Text(
@@ -1566,8 +1734,12 @@ private fun AodShapeCard(
             style = MaterialTheme.typography.labelSmall,
             fontSize = 10.sp,
             fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal,
-            color = if (selected) MaterialTheme.colorScheme.primary
-            else MaterialTheme.colorScheme.onSurfaceVariant,
+            color =
+                if (selected) {
+                    MaterialTheme.colorScheme.primary
+                } else {
+                    MaterialTheme.colorScheme.onSurfaceVariant
+                },
             textAlign = TextAlign.Center,
         )
     }

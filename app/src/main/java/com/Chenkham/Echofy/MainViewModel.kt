@@ -10,7 +10,6 @@ import com.Chenkham.Echofy.db.entities.UserEntity
 import com.Chenkham.Echofy.utils.dataStore
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
-import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
@@ -21,53 +20,60 @@ import javax.inject.Inject
 
 sealed class AuthState {
     object Loading : AuthState()
+
     data class Authenticated(val user: UserEntity) : AuthState()
+
     object Guest : AuthState()
+
     object Unauthenticated : AuthState()
 }
 
 @HiltViewModel
-class MainViewModel @Inject constructor(
-    private val authRepository: AuthRepository,
-    @ApplicationContext private val context: Context
-) : ViewModel() {
+class MainViewModel
+    @Inject
+    constructor(
+        private val authRepository: AuthRepository,
+        @ApplicationContext private val context: Context,
+    ) : ViewModel() {
+        private val isGuestMode =
+            context.dataStore.data
+                .map { it[IsGuestModeKey] ?: false }
 
-    private val isGuestMode = context.dataStore.data
-        .map { it[IsGuestModeKey] ?: false }
+        val authState: StateFlow<AuthState> =
+            combine(
+                authRepository.getActiveUser(),
+                isGuestMode,
+            ) { user, isGuest ->
+                when {
+                    user != null -> AuthState.Authenticated(user)
+                    isGuest -> AuthState.Guest
+                    else -> AuthState.Guest
+                }
+            }.stateIn(
+                scope = viewModelScope,
+                started = SharingStarted.WhileSubscribed(5000),
+                initialValue = AuthState.Loading,
+            )
 
-    val authState: StateFlow<AuthState> = combine(
-        authRepository.getActiveUser(),
-        isGuestMode
-    ) { user, isGuest ->
-        when {
-            user != null -> AuthState.Authenticated(user)
-            isGuest -> AuthState.Guest
-            else -> AuthState.Guest
-        }
-    }.stateIn(
-        scope = viewModelScope,
-        started = SharingStarted.WhileSubscribed(5000),
-        initialValue = AuthState.Loading
-    )
-    
-    val activeUser: StateFlow<UserEntity?> = authRepository.getActiveUser()
-        .stateIn(
-            scope = viewModelScope,
-            started = SharingStarted.WhileSubscribed(5000),
-            initialValue = null
-        )
+        val activeUser: StateFlow<UserEntity?> =
+            authRepository.getActiveUser()
+                .stateIn(
+                    scope = viewModelScope,
+                    started = SharingStarted.WhileSubscribed(5000),
+                    initialValue = null,
+                )
 
-    suspend fun enableGuestMode() {
-        context.dataStore.edit { preferences ->
-            preferences[IsGuestModeKey] = true
-        }
-    }
-    
-    fun disableGuestMode() {
-        viewModelScope.launch {
+        suspend fun enableGuestMode() {
             context.dataStore.edit { preferences ->
-                preferences[IsGuestModeKey] = false
+                preferences[IsGuestModeKey] = true
+            }
+        }
+
+        fun disableGuestMode() {
+            viewModelScope.launch {
+                context.dataStore.edit { preferences ->
+                    preferences[IsGuestModeKey] = false
+                }
             }
         }
     }
-}

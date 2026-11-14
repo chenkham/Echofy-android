@@ -5,6 +5,7 @@ import android.content.Intent
 import android.os.Handler
 import android.os.Looper
 import android.util.Log
+import androidx.datastore.preferences.core.edit
 import androidx.media3.common.MediaItem
 import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
@@ -17,26 +18,16 @@ import androidx.media3.common.Timeline
 import com.Chenkham.Echofy.MusicWidget
 import com.Chenkham.Echofy.MusicWidget.Companion.ACTION_STATE_CHANGED
 import com.Chenkham.Echofy.MusicWidget.Companion.ACTION_UPDATE_PROGRESS
-import androidx.media3.exoplayer.offline.DownloadService
-import com.Chenkham.Echofy.App
-import com.Chenkham.Echofy.LocalDatabase
-import com.Chenkham.Echofy.LocalPlayerConnection
-import com.Chenkham.Echofy.MainActivity
-import com.Chenkham.Echofy.R
-import com.Chenkham.Echofy.models.MediaMetadata
-import com.Chenkham.Echofy.models.toMediaMetadata
 import com.Chenkham.Echofy.db.MusicDatabase
 import com.Chenkham.Echofy.extensions.currentMetadata
 import com.Chenkham.Echofy.extensions.getCurrentQueueIndex
 import com.Chenkham.Echofy.extensions.getQueueWindows
 import com.Chenkham.Echofy.extensions.metadata
-import com.Chenkham.Echofy.jam.JamParticipantRole
+import com.Chenkham.Echofy.models.MediaMetadata
 import com.Chenkham.Echofy.playback.MusicService.MusicBinder
-import com.Chenkham.Echofy.playback.queues.EmptyQueue
 import com.Chenkham.Echofy.playback.queues.Queue
 import com.Chenkham.Echofy.utils.dataStore
 import com.Chenkham.Echofy.utils.reportException
-import androidx.datastore.preferences.core.edit
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -61,7 +52,6 @@ class PlayerConnection(
     val database: MusicDatabase,
     scope: CoroutineScope,
 ) : Player.Listener {
-
     companion object {
         private const val TAG = "PlayerConnection"
         private const val PROGRESS_UPDATE_INTERVAL = 1000L
@@ -83,13 +73,14 @@ class PlayerConnection(
     val playWhenReady: StateFlow<Boolean> = _playWhenReady.asStateFlow()
 
     // Estado combinado de reproducciÃ³n
-    val isPlaying = combine(playbackState, playWhenReady) { playbackState, playWhenReady ->
-        playWhenReady && (playbackState == STATE_READY || playbackState == Player.STATE_BUFFERING)
-    }.stateIn(
-        scope,
-        SharingStarted.Lazily,
-        player.playWhenReady && player.playbackState == STATE_READY
-    )
+    val isPlaying =
+        combine(playbackState, playWhenReady) { playbackState, playWhenReady ->
+            playWhenReady && (playbackState == STATE_READY || playbackState == Player.STATE_BUFFERING)
+        }.stateIn(
+            scope,
+            SharingStarted.Lazily,
+            player.playWhenReady && player.playbackState == STATE_READY,
+        )
 
     // Estados de conexiÃ³n y salud del reproductor
     private val _isConnected = MutableStateFlow(true)
@@ -103,17 +94,20 @@ class PlayerConnection(
     val mediaMetadata: StateFlow<com.Chenkham.Echofy.models.MediaMetadata?> =
         _mediaMetadata.asStateFlow()
 
-    val currentSong = mediaMetadata.flatMapLatest { metadata ->
-        database.song(metadata?.id)
-    }
+    val currentSong =
+        mediaMetadata.flatMapLatest { metadata ->
+            database.song(metadata?.id)
+        }
 
-    val currentLyrics = mediaMetadata.flatMapLatest { mediaMetadata ->
-        database.lyrics(mediaMetadata?.id)
-    }
+    val currentLyrics =
+        mediaMetadata.flatMapLatest { mediaMetadata ->
+            database.lyrics(mediaMetadata?.id)
+        }
 
-    val currentFormat = mediaMetadata.flatMapLatest { mediaMetadata ->
-        database.format(mediaMetadata?.id)
-    }
+    val currentFormat =
+        mediaMetadata.flatMapLatest { mediaMetadata ->
+            database.format(mediaMetadata?.id)
+        }
 
     // Estados de la cola de reproducciÃ³n
     private val _queueTitle = MutableStateFlow<String?>(service.queueTitle)
@@ -182,16 +176,20 @@ class PlayerConnection(
     private var lastPosition: Long = 0L
 
     // Listener adicional para actualizaciones del widget (referencia nombrada para poder removerlo)
-    private val widgetListener = object : Player.Listener {
-        override fun onEvents(player: Player, events: Player.Events) {
-            handlePlayerEvents(player, events)
-        }
+    private val widgetListener =
+        object : Player.Listener {
+            override fun onEvents(
+                player: Player,
+                events: Player.Events,
+            ) {
+                handlePlayerEvents(player, events)
+            }
 
-        override fun onPlaybackStateChanged(playbackState: Int) {
-            Log.d(TAG, "Playback state changed to: $playbackState")
-            updateConnectionState(playbackState)
+            override fun onPlaybackStateChanged(playbackState: Int) {
+                Log.d(TAG, "Playback state changed to: $playbackState")
+                updateConnectionState(playbackState)
+            }
         }
-    }
 
     init {
         Log.d(TAG, "Initializing PlayerConnection")
@@ -215,8 +213,6 @@ class PlayerConnection(
      * Handles Play, Pause, and DriftCheck events from Realtime.
      * All player operations MUST run on main thread.
      */
-
-
 
     private fun initializeStates() {
         try {
@@ -247,20 +243,21 @@ class PlayerConnection(
         }
     }
 
-
     fun refreshLikeStatus() {
         updateScope.launch(Dispatchers.IO) {
             updateLikeStatusForCurrentSong()
         }
-
     }
 
-    private fun handlePlayerEvents(player: Player, events: Player.Events) {
+    private fun handlePlayerEvents(
+        player: Player,
+        events: Player.Events,
+    ) {
         var shouldUpdateWidget = false
 
         if (events.containsAny(
                 Player.EVENT_PLAYBACK_STATE_CHANGED,
-                Player.EVENT_PLAY_WHEN_READY_CHANGED
+                Player.EVENT_PLAY_WHEN_READY_CHANGED,
             )
         ) {
             shouldUpdateWidget = true
@@ -282,40 +279,42 @@ class PlayerConnection(
     }
 
     private fun updateConnectionState(playbackState: Int) {
-        val newConnectionState = when (playbackState) {
-            Player.STATE_IDLE -> ConnectionState.IDLE
-            Player.STATE_BUFFERING -> ConnectionState.BUFFERING
-            Player.STATE_READY -> ConnectionState.CONNECTED
-            Player.STATE_ENDED -> ConnectionState.ENDED
-            else -> ConnectionState.ERROR
-        }
+        val newConnectionState =
+            when (playbackState) {
+                Player.STATE_IDLE -> ConnectionState.IDLE
+                Player.STATE_BUFFERING -> ConnectionState.BUFFERING
+                Player.STATE_READY -> ConnectionState.CONNECTED
+                Player.STATE_ENDED -> ConnectionState.ENDED
+                else -> ConnectionState.ERROR
+            }
 
         _connectionState.value = newConnectionState
         _isConnected.value = newConnectionState == ConnectionState.CONNECTED ||
-                newConnectionState == ConnectionState.BUFFERING
+            newConnectionState == ConnectionState.BUFFERING
     }
 
     private fun startProgressUpdates() {
         stopProgressUpdates()
 
-        progressUpdateRunnable = object : Runnable {
-            override fun run() {
-                if (isUpdatingProgress.compareAndSet(false, true)) {
-                    try {
-                        updateProgressStates()
+        progressUpdateRunnable =
+            object : Runnable {
+                override fun run() {
+                    if (isUpdatingProgress.compareAndSet(false, true)) {
+                        try {
+                            updateProgressStates()
 
-                        // Programar siguiente actualizaciÃ³n
-                        if (player.playWhenReady && player.playbackState == STATE_READY) {
-                            progressUpdateHandler.postDelayed(this, PROGRESS_UPDATE_INTERVAL)
-                        } else {
-                            progressUpdateHandler.postDelayed(this, PROGRESS_UPDATE_INTERVAL * 2)
+                            // Programar siguiente actualizaciÃ³n
+                            if (player.playWhenReady && player.playbackState == STATE_READY) {
+                                progressUpdateHandler.postDelayed(this, PROGRESS_UPDATE_INTERVAL)
+                            } else {
+                                progressUpdateHandler.postDelayed(this, PROGRESS_UPDATE_INTERVAL * 2)
+                            }
+                        } finally {
+                            isUpdatingProgress.set(false)
                         }
-                    } finally {
-                        isUpdatingProgress.set(false)
                     }
                 }
             }
-        }
 
         progressUpdateRunnable?.let {
             progressUpdateHandler.post(it)
@@ -339,7 +338,6 @@ class PlayerConnection(
             if (kotlin.math.abs(currentPos - lastPosition) > 500L ||
                 _duration.value != totalDuration
             ) {
-
                 _currentPosition.value = currentPos
                 _duration.value = totalDuration
                 _bufferedPosition.value = buffered
@@ -359,13 +357,13 @@ class PlayerConnection(
         pendingWidgetUpdate?.let { widgetUpdateHandler.removeCallbacks(it) }
 
         // Programar nueva actualizaciÃ³n con debounce
-        pendingWidgetUpdate = Runnable {
-            sendStateChangedBroadcast()
-        }
+        pendingWidgetUpdate =
+            Runnable {
+                sendStateChangedBroadcast()
+            }
 
         widgetUpdateHandler.postDelayed(pendingWidgetUpdate!!, WIDGET_UPDATE_DEBOUNCE)
     }
-
 
     fun playQueue(queue: Queue) {
         if (service.handleJamAwarePlayQueue(queue)) {
@@ -444,7 +442,6 @@ class PlayerConnection(
         }
     }
 
-
     fun isCurrentSongLiked(): Boolean {
         return _isLiked.value
     }
@@ -510,11 +507,12 @@ class PlayerConnection(
 
     fun toggleReplayMode() {
         try {
-            val newRepeatMode = if (player.repeatMode == Player.REPEAT_MODE_ONE) {
-                REPEAT_MODE_OFF
-            } else {
-                Player.REPEAT_MODE_ONE
-            }
+            val newRepeatMode =
+                if (player.repeatMode == Player.REPEAT_MODE_ONE) {
+                    REPEAT_MODE_OFF
+                } else {
+                    Player.REPEAT_MODE_ONE
+                }
             Log.d(TAG, "Toggling repeat mode to: $newRepeatMode")
             player.repeatMode = newRepeatMode
         } catch (e: Exception) {
@@ -575,10 +573,13 @@ class PlayerConnection(
         }
     }
 
-    override fun onPlayWhenReadyChanged(newPlayWhenReady: Boolean, reason: Int) {
+    override fun onPlayWhenReadyChanged(
+        newPlayWhenReady: Boolean,
+        reason: Int,
+    ) {
         Log.d(
             TAG,
-            "PlayWhenReady changed: $lastPlayWhenReady -> $newPlayWhenReady (reason: $reason)"
+            "PlayWhenReady changed: $lastPlayWhenReady -> $newPlayWhenReady (reason: $reason)",
         )
         _playWhenReady.value = newPlayWhenReady
 
@@ -588,7 +589,10 @@ class PlayerConnection(
         }
     }
 
-    override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
+    override fun onMediaItemTransition(
+        mediaItem: MediaItem?,
+        reason: Int,
+    ) {
         Timber.tag(TAG).d("Media item transition: ${mediaItem?.mediaId} (reason: $reason)")
         _mediaMetadata.value = mediaItem?.metadata
         _currentMediaItemIndex.value = player.currentMediaItemIndex
@@ -614,12 +618,12 @@ class PlayerConnection(
      * Only listeners should sync via this method (when in "EVERYONE" control mode).
      */
 
-
     private suspend fun updateLikeStatusForCurrentSong() {
         try {
-            val currentSongId = withContext(Dispatchers.Main) {
-                player.currentMediaItem?.mediaId
-            }
+            val currentSongId =
+                withContext(Dispatchers.Main) {
+                    player.currentMediaItem?.mediaId
+                }
 
             if (currentSongId != null) {
                 // Consultar la base de datos para obtener el estado actual del like
@@ -635,7 +639,11 @@ class PlayerConnection(
             _isLiked.value = false
         }
     }
-    override fun onTimelineChanged(timeline: Timeline, reason: Int) {
+
+    override fun onTimelineChanged(
+        timeline: Timeline,
+        reason: Int,
+    ) {
         Log.d(TAG, "Timeline changed (reason: $reason)")
         _queueWindows.value = player.getQueueWindows()
         _queueTitle.value = service.queueTitle
@@ -664,7 +672,7 @@ class PlayerConnection(
         Log.e(TAG, "Player error changed", playbackError)
         if (playbackError != null) {
             reportException(playbackError)
-            
+
             // Silently reset visitorData on HTTP 403 errors to prevent interrupt
             val cause = playbackError.cause
             if (cause is androidx.media3.datasource.HttpDataSource.HttpDataSourceException) {
@@ -693,17 +701,20 @@ class PlayerConnection(
     private fun updateCanSkipPreviousAndNext() {
         try {
             if (!player.currentTimeline.isEmpty) {
-                val window = player.currentTimeline.getWindow(
-                    player.currentMediaItemIndex,
-                    Timeline.Window()
-                )
+                val window =
+                    player.currentTimeline.getWindow(
+                        player.currentMediaItemIndex,
+                        Timeline.Window(),
+                    )
 
-                val canPrevious = player.isCommandAvailable(COMMAND_SEEK_IN_CURRENT_MEDIA_ITEM) ||
+                val canPrevious =
+                    player.isCommandAvailable(COMMAND_SEEK_IN_CURRENT_MEDIA_ITEM) ||
                         !window.isLive ||
                         player.isCommandAvailable(COMMAND_SEEK_TO_PREVIOUS_MEDIA_ITEM) ||
                         player.currentPosition > 3000
 
-                val canNext = (window.isLive && window.isDynamic) ||
+                val canNext =
+                    (window.isLive && window.isDynamic) ||
                         player.isCommandAvailable(COMMAND_SEEK_TO_NEXT_MEDIA_ITEM)
 
                 _canSkipPrevious.value = canPrevious
@@ -723,9 +734,10 @@ class PlayerConnection(
         try {
             MusicWidget.updateAllWidgets(context)
             // Keep broadcast for other listeners if any, though explicit call covers the widget
-            val intent = Intent(ACTION_STATE_CHANGED).apply {
-                setPackage(context.packageName)
-            }
+            val intent =
+                Intent(ACTION_STATE_CHANGED).apply {
+                    setPackage(context.packageName)
+                }
             context.sendBroadcast(intent)
         } catch (e: Exception) {
             Log.e(TAG, "Error sending state changed broadcast", e)
@@ -735,11 +747,12 @@ class PlayerConnection(
     private fun sendProgressUpdateBroadcast() {
         try {
             // Uncomment to force widget update on progress (can be heavy)
-            // MusicWidget.updateAllWidgets(context) 
-            
-            val intent = Intent(ACTION_UPDATE_PROGRESS).apply {
-                setPackage(context.packageName)
-            }
+            // MusicWidget.updateAllWidgets(context)
+
+            val intent =
+                Intent(ACTION_UPDATE_PROGRESS).apply {
+                    setPackage(context.packageName)
+                }
             context.sendBroadcast(intent)
         } catch (e: Exception) {
             Log.e(TAG, "Error sending progress update broadcast", e)
@@ -773,6 +786,6 @@ class PlayerConnection(
         CONNECTED,
         BUFFERING,
         ENDED,
-        ERROR
+        ERROR,
     }
 }

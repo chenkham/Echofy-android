@@ -20,7 +20,10 @@ class PoTokenGenerator {
     private var webPoTokenStreamingPot: String? = null
     private var webPoTokenGenerator: PoTokenWebView? = null
 
-    fun getWebClientPoToken(videoId: String, sessionId: String): PoTokenResult? {
+    fun getWebClientPoToken(
+        videoId: String,
+        sessionId: String,
+    ): PoTokenResult? {
         if (!webViewSupported || webViewBadImpl) {
             return null
         }
@@ -49,7 +52,7 @@ class PoTokenGenerator {
     private suspend fun getWebClientPoToken(
         videoId: String,
         sessionId: String,
-        forceRecreate: Boolean
+        forceRecreate: Boolean,
     ): PoTokenResult {
         Log.d(TAG, "Web poToken requested: $videoId, $sessionId")
 
@@ -77,28 +80,29 @@ class PoTokenGenerator {
                 Triple(webPoTokenGenerator!!, webPoTokenStreamingPot!!, shouldRecreate)
             }
 
-        val playerPot = try {
-            // Not using synchronized here, since poTokenGenerator would be able to generate
-            // multiple poTokens in parallel if needed. The only important thing is for exactly one
-            // streaming poToken (based on [sessionId]) to be generated before anything else.
-            poTokenGenerator.generatePoToken(videoId)
-        } catch (throwable: Throwable) {
-            if (hasBeenRecreated) {
-                // the poTokenGenerator has just been recreated (and possibly this is already the
-                // second time we try), so there is likely nothing we can do
-                throw throwable
-            } else {
-                // retry, this time recreating the [webPoTokenGenerator] from scratch;
-                // this might happen for example if the app goes in the background and the WebView
-                // content is lost
-                Log.e(TAG, "Failed to obtain poToken, retrying", throwable)
-                return getWebClientPoToken(
-                    videoId = videoId,
-                    sessionId = sessionId,
-                    forceRecreate = true
-                )
+        val playerPot =
+            try {
+                // Not using synchronized here, since poTokenGenerator would be able to generate
+                // multiple poTokens in parallel if needed. The only important thing is for exactly one
+                // streaming poToken (based on [sessionId]) to be generated before anything else.
+                poTokenGenerator.generatePoToken(videoId)
+            } catch (throwable: Throwable) {
+                if (hasBeenRecreated) {
+                    // the poTokenGenerator has just been recreated (and possibly this is already the
+                    // second time we try), so there is likely nothing we can do
+                    throw throwable
+                } else {
+                    // retry, this time recreating the [webPoTokenGenerator] from scratch;
+                    // this might happen for example if the app goes in the background and the WebView
+                    // content is lost
+                    Log.e(TAG, "Failed to obtain poToken, retrying", throwable)
+                    return getWebClientPoToken(
+                        videoId = videoId,
+                        sessionId = sessionId,
+                        forceRecreate = true,
+                    )
+                }
             }
-        }
 
         Log.d(TAG, "[$videoId] playerPot=$playerPot, streamingPot=$streamingPot")
 

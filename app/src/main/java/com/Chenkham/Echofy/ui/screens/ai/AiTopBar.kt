@@ -28,27 +28,27 @@ import com.Chenkham.Echofy.R
  * Fits flush at the top of the AI tab screen.
  */
 @Composable
-fun AiTopBar(
-    onHistoryClick: () -> Unit,
-) {
+fun AiTopBar(onHistoryClick: () -> Unit) {
     Surface(
         color = androidx.compose.ui.graphics.Color.Transparent,
         tonalElevation = 0.dp,
-        shadowElevation = 0.dp
+        shadowElevation = 0.dp,
     ) {
         Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 10.dp),
-            verticalAlignment = Alignment.CenterVertically
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 10.dp),
+            verticalAlignment = Alignment.CenterVertically,
         ) {
             // Echofy avatar logo
             Image(
                 painter = painterResource(R.drawable.echofy),
                 contentDescription = "Echofy AI",
-                modifier = Modifier
-                    .size(28.dp)
-                    .clip(CircleShape)
+                modifier =
+                    Modifier
+                        .size(28.dp)
+                        .clip(CircleShape),
             )
 
             Spacer(Modifier.width(10.dp))
@@ -56,12 +56,13 @@ fun AiTopBar(
             // AI Title
             Text(
                 text = "AI",
-                style = TextStyle(
-                    fontSize = 20.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = OnSurface,
-                    letterSpacing = (-0.3).sp
-                )
+                style =
+                    TextStyle(
+                        fontSize = 20.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = OnSurface,
+                        letterSpacing = (-0.3).sp,
+                    ),
             )
 
             Spacer(Modifier.weight(1f))
@@ -69,13 +70,13 @@ fun AiTopBar(
             // Chat History drawer icon button
             IconButton(
                 onClick = onHistoryClick,
-                modifier = Modifier.size(36.dp)
+                modifier = Modifier.size(36.dp),
             ) {
                 Icon(
                     painter = painterResource(R.drawable.history),
                     contentDescription = "Chat History",
                     tint = OnSurfaceVariant,
-                    modifier = Modifier.size(22.dp)
+                    modifier = Modifier.size(22.dp),
                 )
             }
         }

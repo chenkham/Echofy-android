@@ -49,23 +49,25 @@ object Bandsintown {
         require(appId.isNotBlank()) { "Bandsintown app id is required" }
 
         val encoded = artistName.replace("/", "%252F")
-        val events = client
-            .get("artists/$encoded/events") {
-                parameter("app_id", appId)
-                parameter("date", "upcoming")
-            }.body<List<BandsintownEvent>>()
+        val events =
+            client
+                .get("artists/$encoded/events") {
+                    parameter("app_id", appId)
+                    parameter("date", "upcoming")
+                }.body<List<BandsintownEvent>>()
 
         events.map { it.toConcert(artistName) }
     }
 
-    private fun BandsintownEvent.toConcert(artistName: String) = Concert(
-        id = id,
-        artistName = artistName,
-        venueName = venue?.name.orEmpty(),
-        city = venue?.city.orEmpty(),
-        country = venue?.country.orEmpty(),
-        datetime = datetime,
-        ticketUrl = offers.firstOrNull { it.type == "Tickets" }?.url ?: url,
-        lineup = lineup,
-    )
+    private fun BandsintownEvent.toConcert(artistName: String) =
+        Concert(
+            id = id,
+            artistName = artistName,
+            venueName = venue?.name.orEmpty(),
+            city = venue?.city.orEmpty(),
+            country = venue?.country.orEmpty(),
+            datetime = datetime,
+            ticketUrl = offers.firstOrNull { it.type == "Tickets" }?.url ?: url,
+            lineup = lineup,
+        )
 }

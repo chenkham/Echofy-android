@@ -11,18 +11,20 @@ data class CacheItem(
     val subtitle: String?,
     val thumbnailUrl: String?,
     val sizeBytes: Long,
-    val type: CacheType
+    val type: CacheType,
 )
 
 enum class CacheType {
-    SONG, IMAGE, OTHER
+    SONG,
+    IMAGE,
+    OTHER,
 }
 
 data class CacheSectionState(
     val type: CacheType,
     val items: List<CacheItem>,
     val totalSize: Long,
-    val isExpanded: Boolean = true
+    val isExpanded: Boolean = true,
 )
 
 fun formatFileSize(bytes: Long): String {

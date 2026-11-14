@@ -34,10 +34,11 @@ import java.util.concurrent.TimeUnit
 object ShareStatsTracker {
     private val memoryCache = ConcurrentHashMap<String, MutableStateFlow<Int>>()
     private val scope = CoroutineScope(Dispatchers.IO)
-    private val client = OkHttpClient.Builder()
-        .connectTimeout(3, TimeUnit.SECONDS)
-        .readTimeout(3, TimeUnit.SECONDS)
-        .build()
+    private val client =
+        OkHttpClient.Builder()
+            .connectTimeout(3, TimeUnit.SECONDS)
+            .readTimeout(3, TimeUnit.SECONDS)
+            .build()
 
     private const val PREFS_NAME = "echofy_share_stats"
 
@@ -47,7 +48,10 @@ object ShareStatsTracker {
         }.asStateFlow()
     }
 
-    fun loadCount(context: Context, songId: String) {
+    fun loadCount(
+        context: Context,
+        songId: String,
+    ) {
         val flow = memoryCache.getOrPut(songId) { MutableStateFlow(0) }
 
         // Load local cached count first
@@ -61,10 +65,11 @@ object ShareStatsTracker {
         scope.launch {
             try {
                 val baseUrl = ShareUtils.getBaseShareUrl(context)
-                val request = Request.Builder()
-                    .url("$baseUrl/api/stats?id=$songId")
-                    .get()
-                    .build()
+                val request =
+                    Request.Builder()
+                        .url("$baseUrl/api/stats?id=$songId")
+                        .get()
+                        .build()
 
                 client.newCall(request).execute().use { response ->
                     if (response.isSuccessful) {
@@ -84,7 +89,10 @@ object ShareStatsTracker {
         }
     }
 
-    fun increment(context: Context, songId: String) {
+    fun increment(
+        context: Context,
+        songId: String,
+    ) {
         val flow = memoryCache.getOrPut(songId) { MutableStateFlow(0) }
         val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
         val newCount = prefs.getInt(songId, flow.value) + 1
@@ -95,10 +103,11 @@ object ShareStatsTracker {
         scope.launch {
             try {
                 val baseUrl = ShareUtils.getBaseShareUrl(context)
-                val request = Request.Builder()
-                    .url("$baseUrl/api/share?id=$songId")
-                    .post(okhttp3.RequestBody.create(null, ByteArray(0)))
-                    .build()
+                val request =
+                    Request.Builder()
+                        .url("$baseUrl/api/share?id=$songId")
+                        .post(okhttp3.RequestBody.create(null, ByteArray(0)))
+                        .build()
                 client.newCall(request).execute().close()
             } catch (_: Exception) {
                 // Ignore sync failures silently
@@ -139,31 +148,31 @@ object ShareStatsTracker {
 @Composable
 fun ShareCountBadge(
     songId: String,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
 ) {
     val count by ShareStatsTracker.observeCount(songId).collectAsState()
     if (count > 0) {
         Surface(
             shape = RoundedCornerShape(10.dp),
             color = MaterialTheme.colorScheme.primary.copy(alpha = 0.12f),
-            modifier = modifier.padding(vertical = 2.dp)
+            modifier = modifier.padding(vertical = 2.dp),
         ) {
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp),
-                horizontalArrangement = Arrangement.spacedBy(4.dp)
+                horizontalArrangement = Arrangement.spacedBy(4.dp),
             ) {
                 Icon(
                     painter = painterResource(R.drawable.share),
                     contentDescription = null,
                     tint = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.size(11.dp)
+                    modifier = Modifier.size(11.dp),
                 )
                 Text(
                     text = "${ShareStatsTracker.formatCount(count)} Shares",
                     style = MaterialTheme.typography.labelSmall,
                     fontWeight = FontWeight.SemiBold,
-                    color = MaterialTheme.colorScheme.primary
+                    color = MaterialTheme.colorScheme.primary,
                 )
             }
         }
@@ -171,32 +180,30 @@ fun ShareCountBadge(
 }
 
 @Composable
-fun EchofyHomeSharePill(
-    modifier: Modifier = Modifier
-) {
+fun EchofyHomeSharePill(modifier: Modifier = Modifier) {
     val total by ShareStatsTracker.observeTotalShares().collectAsState()
     if (total > 0) {
         Surface(
             shape = RoundedCornerShape(20.dp),
             color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.45f),
-            modifier = modifier.padding(horizontal = 16.dp, vertical = 6.dp)
+            modifier = modifier.padding(horizontal = 16.dp, vertical = 6.dp),
         ) {
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier.padding(horizontal = 14.dp, vertical = 6.dp),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
             ) {
                 Icon(
                     painter = painterResource(R.drawable.share),
                     contentDescription = null,
                     tint = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.size(14.dp)
+                    modifier = Modifier.size(14.dp),
                 )
                 Text(
                     text = "🔥 ${ShareStatsTracker.formatCount(total)} Echofy Community Shares",
                     style = MaterialTheme.typography.labelMedium,
                     fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onPrimaryContainer
+                    color = MaterialTheme.colorScheme.onPrimaryContainer,
                 )
             }
         }

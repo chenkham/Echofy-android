@@ -5,11 +5,8 @@ import com.Chenkham.Echofy.constants.ArtistSongSortType
 import com.Chenkham.Echofy.constants.ArtistSortType
 import com.Chenkham.Echofy.constants.PlaylistSortType
 import com.Chenkham.Echofy.constants.SongSortType
-import com.Chenkham.Echofy.db.entities.Album
 import com.Chenkham.Echofy.db.entities.AlbumArtistMap
 import com.Chenkham.Echofy.db.entities.AlbumEntity
-import com.Chenkham.Echofy.db.entities.AlbumWithSongs
-import com.Chenkham.Echofy.db.entities.Artist
 import com.Chenkham.Echofy.db.entities.ArtistEntity
 import com.Chenkham.Echofy.db.entities.LyricsEntity
 import com.Chenkham.Echofy.db.entities.PlayCountEntity
@@ -36,8 +33,6 @@ import java.text.Collator
 import java.time.LocalDateTime
 import java.time.ZoneOffset
 import java.util.Locale
-
-import androidx.room.Transaction
 
 fun DatabaseDao.songs(
     sortType: SongSortType,
@@ -258,7 +253,10 @@ suspend fun DatabaseDao.incrementPlayCount(songId: String) {
     incrementPlayCount(songId, time.year, time.monthValue)
 }
 
-suspend fun DatabaseDao.addSongToPlaylist(playlist: Playlist, songIds: List<String>) {
+suspend fun DatabaseDao.addSongToPlaylist(
+    playlist: Playlist,
+    songIds: List<String>,
+) {
     var position = playlist.songCount
     songIds.forEach { id ->
         val songExists = getSongById(id) != null
@@ -267,8 +265,8 @@ suspend fun DatabaseDao.addSongToPlaylist(playlist: Playlist, songIds: List<Stri
                 PlaylistSongMap(
                     songId = id,
                     playlistId = playlist.id,
-                    position = position++
-                )
+                    position = position++,
+                ),
             )
         } else {
             android.util.Log.e("DatabaseDaoExt", "Skipping adding missing song $id to playlist ${playlist.id}")
@@ -333,8 +331,9 @@ suspend fun DatabaseDao.insert(albumPage: AlbumPage) {
     albumPage.album.artists
         ?.map { artist ->
             ArtistEntity(
-                id = artist.id ?: artistByName(artist.name)?.id
-                ?: ArtistEntity.generateArtistId(),
+                id =
+                    artist.id ?: artistByName(artist.name)?.id
+                        ?: ArtistEntity.generateArtistId(),
                 name = artist.name,
             )
         }?.onEach(::insert)
@@ -434,8 +433,9 @@ suspend fun DatabaseDao.update(
         artists
             .map { artist ->
                 ArtistEntity(
-                    id = artist.id ?: artistByName(artist.name)?.id
-                    ?: ArtistEntity.generateArtistId(),
+                    id =
+                        artist.id ?: artistByName(artist.name)?.id
+                            ?: ArtistEntity.generateArtistId(),
                     name = artist.name,
                 )
             }.onEach(::insert)
@@ -449,7 +449,10 @@ suspend fun DatabaseDao.update(
     }
 }
 
-fun DatabaseDao.update(playlistEntity: PlaylistEntity, playlistItem: PlaylistItem) {
+fun DatabaseDao.update(
+    playlistEntity: PlaylistEntity,
+    playlistItem: PlaylistItem,
+) {
     update(
         playlistEntity.copy(
             name = playlistItem.title,
@@ -458,8 +461,8 @@ fun DatabaseDao.update(playlistEntity: PlaylistEntity, playlistItem: PlaylistIte
             remoteSongCount = playlistItem.songCountText?.replace(Regex("""\D"""), "")?.toIntOrNull(),
             playEndpointParams = playlistItem.playEndpoint?.params,
             shuffleEndpointParams = playlistItem.shuffleEndpoint?.params,
-            radioEndpointParams = playlistItem.radioEndpoint?.params
-        )
+            radioEndpointParams = playlistItem.radioEndpoint?.params,
+        ),
     )
 }
 

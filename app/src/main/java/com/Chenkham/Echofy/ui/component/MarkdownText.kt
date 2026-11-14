@@ -26,10 +26,11 @@ fun MarkdownText(
     ComposeMarkdownText(
         markdown = markdown,
         modifier = modifier,
-        style = style.copy(
-            color = color,
-            fontSize = style.fontSize.takeIf { it.value > 0f } ?: 16.sp
-        ),
+        style =
+            style.copy(
+                color = color,
+                fontSize = style.fontSize.takeIf { it.value > 0f } ?: 16.sp,
+            ),
         linkColor = linkColor,
         isTextSelectable = isTextSelectable,
     )

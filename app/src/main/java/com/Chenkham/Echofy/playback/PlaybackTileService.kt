@@ -23,15 +23,15 @@ import com.google.common.util.concurrent.MoreExecutors
  */
 @RequiresApi(Build.VERSION_CODES.N)
 class PlaybackTileService : TileService() {
-
     private var controllerFuture: ListenableFuture<MediaController>? = null
     private var controller: MediaController? = null
 
-    private val playerListener = object : Player.Listener {
-        override fun onIsPlayingChanged(isPlaying: Boolean) {
-            updateTile()
+    private val playerListener =
+        object : Player.Listener {
+            override fun onIsPlayingChanged(isPlaying: Boolean) {
+                updateTile()
+            }
         }
-    }
 
     override fun onStartListening() {
         super.onStartListening()
@@ -58,19 +58,19 @@ class PlaybackTileService : TileService() {
         }
     }
 
-    private fun isTileEnabled(): Boolean =
-        dataStore[QuickSettingsTileEnabledKey] ?: true
+    private fun isTileEnabled(): Boolean = dataStore[QuickSettingsTileEnabledKey] ?: true
 
     private fun connectController() {
         val token = SessionToken(this, ComponentName(this, MusicService::class.java))
         val future = MediaController.Builder(this, token).buildAsync()
         controllerFuture = future
         future.addListener({
-            controller = try {
-                future.get().also { it.addListener(playerListener) }
-            } catch (e: Exception) {
-                null
-            }
+            controller =
+                try {
+                    future.get().also { it.addListener(playerListener) }
+                } catch (e: Exception) {
+                    null
+                }
             updateTile()
         }, MoreExecutors.directExecutor())
     }
@@ -97,10 +97,11 @@ class PlaybackTileService : TileService() {
         tile.state = if (isPlaying) Tile.STATE_ACTIVE else Tile.STATE_INACTIVE
         tile.label = controller?.mediaMetadata?.title?.toString()
             ?: getString(R.string.app_name)
-        tile.icon = Icon.createWithResource(
-            this,
-            if (isPlaying) R.drawable.pause else R.drawable.play,
-        )
+        tile.icon =
+            Icon.createWithResource(
+                this,
+                if (isPlaying) R.drawable.pause else R.drawable.play,
+            )
         tile.updateTile()
     }
 }

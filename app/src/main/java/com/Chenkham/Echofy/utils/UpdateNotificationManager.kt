@@ -4,8 +4,6 @@
  * Licensed Under GPL-3.0 | see git history for contributors
  */
 
-
-
 package com.Chenkham.Echofy.utils
 
 import android.app.NotificationChannel
@@ -23,12 +21,6 @@ import androidx.work.ExistingPeriodicWorkPolicy
 import androidx.work.NetworkType
 import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.launch
 import com.Chenkham.Echofy.BuildConfig
 import com.Chenkham.Echofy.MainActivity
 import com.Chenkham.Echofy.R
@@ -37,6 +29,12 @@ import com.Chenkham.Echofy.constants.LastNotifiedVersionKey
 import com.Chenkham.Echofy.constants.LastUpdateCheckKey
 import com.Chenkham.Echofy.constants.UpdateChannel
 import com.Chenkham.Echofy.constants.UpdateChannelKey
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.launch
 import java.util.concurrent.TimeUnit
 
 object UpdateNotificationManager {
@@ -52,31 +50,36 @@ object UpdateNotificationManager {
             val name = context.getString(R.string.update_notification_channel_name)
             val descriptionText = context.getString(R.string.update_notification_channel_desc)
             val importance = NotificationManager.IMPORTANCE_DEFAULT
-            val channel = NotificationChannel(CHANNEL_ID, name, importance).apply {
-                description = descriptionText
-            }
+            val channel =
+                NotificationChannel(CHANNEL_ID, name, importance).apply {
+                    description = descriptionText
+                }
             val notificationManager = context.getSystemService(NotificationManager::class.java)
             notificationManager?.createNotificationChannel(channel)
         }
     }
 
     fun schedulePeriodicUpdateCheck(context: Context) {
-        val constraints = Constraints.Builder()
-            .setRequiredNetworkType(NetworkType.CONNECTED)
-            .setRequiresBatteryNotLow(true)
-            .build()
+        val constraints =
+            Constraints.Builder()
+                .setRequiredNetworkType(NetworkType.CONNECTED)
+                .setRequiresBatteryNotLow(true)
+                .build()
 
-        val updateCheckRequest = PeriodicWorkRequestBuilder<UpdateCheckWorker>(
-            6L, TimeUnit.HOURS,
-            30L, TimeUnit.MINUTES
-        )
-            .setConstraints(constraints)
-            .build()
+        val updateCheckRequest =
+            PeriodicWorkRequestBuilder<UpdateCheckWorker>(
+                6L,
+                TimeUnit.HOURS,
+                30L,
+                TimeUnit.MINUTES,
+            )
+                .setConstraints(constraints)
+                .build()
 
         WorkManager.getInstance(context).enqueueUniquePeriodicWork(
             WORK_NAME,
             ExistingPeriodicWorkPolicy.KEEP,
-            updateCheckRequest
+            updateCheckRequest,
         )
     }
 
@@ -97,11 +100,16 @@ object UpdateNotificationManager {
 
                 schedulePeriodicUpdateCheck(context)
 
-                val updateChannel = dataStore.data.map { 
-                    it[UpdateChannelKey]?.let { value -> 
-                        try { UpdateChannel.valueOf(value) } catch (e: Exception) { UpdateChannel.STABLE }
-                    } ?: UpdateChannel.STABLE
-                }.first()
+                val updateChannel =
+                    dataStore.data.map {
+                        it[UpdateChannelKey]?.let { value ->
+                            try {
+                                UpdateChannel.valueOf(value)
+                            } catch (e: Exception) {
+                                UpdateChannel.STABLE
+                            }
+                        } ?: UpdateChannel.STABLE
+                    }.first()
 
                 if (updateChannel == UpdateChannel.NIGHTLY) return@launch
 
@@ -123,7 +131,10 @@ object UpdateNotificationManager {
         }
     }
 
-    suspend fun notifyIfNewVersion(context: Context, latestVersion: String) {
+    suspend fun notifyIfNewVersion(
+        context: Context,
+        latestVersion: String,
+    ) {
         try {
             val dataStore = context.dataStore
             val lastNotified = dataStore.data.map { it[LastNotifiedVersionKey] ?: "" }.first()
@@ -137,41 +148,48 @@ object UpdateNotificationManager {
         }
     }
 
-    private fun showUpdateNotification(context: Context, newVersion: String) {
+    private fun showUpdateNotification(
+        context: Context,
+        newVersion: String,
+    ) {
         createNotificationChannel(context)
 
-        val openAppIntent = Intent(context, MainActivity::class.java).apply {
-            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
-            putExtra("navigate_to", "settings/update")
-        }
-        val openAppPendingIntent = PendingIntent.getActivity(
-            context,
-            0,
-            openAppIntent,
-            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-        )
+        val openAppIntent =
+            Intent(context, MainActivity::class.java).apply {
+                flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+                putExtra("navigate_to", "settings/update")
+            }
+        val openAppPendingIntent =
+            PendingIntent.getActivity(
+                context,
+                0,
+                openAppIntent,
+                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
+            )
 
         val downloadIntent = Intent(Intent.ACTION_VIEW, Uri.parse(Updater.getLatestDownloadUrl()))
-        val downloadPendingIntent = PendingIntent.getActivity(
-            context,
-            1,
-            downloadIntent,
-            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-        )
-
-        val notification = NotificationCompat.Builder(context, CHANNEL_ID)
-            .setSmallIcon(R.mipmap.ic_launcher)
-            .setContentTitle(context.getString(R.string.update_notification_title))
-            .setContentText(context.getString(R.string.update_notification_text, newVersion))
-            .setPriority(NotificationCompat.PRIORITY_DEFAULT)
-            .setContentIntent(openAppPendingIntent)
-            .setAutoCancel(true)
-            .addAction(
-                R.drawable.download,
-                context.getString(R.string.download),
-                downloadPendingIntent
+        val downloadPendingIntent =
+            PendingIntent.getActivity(
+                context,
+                1,
+                downloadIntent,
+                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
             )
-            .build()
+
+        val notification =
+            NotificationCompat.Builder(context, CHANNEL_ID)
+                .setSmallIcon(R.mipmap.ic_launcher)
+                .setContentTitle(context.getString(R.string.update_notification_title))
+                .setContentText(context.getString(R.string.update_notification_text, newVersion))
+                .setPriority(NotificationCompat.PRIORITY_DEFAULT)
+                .setContentIntent(openAppPendingIntent)
+                .setAutoCancel(true)
+                .addAction(
+                    R.drawable.download,
+                    context.getString(R.string.download),
+                    downloadPendingIntent,
+                )
+                .build()
 
         try {
             NotificationManagerCompat.from(context).notify(NOTIFICATION_ID, notification)

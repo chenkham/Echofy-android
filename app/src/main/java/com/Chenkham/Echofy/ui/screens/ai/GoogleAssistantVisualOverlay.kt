@@ -1,7 +1,6 @@
 package com.Chenkham.Echofy.ui.screens.ai
 
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.core.Easing
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
@@ -17,8 +16,6 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -49,27 +46,29 @@ fun GoogleAssistantVisualOverlay(
     visible: Boolean,
     modifier: Modifier = Modifier,
     statusText: String = "Listening for command...",
-    transcript: String = ""
+    transcript: String = "",
 ) {
     AnimatedVisibility(
         visible = visible,
         enter = slideInVertically { it / 2 } + fadeIn(),
         exit = slideOutVertically { it / 2 } + fadeOut(),
-        modifier = modifier
+        modifier = modifier,
     ) {
         Surface(
             color = Color(0xEE1E1E2C),
             shape = RoundedCornerShape(28.dp),
             tonalElevation = 8.dp,
             shadowElevation = 12.dp,
-            modifier = Modifier
-                .padding(horizontal = 24.dp, vertical = 8.dp)
+            modifier =
+                Modifier
+                    .padding(horizontal = 24.dp, vertical = 8.dp),
         ) {
             Row(
-                modifier = Modifier
-                    .padding(horizontal = 18.dp, vertical = 10.dp),
+                modifier =
+                    Modifier
+                        .padding(horizontal = 18.dp, vertical = 10.dp),
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.Center
+                horizontalArrangement = Arrangement.Center,
             ) {
                 // Google Assistant 4-Color Glowing Wave Dots
                 AssistantDot(color = Color(0xFF4285F4), delayMs = 0)
@@ -91,7 +90,7 @@ fun GoogleAssistantVisualOverlay(
                     fontWeight = if (hasTranscript) FontWeight.SemiBold else FontWeight.Medium,
                     maxLines = 2,
                     overflow = TextOverflow.Ellipsis,
-                    modifier = Modifier.weight(1f, fill = false)
+                    modifier = Modifier.weight(1f, fill = false),
                 )
             }
         }
@@ -101,35 +100,38 @@ fun GoogleAssistantVisualOverlay(
 @Composable
 private fun AssistantDot(
     color: Color,
-    delayMs: Int
+    delayMs: Int,
 ) {
     val transition = rememberInfiniteTransition(label = "assistantDot")
 
     val offsetY by transition.animateFloat(
         initialValue = 0f,
         targetValue = -6f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(durationMillis = 400, delayMillis = delayMs, easing = FastOutSlowInEasing),
-            repeatMode = RepeatMode.Reverse
-        ),
-        label = "offsetY"
+        animationSpec =
+            infiniteRepeatable(
+                animation = tween(durationMillis = 400, delayMillis = delayMs, easing = FastOutSlowInEasing),
+                repeatMode = RepeatMode.Reverse,
+            ),
+        label = "offsetY",
     )
 
     val scale by transition.animateFloat(
         initialValue = 0.85f,
         targetValue = 1.15f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(durationMillis = 400, delayMillis = delayMs, easing = FastOutSlowInEasing),
-            repeatMode = RepeatMode.Reverse
-        ),
-        label = "scale"
+        animationSpec =
+            infiniteRepeatable(
+                animation = tween(durationMillis = 400, delayMillis = delayMs, easing = FastOutSlowInEasing),
+                repeatMode = RepeatMode.Reverse,
+            ),
+        label = "scale",
     )
 
     Box(
-        modifier = Modifier
-            .offset(y = offsetY.dp)
-            .size((9 * scale).dp)
-            .clip(CircleShape)
-            .background(color)
+        modifier =
+            Modifier
+                .offset(y = offsetY.dp)
+                .size((9 * scale).dp)
+                .clip(CircleShape)
+                .background(color),
     )
 }

@@ -3,17 +3,17 @@ package com.Chenkham.Echofy.viewmodels
 import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.arturo254.opentune.innertube.YouTube
-import com.arturo254.opentune.innertube.models.SearchSuggestions
-import com.arturo254.opentune.innertube.models.YTItem
-import com.arturo254.opentune.innertube.models.filterExplicit
-import com.arturo254.opentune.innertube.models.filterVideo
 import com.Chenkham.Echofy.constants.HideExplicitKey
 import com.Chenkham.Echofy.constants.HideVideoKey
 import com.Chenkham.Echofy.db.MusicDatabase
 import com.Chenkham.Echofy.db.entities.SearchHistory
 import com.Chenkham.Echofy.utils.dataStore
 import com.Chenkham.Echofy.utils.get
+import com.arturo254.opentune.innertube.YouTube
+import com.arturo254.opentune.innertube.models.SearchSuggestions
+import com.arturo254.opentune.innertube.models.YTItem
+import com.arturo254.opentune.innertube.models.filterExplicit
+import com.arturo254.opentune.innertube.models.filterVideo
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -29,66 +29,69 @@ import javax.inject.Inject
 @OptIn(ExperimentalCoroutinesApi::class)
 @HiltViewModel
 class OnlineSearchSuggestionViewModel
-@Inject
-constructor(
-    @ApplicationContext val context: Context,
-    database: MusicDatabase,
-) : ViewModel() {
-    val query = MutableStateFlow("")
-    private val _viewState = MutableStateFlow(SearchSuggestionViewState())
-    val viewState = _viewState.asStateFlow()
+    @Inject
+    constructor(
+        @ApplicationContext val context: Context,
+        database: MusicDatabase,
+    ) : ViewModel() {
+        val query = MutableStateFlow("")
+        private val _viewState = MutableStateFlow(SearchSuggestionViewState())
+        val viewState = _viewState.asStateFlow()
 
-    init {
-        // History flow: updates immediately from DB
-        viewModelScope.launch {
-            query
-                .flatMapLatest { query ->
-                    if (query.isEmpty()) {
-                        database.searchHistory().map { history ->
-                            SearchSuggestionViewState(history = history)
-                        }
-                    } else {
-                        database
-                            .searchHistory(query)
-                            .map { it.take(3) }
-                            .map { history ->
+        init {
+            // History flow: updates immediately from DB
+            viewModelScope.launch {
+                query
+                    .flatMapLatest { query ->
+                        if (query.isEmpty()) {
+                            database.searchHistory().map { history ->
                                 SearchSuggestionViewState(history = history)
                             }
-                    }
-                }.collect {
-                    _viewState.value = it
-                }
-        }
-
-        // Suggestions flow: fetches from network independently
-        viewModelScope.launch {
-            query
-                .flatMapLatest { query ->
-                    if (query.isEmpty()) {
-                        flowOf<SearchSuggestions?>(null)
-                    } else {
-                        flow<SearchSuggestions?> {
-                            emit(null) // clear stale suggestions immediately
-                            emit(YouTube.searchSuggestions(query).getOrNull())
+                        } else {
+                            database
+                                .searchHistory(query)
+                                .map { it.take(3) }
+                                .map { history ->
+                                    SearchSuggestionViewState(history = history)
+                                }
                         }
+                    }.collect {
+                        _viewState.value = it
                     }
-                }.collect { result ->
-                    val history = _viewState.value.history
-                    _viewState.value = _viewState.value.copy(
-                        suggestions = result
-                            ?.queries
-                            ?.filter { s -> history.none { it.query == s } }
-                            .orEmpty(),
-                        items = result
-                            ?.recommendedItems
-                            ?.filterExplicit(context.dataStore.get(HideExplicitKey, false))
-                            ?.filterVideo(context.dataStore.get(HideVideoKey, false))
-                            .orEmpty(),
-                    )
-                }
+            }
+
+            // Suggestions flow: fetches from network independently
+            viewModelScope.launch {
+                query
+                    .flatMapLatest { query ->
+                        if (query.isEmpty()) {
+                            flowOf<SearchSuggestions?>(null)
+                        } else {
+                            flow<SearchSuggestions?> {
+                                emit(null) // clear stale suggestions immediately
+                                emit(YouTube.searchSuggestions(query).getOrNull())
+                            }
+                        }
+                    }.collect { result ->
+                        val history = _viewState.value.history
+                        _viewState.value =
+                            _viewState.value.copy(
+                                suggestions =
+                                    result
+                                        ?.queries
+                                        ?.filter { s -> history.none { it.query == s } }
+                                        .orEmpty(),
+                                items =
+                                    result
+                                        ?.recommendedItems
+                                        ?.filterExplicit(context.dataStore.get(HideExplicitKey, false))
+                                        ?.filterVideo(context.dataStore.get(HideVideoKey, false))
+                                        .orEmpty(),
+                            )
+                    }
+            }
         }
     }
-}
 
 data class SearchSuggestionViewState(
     val history: List<SearchHistory> = emptyList(),

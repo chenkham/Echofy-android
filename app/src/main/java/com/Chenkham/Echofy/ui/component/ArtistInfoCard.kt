@@ -55,39 +55,44 @@ fun ArtistInfoCard(
     val info = enrichment.info
     val bio = enrichment.bio
 
-    val facts = remember(info, bio) {
-        buildList {
-            info?.type?.let { add(it) }
-            (info?.country ?: bio?.country)?.let { add(it) }
-            activeYears(
-                begin = info?.beginDate ?: bio?.formedYear,
-                end = info?.endDate,
-                isEnded = info?.isEnded == true,
-            )?.let { add(it) }
+    val facts =
+        remember(info, bio) {
+            buildList {
+                info?.type?.let { add(it) }
+                (info?.country ?: bio?.country)?.let { add(it) }
+                activeYears(
+                    begin = info?.beginDate ?: bio?.formedYear,
+                    end = info?.endDate,
+                    isEnded = info?.isEnded == true,
+                )?.let { add(it) }
+            }
         }
-    }
 
-    val genres = remember(info, bio) {
-        info?.genres?.takeIf { it.isNotEmpty() }
-            ?: bio?.genre?.split(",")?.map { it.trim() }?.filter { it.isNotEmpty() }.orEmpty()
-    }
+    val genres =
+        remember(info, bio) {
+            info?.genres?.takeIf { it.isNotEmpty() }
+                ?: bio?.genre?.split(",")?.map { it.trim() }?.filter { it.isNotEmpty() }.orEmpty()
+        }
 
-    val hasAnything = facts.isNotEmpty() ||
-        !bio?.biography.isNullOrBlank() ||
-        (showGenres && genres.isNotEmpty()) ||
-        enrichment.concerts.isNotEmpty() ||
-        enrichment.similarArtists.isNotEmpty() ||
-        (showLinks && (info?.officialHomepage != null || info?.wikipediaUrl != null))
+    val hasAnything =
+        facts.isNotEmpty() ||
+            !bio?.biography.isNullOrBlank() ||
+            (showGenres && genres.isNotEmpty()) ||
+            enrichment.concerts.isNotEmpty() ||
+            enrichment.similarArtists.isNotEmpty() ||
+            (showLinks && (info?.officialHomepage != null || info?.wikipediaUrl != null))
 
     if (!hasAnything) return
 
     Card(
-        modifier = modifier
-            .fillMaxWidth()
-            .padding(horizontal = 12.dp, vertical = 6.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceContainer,
-        ),
+        modifier =
+            modifier
+                .fillMaxWidth()
+                .padding(horizontal = 12.dp, vertical = 6.dp),
+        colors =
+            CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.surfaceContainer,
+            ),
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
             if (facts.isNotEmpty()) {
@@ -106,9 +111,10 @@ fun ArtistInfoCard(
             if (showGenres && genres.isNotEmpty()) {
                 Spacer(Modifier.height(12.dp))
                 Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .horizontalScroll(rememberScrollState()),
+                    modifier =
+                        Modifier
+                            .fillMaxWidth()
+                            .horizontalScroll(rememberScrollState()),
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
                     genres.take(6).forEach { genre ->
@@ -133,9 +139,10 @@ fun ArtistInfoCard(
                 )
                 Spacer(Modifier.height(8.dp))
                 Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .horizontalScroll(rememberScrollState()),
+                    modifier =
+                        Modifier
+                            .fillMaxWidth()
+                            .horizontalScroll(rememberScrollState()),
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
                     enrichment.similarArtists.take(10).forEach { rec ->
@@ -215,10 +222,11 @@ private fun ExpandableBiography(biography: String) {
         if (biography.length > 200) {
             TextButton(
                 onClick = { expanded = !expanded },
-                contentPadding = androidx.compose.foundation.layout.PaddingValues(
-                    horizontal = 0.dp,
-                    vertical = 4.dp,
-                ),
+                contentPadding =
+                    androidx.compose.foundation.layout.PaddingValues(
+                        horizontal = 0.dp,
+                        vertical = 4.dp,
+                    ),
             ) {
                 Text(if (expanded) "Show less" else "Read more")
             }
@@ -238,9 +246,10 @@ private fun ConcertsSection(concerts: List<Concert>) {
 
     concerts.take(5).forEach { concert ->
         Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(vertical = 6.dp),
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 6.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Column(modifier = Modifier.weight(1f)) {
@@ -252,9 +261,10 @@ private fun ConcertsSection(concerts: List<Concert>) {
                     overflow = TextOverflow.Ellipsis,
                 )
                 Text(
-                    text = listOf(formatConcertDate(concert.datetime), concert.location)
-                        .filter { it.isNotBlank() }
-                        .joinToString("  •  "),
+                    text =
+                        listOf(formatConcertDate(concert.datetime), concert.location)
+                            .filter { it.isNotBlank() }
+                            .joinToString("  •  "),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     maxLines = 1,
@@ -272,7 +282,10 @@ private fun ConcertsSection(concerts: List<Concert>) {
 }
 
 @Composable
-private fun SectionHeader(icon: Int, title: String) {
+private fun SectionHeader(
+    icon: Int,
+    title: String,
+) {
     Row(verticalAlignment = Alignment.CenterVertically) {
         Icon(
             painter = painterResource(icon),
@@ -303,7 +316,11 @@ private fun formatConcertDate(datetime: String): String =
         datetime.substringBefore('T')
     }
 
-private fun activeYears(begin: String?, end: String?, isEnded: Boolean): String? {
+private fun activeYears(
+    begin: String?,
+    end: String?,
+    isEnded: Boolean,
+): String? {
     val start = begin?.take(4)?.takeIf { it.isNotBlank() } ?: return null
     val finish = end?.take(4)
     return when {
@@ -314,11 +331,12 @@ private fun activeYears(begin: String?, end: String?, isEnded: Boolean): String?
 }
 
 private fun attributionFor(enrichment: ArtistEnrichment): String {
-    val sources = buildList {
-        if (enrichment.info != null) add("MusicBrainz")
-        if (enrichment.bio != null) add("TheAudioDB")
-        if (enrichment.concerts.isNotEmpty()) add("Bandsintown")
-        if (enrichment.similarArtists.isNotEmpty()) add("TasteDive")
-    }
+    val sources =
+        buildList {
+            if (enrichment.info != null) add("MusicBrainz")
+            if (enrichment.bio != null) add("TheAudioDB")
+            if (enrichment.concerts.isNotEmpty()) add("Bandsintown")
+            if (enrichment.similarArtists.isNotEmpty()) add("TasteDive")
+        }
     return "Metadata from ${sources.joinToString(", ")}"
 }

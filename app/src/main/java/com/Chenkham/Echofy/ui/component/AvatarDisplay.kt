@@ -37,54 +37,58 @@ fun AvatarDisplay(
     borderColor: Color = MaterialTheme.colorScheme.primary,
     borderWidth: Dp = 2.dp,
     modifier: Modifier = Modifier,
-    contentDescription: String? = null
+    contentDescription: String? = null,
 ) {
     val context = LocalContext.current
     val avatarManager = remember { AvatarPreferenceManager(context) }
     val currentSelection by avatarManager.getAvatarSelection.collectAsState(initial = AvatarSelection.Default)
 
-    val displayModifier = if (showBorder) {
-        modifier
-            .size(size)
-            .clip(CircleShape)
-            .border(borderWidth, borderColor, CircleShape)
-    } else {
-        modifier
-            .size(size)
-            .clip(CircleShape)
-    }
+    val displayModifier =
+        if (showBorder) {
+            modifier
+                .size(size)
+                .clip(CircleShape)
+                .border(borderWidth, borderColor, CircleShape)
+        } else {
+            modifier
+                .size(size)
+                .clip(CircleShape)
+        }
 
     Box(
         modifier = displayModifier,
-        contentAlignment = Alignment.Center
+        contentAlignment = Alignment.Center,
     ) {
         when (currentSelection) {
             is AvatarSelection.Custom -> {
                 AsyncImage(
-                    model = ImageRequest.Builder(context)
-                        .data((currentSelection as AvatarSelection.Custom).uri.toUri())
-                        .crossfade(true)
-                        .error(R.drawable.person)
-                        .placeholder(R.drawable.person)
-                        .build(),
-                    contentDescription = contentDescription
-                        ?: stringResource(id = R.string.custom_avatar),
+                    model =
+                        ImageRequest.Builder(context)
+                            .data((currentSelection as AvatarSelection.Custom).uri.toUri())
+                            .crossfade(true)
+                            .error(R.drawable.person)
+                            .placeholder(R.drawable.person)
+                            .build(),
+                    contentDescription =
+                        contentDescription
+                            ?: stringResource(id = R.string.custom_avatar),
                     modifier = Modifier.fillMaxSize(),
-                    contentScale = ContentScale.Crop
+                    contentScale = ContentScale.Crop,
                 )
             }
 
             is AvatarSelection.DiceBear -> {
                 AsyncImage(
-                    model = ImageRequest.Builder(context)
-                        .data((currentSelection as AvatarSelection.DiceBear).url)
-                        .crossfade(true)
-                        .error(R.drawable.person)
-                        .placeholder(R.drawable.person)
-                        .build(),
+                    model =
+                        ImageRequest.Builder(context)
+                            .data((currentSelection as AvatarSelection.DiceBear).url)
+                            .crossfade(true)
+                            .error(R.drawable.person)
+                            .placeholder(R.drawable.person)
+                            .build(),
                     contentDescription = contentDescription ?: "Avatar DiceBear",
                     modifier = Modifier.fillMaxSize(),
-                    contentScale = ContentScale.Crop
+                    contentScale = ContentScale.Crop,
                 )
             }
 
@@ -99,13 +103,13 @@ fun AvatarDisplay(
 @Composable
 fun SmallAvatarDisplay(
     modifier: Modifier = Modifier,
-    contentDescription: String? = null
+    contentDescription: String? = null,
 ) {
     AvatarDisplay(
         size = 32.dp,
         showBorder = false,
         modifier = modifier,
-        contentDescription = contentDescription
+        contentDescription = contentDescription,
     )
 }
 
@@ -114,14 +118,14 @@ fun SmallAvatarDisplay(
 fun LargeAvatarDisplay(
     modifier: Modifier = Modifier,
     contentDescription: String? = null,
-    showBorder: Boolean = true
+    showBorder: Boolean = true,
 ) {
     AvatarDisplay(
         size = 80.dp,
         showBorder = showBorder,
         borderWidth = 3.dp,
         modifier = modifier,
-        contentDescription = contentDescription
+        contentDescription = contentDescription,
     )
 }
 
@@ -131,39 +135,41 @@ fun AvatarWithStatus(
     isOnline: Boolean = true,
     size: Dp = 40.dp,
     modifier: Modifier = Modifier,
-    contentDescription: String? = null
+    contentDescription: String? = null,
 ) {
     Box(modifier = modifier) {
         AvatarDisplay(
             size = size,
             showBorder = true,
-            contentDescription = contentDescription
+            contentDescription = contentDescription,
         )
 
         // Indicador de estado
         if (isOnline) {
             Box(
-                modifier = Modifier
-                    .size(size * 0.3f)
-                    .clip(CircleShape)
-                    .border(
-                        width = 2.dp,
-                        color = MaterialTheme.colorScheme.surface,
-                        shape = CircleShape
-                    )
-                    .align(Alignment.BottomEnd),
-                contentAlignment = Alignment.Center
+                modifier =
+                    Modifier
+                        .size(size * 0.3f)
+                        .clip(CircleShape)
+                        .border(
+                            width = 2.dp,
+                            color = MaterialTheme.colorScheme.surface,
+                            shape = CircleShape,
+                        )
+                        .align(Alignment.BottomEnd),
+                contentAlignment = Alignment.Center,
             ) {
                 Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .clip(CircleShape),
+                    modifier =
+                        Modifier
+                            .fillMaxSize()
+                            .clip(CircleShape),
                 ) {
                     Icon(
                         painter = painterResource(R.drawable.person),
                         contentDescription = "Online",
                         tint = MaterialTheme.colorScheme.primary,
-                        modifier = Modifier.fillMaxSize()
+                        modifier = Modifier.fillMaxSize(),
                     )
                 }
             }
@@ -178,7 +184,7 @@ private fun DefaultAvatarIcon(contentDescription: String? = null) {
         painter = painterResource(id = R.drawable.person),
         contentDescription = contentDescription ?: stringResource(id = R.string.default_avatar),
         modifier = Modifier.fillMaxSize(0.6f),
-        tint = MaterialTheme.colorScheme.onSurfaceVariant
+        tint = MaterialTheme.colorScheme.onSurfaceVariant,
     )
 }
 

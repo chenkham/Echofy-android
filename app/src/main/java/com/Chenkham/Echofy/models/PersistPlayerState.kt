@@ -9,5 +9,5 @@ data class PersistPlayerState(
     val volume: Float,
     val currentPosition: Long,
     val currentMediaItemIndex: Int,
-    val playbackState: Int
+    val playbackState: Int,
 ) : Serializable

@@ -4,15 +4,13 @@
  * Licensed Under GPL-3.0 | see git history for contributors
  */
 
-
-
 package com.Chenkham.Echofy.models
 
 import androidx.compose.runtime.Immutable
-import com.arturo254.opentune.innertube.models.SongItem
 import com.Chenkham.Echofy.db.entities.Song
 import com.Chenkham.Echofy.db.entities.SongEntity
 import com.Chenkham.Echofy.ui.utils.resize
+import com.arturo254.opentune.innertube.models.SongItem
 import java.io.Serializable
 import java.time.LocalDateTime
 
@@ -74,7 +72,7 @@ data class MediaMetadata(
 private fun resolveAlbum(
     album: com.Chenkham.Echofy.db.entities.Album?,
     albumId: String?,
-    albumName: String?
+    albumName: String?,
 ): MediaMetadata.Album? =
     album?.let {
         MediaMetadata.Album(id = it.id, title = it.title)
@@ -82,32 +80,32 @@ private fun resolveAlbum(
         MediaMetadata.Album(id = it, title = albumName.orEmpty())
     }
 
-
 fun Song.toMediaMetadata() =
     MediaMetadata(
         id = song.id,
         title = song.title,
-        artists = artists.map {
-            MediaMetadata.Artist(
-                id = it.id,
-                name = it.name,
-                thumbnailUrl = it.thumbnailUrl,
-            )
-        },
+        artists =
+            artists.map {
+                MediaMetadata.Artist(
+                    id = it.id,
+                    name = it.name,
+                    thumbnailUrl = it.thumbnailUrl,
+                )
+            },
         duration = song.duration,
         thumbnailUrl = song.thumbnailUrl,
         album =
-        album?.let {
-            MediaMetadata.Album(
-                id = it.id,
-                title = it.title,
-            )
-        } ?: song.albumId?.let { albumId ->
-            MediaMetadata.Album(
-                id = albumId,
-                title = song.albumName.orEmpty(),
-            )
-        },
+            album?.let {
+                MediaMetadata.Album(
+                    id = it.id,
+                    title = it.title,
+                )
+            } ?: song.albumId?.let { albumId ->
+                MediaMetadata.Album(
+                    id = albumId,
+                    title = song.albumName.orEmpty(),
+                )
+            },
     )
 
 fun SongItem.toMediaMetadata() =
@@ -115,22 +113,22 @@ fun SongItem.toMediaMetadata() =
         id = id,
         title = title,
         artists =
-        artists.map {
-            MediaMetadata.Artist(
-                id = it.id,
-                name = it.name,
-                thumbnailUrl = null,
-            )
-        },
+            artists.map {
+                MediaMetadata.Artist(
+                    id = it.id,
+                    name = it.name,
+                    thumbnailUrl = null,
+                )
+            },
         duration = duration ?: MediaMetadata.UNKNOWN_DURATION,
-        thumbnailUrl = thumbnail.resize(544, 544,),
+        thumbnailUrl = thumbnail.resize(544, 544),
         album =
-        album?.let {
-            MediaMetadata.Album(
-                id = it.id,
-                title = it.name,
-            )
-        },
+            album?.let {
+                MediaMetadata.Album(
+                    id = it.id,
+                    title = it.name,
+                )
+            },
         setVideoId = setVideoId,
         explicit = explicit,
     )

@@ -7,8 +7,8 @@ import android.webkit.WebChromeClient
 import android.webkit.WebView
 import androidx.annotation.MainThread
 import androidx.collection.ArrayMap
-import com.arturo254.opentune.innertube.YouTube
 import com.Chenkham.Echofy.BuildConfig
+import com.arturo254.opentune.innertube.YouTube
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.MainScope
@@ -36,9 +36,10 @@ class PoTokenWebView private constructor(
     private val scope = MainScope()
     private val poTokenContinuations =
         Collections.synchronizedMap(ArrayMap<String, Continuation<String>>())
-    private val exceptionHandler = CoroutineExceptionHandler { _, t ->
-        onInitializationErrorCloseAndCancel(t)
-    }
+    private val exceptionHandler =
+        CoroutineExceptionHandler { _, t ->
+            onInitializationErrorCloseAndCancel(t)
+        }
     private lateinit var expirationInstant: Instant
 
     //region Initialization
@@ -52,27 +53,28 @@ class PoTokenWebView private constructor(
         // so that we can run async functions and get back the result
         webView.addJavascriptInterface(this, JS_INTERFACE)
 
-        webView.webChromeClient = object : WebChromeClient() {
-            override fun onConsoleMessage(m: ConsoleMessage): Boolean {
-                val msg = m.message()
-                // Log all console messages for debugging
-                when (m.messageLevel()) {
-                    ConsoleMessage.MessageLevel.ERROR -> Timber.tag(TAG).e("JS: $msg")
-                    ConsoleMessage.MessageLevel.WARNING -> Timber.tag(TAG).w("JS: $msg")
-                    else -> Timber.tag(TAG).d("JS: $msg")
-                }
+        webView.webChromeClient =
+            object : WebChromeClient() {
+                override fun onConsoleMessage(m: ConsoleMessage): Boolean {
+                    val msg = m.message()
+                    // Log all console messages for debugging
+                    when (m.messageLevel()) {
+                        ConsoleMessage.MessageLevel.ERROR -> Timber.tag(TAG).e("JS: $msg")
+                        ConsoleMessage.MessageLevel.WARNING -> Timber.tag(TAG).w("JS: $msg")
+                        else -> Timber.tag(TAG).d("JS: $msg")
+                    }
 
-                if (msg.contains("Uncaught")) {
-                    val fmt = "\"$msg\", source: ${m.sourceId()} (${m.lineNumber()})"
-                    val exception = BadWebViewException(fmt)
-                    Timber.tag(TAG).e("This WebView implementation is broken: $fmt")
+                    if (msg.contains("Uncaught")) {
+                        val fmt = "\"$msg\", source: ${m.sourceId()} (${m.lineNumber()})"
+                        val exception = BadWebViewException(fmt)
+                        Timber.tag(TAG).e("This WebView implementation is broken: $fmt")
 
-                    onInitializationErrorCloseAndCancel(exception)
-                    popAllPoTokenContinuations().forEach { (_, cont) -> cont.resumeWithException(exception) }
+                        onInitializationErrorCloseAndCancel(exception)
+                        popAllPoTokenContinuations().forEach { (_, cont) -> cont.resumeWithException(exception) }
+                    }
+                    return super.onConsoleMessage(m)
                 }
-                return super.onConsoleMessage(m)
             }
-        }
     }
 
     /**
@@ -84,9 +86,10 @@ class PoTokenWebView private constructor(
         Timber.tag(TAG).d("loadHtmlAndObtainBotguard() called")
 
         scope.launch(exceptionHandler) {
-            val html = withContext(Dispatchers.IO) {
-                webView.context.assets.open("po_token.html").bufferedReader().use { it.readText() }
-            }
+            val html =
+                withContext(Dispatchers.IO) {
+                    webView.context.assets.open("po_token.html").bufferedReader().use { it.readText() }
+                }
 
             // calls downloadAndRunBotguard() when the page has finished loading
             val data = html.replaceFirst("</script>", "\n$JS_INTERFACE.downloadAndRunBotguard()</script>")
@@ -119,7 +122,7 @@ class PoTokenWebView private constructor(
                 } catch (error) {
                     $JS_INTERFACE.onJsInitializationError(error + "\n" + error.stack)
                 }""",
-                null
+                null,
             )
         }
     }
@@ -174,7 +177,7 @@ class PoTokenWebView private constructor(
                         console.log('[JS] createPoTokenMinter SYNC error: ' + error);
                         $JS_INTERFACE.onJsInitializationError(error + "\n" + error.stack)
                     }""",
-                    null
+                    null,
                 )
             } catch (e: Exception) {
                 Timber.tag(TAG).e(e, "Failed to parse integrity token data: ${e.message}")
@@ -213,7 +216,7 @@ class PoTokenWebView private constructor(
                     } catch (error) {
                         $JS_INTERFACE.onObtainPoTokenError(identifier, error + "\n" + error.stack)
                     }""",
-                    null
+                    null,
                 )
             }
         }
@@ -224,7 +227,10 @@ class PoTokenWebView private constructor(
      * JavaScript `obtainPoToken()` function.
      */
     @JavascriptInterface
-    fun onObtainPoTokenError(identifier: String, error: String) {
+    fun onObtainPoTokenError(
+        identifier: String,
+        error: String,
+    ) {
         if (BuildConfig.DEBUG) {
             Timber.tag(TAG).e("obtainPoToken error from JavaScript: $error")
         }
@@ -236,14 +242,18 @@ class PoTokenWebView private constructor(
      * result of the JavaScript `obtainPoToken()` function.
      */
     @JavascriptInterface
-    fun onObtainPoTokenResult(identifier: String, poTokenU8: String) {
+    fun onObtainPoTokenResult(
+        identifier: String,
+        poTokenU8: String,
+    ) {
         Timber.tag(TAG).d("Generated poToken (before decoding): identifier=$identifier poTokenU8=$poTokenU8")
-        val poToken = try {
-            u8ToBase64(poTokenU8)
-        } catch (t: Throwable) {
-            popPoTokenContinuation(identifier)?.resumeWithException(t)
-            return
-        }
+        val poToken =
+            try {
+                u8ToBase64(poTokenU8)
+            } catch (t: Throwable) {
+                popPoTokenContinuation(identifier)?.resumeWithException(t)
+                return
+            }
 
         Timber.tag(TAG).d("Generated poToken: identifier=$identifier poToken=$poToken")
         popPoTokenContinuation(identifier)?.resume(poToken)
@@ -254,7 +264,10 @@ class PoTokenWebView private constructor(
     //endregion
 
     //region Handling multiple emitters
-    private fun addPoTokenEmitter(identifier: String, continuation: Continuation<String>) {
+    private fun addPoTokenEmitter(
+        identifier: String,
+        continuation: Continuation<String>,
+    ) {
         poTokenContinuations[identifier] = continuation
     }
 
@@ -276,26 +289,31 @@ class PoTokenWebView private constructor(
         handleResponseBody: (String) -> Unit,
     ) {
         scope.launch(exceptionHandler) {
-            val requestBuilder = okhttp3.Request.Builder()
-                .post(data.toRequestBody())
-                .headers(mapOf(
-                    "User-Agent" to USER_AGENT,
-                    "Accept" to "application/json",
-                    "Content-Type" to "application/json+protobuf",
-                    "x-goog-api-key" to GOOGLE_API_KEY,
-                    "x-user-agent" to "grpc-web-javascript/0.1",
-                ).toHeaders())
-                .url(url)
-            val response = withContext(Dispatchers.IO) {
-                httpClient.newCall(requestBuilder.build()).execute()
-            }
+            val requestBuilder =
+                okhttp3.Request.Builder()
+                    .post(data.toRequestBody())
+                    .headers(
+                        mapOf(
+                            "User-Agent" to USER_AGENT,
+                            "Accept" to "application/json",
+                            "Content-Type" to "application/json+protobuf",
+                            "x-goog-api-key" to GOOGLE_API_KEY,
+                            "x-user-agent" to "grpc-web-javascript/0.1",
+                        ).toHeaders(),
+                    )
+                    .url(url)
+            val response =
+                withContext(Dispatchers.IO) {
+                    httpClient.newCall(requestBuilder.build()).execute()
+                }
             val httpCode = response.code
             if (httpCode != 200) {
                 onInitializationErrorCloseAndCancel(PoTokenException("Invalid response code: $httpCode"))
             } else {
-                val body = withContext(Dispatchers.IO) {
-                    response.body!!.string()
-                }
+                val body =
+                    withContext(Dispatchers.IO) {
+                        response.body!!.string()
+                    }
                 handleResponseBody(body)
             }
         }
@@ -325,13 +343,15 @@ class PoTokenWebView private constructor(
         private const val TAG = "PoTokenWebView"
         private const val GOOGLE_API_KEY = "AIzaSyDyT5W0Jh49F30Pqqtyfdf7pDLFKLJoAnw"
         private const val REQUEST_KEY = "O43z0dpjhgX20SCx4KAo"
-        private const val USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) " +
+        private const val USER_AGENT =
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) " +
                 "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.3"
         private const val JS_INTERFACE = "PoTokenWebView"
 
-        private val httpClient = OkHttpClient.Builder()
-            .proxy(YouTube.proxy)
-            .build()
+        private val httpClient =
+            OkHttpClient.Builder()
+                .proxy(YouTube.proxy)
+                .build()
 
         suspend fun getNewPoTokenGenerator(context: Context): PoTokenWebView {
             return withContext(Dispatchers.Main) {

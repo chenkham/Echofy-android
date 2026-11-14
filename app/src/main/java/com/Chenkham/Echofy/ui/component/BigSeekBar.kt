@@ -43,8 +43,8 @@ fun BigSeekBar(
                     onProgressChange(
                         (progressProvider() + dragAmount * 1.2f / width).coerceIn(
                             0f,
-                            1f
-                        )
+                            1f,
+                        ),
                     )
                 }
             },

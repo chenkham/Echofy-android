@@ -6,7 +6,6 @@ import android.appwidget.AppWidgetProvider
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
-import android.graphics.Bitmap
 import android.os.Build
 import android.widget.RemoteViews
 import androidx.core.graphics.drawable.toBitmap
@@ -21,21 +20,22 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import timber.log.Timber
 
 class LyricsWidget : AppWidgetProvider() {
-
     override fun onUpdate(
         context: Context,
         appWidgetManager: AppWidgetManager,
-        appWidgetIds: IntArray
+        appWidgetIds: IntArray,
     ) {
         appWidgetIds.forEach { appWidgetId ->
             updateWidget(context, appWidgetManager, appWidgetId)
         }
     }
 
-    override fun onReceive(context: Context, intent: Intent) {
+    override fun onReceive(
+        context: Context,
+        intent: Intent,
+    ) {
         super.onReceive(context, intent)
         val action = intent.action
         if (action == ACTION_UPDATE_LYRICS ||
@@ -53,36 +53,43 @@ class LyricsWidget : AppWidgetProvider() {
     companion object {
         const val ACTION_UPDATE_LYRICS = "com.Chenkham.Echofy.ACTION_UPDATE_LYRICS"
 
-        private fun getBroadcastPendingIntent(context: Context, action: String): PendingIntent {
-            val intent = Intent(context, MusicWidget::class.java).apply {
-                this.action = action
-            }
-            val flags = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-            } else {
-                PendingIntent.FLAG_UPDATE_CURRENT
-            }
+        private fun getBroadcastPendingIntent(
+            context: Context,
+            action: String,
+        ): PendingIntent {
+            val intent =
+                Intent(context, MusicWidget::class.java).apply {
+                    this.action = action
+                }
+            val flags =
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                    PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+                } else {
+                    PendingIntent.FLAG_UPDATE_CURRENT
+                }
             return PendingIntent.getBroadcast(context, action.hashCode(), intent, flags)
         }
 
         private fun getOpenAppPendingIntent(context: Context): PendingIntent {
-            val intent = Intent(context, MainActivity::class.java).apply {
-                action = Intent.ACTION_MAIN
-                addCategory(Intent.CATEGORY_LAUNCHER)
-                flags = Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP
-            }
-            val flags = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-            } else {
-                PendingIntent.FLAG_UPDATE_CURRENT
-            }
+            val intent =
+                Intent(context, MainActivity::class.java).apply {
+                    action = Intent.ACTION_MAIN
+                    addCategory(Intent.CATEGORY_LAUNCHER)
+                    flags = Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP
+                }
+            val flags =
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                    PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+                } else {
+                    PendingIntent.FLAG_UPDATE_CURRENT
+                }
             return PendingIntent.getActivity(context, 0, intent, flags)
         }
 
         fun updateWidget(
             context: Context,
             appWidgetManager: AppWidgetManager,
-            appWidgetId: Int
+            appWidgetId: Int,
         ) {
             val views = RemoteViews(context.packageName, R.layout.widget_lyrics)
             val playerConnection = PlayerConnection.instance
@@ -91,10 +98,18 @@ class LyricsWidget : AppWidgetProvider() {
             val scrim = com.Chenkham.Echofy.widget.WidgetPreferences.cachedScrimOpacity
             when (bgMode) {
                 com.Chenkham.Echofy.constants.WidgetBackgroundMode.DOMINANT_COLOR -> {
-                    views.setInt(R.id.widget_lyrics_root, "setBackgroundColor", android.graphics.Color.argb((scrim * 255).toInt(), 30, 18, 10))
+                    views.setInt(
+                        R.id.widget_lyrics_root,
+                        "setBackgroundColor",
+                        android.graphics.Color.argb((scrim * 255).toInt(), 30, 18, 10),
+                    )
                 }
                 com.Chenkham.Echofy.constants.WidgetBackgroundMode.SOLID -> {
-                    views.setInt(R.id.widget_lyrics_root, "setBackgroundColor", android.graphics.Color.argb(((0.8f + scrim * 0.2f) * 255).toInt(), 20, 12, 6))
+                    views.setInt(
+                        R.id.widget_lyrics_root,
+                        "setBackgroundColor",
+                        android.graphics.Color.argb(((0.8f + scrim * 0.2f) * 255).toInt(), 20, 12, 6),
+                    )
                 }
                 else -> {
                     views.setInt(R.id.widget_lyrics_root, "setBackgroundResource", R.drawable.widget_lyrics_bg)
@@ -113,13 +128,17 @@ class LyricsWidget : AppWidgetProvider() {
             views.setOnClickPendingIntent(R.id.widget_lyrics_play_pause, playPausePendingIntent)
 
             // Refresh / Output action
-            val refreshIntent = Intent(context, LyricsWidget::class.java).apply {
-                action = ACTION_UPDATE_LYRICS
-            }
-            val refreshPendingIntent = PendingIntent.getBroadcast(
-                context, 1001, refreshIntent,
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE else PendingIntent.FLAG_UPDATE_CURRENT
-            )
+            val refreshIntent =
+                Intent(context, LyricsWidget::class.java).apply {
+                    action = ACTION_UPDATE_LYRICS
+                }
+            val refreshPendingIntent =
+                PendingIntent.getBroadcast(
+                    context,
+                    1001,
+                    refreshIntent,
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE else PendingIntent.FLAG_UPDATE_CURRENT,
+                )
             views.setOnClickPendingIntent(R.id.widget_lyrics_output, refreshPendingIntent)
 
             val player = playerConnection?.player
@@ -151,7 +170,7 @@ class LyricsWidget : AppWidgetProvider() {
             views.setTextViewText(R.id.widget_lyrics_artist, artist)
             views.setTextViewText(
                 R.id.widget_lyrics_play_pause,
-                if (isPlaying) "❚❚ Pause" else "▶ Play"
+                if (isPlaying) "❚❚ Pause" else "▶ Play",
             )
 
             // Load album art
@@ -160,10 +179,11 @@ class LyricsWidget : AppWidgetProvider() {
                 CoroutineScope(Dispatchers.IO).launch {
                     try {
                         val loader = ImageLoader(context)
-                        val req = ImageRequest.Builder(context)
-                            .data(artworkUri)
-                            .allowHardware(false)
-                            .build()
+                        val req =
+                            ImageRequest.Builder(context)
+                                .data(artworkUri)
+                                .allowHardware(false)
+                                .build()
                         val result = loader.execute(req)
                         val bitmap = result.drawable?.toBitmap()
                         if (bitmap != null) {
@@ -196,9 +216,10 @@ class LyricsWidget : AppWidgetProvider() {
 
                     withContext(Dispatchers.Main) {
                         if (!lyricsText.isNullOrBlank()) {
-                            val lines = lyricsText.lines().map { line ->
-                                line.replace(Regex("\\[\\d{2}:\\d{2}\\.\\d{2,3}\\]"), "").trim()
-                            }.filter { it.isNotBlank() }
+                            val lines =
+                                lyricsText.lines().map { line ->
+                                    line.replace(Regex("\\[\\d{2}:\\d{2}\\.\\d{2,3}\\]"), "").trim()
+                                }.filter { it.isNotBlank() }
 
                             LyricsWidgetCache.lines = lines
                             views.setViewVisibility(R.id.widget_lyrics_status, android.view.View.GONE)

@@ -27,7 +27,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
@@ -47,9 +46,7 @@ import kotlinx.coroutines.launch
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun AiAssistantScreen(
-    viewModel: AiViewModel = hiltViewModel()
-) {
+fun AiAssistantScreen(viewModel: AiViewModel = hiltViewModel()) {
     val context = LocalContext.current
     val playerConnection = LocalPlayerConnection.current
     val keyboardController = LocalSoftwareKeyboardController.current
@@ -73,13 +70,14 @@ fun AiAssistantScreen(
     var attachedFile by remember { mutableStateOf<AttachedFile?>(null) }
     val listState = rememberLazyListState()
 
-    val filePickerLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.GetContent()
-    ) { uri ->
-        if (uri != null) {
-            scope.launch { attachedFile = FileAttachmentParser.parseFile(context, uri) }
+    val filePickerLauncher =
+        rememberLauncherForActivityResult(
+            contract = ActivityResultContracts.GetContent(),
+        ) { uri ->
+            if (uri != null) {
+                scope.launch { attachedFile = FileAttachmentParser.parseFile(context, uri) }
+            }
         }
-    }
 
     // ── Voice Activation Lifecycle ───────────────────────────────
     // Wake word activation is owned by MainActivity so it works on every tab.
@@ -106,7 +104,7 @@ fun AiAssistantScreen(
             onSaveProfiles = { updatedList, newActiveId ->
                 viewModel.saveProfiles(updatedList, newActiveId)
                 viewModel.dismissSettingsDialog()
-            }
+            },
         )
     }
 
@@ -117,27 +115,28 @@ fun AiAssistantScreen(
             onDismiss = viewModel::dismissHistoryDrawer,
             onSelectSession = viewModel::selectSession,
             onNewChat = viewModel::createNewSession,
-            onDeleteSession = viewModel::deleteSession
+            onDeleteSession = viewModel::deleteSession,
         )
     }
 
     // ── Main Layout ──────────────────────────────────────────────
     Surface(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(bottom = bottomInset)
-            .imePadding(),
-        color = SurfaceDark
+        modifier =
+            Modifier
+                .fillMaxSize()
+                .padding(bottom = bottomInset)
+                .imePadding(),
+        color = SurfaceDark,
     ) {
         Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .windowInsetsPadding(WindowInsets.statusBars)
+            modifier =
+                Modifier
+                    .fillMaxSize()
+                    .windowInsetsPadding(WindowInsets.statusBars),
         ) {
-
             // 1. Top Bar (Clean AI Header, flush at top)
             AiTopBar(
-                onHistoryClick = viewModel::toggleHistoryDrawer
+                onHistoryClick = viewModel::toggleHistoryDrawer,
             )
 
             // 2. Main Content Area (Chat Messages or Welcome View)
@@ -146,14 +145,14 @@ fun AiAssistantScreen(
                     AiWelcomeView(
                         onSuggestionClick = { suggestion ->
                             viewModel.sendTextMessage(suggestion, playerConnection)
-                        }
+                        },
                     )
                 } else {
                     LazyColumn(
                         state = listState,
                         modifier = Modifier.fillMaxSize(),
                         contentPadding = PaddingValues(horizontal = 16.dp, vertical = 12.dp),
-                        verticalArrangement = Arrangement.spacedBy(2.dp)
+                        verticalArrangement = Arrangement.spacedBy(2.dp),
                     ) {
                         items(chatHistory, key = { it.id }) { msg ->
                             ChatBubble(msg)
@@ -189,13 +188,16 @@ fun AiAssistantScreen(
                             textInput = result
                         }
                     }
-                }
+                },
             )
         }
     }
 }
 
-private fun buildInputMessage(textInput: String, attachedFile: AttachedFile?): String {
+private fun buildInputMessage(
+    textInput: String,
+    attachedFile: AttachedFile?,
+): String {
     return buildString {
         append(textInput.trim())
         if (attachedFile != null) {

@@ -66,11 +66,6 @@ import androidx.compose.ui.util.fastForEach
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import coil.compose.AsyncImage
-import com.arturo254.opentune.innertube.models.AlbumItem
-import com.arturo254.opentune.innertube.models.ArtistItem
-import com.arturo254.opentune.innertube.models.PlaylistItem
-import com.arturo254.opentune.innertube.models.SongItem
-import com.arturo254.opentune.innertube.models.WatchEndpoint
 import com.Chenkham.Echofy.LocalDatabase
 import com.Chenkham.Echofy.LocalPlayerAwareWindowInsets
 import com.Chenkham.Echofy.LocalPlayerConnection
@@ -99,6 +94,11 @@ import com.Chenkham.Echofy.ui.utils.backToMain
 import com.Chenkham.Echofy.ui.utils.fadingEdge
 import com.Chenkham.Echofy.ui.utils.resize
 import com.Chenkham.Echofy.viewmodels.ArtistViewModel
+import com.arturo254.opentune.innertube.models.AlbumItem
+import com.arturo254.opentune.innertube.models.ArtistItem
+import com.arturo254.opentune.innertube.models.PlaylistItem
+import com.arturo254.opentune.innertube.models.SongItem
+import com.arturo254.opentune.innertube.models.WatchEndpoint
 import com.valentinilk.shimmer.shimmer
 
 @SuppressLint("ServiceCast")
@@ -132,14 +132,18 @@ fun ArtistScreen(
 
     LazyColumn(
         state = lazyListState,
-        contentPadding = LocalPlayerAwareWindowInsets.current
-            .add(
-                WindowInsets(
-                    top = (WindowInsets.systemBars.asPaddingValues()
-                        .calculateTopPadding() - AppBarHeight).coerceAtLeast(0.dp)
+        contentPadding =
+            LocalPlayerAwareWindowInsets.current
+                .add(
+                    WindowInsets(
+                        top =
+                            (
+                                WindowInsets.systemBars.asPaddingValues()
+                                    .calculateTopPadding() - AppBarHeight
+                            ).coerceAtLeast(0.dp),
+                    ),
                 )
-            )
-            .asPaddingValues(),
+                .asPaddingValues(),
     ) {
         artistPage.let {
             if (artistPage != null) {
@@ -147,69 +151,75 @@ fun ArtistScreen(
                     Column {
                         // Hero Header con imagen de fondo desvanecida
                         Box(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(380.dp)
+                            modifier =
+                                Modifier
+                                    .fillMaxWidth()
+                                    .height(380.dp),
                         ) {
                             // Imagen de fondo con desvanecimiento
                             Box(
-                                modifier = Modifier.fillMaxSize()
+                                modifier = Modifier.fillMaxSize(),
                             ) {
                                 AsyncImage(
                                     model = artistPage.artist.thumbnail?.resize(1200, 1000),
                                     contentDescription = null,
                                     contentScale = ContentScale.Crop,
-                                    modifier = Modifier
-                                        .fillMaxSize()
-                                        .background(
-                                            Brush.verticalGradient(
-                                                colors = listOf(
-                                                    Color.Transparent,
-                                                    Color.Transparent,
-                                                    MaterialTheme.colorScheme.surface
+                                    modifier =
+                                        Modifier
+                                            .fillMaxSize()
+                                            .background(
+                                                Brush.verticalGradient(
+                                                    colors =
+                                                        listOf(
+                                                            Color.Transparent,
+                                                            Color.Transparent,
+                                                            MaterialTheme.colorScheme.surface,
+                                                        ),
+                                                    startY = 0f,
+                                                    endY = 1100f,
                                                 ),
-                                                startY = 0f,
-                                                endY = 1100f
-                                            )
-                                        )
+                                            ),
                                 )
                             }
 
                             // Gradiente adicional para mejor legibilidad
                             Box(
-                                modifier = Modifier
-                                    .fillMaxSize()
-                                    .background(
-                                        Brush.verticalGradient(
-                                            colors = listOf(
-                                                Color.Black.copy(alpha = 0.2f),
-                                                Color.Black.copy(alpha = 0.4f),
-                                                MaterialTheme.colorScheme.surface.copy(alpha = 0.9f),
-                                                MaterialTheme.colorScheme.surface
+                                modifier =
+                                    Modifier
+                                        .fillMaxSize()
+                                        .background(
+                                            Brush.verticalGradient(
+                                                colors =
+                                                    listOf(
+                                                        Color.Black.copy(alpha = 0.2f),
+                                                        Color.Black.copy(alpha = 0.4f),
+                                                        MaterialTheme.colorScheme.surface.copy(alpha = 0.9f),
+                                                        MaterialTheme.colorScheme.surface,
+                                                    ),
+                                                startY = 0f,
+                                                endY = 1400f,
                                             ),
-                                            startY = 0f,
-                                            endY = 1400f
-                                        )
-                                    )
+                                        ),
                             )
 
                             // Contenido sobre la imagen
                             Column(
-                                modifier = Modifier
-                                    .align(Alignment.BottomStart)
-                                    .padding(horizontal = 20.dp, vertical = 20.dp),
-                                verticalArrangement = Arrangement.spacedBy(12.dp)
+                                modifier =
+                                    Modifier
+                                        .align(Alignment.BottomStart)
+                                        .padding(horizontal = 20.dp, vertical = 20.dp),
+                                verticalArrangement = Arrangement.spacedBy(12.dp),
                             ) {
                                 // Avatar circular del artista
                                 Surface(
                                     shape = CircleShape,
                                     shadowElevation = 8.dp,
-                                    modifier = Modifier.size(110.dp)
+                                    modifier = Modifier.size(110.dp),
                                 ) {
                                     AsyncImage(
                                         model = artistPage.artist.thumbnail?.resize(220, 220),
                                         contentDescription = null,
-                                        contentScale = ContentScale.Crop
+                                        contentScale = ContentScale.Crop,
                                     )
                                 }
 
@@ -222,7 +232,7 @@ fun ArtistScreen(
                                     fontWeight = FontWeight.Bold,
                                     color = Color.White,
                                     maxLines = 2,
-                                    overflow = TextOverflow.Ellipsis
+                                    overflow = TextOverflow.Ellipsis,
                                 )
                             }
                         }
@@ -230,14 +240,15 @@ fun ArtistScreen(
                         // Barra de acciones principales
                         Surface(
                             color = MaterialTheme.colorScheme.surface,
-                            modifier = Modifier.fillMaxWidth()
+                            modifier = Modifier.fillMaxWidth(),
                         ) {
                             Row(
                                 horizontalArrangement = Arrangement.spacedBy(8.dp),
                                 verticalAlignment = Alignment.CenterVertically,
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(horizontal = 16.dp, vertical = 12.dp)
+                                modifier =
+                                    Modifier
+                                        .fillMaxWidth()
+                                        .padding(horizontal = 16.dp, vertical = 12.dp),
                             ) {
                                 // Botón Suscribirse/Suscrito
                                 Button(
@@ -254,42 +265,51 @@ fun ArtistScreen(
                                                             name = it.title,
                                                             channelId = it.channelId,
                                                             thumbnailUrl = it.thumbnail,
-                                                        ).toggleLike()
+                                                        ).toggleLike(),
                                                     )
                                                 }
                                             }
                                         }
                                     },
-                                    colors = ButtonDefaults.buttonColors(
-                                        containerColor = if (libraryArtist?.artist?.bookmarkedAt != null)
-                                            MaterialTheme.colorScheme.secondaryContainer
-                                        else
-                                            MaterialTheme.colorScheme.primary,
-                                        contentColor = if (libraryArtist?.artist?.bookmarkedAt != null)
-                                            MaterialTheme.colorScheme.onSecondaryContainer
-                                        else
-                                            MaterialTheme.colorScheme.onPrimary
-                                    ),
+                                    colors =
+                                        ButtonDefaults.buttonColors(
+                                            containerColor =
+                                                if (libraryArtist?.artist?.bookmarkedAt != null) {
+                                                    MaterialTheme.colorScheme.secondaryContainer
+                                                } else {
+                                                    MaterialTheme.colorScheme.primary
+                                                },
+                                            contentColor =
+                                                if (libraryArtist?.artist?.bookmarkedAt != null) {
+                                                    MaterialTheme.colorScheme.onSecondaryContainer
+                                                } else {
+                                                    MaterialTheme.colorScheme.onPrimary
+                                                },
+                                        ),
                                     shape = RoundedCornerShape(24.dp),
-                                    modifier = Modifier.height(44.dp)
+                                    modifier = Modifier.height(44.dp),
                                 ) {
                                     Icon(
-                                        painter = painterResource(
-                                            if (libraryArtist?.artist?.bookmarkedAt != null)
-                                                R.drawable.library_add_check
-                                            else
-                                                R.drawable.library_add
-                                        ),
+                                        painter =
+                                            painterResource(
+                                                if (libraryArtist?.artist?.bookmarkedAt != null) {
+                                                    R.drawable.library_add_check
+                                                } else {
+                                                    R.drawable.library_add
+                                                },
+                                            ),
                                         contentDescription = null,
-                                        modifier = Modifier.size(18.dp)
+                                        modifier = Modifier.size(18.dp),
                                     )
                                     Spacer(modifier = Modifier.width(8.dp))
                                     Text(
-                                        text = if (libraryArtist?.artist?.bookmarkedAt != null)
-                                            stringResource(R.string.subscribed)
-                                        else
-                                            stringResource(R.string.subscribe),
-                                        fontWeight = FontWeight.SemiBold
+                                        text =
+                                            if (libraryArtist?.artist?.bookmarkedAt != null) {
+                                                stringResource(R.string.subscribed)
+                                            } else {
+                                                stringResource(R.string.subscribe)
+                                            },
+                                        fontWeight = FontWeight.SemiBold,
                                     )
                                 }
 
@@ -300,18 +320,18 @@ fun ArtistScreen(
                                     Surface(
                                         shape = CircleShape,
                                         color = MaterialTheme.colorScheme.primaryContainer,
-                                        modifier = Modifier.size(44.dp)
+                                        modifier = Modifier.size(44.dp),
                                     ) {
                                         IconButton(
                                             onClick = {
                                                 playerConnection.playQueue(YouTubeQueue(shuffleEndpoint))
-                                            }
+                                            },
                                         ) {
                                             Icon(
                                                 painter = painterResource(R.drawable.shuffle),
                                                 contentDescription = stringResource(R.string.shuffle),
                                                 tint = MaterialTheme.colorScheme.onPrimaryContainer,
-                                                modifier = Modifier.size(20.dp)
+                                                modifier = Modifier.size(20.dp),
                                             )
                                         }
                                     }
@@ -321,7 +341,7 @@ fun ArtistScreen(
                                 Surface(
                                     shape = CircleShape,
                                     color = MaterialTheme.colorScheme.surfaceVariant,
-                                    modifier = Modifier.size(44.dp)
+                                    modifier = Modifier.size(44.dp),
                                 ) {
                                     IconButton(
                                         onClick = {
@@ -332,16 +352,16 @@ fun ArtistScreen(
                                                 Toast.makeText(
                                                     context,
                                                     R.string.link_copied,
-                                                    Toast.LENGTH_SHORT
+                                                    Toast.LENGTH_SHORT,
                                                 ).show()
                                             }
-                                        }
+                                        },
                                     ) {
                                         Icon(
                                             painter = painterResource(R.drawable.link),
                                             contentDescription = null,
                                             tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                                            modifier = Modifier.size(20.dp)
+                                            modifier = Modifier.size(20.dp),
                                         )
                                     }
                                 }
@@ -384,36 +404,41 @@ fun ArtistScreen(
                                         }
                                     },
                                 ) {
-                                    Icon(painter = painterResource(R.drawable.more_vert), tint = MaterialTheme.colorScheme.onSurface, contentDescription = null)
+                                    Icon(
+                                        painter = painterResource(R.drawable.more_vert),
+                                        tint = MaterialTheme.colorScheme.onSurface,
+                                        contentDescription = null,
+                                    )
                                 }
                             },
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .combinedClickable(
-                                    onClick = {
-                                        if (song.id == mediaMetadata?.id) {
-                                            playerConnection.togglePlayPause()
-                                        } else {
-                                            playerConnection.playQueue(
-                                                YouTubeQueue(
-                                                    WatchEndpoint(videoId = song.id),
-                                                    song.toMediaMetadata(),
-                                                ),
-                                            )
-                                        }
-                                    },
-                                    onLongClick = {
-                                        haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                                        menuState.show {
-                                            SongMenu(
-                                                originalSong = song,
-                                                navController = navController,
-                                                onDismiss = menuState::dismiss,
-                                            )
-                                        }
-                                    },
-                                )
-                                .animateItem(),
+                            modifier =
+                                Modifier
+                                    .fillMaxWidth()
+                                    .combinedClickable(
+                                        onClick = {
+                                            if (song.id == mediaMetadata?.id) {
+                                                playerConnection.togglePlayPause()
+                                            } else {
+                                                playerConnection.playQueue(
+                                                    YouTubeQueue(
+                                                        WatchEndpoint(videoId = song.id),
+                                                        song.toMediaMetadata(),
+                                                    ),
+                                                )
+                                            }
+                                        },
+                                        onLongClick = {
+                                            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                            menuState.show {
+                                                SongMenu(
+                                                    originalSong = song,
+                                                    navController = navController,
+                                                    onDismiss = menuState::dismiss,
+                                                )
+                                            }
+                                        },
+                                    )
+                                    .animateItem(),
                         )
                     }
                 }
@@ -424,13 +449,14 @@ fun ArtistScreen(
                         item {
                             NavigationTitle(
                                 title = section.title,
-                                onClick = section.moreEndpoint?.let {
-                                    {
-                                        navController.navigate(
-                                            "artist/${viewModel.artistId}/items?browseId=${it.browseId}?params=${it.params}",
-                                        )
-                                    }
-                                },
+                                onClick =
+                                    section.moreEndpoint?.let {
+                                        {
+                                            navController.navigate(
+                                                "artist/${viewModel.artistId}/items?browseId=${it.browseId}?params=${it.params}",
+                                            )
+                                        }
+                                    },
                             )
                         }
                     }
@@ -456,42 +482,47 @@ fun ArtistScreen(
                                             }
                                         },
                                     ) {
-                                        Icon(painter = painterResource(R.drawable.more_vert), tint = MaterialTheme.colorScheme.onSurface, contentDescription = null)
+                                        Icon(
+                                            painter = painterResource(R.drawable.more_vert),
+                                            tint = MaterialTheme.colorScheme.onSurface,
+                                            contentDescription = null,
+                                        )
                                     }
                                 },
-                                modifier = Modifier
-                                    .combinedClickable(
-                                        onClick = {
-                                            if (song.id == mediaMetadata?.id) {
-                                                playerConnection.togglePlayPause()
-                                            } else {
-                                                playerConnection.playQueue(
-                                                    YouTubeQueue(
-                                                        WatchEndpoint(videoId = song.id),
-                                                        song.toMediaMetadata()
-                                                    ),
-                                                )
-                                            }
-                                        },
-                                        onLongClick = {
-                                            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                                            menuState.show {
-                                                YouTubeSongMenu(
-                                                    song = song,
-                                                    navController = navController,
-                                                    onDismiss = menuState::dismiss,
-                                                )
-                                            }
-                                        },
-                                    )
-                                    .animateItem(),
+                                modifier =
+                                    Modifier
+                                        .combinedClickable(
+                                            onClick = {
+                                                if (song.id == mediaMetadata?.id) {
+                                                    playerConnection.togglePlayPause()
+                                                } else {
+                                                    playerConnection.playQueue(
+                                                        YouTubeQueue(
+                                                            WatchEndpoint(videoId = song.id),
+                                                            song.toMediaMetadata(),
+                                                        ),
+                                                    )
+                                                }
+                                            },
+                                            onLongClick = {
+                                                haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                                menuState.show {
+                                                    YouTubeSongMenu(
+                                                        song = song,
+                                                        navController = navController,
+                                                        onDismiss = menuState::dismiss,
+                                                    )
+                                                }
+                                            },
+                                        )
+                                        .animateItem(),
                             )
                         }
                     } else {
                         item {
                             LazyRow(
                                 contentPadding = PaddingValues(horizontal = 16.dp),
-                                horizontalArrangement = Arrangement.spacedBy(12.dp)
+                                horizontalArrangement = Arrangement.spacedBy(12.dp),
                             ) {
                                 items(
                                     items = section.items,
@@ -499,96 +530,103 @@ fun ArtistScreen(
                                 ) { item ->
                                     YouTubeGridItem(
                                         item = item,
-                                        isActive = when (item) {
-                                            is SongItem -> mediaMetadata?.id == item.id
-                                            is AlbumItem -> mediaMetadata?.album?.id == item.id
-                                            else -> false
-                                        },
+                                        isActive =
+                                            when (item) {
+                                                is SongItem -> mediaMetadata?.id == item.id
+                                                is AlbumItem -> mediaMetadata?.album?.id == item.id
+                                                else -> false
+                                            },
                                         isPlaying = isPlaying,
                                         coroutineScope = coroutineScope,
-                                        modifier = Modifier
-                                            .combinedClickable(
-                                                onClick = {
-                                                    when (item) {
-                                                        is SongItem -> playerConnection.playQueue(
-                                                            YouTubeQueue(
-                                                                WatchEndpoint(videoId = item.id),
-                                                                item.toMediaMetadata()
-                                                            ),
-                                                        )
-                                                        is AlbumItem -> {
-                                                            try {
-                                                                if (item.id.isNotEmpty()) {
-                                                                    navController.navigate("album/${item.id}")
-                                                                } else {
-                                                                    Log.w("ArtistScreen", "Album ID is empty")
+                                        modifier =
+                                            Modifier
+                                                .combinedClickable(
+                                                    onClick = {
+                                                        when (item) {
+                                                            is SongItem ->
+                                                                playerConnection.playQueue(
+                                                                    YouTubeQueue(
+                                                                        WatchEndpoint(videoId = item.id),
+                                                                        item.toMediaMetadata(),
+                                                                    ),
+                                                                )
+                                                            is AlbumItem -> {
+                                                                try {
+                                                                    if (item.id.isNotEmpty()) {
+                                                                        navController.navigate("album/${item.id}")
+                                                                    } else {
+                                                                        Log.w("ArtistScreen", "Album ID is empty")
+                                                                        Toast.makeText(
+                                                                            context,
+                                                                            "Error: Invalid album ID",
+                                                                            Toast.LENGTH_SHORT,
+                                                                        ).show()
+                                                                    }
+                                                                } catch (e: Exception) {
+                                                                    Log.e("ArtistScreen", "Navigation error to album: ${item.id}", e)
                                                                     Toast.makeText(
                                                                         context,
-                                                                        "Error: Invalid album ID",
-                                                                        Toast.LENGTH_SHORT
+                                                                        "Navigation error",
+                                                                        Toast.LENGTH_SHORT,
                                                                     ).show()
                                                                 }
-                                                            } catch (e: Exception) {
-                                                                Log.e("ArtistScreen", "Navigation error to album: ${item.id}", e)
-                                                                Toast.makeText(
-                                                                    context,
-                                                                    "Navigation error",
-                                                                    Toast.LENGTH_SHORT
-                                                                ).show()
                                                             }
-                                                        }
-                                                        is ArtistItem -> {
-                                                            try {
-                                                                if (item.id.isNotEmpty()) {
-                                                                    navController.navigate("artist/${item.id}")
-                                                                } else {
-                                                                    Log.w("ArtistScreen", "Artist ID is empty")
+                                                            is ArtistItem -> {
+                                                                try {
+                                                                    if (item.id.isNotEmpty()) {
+                                                                        navController.navigate("artist/${item.id}")
+                                                                    } else {
+                                                                        Log.w("ArtistScreen", "Artist ID is empty")
+                                                                    }
+                                                                } catch (e: Exception) {
+                                                                    Log.e("ArtistScreen", "Navigation error to artist: ${item.id}", e)
                                                                 }
-                                                            } catch (e: Exception) {
-                                                                Log.e("ArtistScreen", "Navigation error to artist: ${item.id}", e)
                                                             }
-                                                        }
-                                                        is PlaylistItem -> {
-                                                            try {
-                                                                if (item.id.isNotEmpty()) {
-                                                                    navController.navigate("online_playlist/${item.id}")
-                                                                } else {
-                                                                    Log.w("ArtistScreen", "Playlist ID is empty")
+                                                            is PlaylistItem -> {
+                                                                try {
+                                                                    if (item.id.isNotEmpty()) {
+                                                                        navController.navigate("online_playlist/${item.id}")
+                                                                    } else {
+                                                                        Log.w("ArtistScreen", "Playlist ID is empty")
+                                                                    }
+                                                                } catch (e: Exception) {
+                                                                    Log.e("ArtistScreen", "Navigation error to playlist: ${item.id}", e)
                                                                 }
-                                                            } catch (e: Exception) {
-                                                                Log.e("ArtistScreen", "Navigation error to playlist: ${item.id}", e)
                                                             }
                                                         }
-                                                    }
-                                                },
-                                                onLongClick = {
-                                                    haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                                                    menuState.show {
-                                                        when (item) {
-                                                            is SongItem -> YouTubeSongMenu(
-                                                                song = item,
-                                                                navController = navController,
-                                                                onDismiss = menuState::dismiss,
-                                                            )
-                                                            is AlbumItem -> YouTubeAlbumMenu(
-                                                                albumItem = item,
-                                                                navController = navController,
-                                                                onDismiss = menuState::dismiss,
-                                                            )
-                                                            is ArtistItem -> YouTubeArtistMenu(
-                                                                artist = item,
-                                                                onDismiss = menuState::dismiss,
-                                                            )
-                                                            is PlaylistItem -> YouTubePlaylistMenu(
-                                                                playlist = item,
-                                                                coroutineScope = coroutineScope,
-                                                                onDismiss = menuState::dismiss,
-                                                            )
+                                                    },
+                                                    onLongClick = {
+                                                        haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                                        menuState.show {
+                                                            when (item) {
+                                                                is SongItem ->
+                                                                    YouTubeSongMenu(
+                                                                        song = item,
+                                                                        navController = navController,
+                                                                        onDismiss = menuState::dismiss,
+                                                                    )
+                                                                is AlbumItem ->
+                                                                    YouTubeAlbumMenu(
+                                                                        albumItem = item,
+                                                                        navController = navController,
+                                                                        onDismiss = menuState::dismiss,
+                                                                    )
+                                                                is ArtistItem ->
+                                                                    YouTubeArtistMenu(
+                                                                        artist = item,
+                                                                        onDismiss = menuState::dismiss,
+                                                                    )
+                                                                is PlaylistItem ->
+                                                                    YouTubePlaylistMenu(
+                                                                        playlist = item,
+                                                                        coroutineScope = coroutineScope,
+                                                                        onDismiss = menuState::dismiss,
+                                                                    )
+                                                            }
                                                         }
-                                                    }
-                                                },
-                                            )
-                                            .animateItem(),
+                                                    },
+                                                )
+                                                .animateItem(),
                                     )
                                 }
                             }
@@ -599,7 +637,7 @@ fun ArtistScreen(
                 item(key = "artist_enrichment_card") {
                     com.Chenkham.Echofy.ui.component.ArtistInfoCard(
                         enrichment = enrichment,
-                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp)
+                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
                     )
                 }
             } else {
@@ -607,26 +645,30 @@ fun ArtistScreen(
                 item(key = "shimmer") {
                     ShimmerHost {
                         Box(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .aspectRatio(4f / 3),
+                            modifier =
+                                Modifier
+                                    .fillMaxWidth()
+                                    .aspectRatio(4f / 3),
                         ) {
                             Spacer(
-                                modifier = Modifier
-                                    .shimmer()
-                                    .background(MaterialTheme.colorScheme.onSurface)
-                                    .fadingEdge(
-                                        top = WindowInsets.systemBars
-                                            .asPaddingValues()
-                                            .calculateTopPadding() + AppBarHeight,
-                                        bottom = 108.dp,
-                                    ),
+                                modifier =
+                                    Modifier
+                                        .shimmer()
+                                        .background(MaterialTheme.colorScheme.onSurface)
+                                        .fadingEdge(
+                                            top =
+                                                WindowInsets.systemBars
+                                                    .asPaddingValues()
+                                                    .calculateTopPadding() + AppBarHeight,
+                                            bottom = 108.dp,
+                                        ),
                             )
                             TextPlaceholder(
                                 height = 56.dp,
-                                modifier = Modifier
-                                    .align(Alignment.BottomCenter)
-                                    .padding(horizontal = 48.dp),
+                                modifier =
+                                    Modifier
+                                        .align(Alignment.BottomCenter)
+                                        .padding(horizontal = 48.dp),
                             )
                         }
 
@@ -654,7 +696,7 @@ fun ArtistScreen(
                 Text(
                     text = artistPage?.artist?.title.orEmpty(),
                     maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
+                    overflow = TextOverflow.Ellipsis,
                 )
             }
         },
@@ -669,14 +711,15 @@ fun ArtistScreen(
                 )
             }
         },
-        colors = if (transparentAppBar) {
-            TopAppBarDefaults.topAppBarColors(
-                containerColor = Color.Transparent,
-                scrolledContainerColor = Color.Transparent
-            )
-        } else {
-            TopAppBarDefaults.topAppBarColors()
-        },
-        scrollBehavior = scrollBehavior
+        colors =
+            if (transparentAppBar) {
+                TopAppBarDefaults.topAppBarColors(
+                    containerColor = Color.Transparent,
+                    scrolledContainerColor = Color.Transparent,
+                )
+            } else {
+                TopAppBarDefaults.topAppBarColors()
+            },
+        scrollBehavior = scrollBehavior,
     )
 }

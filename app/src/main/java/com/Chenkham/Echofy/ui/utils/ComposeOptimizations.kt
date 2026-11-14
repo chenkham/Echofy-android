@@ -11,20 +11,14 @@ import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.composed
-import androidx.compose.ui.draw.drawWithCache
-import androidx.compose.ui.graphics.layer.GraphicsLayer
-import androidx.compose.ui.graphics.rememberGraphicsLayer
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.launch
 
 /**
  * PERFORMANCE: Professional-grade Compose optimizations for commercial app quality
@@ -54,7 +48,7 @@ import kotlinx.coroutines.launch
  */
 @Stable
 class DeferredScrollState(
-    initialShouldRender: Boolean = true
+    initialShouldRender: Boolean = true,
 ) {
     var shouldRenderFullContent by mutableStateOf(initialShouldRender)
         internal set
@@ -64,7 +58,7 @@ class DeferredScrollState(
 @Composable
 fun rememberDeferredScrollContent(
     listState: LazyListState,
-    deferDelayMs: Long = 150L
+    deferDelayMs: Long = 150L,
 ): DeferredScrollState {
     val state = remember { DeferredScrollState() }
 
@@ -88,7 +82,7 @@ fun rememberDeferredScrollContent(
 @Composable
 fun rememberDeferredGridScrollContent(
     gridState: LazyGridState,
-    deferDelayMs: Long = 150L
+    deferDelayMs: Long = 150L,
 ): DeferredScrollState {
     val state = remember { DeferredScrollState() }
 
@@ -114,7 +108,7 @@ fun rememberDeferredGridScrollContent(
  */
 suspend fun LazyListState.smoothScrollToTop(
     jumpThreshold: Int = 15,
-    jumpToIndex: Int = 5
+    jumpToIndex: Int = 5,
 ) {
     if (firstVisibleItemIndex > jumpThreshold) {
         scrollToItem(jumpToIndex)
@@ -124,7 +118,7 @@ suspend fun LazyListState.smoothScrollToTop(
 
 suspend fun LazyGridState.smoothScrollToTop(
     jumpThreshold: Int = 20,
-    jumpToIndex: Int = 8
+    jumpToIndex: Int = 8,
 ) {
     if (firstVisibleItemIndex > jumpThreshold) {
         scrollToItem(jumpToIndex)
@@ -153,17 +147,17 @@ fun rememberIsScrolledPastFirst(listState: LazyListState): Boolean {
 fun ObserveScrollPosition(
     listState: LazyListState,
     debounceMs: Long = 100L,
-    onPositionChange: (firstVisibleIndex: Int, offset: Int) -> Unit
+    onPositionChange: (firstVisibleIndex: Int, offset: Int) -> Unit,
 ) {
     LaunchedEffect(listState) {
         snapshotFlow {
             listState.firstVisibleItemIndex to listState.firstVisibleItemScrollOffset
         }
-        .debounce(debounceMs)
-        .distinctUntilChanged()
-        .collect { (index, offset) ->
-            onPositionChange(index, offset)
-        }
+            .debounce(debounceMs)
+            .distinctUntilChanged()
+            .collect { (index, offset) ->
+                onPositionChange(index, offset)
+            }
     }
 }
 
@@ -186,7 +180,7 @@ fun rememberStableOnClick(onClick: () -> Unit): StableOnClick {
 @Composable
 inline fun MeasureCompositionTime(
     tag: String,
-    crossinline content: @Composable () -> Unit
+    crossinline content: @Composable () -> Unit,
 ) {
     val startTime = remember { System.nanoTime() }
     content()
@@ -244,14 +238,12 @@ object DeviceCapabilities {
  */
 inline fun Modifier.thenIf(
     condition: Boolean,
-    crossinline block: Modifier.() -> Modifier
+    crossinline block: Modifier.() -> Modifier,
 ): Modifier = if (condition) block() else this
 
 /**
  * Apply modifier only on high-end devices
  * Useful for effects that may cause jank on lower-end devices
  */
-inline fun Modifier.ifHighEnd(
-    crossinline block: Modifier.() -> Modifier
-): Modifier = if (DeviceCapabilities.isHighEndDevice) block() else this
-
+inline fun Modifier.ifHighEnd(crossinline block: Modifier.() -> Modifier): Modifier =
+    if (DeviceCapabilities.isHighEndDevice) block() else this

@@ -77,15 +77,17 @@ private class DragDropListState(
     private var draggedDistance by mutableStateOf(0f)
 
     private val currentElement: LazyListItemInfo?
-        get() = draggingItemIndex?.let { index ->
-            listState.layoutInfo.visibleItemsInfo.firstOrNull { it.index == index }
-        }
+        get() =
+            draggingItemIndex?.let { index ->
+                listState.layoutInfo.visibleItemsInfo.firstOrNull { it.index == index }
+            }
 
     /** Cu├ínto debe desplazarse visualmente (translationY) el item que se arrastra. */
     val elementDisplacement: Float
-        get() = currentElement?.let { item ->
-            (draggingItemInitialOffset + draggedDistance) - item.offset
-        } ?: 0f
+        get() =
+            currentElement?.let { item ->
+                (draggingItemInitialOffset + draggedDistance) - item.offset
+            } ?: 0f
 
     fun onDragStart(offset: Offset) {
         listState.layoutInfo.visibleItemsInfo
@@ -111,16 +113,18 @@ private class DragDropListState(
         val minTop = visible.first().offset.toFloat()
         val maxTop = (visible.last().offset + visible.last().size - current.size).toFloat()
 
-        val proposedTop = (draggingItemInitialOffset + draggedDistance + dragAmount.y)
-            .coerceIn(minTop.coerceAtMost(maxTop), maxTop.coerceAtLeast(minTop))
+        val proposedTop =
+            (draggingItemInitialOffset + draggedDistance + dragAmount.y)
+                .coerceIn(minTop.coerceAtMost(maxTop), maxTop.coerceAtLeast(minTop))
         draggedDistance = proposedTop - draggingItemInitialOffset
 
         val startOffset = current.offset + elementDisplacement
         val middle = startOffset + current.size / 2f
 
-        val target = visible.firstOrNull { item ->
-            middle.toInt() in item.offset..(item.offset + item.size) && item.index != current.index
-        }
+        val target =
+            visible.firstOrNull { item ->
+                middle.toInt() in item.offset..(item.offset + item.size) && item.index != current.index
+            }
 
         if (target != null) {
             onMove(current.index, target.index)
@@ -157,36 +161,38 @@ fun DragDropLyricsProviderDialog(
     val haptic = LocalHapticFeedback.current
     val listState = rememberLazyListState()
 
-    val dragDropState = rememberDragDropListState(
-        listState = listState,
-        onMove = { from, to ->
-            items = items.toMutableList().apply { add(to, removeAt(from)) }
-        },
-    )
+    val dragDropState =
+        rememberDragDropListState(
+            listState = listState,
+            onMove = { from, to ->
+                items = items.toMutableList().apply { add(to, removeAt(from)) }
+            },
+        )
 
     Dialog(
         onDismissRequest = onDismiss,
         properties = DialogProperties(usePlatformDefaultWidth = false),
     ) {
         Surface(
-            modifier = Modifier
-                .fillMaxWidth(0.94f)
-                .padding(vertical = 24.dp),
+            modifier =
+                Modifier
+                    .fillMaxWidth(0.94f)
+                    .padding(vertical = 24.dp),
             shape = RoundedCornerShape(32.dp), // Forma expresiva M3
             tonalElevation = 6.dp,
             shadowElevation = 8.dp,
             color = MaterialTheme.colorScheme.surfaceContainerHigh,
         ) {
             Column(modifier = Modifier.padding(24.dp)) {
-
                 // Handle superior estilo bottom-sheet expressive
                 Box(
-                    modifier = Modifier
-                        .align(Alignment.CenterHorizontally)
-                        .width(32.dp)
-                        .height(4.dp)
-                        .clip(RoundedCornerShape(2.dp))
-                        .background(MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.3f)),
+                    modifier =
+                        Modifier
+                            .align(Alignment.CenterHorizontally)
+                            .width(32.dp)
+                            .height(4.dp)
+                            .clip(RoundedCornerShape(2.dp))
+                            .background(MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.3f)),
                 )
 
                 Spacer(Modifier.height(20.dp))
@@ -210,23 +216,24 @@ fun DragDropLyricsProviderDialog(
 
                 LazyColumn(
                     state = listState,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .heightIn(max = 360.dp)
-                        .pointerInput(dragDropState) {
-                            detectDragGesturesAfterLongPress(
-                                onDragStart = { offset ->
-                                    dragDropState.onDragStart(offset)
-                                    haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                                },
-                                onDrag = { change, dragAmount ->
-                                    change.consume()
-                                    dragDropState.onDrag(dragAmount)
-                                },
-                                onDragEnd = { dragDropState.onDragEnd() },
-                                onDragCancel = { dragDropState.onDragEnd() },
-                            )
-                        },
+                    modifier =
+                        Modifier
+                            .fillMaxWidth()
+                            .heightIn(max = 360.dp)
+                            .pointerInput(dragDropState) {
+                                detectDragGesturesAfterLongPress(
+                                    onDragStart = { offset ->
+                                        dragDropState.onDragStart(offset)
+                                        haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                    },
+                                    onDrag = { change, dragAmount ->
+                                        change.consume()
+                                        dragDropState.onDrag(dragAmount)
+                                    },
+                                    onDragEnd = { dragDropState.onDragEnd() },
+                                    onDragCancel = { dragDropState.onDragEnd() },
+                                )
+                            },
                     verticalArrangement = Arrangement.spacedBy(10.dp),
                 ) {
                     itemsIndexed(
@@ -252,29 +259,30 @@ fun DragDropLyricsProviderDialog(
                             displayName = valueText(provider),
                             isSelected = isSelected,
                             isDragging = isDragging,
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .zIndex(if (isDragging) 1f else 0f)
-                                .then(
-                                    // Importante: mientras haya un drag activo, NING├ÜN item debe
-                                    // animar su posici├│n (ni siquiera los que no se arrastran).
-                                    // Si animan, su offset en layoutInfo queda en un valor
-                                    // transicional durante ~300ms, y el hit-testing de onDrag()
-                                    // compara justamente esos offsets ÔÇö eso es lo que causaba
-                                    // que el item "saltara hasta arriba" en vez de moverse de a uno.
-                                    if (dragDropState.draggingItemIndex == null) {
-                                        Modifier.animateItem(tween(300))
-                                    } else {
-                                        Modifier
-                                    }
-                                )
-                                .graphicsLayer {
-                                    translationY =
-                                        if (isDragging) dragDropState.elementDisplacement else 0f
-                                    scaleX = scale
-                                    scaleY = scale
-                                    shadowElevation = elevation
-                                },
+                            modifier =
+                                Modifier
+                                    .fillMaxWidth()
+                                    .zIndex(if (isDragging) 1f else 0f)
+                                    .then(
+                                        // Importante: mientras haya un drag activo, NING├ÜN item debe
+                                        // animar su posici├│n (ni siquiera los que no se arrastran).
+                                        // Si animan, su offset en layoutInfo queda en un valor
+                                        // transicional durante ~300ms, y el hit-testing de onDrag()
+                                        // compara justamente esos offsets ÔÇö eso es lo que causaba
+                                        // que el item "saltara hasta arriba" en vez de moverse de a uno.
+                                        if (dragDropState.draggingItemIndex == null) {
+                                            Modifier.animateItem(tween(300))
+                                        } else {
+                                            Modifier
+                                        },
+                                    )
+                                    .graphicsLayer {
+                                        translationY =
+                                            if (isDragging) dragDropState.elementDisplacement else 0f
+                                        scaleX = scale
+                                        scaleY = scale
+                                        shadowElevation = elevation
+                                    },
                         )
                     }
                 }
@@ -323,11 +331,12 @@ private fun ProviderRow(
     modifier: Modifier = Modifier,
 ) {
     val containerColor by animateColorAsState(
-        targetValue = when {
-            isDragging -> MaterialTheme.colorScheme.primaryContainer
-            isSelected -> MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.5f)
-            else -> MaterialTheme.colorScheme.surfaceContainerLow
-        },
+        targetValue =
+            when {
+                isDragging -> MaterialTheme.colorScheme.primaryContainer
+                isSelected -> MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.5f)
+                else -> MaterialTheme.colorScheme.surfaceContainerLow
+            },
         label = "containerColor",
     )
 
@@ -338,9 +347,10 @@ private fun ProviderRow(
         tonalElevation = if (isDragging) 4.dp else 0.dp,
     ) {
         Row(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(horizontal = 16.dp),
+            modifier =
+                Modifier
+                    .fillMaxSize()
+                    .padding(horizontal = 16.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically,
         ) {
@@ -349,27 +359,29 @@ private fun ProviderRow(
                 horizontalArrangement = Arrangement.spacedBy(14.dp),
             ) {
                 Box(
-                    modifier = Modifier
-                        .size(30.dp)
-                        .clip(RoundedCornerShape(10.dp))
-                        .background(
-                            if (isSelected || isDragging) {
-                                MaterialTheme.colorScheme.primary
-                            } else {
-                                MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.1f)
-                            },
-                        ),
+                    modifier =
+                        Modifier
+                            .size(30.dp)
+                            .clip(RoundedCornerShape(10.dp))
+                            .background(
+                                if (isSelected || isDragging) {
+                                    MaterialTheme.colorScheme.primary
+                                } else {
+                                    MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.1f)
+                                },
+                            ),
                     contentAlignment = Alignment.Center,
                 ) {
                     Text(
                         text = (index + 1).toString(),
                         style = MaterialTheme.typography.labelLarge,
                         fontWeight = FontWeight.Bold,
-                        color = if (isSelected || isDragging) {
-                            MaterialTheme.colorScheme.onPrimary
-                        } else {
-                            MaterialTheme.colorScheme.onSurfaceVariant
-                        },
+                        color =
+                            if (isSelected || isDragging) {
+                                MaterialTheme.colorScheme.onPrimary
+                            } else {
+                                MaterialTheme.colorScheme.onSurfaceVariant
+                            },
                     )
                 }
 
@@ -393,11 +405,12 @@ private fun ProviderRow(
             Icon(
                 painter = painterResource(R.drawable.drag_handle),
                 contentDescription = "Arrastrar",
-                tint = if (isDragging) {
-                    MaterialTheme.colorScheme.primary
-                } else {
-                    MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
-                },
+                tint =
+                    if (isDragging) {
+                        MaterialTheme.colorScheme.primary
+                    } else {
+                        MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
+                    },
             )
         }
     }

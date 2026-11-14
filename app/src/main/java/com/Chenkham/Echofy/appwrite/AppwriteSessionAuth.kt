@@ -11,19 +11,19 @@ import java.net.ConnectException
 import java.net.SocketTimeoutException
 import java.net.URI
 import java.net.UnknownHostException
-import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.CopyOnWriteArrayList
+import java.util.concurrent.atomic.AtomicBoolean
 
 /**
  * Manages the single anonymous Appwrite session used by the Together feature.
  * Replaces FirebaseShardAuthManager — no Firebase Auth dependency needed.
  */
 object AppwriteSessionAuth {
-
     private val inFlight = AtomicBoolean(false)
     private val pendingCallbacks = CopyOnWriteArrayList<(String?) -> Unit>()
 
     @Volatile private var cachedUserId: String? = null
+
     @Volatile private var lastFailureMessage: String? = null
 
     /**
@@ -35,7 +35,10 @@ object AppwriteSessionAuth {
         scope: CoroutineScope,
         onReady: (String?) -> Unit,
     ) {
-        cachedUserId?.let { onReady(it); return }
+        cachedUserId?.let {
+            onReady(it)
+            return
+        }
         pendingCallbacks += onReady
         if (!inFlight.compareAndSet(false, true)) return
 

@@ -23,18 +23,18 @@ import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
-import androidx.compose.ui.graphics.Color
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.painterResource
@@ -42,11 +42,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.util.fastForEach
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
-import com.arturo254.opentune.innertube.models.AlbumItem
-import com.arturo254.opentune.innertube.models.ArtistItem
-import com.arturo254.opentune.innertube.models.PlaylistItem
-import com.arturo254.opentune.innertube.models.SongItem
-import com.arturo254.opentune.innertube.models.WatchEndpoint
 import com.Chenkham.Echofy.LocalPlayerAwareWindowInsets
 import com.Chenkham.Echofy.LocalPlayerConnection
 import com.Chenkham.Echofy.R
@@ -68,6 +63,11 @@ import com.Chenkham.Echofy.ui.menu.YouTubeSongMenu
 import com.Chenkham.Echofy.ui.utils.SnapLayoutInfoProvider
 import com.Chenkham.Echofy.ui.utils.backToMain
 import com.Chenkham.Echofy.viewmodels.YouTubeBrowseViewModel
+import com.arturo254.opentune.innertube.models.AlbumItem
+import com.arturo254.opentune.innertube.models.ArtistItem
+import com.arturo254.opentune.innertube.models.PlaylistItem
+import com.arturo254.opentune.innertube.models.SongItem
+import com.arturo254.opentune.innertube.models.WatchEndpoint
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
@@ -155,7 +155,11 @@ fun YouTubeBrowseScreen(
                                                         }
                                                     },
                                                 ) {
-                                                    Icon(painter = painterResource(R.drawable.more_vert), tint = MaterialTheme.colorScheme.onSurface, contentDescription = null)
+                                                    Icon(
+                                                        painter = painterResource(R.drawable.more_vert),
+                                                        tint = MaterialTheme.colorScheme.onSurface,
+                                                        contentDescription = null,
+                                                    )
                                                 }
                                             },
                                             modifier =
@@ -210,18 +214,20 @@ fun YouTubeBrowseScreen(
                                                                 )
 
                                                             is AlbumItem -> navController.navigate("album/${item.id}")
-                                                            is ArtistItem -> navController.navigate(
-                                                                "artist/${item.id}"
-                                                            )
+                                                            is ArtistItem ->
+                                                                navController.navigate(
+                                                                    "artist/${item.id}",
+                                                                )
 
-                                                            is PlaylistItem -> navController.navigate(
-                                                                "online_playlist/${item.id}"
-                                                            )
+                                                            is PlaylistItem ->
+                                                                navController.navigate(
+                                                                    "online_playlist/${item.id}",
+                                                                )
                                                         }
                                                     },
                                                     onLongClick = {
                                                         haptic.performHapticFeedback(
-                                                            HapticFeedbackType.LongPress
+                                                            HapticFeedbackType.LongPress,
                                                         )
                                                         menuState.show {
                                                             when (item) {
@@ -266,7 +272,7 @@ fun YouTubeBrowseScreen(
         }
     }
     TopAppBar(
-            colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent, scrolledContainerColor = Color.Transparent),
+        colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent, scrolledContainerColor = Color.Transparent),
         title = { Text(browseResult?.title.orEmpty()) },
         navigationIcon = {
             IconButton(

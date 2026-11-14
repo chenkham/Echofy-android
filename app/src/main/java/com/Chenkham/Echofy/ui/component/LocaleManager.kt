@@ -8,10 +8,8 @@ import android.content.Intent
 import android.content.res.Configuration
 import android.content.res.Resources
 import android.os.Build
-import android.os.Handler
 import android.os.LocaleList
-import android.os.Looper
-import android.util.Log
+import androidx.appcompat.app.AppCompatDelegate
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateDpAsState
@@ -47,8 +45,6 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.appcompat.app.AppCompatDelegate
-import androidx.core.os.LocaleListCompat
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.RadioButton
@@ -85,13 +81,14 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.core.os.ConfigurationCompat
+import androidx.core.os.LocaleListCompat
 import com.Chenkham.Echofy.R
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import java.util.Locale
 import timber.log.Timber
+import java.util.Locale
 
 /** Modelo de datos para representar un idioma */
 data class LanguageItem(
@@ -100,7 +97,7 @@ data class LanguageItem(
     val nativeName: String,
     val completionStatus: CompletionStatus = CompletionStatus.COMPLETE,
     val isSystemDefault: Boolean = false,
-    val flag: String = ""
+    val flag: String = "",
 )
 
 /** Estado de completitud de las traducciones */
@@ -108,18 +105,21 @@ enum class CompletionStatus(val label: String, val color: @Composable () -> Colo
     COMPLETE("", { Color.Transparent }),
     INCOMPLETE("Incompleta", { MaterialTheme.colorScheme.tertiary }),
     BETA("Beta", { MaterialTheme.colorScheme.primary }),
-    EXPERIMENTAL("Exp", { MaterialTheme.colorScheme.secondary })
+    EXPERIMENTAL("Exp", { MaterialTheme.colorScheme.secondary }),
 }
 
 /** Estados de la operaciÃ³n de cambio de idioma */
 sealed class LanguageChangeState {
     object Idle : LanguageChangeState()
+
     object Changing : LanguageChangeState()
+
     object Success : LanguageChangeState()
+
     data class Error(val message: String) : LanguageChangeState()
 }
-class LocaleManager private constructor(private val context: Context) {
 
+class LocaleManager private constructor(private val context: Context) {
     companion object {
         private const val TAG = "LocaleManager"
         private const val PREF_NAME = "locale_preferences"
@@ -138,34 +138,35 @@ class LocaleManager private constructor(private val context: Context) {
         }
 
         // Mapeo de banderas y estados de traducciÃ³n
-        private val LANGUAGE_METADATA = mapOf(
-            "en" to LanguageMetadata("ðŸ‡ºðŸ‡¸", CompletionStatus.COMPLETE),
-            "es" to LanguageMetadata("ðŸ‡ªðŸ‡¸", CompletionStatus.COMPLETE),
-            "fr" to LanguageMetadata("ðŸ‡«ðŸ‡·", CompletionStatus.COMPLETE),
-            "de" to LanguageMetadata("ðŸ‡©ðŸ‡ª", CompletionStatus.COMPLETE),
-            "it" to LanguageMetadata("ðŸ‡®ðŸ‡¹", CompletionStatus.COMPLETE),
-            "pt-rBR" to LanguageMetadata("ðŸ‡§ðŸ‡·", CompletionStatus.COMPLETE),
-            "pt" to LanguageMetadata("ðŸ‡µðŸ‡¹", CompletionStatus.COMPLETE),
-            "ru" to LanguageMetadata("ðŸ‡·ðŸ‡º", CompletionStatus.COMPLETE),
-            "zh-rCN" to LanguageMetadata("ðŸ‡¨ðŸ‡³", CompletionStatus.COMPLETE),
-            "zh-rTW" to LanguageMetadata("ðŸ‡¹ðŸ‡¼", CompletionStatus.COMPLETE),
-            "ja" to LanguageMetadata("ðŸ‡¯ðŸ‡µ", CompletionStatus.COMPLETE),
-            "ko" to LanguageMetadata("ðŸ‡°ðŸ‡·", CompletionStatus.COMPLETE),
-            "ar" to LanguageMetadata("ðŸ‡¸ðŸ‡¦", CompletionStatus.BETA),
-            "hi" to LanguageMetadata("ðŸ‡®ðŸ‡³", CompletionStatus.BETA),
-            "th" to LanguageMetadata("ðŸ‡¹ðŸ‡­", CompletionStatus.INCOMPLETE),
-            "vi" to LanguageMetadata("ðŸ‡»ðŸ‡³", CompletionStatus.INCOMPLETE),
-            "tr" to LanguageMetadata("ðŸ‡¹ðŸ‡·", CompletionStatus.BETA),
-            "pl" to LanguageMetadata("ðŸ‡µðŸ‡±", CompletionStatus.INCOMPLETE),
-            "nl" to LanguageMetadata("ðŸ‡³ðŸ‡±", CompletionStatus.INCOMPLETE),
-            "id" to LanguageMetadata("ðŸ‡®ðŸ‡©", CompletionStatus.BETA),
-            "uk" to LanguageMetadata("ðŸ‡ºðŸ‡¦", CompletionStatus.BETA),
-            "he" to LanguageMetadata("ðŸ‡®ðŸ‡±", CompletionStatus.BETA)
-        )
+        private val LANGUAGE_METADATA =
+            mapOf(
+                "en" to LanguageMetadata("ðŸ‡ºðŸ‡¸", CompletionStatus.COMPLETE),
+                "es" to LanguageMetadata("ðŸ‡ªðŸ‡¸", CompletionStatus.COMPLETE),
+                "fr" to LanguageMetadata("ðŸ‡«ðŸ‡·", CompletionStatus.COMPLETE),
+                "de" to LanguageMetadata("ðŸ‡©ðŸ‡ª", CompletionStatus.COMPLETE),
+                "it" to LanguageMetadata("ðŸ‡®ðŸ‡¹", CompletionStatus.COMPLETE),
+                "pt-rBR" to LanguageMetadata("ðŸ‡§ðŸ‡·", CompletionStatus.COMPLETE),
+                "pt" to LanguageMetadata("ðŸ‡µðŸ‡¹", CompletionStatus.COMPLETE),
+                "ru" to LanguageMetadata("ðŸ‡·ðŸ‡º", CompletionStatus.COMPLETE),
+                "zh-rCN" to LanguageMetadata("ðŸ‡¨ðŸ‡³", CompletionStatus.COMPLETE),
+                "zh-rTW" to LanguageMetadata("ðŸ‡¹ðŸ‡¼", CompletionStatus.COMPLETE),
+                "ja" to LanguageMetadata("ðŸ‡¯ðŸ‡µ", CompletionStatus.COMPLETE),
+                "ko" to LanguageMetadata("ðŸ‡°ðŸ‡·", CompletionStatus.COMPLETE),
+                "ar" to LanguageMetadata("ðŸ‡¸ðŸ‡¦", CompletionStatus.BETA),
+                "hi" to LanguageMetadata("ðŸ‡®ðŸ‡³", CompletionStatus.BETA),
+                "th" to LanguageMetadata("ðŸ‡¹ðŸ‡­", CompletionStatus.INCOMPLETE),
+                "vi" to LanguageMetadata("ðŸ‡»ðŸ‡³", CompletionStatus.INCOMPLETE),
+                "tr" to LanguageMetadata("ðŸ‡¹ðŸ‡·", CompletionStatus.BETA),
+                "pl" to LanguageMetadata("ðŸ‡µðŸ‡±", CompletionStatus.INCOMPLETE),
+                "nl" to LanguageMetadata("ðŸ‡³ðŸ‡±", CompletionStatus.INCOMPLETE),
+                "id" to LanguageMetadata("ðŸ‡®ðŸ‡©", CompletionStatus.BETA),
+                "uk" to LanguageMetadata("ðŸ‡ºðŸ‡¦", CompletionStatus.BETA),
+                "he" to LanguageMetadata("ðŸ‡®ðŸ‡±", CompletionStatus.BETA),
+            )
 
         private data class LanguageMetadata(
             val flag: String,
-            val completionStatus: CompletionStatus
+            val completionStatus: CompletionStatus,
         )
     }
 
@@ -190,25 +191,33 @@ class LocaleManager private constructor(private val context: Context) {
 
     private fun getSystemLanguageCode(): String {
         return _cachedSystemLanguage ?: run {
-            val systemCode = try {
-                val localeList = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-                    ConfigurationCompat.getLocales(Resources.getSystem().configuration)
-                } else {
-                    LocaleListCompat.create(Locale.getDefault())
+            val systemCode =
+                try {
+                    val localeList =
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                            ConfigurationCompat.getLocales(Resources.getSystem().configuration)
+                        } else {
+                            LocaleListCompat.create(Locale.getDefault())
+                        }
+
+                    val systemLocale =
+                        if (localeList.isEmpty) {
+                            Locale.getDefault()
+                        } else {
+                            localeList[0]
+                                ?: Locale.getDefault()
+                        }
+
+                    formatLocaleCode(systemLocale)
+                } catch (e: Exception) {
+                    Timber.tag(TAG).e(e, "Error obteniendo idioma del sistema")
+                    "en"
                 }
-
-                val systemLocale = if (localeList.isEmpty) Locale.getDefault() else localeList[0]
-                    ?: Locale.getDefault()
-
-                formatLocaleCode(systemLocale)
-            } catch (e: Exception) {
-                Timber.tag(TAG).e(e, "Error obteniendo idioma del sistema")
-                "en"
-            }
             _cachedSystemLanguage = systemCode
             systemCode
         }
     }
+
     private fun detectAvailableLanguages(): List<String> {
         val availableLocales = mutableSetOf<String>()
 
@@ -236,11 +245,12 @@ class LocaleManager private constructor(private val context: Context) {
             }
 
             if (availableLocales.isEmpty()) {
-                val commonLocales = listOf(
-                    "en", "es", "fr", "de", "it", "pt", "pt-rBR",
-                    "ru", "zh-rCN", "zh-rTW", "ja", "ko", "ar",
-                    "hi", "th", "vi", "tr", "pl", "nl", "id", "uk", "he"
-                )
+                val commonLocales =
+                    listOf(
+                        "en", "es", "fr", "de", "it", "pt", "pt-rBR",
+                        "ru", "zh-rCN", "zh-rTW", "ja", "ko", "ar",
+                        "hi", "th", "vi", "tr", "pl", "nl", "id", "uk", "he",
+                    )
 
                 commonLocales.forEach { localeCode ->
                     if (hasTranslationsForLocale(localeCode)) {
@@ -288,7 +298,6 @@ class LocaleManager private constructor(private val context: Context) {
         }
     }
 
-
     private fun formatLocaleCode(locale: Locale): String {
         val language = locale.language
         val country = locale.country
@@ -334,12 +343,13 @@ class LocaleManager private constructor(private val context: Context) {
             val languages = mutableListOf<LanguageItem>()
 
             // Agregar opciÃ³n de sistema
-            val systemDisplayName = try {
-                val locale = parseLocaleCode(systemLanguageCode)
-                locale.displayLanguage.replaceFirstChar { it.uppercase() }
-            } catch (e: Exception) {
-                systemLanguageCode
-            }
+            val systemDisplayName =
+                try {
+                    val locale = parseLocaleCode(systemLanguageCode)
+                    locale.displayLanguage.replaceFirstChar { it.uppercase() }
+                } catch (e: Exception) {
+                    systemLanguageCode
+                }
 
             languages.add(
                 LanguageItem(
@@ -348,22 +358,25 @@ class LocaleManager private constructor(private val context: Context) {
                     nativeName = systemDisplayName,
                     completionStatus = CompletionStatus.COMPLETE,
                     isSystemDefault = true,
-                    flag = "ðŸŒ"
-                )
+                    flag = "ðŸŒ",
+                ),
             )
 
             // Agregar idiomas detectados
             availableLocaleCodes.forEach { localeCode ->
                 try {
                     val locale = parseLocaleCode(localeCode)
-                    val displayName = locale.getDisplayLanguage(Locale.ENGLISH)
-                        .replaceFirstChar { it.uppercase() }
-                    val nativeName = locale.getDisplayLanguage(locale)
-                        .replaceFirstChar { it.uppercase() }
+                    val displayName =
+                        locale.getDisplayLanguage(Locale.ENGLISH)
+                            .replaceFirstChar { it.uppercase() }
+                    val nativeName =
+                        locale.getDisplayLanguage(locale)
+                            .replaceFirstChar { it.uppercase() }
 
                     // Obtener metadata (bandera y estado)
-                    val metadata = LANGUAGE_METADATA[localeCode]
-                        ?: LanguageMetadata("ðŸŒ", CompletionStatus.COMPLETE)
+                    val metadata =
+                        LANGUAGE_METADATA[localeCode]
+                            ?: LanguageMetadata("ðŸŒ", CompletionStatus.COMPLETE)
 
                     languages.add(
                         LanguageItem(
@@ -372,8 +385,8 @@ class LocaleManager private constructor(private val context: Context) {
                             nativeName = nativeName,
                             completionStatus = metadata.completionStatus,
                             isSystemDefault = false,
-                            flag = metadata.flag
-                        )
+                            flag = metadata.flag,
+                        ),
                     )
                 } catch (e: Exception) {
                     Timber.tag(TAG).e(e, "Error procesando locale: $localeCode")
@@ -381,11 +394,12 @@ class LocaleManager private constructor(private val context: Context) {
             }
 
             // Ordenar por: sistema primero, luego completos, luego alfabÃ©ticamente
-            val sorted = languages.sortedWith(
-                compareBy<LanguageItem> { !it.isSystemDefault }
-                    .thenBy { it.completionStatus.ordinal }
-                    .thenBy { it.displayName }
-            )
+            val sorted =
+                languages.sortedWith(
+                    compareBy<LanguageItem> { !it.isSystemDefault }
+                        .thenBy { it.completionStatus.ordinal }
+                        .thenBy { it.displayName },
+                )
 
             _cachedLanguages = sorted
             sorted
@@ -413,20 +427,22 @@ class LocaleManager private constructor(private val context: Context) {
 
             _currentLanguage.value = languageCode
 
-            val effectiveLanguageCode = if (languageCode == SYSTEM_DEFAULT) {
-                getSystemLanguageCode()
-            } else {
-                languageCode
-            }
+            val effectiveLanguageCode =
+                if (languageCode == SYSTEM_DEFAULT) {
+                    getSystemLanguageCode()
+                } else {
+                    languageCode
+                }
 
             val locale = parseLocaleCode(effectiveLanguageCode)
-            
+
             try {
-                val appLocales = if (languageCode == SYSTEM_DEFAULT) {
-                    LocaleListCompat.getEmptyLocaleList()
-                } else {
-                    LocaleListCompat.forLanguageTags(effectiveLanguageCode)
-                }
+                val appLocales =
+                    if (languageCode == SYSTEM_DEFAULT) {
+                        LocaleListCompat.getEmptyLocaleList()
+                    } else {
+                        LocaleListCompat.forLanguageTags(effectiveLanguageCode)
+                    }
                 AppCompatDelegate.setApplicationLocales(appLocales)
             } catch (e: Exception) {
                 Timber.tag(TAG).w(e, "AppCompatDelegate setApplicationLocales fallback")
@@ -491,7 +507,7 @@ class LocaleManager private constructor(private val context: Context) {
                 @Suppress("DEPRECATION")
                 baseContext.resources.updateConfiguration(
                     config,
-                    baseContext.resources.displayMetrics
+                    baseContext.resources.displayMetrics,
                 )
                 baseContext
             }
@@ -529,7 +545,7 @@ class LocaleManager private constructor(private val context: Context) {
 @Composable
 fun LanguageSelector(
     modifier: Modifier = Modifier,
-    onDismiss: () -> Unit = {}
+    onDismiss: () -> Unit = {},
 ) {
     val context = LocalContext.current
     val localeManager = remember { LocaleManager.getInstance(context) }
@@ -546,17 +562,18 @@ fun LanguageSelector(
     val listState = rememberLazyListState()
     val focusRequester = remember { FocusRequester() }
 
-    val filteredLanguages = remember(availableLanguages, searchQuery) {
-        if (searchQuery.isBlank()) {
-            availableLanguages
-        } else {
-            availableLanguages.filter { language ->
-                language.displayName.contains(searchQuery, ignoreCase = true) ||
+    val filteredLanguages =
+        remember(availableLanguages, searchQuery) {
+            if (searchQuery.isBlank()) {
+                availableLanguages
+            } else {
+                availableLanguages.filter { language ->
+                    language.displayName.contains(searchQuery, ignoreCase = true) ||
                         language.nativeName.contains(searchQuery, ignoreCase = true) ||
                         language.code.contains(searchQuery, ignoreCase = true)
+                }
             }
         }
-    }
 
     LaunchedEffect(selectedLanguageCode) {
         selectedLanguageCode?.let { languageCode ->
@@ -585,24 +602,26 @@ fun LanguageSelector(
         modifier = modifier,
         dragHandle = {
             Surface(
-                modifier = Modifier
-                    .padding(vertical = 8.dp)
-                    .size(width = 32.dp, height = 4.dp)
-                    .clip(RoundedCornerShape(2.dp)),
-                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f)
+                modifier =
+                    Modifier
+                        .padding(vertical = 8.dp)
+                        .size(width = 32.dp, height = 4.dp)
+                        .clip(RoundedCornerShape(2.dp)),
+                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f),
             ) {}
-        }
+        },
     ) {
         Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .navigationBarsPadding()
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .navigationBarsPadding(),
         ) {
             Text(
                 text = stringResource(R.string.language),
                 style = MaterialTheme.typography.headlineMedium,
                 fontWeight = FontWeight.Bold,
-                modifier = Modifier.padding(horizontal = 24.dp, vertical = 8.dp)
+                modifier = Modifier.padding(horizontal = 24.dp, vertical = 8.dp),
             )
 
             SearchBar(
@@ -614,19 +633,21 @@ fun LanguageSelector(
                     keyboardController?.hide()
                 },
                 focusRequester = focusRequester,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 24.dp, vertical = 12.dp)
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 24.dp, vertical = 12.dp),
             )
 
             AnimatedVisibility(
-                visible = changeState is LanguageChangeState.Changing ||
+                visible =
+                    changeState is LanguageChangeState.Changing ||
                         changeState is LanguageChangeState.Success,
                 enter = fadeIn(),
-                exit = fadeOut()
+                exit = fadeOut(),
             ) {
                 ChangeStateIndicator(
-                    isChanging = changeState is LanguageChangeState.Changing
+                    isChanging = changeState is LanguageChangeState.Changing,
                 )
             }
 
@@ -635,15 +656,16 @@ fun LanguageSelector(
             } else {
                 LazyColumn(
                     state = listState,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .selectableGroup(),
+                    modifier =
+                        Modifier
+                            .fillMaxWidth()
+                            .selectableGroup(),
                     contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
-                    verticalArrangement = Arrangement.spacedBy(6.dp)
+                    verticalArrangement = Arrangement.spacedBy(6.dp),
                 ) {
                     items(
                         items = filteredLanguages,
-                        key = { it.code }
+                        key = { it.code },
                     ) { language ->
                         val isSelected = language.code == currentLanguage
                         val isEnabled = changeState !is LanguageChangeState.Changing
@@ -659,7 +681,7 @@ fun LanguageSelector(
                                     focusManager.clearFocus()
                                     selectedLanguageCode = language.code
                                 }
-                            }
+                            },
                         )
                     }
                 }
@@ -676,7 +698,7 @@ private fun SearchBar(
     onQueryChange: (String) -> Unit,
     onClear: () -> Unit,
     focusRequester: FocusRequester,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
 ) {
     val focusManager = LocalFocusManager.current
 
@@ -684,19 +706,20 @@ private fun SearchBar(
         modifier = modifier,
         shape = RoundedCornerShape(16.dp),
         color = MaterialTheme.colorScheme.surfaceVariant,
-        tonalElevation = 1.dp
+        tonalElevation = 1.dp,
     ) {
         Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 12.dp),
-            verticalAlignment = Alignment.CenterVertically
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 12.dp),
+            verticalAlignment = Alignment.CenterVertically,
         ) {
             Icon(
                 painter = painterResource(R.drawable.search),
                 contentDescription = null,
                 tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.size(20.dp)
+                modifier = Modifier.size(20.dp),
             )
 
             Spacer(modifier = Modifier.width(12.dp))
@@ -704,44 +727,47 @@ private fun SearchBar(
             BasicTextField(
                 value = query,
                 onValueChange = onQueryChange,
-                modifier = Modifier
-                    .weight(1f)
-                    .focusRequester(focusRequester),
-                textStyle = MaterialTheme.typography.bodyLarge.copy(
-                    color = MaterialTheme.colorScheme.onSurface
-                ),
+                modifier =
+                    Modifier
+                        .weight(1f)
+                        .focusRequester(focusRequester),
+                textStyle =
+                    MaterialTheme.typography.bodyLarge.copy(
+                        color = MaterialTheme.colorScheme.onSurface,
+                    ),
                 singleLine = true,
                 cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
                 keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
-                keyboardActions = KeyboardActions(
-                    onSearch = { focusManager.clearFocus() }
-                ),
+                keyboardActions =
+                    KeyboardActions(
+                        onSearch = { focusManager.clearFocus() },
+                    ),
                 decorationBox = { innerTextField ->
                     if (query.isEmpty()) {
                         Text(
                             text = "Buscar idioma...",
                             style = MaterialTheme.typography.bodyLarge,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
                     }
                     innerTextField()
-                }
+                },
             )
 
             AnimatedVisibility(
                 visible = query.isNotEmpty(),
                 enter = fadeIn(),
-                exit = fadeOut()
+                exit = fadeOut(),
             ) {
                 IconButton(
                     onClick = onClear,
-                    modifier = Modifier.size(20.dp)
+                    modifier = Modifier.size(20.dp),
                 ) {
                     Icon(
                         painter = painterResource(R.drawable.close),
                         contentDescription = "Limpiar bÃºsqueda",
                         tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.size(18.dp)
+                        modifier = Modifier.size(18.dp),
                     )
                 }
             }
@@ -750,63 +776,60 @@ private fun SearchBar(
 }
 
 @Composable
-private fun ChangeStateIndicator(
-    isChanging: Boolean
-) {
+private fun ChangeStateIndicator(isChanging: Boolean) {
     Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 24.dp, vertical = 12.dp),
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 24.dp, vertical = 12.dp),
         horizontalArrangement = Arrangement.Center,
-        verticalAlignment = Alignment.CenterVertically
+        verticalAlignment = Alignment.CenterVertically,
     ) {
         if (isChanging) {
             CircularProgressIndicator(
                 modifier = Modifier.size(16.dp),
                 strokeWidth = 2.dp,
-                color = MaterialTheme.colorScheme.primary
+                color = MaterialTheme.colorScheme.primary,
             )
             Spacer(modifier = Modifier.width(12.dp))
             Text(
                 text = "Aplicando...",
                 style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         } else {
             Icon(
                 painter = painterResource(R.drawable.check),
                 contentDescription = null,
                 tint = MaterialTheme.colorScheme.primary,
-                modifier = Modifier.size(16.dp)
+                modifier = Modifier.size(16.dp),
             )
             Spacer(modifier = Modifier.width(12.dp))
             Text(
                 text = "Reiniciando...",
                 style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
     }
 }
 
 @Composable
-private fun EmptySearchResult(
-    modifier: Modifier = Modifier
-) {
+private fun EmptySearchResult(modifier: Modifier = Modifier) {
     Column(
         modifier = modifier.fillMaxWidth(),
-        horizontalAlignment = Alignment.CenterHorizontally
+        horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         Text(
             text = "Sin resultados",
             style = MaterialTheme.typography.bodyLarge,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
         Text(
             text = "Prueba con otro tÃ©rmino",
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
-            modifier = Modifier.padding(top = 4.dp)
+            modifier = Modifier.padding(top = 4.dp),
         )
     }
 }
@@ -816,46 +839,50 @@ private fun LanguageItem(
     language: LanguageItem,
     isSelected: Boolean,
     isEnabled: Boolean,
-    onClick: () -> Unit
+    onClick: () -> Unit,
 ) {
     val elevation by animateDpAsState(
         targetValue = if (isSelected) 2.dp else 0.dp,
-        animationSpec = spring(
-            dampingRatio = Spring.DampingRatioMediumBouncy,
-            stiffness = Spring.StiffnessMedium
-        ),
-        label = "elevation"
+        animationSpec =
+            spring(
+                dampingRatio = Spring.DampingRatioMediumBouncy,
+                stiffness = Spring.StiffnessMedium,
+            ),
+        label = "elevation",
     )
 
     Surface(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(14.dp))
-            .selectable(
-                selected = isSelected,
-                enabled = isEnabled,
-                role = Role.RadioButton,
-                onClick = onClick
-            ),
-        color = if (isSelected) {
-            MaterialTheme.colorScheme.primaryContainer
-        } else {
-            MaterialTheme.colorScheme.surface
-        },
-        tonalElevation = elevation
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(14.dp))
+                .selectable(
+                    selected = isSelected,
+                    enabled = isEnabled,
+                    role = Role.RadioButton,
+                    onClick = onClick,
+                ),
+        color =
+            if (isSelected) {
+                MaterialTheme.colorScheme.primaryContainer
+            } else {
+                MaterialTheme.colorScheme.surface
+            },
+        tonalElevation = elevation,
     ) {
         Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 14.dp),
-            verticalAlignment = Alignment.CenterVertically
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 14.dp),
+            verticalAlignment = Alignment.CenterVertically,
         ) {
             // Bandera
             Text(
                 text = language.flag,
                 style = MaterialTheme.typography.headlineMedium,
                 modifier = Modifier.size(28.dp),
-                textAlign = TextAlign.Center
+                textAlign = TextAlign.Center,
             )
 
             Spacer(modifier = Modifier.width(16.dp))
@@ -866,13 +893,14 @@ private fun LanguageItem(
                     text = language.displayName,
                     style = MaterialTheme.typography.bodyLarge,
                     fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal,
-                    color = if (isSelected) {
-                        MaterialTheme.colorScheme.onPrimaryContainer
-                    } else {
-                        MaterialTheme.colorScheme.onSurface
-                    },
+                    color =
+                        if (isSelected) {
+                            MaterialTheme.colorScheme.onPrimaryContainer
+                        } else {
+                            MaterialTheme.colorScheme.onSurface
+                        },
                     maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
+                    overflow = TextOverflow.Ellipsis,
                 )
 
                 if (language.nativeName.isNotEmpty() &&
@@ -882,13 +910,14 @@ private fun LanguageItem(
                     Text(
                         text = language.nativeName,
                         style = MaterialTheme.typography.bodySmall,
-                        color = if (isSelected) {
-                            MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
-                        } else {
-                            MaterialTheme.colorScheme.onSurfaceVariant
-                        },
+                        color =
+                            if (isSelected) {
+                                MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
+                            } else {
+                                MaterialTheme.colorScheme.onSurfaceVariant
+                            },
                         maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
+                        overflow = TextOverflow.Ellipsis,
                     )
                 }
             }
@@ -900,14 +929,14 @@ private fun LanguageItem(
                 Surface(
                     shape = RoundedCornerShape(6.dp),
                     color = statusColor.copy(alpha = 0.12f),
-                    modifier = Modifier.padding(end = 8.dp)
+                    modifier = Modifier.padding(end = 8.dp),
                 ) {
                     Text(
                         text = language.completionStatus.label,
                         style = MaterialTheme.typography.labelSmall,
                         color = statusColor,
                         fontWeight = FontWeight.Medium,
-                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
                     )
                 }
             }
@@ -917,70 +946,74 @@ private fun LanguageItem(
                 selected = isSelected,
                 onClick = null,
                 enabled = isEnabled,
-                colors = RadioButtonDefaults.colors(
-                    selectedColor = MaterialTheme.colorScheme.primary,
-                    unselectedColor = MaterialTheme.colorScheme.onSurfaceVariant
-                )
+                colors =
+                    RadioButtonDefaults.colors(
+                        selectedColor = MaterialTheme.colorScheme.primary,
+                        unselectedColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                    ),
             )
         }
     }
 }
 
 @Composable
-fun LanguagePreference(
-    modifier: Modifier = Modifier
-) {
+fun LanguagePreference(modifier: Modifier = Modifier) {
     var showLanguageSelector by remember { mutableStateOf(false) }
     val context = LocalContext.current
     val localeManager = remember { LocaleManager.getInstance(context) }
     val currentLanguage by localeManager.currentLanguage.collectAsState()
     val changeState by localeManager.changeState.collectAsState()
 
-    val currentLanguageDisplay = remember(currentLanguage) {
-        val selectedCode = localeManager.getSelectedLanguageCode()
-        localeManager.getAvailableLanguages()
-            .find { it.code == selectedCode }
-            ?.let { language ->
-                if (language.isSystemDefault) {
-                    language.nativeName
-                } else {
-                    "${language.nativeName} ${language.flag}".trim()
-                }
-            } ?: selectedCode
-    }
+    val currentLanguageDisplay =
+        remember(currentLanguage) {
+            val selectedCode = localeManager.getSelectedLanguageCode()
+            localeManager.getAvailableLanguages()
+                .find { it.code == selectedCode }
+                ?.let { language ->
+                    if (language.isSystemDefault) {
+                        language.nativeName
+                    } else {
+                        "${language.nativeName} ${language.flag}".trim()
+                    }
+                } ?: selectedCode
+        }
 
     val isChanging = changeState is LanguageChangeState.Changing
 
     Card(
-        modifier = modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(12.dp))
-            .clickable(enabled = !isChanging) {
-                showLanguageSelector = true
-            },
-        colors = CardDefaults.cardColors(
-            containerColor = Color.Transparent
-        )
+        modifier =
+            modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(12.dp))
+                .clickable(enabled = !isChanging) {
+                    showLanguageSelector = true
+                },
+        colors =
+            CardDefaults.cardColors(
+                containerColor = Color.Transparent,
+            ),
     ) {
         Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 20.dp, vertical = 16.dp),
-            verticalAlignment = Alignment.CenterVertically
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 20.dp, vertical = 16.dp),
+            verticalAlignment = Alignment.CenterVertically,
         ) {
             Box(
-                modifier = Modifier
-                    .size(40.dp)
-                    .clip(RoundedCornerShape(12.dp))
-                    .background(
-                        MaterialTheme.colorScheme.primary.copy(alpha = 0.1f)
-                    ),
-                contentAlignment = Alignment.Center
+                modifier =
+                    Modifier
+                        .size(40.dp)
+                        .clip(RoundedCornerShape(12.dp))
+                        .background(
+                            MaterialTheme.colorScheme.primary.copy(alpha = 0.1f),
+                        ),
+                contentAlignment = Alignment.Center,
             ) {
                 Icon(
                     painterResource(R.drawable.translate),
                     contentDescription = null,
-                    modifier = Modifier.size(24.dp)
+                    modifier = Modifier.size(24.dp),
                 )
             }
 
@@ -990,27 +1023,30 @@ fun LanguagePreference(
                 Text(
                     text = stringResource(R.string.language),
                     style = MaterialTheme.typography.titleMedium,
-                    color = if (isChanging) {
-                        MaterialTheme.colorScheme.onSurfaceVariant
-                    } else {
-                        MaterialTheme.colorScheme.onSurface
-                    },
-                    fontWeight = FontWeight.Medium
+                    color =
+                        if (isChanging) {
+                            MaterialTheme.colorScheme.onSurfaceVariant
+                        } else {
+                            MaterialTheme.colorScheme.onSurface
+                        },
+                    fontWeight = FontWeight.Medium,
                 )
 
                 Text(
-                    text = if (isChanging) {
-                        stringResource(R.string.changing_language)
-                    } else {
-                        currentLanguageDisplay
-                    },
+                    text =
+                        if (isChanging) {
+                            stringResource(R.string.changing_language)
+                        } else {
+                            currentLanguageDisplay
+                        },
                     style = MaterialTheme.typography.bodyMedium,
-                    color = if (isChanging) {
-                        MaterialTheme.colorScheme.onSurfaceVariant
-                    } else {
-                        MaterialTheme.colorScheme.onSurfaceVariant
-                    },
-                    modifier = Modifier.padding(top = 2.dp)
+                    color =
+                        if (isChanging) {
+                            MaterialTheme.colorScheme.onSurfaceVariant
+                        } else {
+                            MaterialTheme.colorScheme.onSurfaceVariant
+                        },
+                    modifier = Modifier.padding(top = 2.dp),
                 )
             }
 
@@ -1018,14 +1054,14 @@ fun LanguagePreference(
                 CircularProgressIndicator(
                     modifier = Modifier.size(20.dp),
                     strokeWidth = 2.dp,
-                    color = MaterialTheme.colorScheme.primary
+                    color = MaterialTheme.colorScheme.primary,
                 )
             } else {
                 Icon(
                     painter = painterResource(R.drawable.arrow_forward),
                     contentDescription = stringResource(R.string.configure_app_language),
                     tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.size(20.dp)
+                    modifier = Modifier.size(20.dp),
                 )
             }
         }
@@ -1033,14 +1069,12 @@ fun LanguagePreference(
 
     if (showLanguageSelector) {
         LanguageSelector(
-            onDismiss = { showLanguageSelector = false }
+            onDismiss = { showLanguageSelector = false },
         )
     }
 }
 
-
 abstract class LocaleAwareApplication : android.app.Application() {
-
     private val localeManager by lazy { LocaleManager.getInstance(this) }
 
     override fun attachBaseContext(base: Context) {
@@ -1068,4 +1102,3 @@ abstract class LocaleAwareApplication : android.app.Application() {
         localeManager.clearCache()
     }
 }
-

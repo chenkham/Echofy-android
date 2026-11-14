@@ -6,6 +6,8 @@
 
 package com.arturo254.opentune.simpmusic
 
+import com.arturo254.opentune.simpmusic.models.LyricsData
+import com.arturo254.opentune.simpmusic.models.SimpMusicApiResponse
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.engine.cio.CIO
@@ -18,8 +20,6 @@ import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpStatusCode
 import io.ktor.serialization.kotlinx.json.json
 import kotlinx.serialization.json.Json
-import com.arturo254.opentune.simpmusic.models.LyricsData
-import com.arturo254.opentune.simpmusic.models.SimpMusicApiResponse
 import kotlin.math.abs
 
 object SimpMusicLyrics {
@@ -92,7 +92,7 @@ object SimpMusicLyrics {
 
             val lyrics =
                 bestMatch?.syncedLyrics ?: bestMatch?.plainLyrics
-                ?: throw IllegalStateException("Lyrics unavailable")
+                    ?: throw IllegalStateException("Lyrics unavailable")
 
             lyrics
         }

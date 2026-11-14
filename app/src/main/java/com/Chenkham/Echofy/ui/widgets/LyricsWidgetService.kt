@@ -13,7 +13,6 @@ class LyricsWidgetService : RemoteViewsService() {
 }
 
 class LyricsRemoteViewsFactory(private val context: Context) : RemoteViewsService.RemoteViewsFactory {
-    
     override fun onCreate() {
         // No-op
     }

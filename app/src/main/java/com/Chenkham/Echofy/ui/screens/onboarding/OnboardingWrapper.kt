@@ -14,35 +14,34 @@ import com.Chenkham.Echofy.utils.rememberPreference
 
 /**
  * Simple wrapper to show onboarding on first launch
- * 
+ *
  * Usage in MainActivity:
  * Replace your main content composable with:
- * 
+ *
  * OnboardingWrapper {
  *     // Your existing main app content here
  *     Scaffold(...) { ... }
  * }
  */
 @Composable
-fun OnboardingWrapper(
-    content: @Composable () -> Unit
-) {
+fun OnboardingWrapper(content: @Composable () -> Unit) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
-    val (isOnboardingCompleted, onOnboardingCompletedChange) = 
+    val (isOnboardingCompleted, onOnboardingCompletedChange) =
         rememberPreference(OnboardingCompletedKey, defaultValue = false)
-    
+
     // Permission launcher
-    val notificationPermissionLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.RequestPermission(),
-        onResult = { isGranted ->
-           // Proceed regardless of result
-           onOnboardingCompletedChange(true) 
-           if (isGranted) {
-               Toast.makeText(context, "Notifications enabled!", Toast.LENGTH_SHORT).show()
-           }
-        }
-    )
+    val notificationPermissionLauncher =
+        rememberLauncherForActivityResult(
+            contract = ActivityResultContracts.RequestPermission(),
+            onResult = { isGranted ->
+                // Proceed regardless of result
+                onOnboardingCompletedChange(true)
+                if (isGranted) {
+                    Toast.makeText(context, "Notifications enabled!", Toast.LENGTH_SHORT).show()
+                }
+            },
+        )
 
     fun completeOnboarding() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
@@ -59,9 +58,9 @@ fun OnboardingWrapper(
             },
             onSkip = {
                 completeOnboarding()
-            }
+            },
         )
     } else {
-         content()
+        content()
     }
 }

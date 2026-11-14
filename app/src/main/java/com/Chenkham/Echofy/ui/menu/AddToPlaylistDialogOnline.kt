@@ -4,8 +4,6 @@
  * Licensed Under GPL-3.0 | see git history for contributors
  */
 
-
-
 package com.Chenkham.Echofy.ui.menu
 
 import androidx.compose.foundation.Image
@@ -39,8 +37,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
-import com.arturo254.opentune.innertube.YouTube
-import com.arturo254.opentune.innertube.models.SongItem
 import com.Chenkham.Echofy.LocalDatabase
 import com.Chenkham.Echofy.R
 import com.Chenkham.Echofy.constants.ListThumbnailSize
@@ -52,13 +48,15 @@ import com.Chenkham.Echofy.ui.component.DefaultDialog
 import com.Chenkham.Echofy.ui.component.ListDialog
 import com.Chenkham.Echofy.ui.component.ListItem
 import com.Chenkham.Echofy.ui.component.PlaylistListItem
+import com.arturo254.opentune.innertube.YouTube
+import com.arturo254.opentune.innertube.models.SongItem
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Semaphore
 import kotlinx.coroutines.sync.withPermit
+import kotlinx.coroutines.withContext
 import timber.log.Timber
 import java.net.URLDecoder
 import java.nio.charset.StandardCharsets
@@ -73,7 +71,7 @@ fun AddToPlaylistDialogOnline(
     onDismiss: () -> Unit,
     onProgressStart: (Boolean) -> Unit,
     onPercentageChange: (Int) -> Unit,
-    onStatusChange: (String) -> Unit = {}
+    onStatusChange: (String) -> Unit = {},
 ) {
     val database = LocalDatabase.current
     val coroutineScope = rememberCoroutineScope()
@@ -88,12 +86,11 @@ fun AddToPlaylistDialogOnline(
         mutableStateOf<Playlist?>(null)
     }
     val songIds by remember {
-        mutableStateOf<List<String>?>(null) 
+        mutableStateOf<List<String>?>(null)
     }
 
     var showResultDialog by remember { mutableStateOf(false) }
     var processingSummary by remember { mutableStateOf<ProcessingSummary?>(null) }
-
 
     LaunchedEffect(Unit) {
         database.playlistsByCreateDateAsc().collect {
@@ -103,7 +100,7 @@ fun AddToPlaylistDialogOnline(
 
     fun processSongs(
         targetPlaylist: Playlist?,
-        addToLiked: Boolean
+        addToLiked: Boolean,
     ) {
         coroutineScope.launch(Dispatchers.IO) {
             val snapshotSongs = songs.toList()
@@ -232,7 +229,7 @@ fun AddToPlaylistDialogOnline(
 
     if (isVisible) {
         ListDialog(
-            onDismiss = onDismiss
+            onDismiss = onDismiss,
         ) {
             item {
                 ListItem(
@@ -242,40 +239,43 @@ fun AddToPlaylistDialogOnline(
                             painter = painterResource(id = R.drawable.playlist_add),
                             contentDescription = null,
                             colorFilter = ColorFilter.tint(MaterialTheme.colorScheme.onBackground),
-                            modifier = Modifier.size(ListThumbnailSize)
+                            modifier = Modifier.size(ListThumbnailSize),
                         )
                     },
-                    modifier = Modifier.clickable {
-                        showCreatePlaylistDialog = true
-                    }
+                    modifier =
+                        Modifier.clickable {
+                            showCreatePlaylistDialog = true
+                        },
                 )
             }
 
             items(playlists) { playlist ->
                 PlaylistListItem(
                     playlist = playlist,
-                    modifier = Modifier.clickable {
-                        selectedPlaylist = playlist
-                        processSongs(targetPlaylist = playlist, addToLiked = false)
-                    }
+                    modifier =
+                        Modifier.clickable {
+                            selectedPlaylist = playlist
+                            processSongs(targetPlaylist = playlist, addToLiked = false)
+                        },
                 )
             }
 
             item {
                 ListItem(
-                    modifier = Modifier.clickable {
-                        processSongs(targetPlaylist = null, addToLiked = true)
-                    },
+                    modifier =
+                        Modifier.clickable {
+                            processSongs(targetPlaylist = null, addToLiked = true)
+                        },
                     title = stringResource(R.string.liked_songs),
                     thumbnailContent = {
                         Image(
                             painter = painterResource(id = R.drawable.favorite), // The XML image
                             contentDescription = null,
                             modifier = Modifier.size(40.dp), // Adjust size as needed
-                            colorFilter = ColorFilter.tint(MaterialTheme.colorScheme.onBackground) // Optional tinting
+                            colorFilter = ColorFilter.tint(MaterialTheme.colorScheme.onBackground), // Optional tinting
                         )
                     },
-                    trailingContent = {}
+                    trailingContent = {},
                 )
             }
 
@@ -283,7 +283,7 @@ fun AddToPlaylistDialogOnline(
                 Text(
                     text = stringResource(R.string.playlist_add_local_to_synced_note),
                     fontSize = TextUnit(12F, TextUnitType.Sp),
-                    modifier = Modifier.padding(horizontal = 20.dp)
+                    modifier = Modifier.padding(horizontal = 20.dp),
                 )
             }
         }
@@ -293,7 +293,7 @@ fun AddToPlaylistDialogOnline(
         CreatePlaylistDialog(
             onDismiss = { showCreatePlaylistDialog = false },
             initialTextFieldValue = initialTextFieldValue,
-            allowSyncing = allowSyncing
+            allowSyncing = allowSyncing,
         )
     }
 
@@ -307,7 +307,7 @@ fun AddToPlaylistDialogOnline(
                 TextButton(onClick = { showResultDialog = false }) {
                     Text("OK")
                 }
-            }
+            },
         ) {
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 Text("Total Processed: ${summary.total}")
@@ -317,15 +317,16 @@ fun AddToPlaylistDialogOnline(
                     HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
                     Text("Failed Items:", style = MaterialTheme.typography.labelLarge)
                     LazyColumn(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(150.dp)
+                        modifier =
+                            Modifier
+                                .fillMaxWidth()
+                                .height(150.dp),
                     ) {
                         items(summary.failedItems) { title ->
                             Text(
                                 text = "• $title",
                                 style = MaterialTheme.typography.bodySmall,
-                                modifier = Modifier.padding(vertical = 2.dp)
+                                modifier = Modifier.padding(vertical = 2.dp),
                             )
                         }
                     }
@@ -339,5 +340,5 @@ data class ProcessingSummary(
     val total: Int,
     val success: Int,
     val failed: Int,
-    val failedItems: List<String>
+    val failedItems: List<String>,
 )

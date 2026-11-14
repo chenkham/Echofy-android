@@ -1,6 +1,5 @@
 package com.Chenkham.Echofy.ui.screens.library
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -9,8 +8,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.MaterialTheme
-import com.Chenkham.Echofy.ui.component.ExpressivePullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -18,25 +15,25 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import com.Chenkham.Echofy.LocalPlayerAwareWindowInsets
 import com.Chenkham.Echofy.R
+import com.Chenkham.Echofy.ads.AdManager
 import com.Chenkham.Echofy.constants.BackpaperScreen
 import com.Chenkham.Echofy.constants.ChipSortTypeKey
 import com.Chenkham.Echofy.constants.LibraryFilter
 import com.Chenkham.Echofy.ui.component.BackpaperBackground
+import com.Chenkham.Echofy.ui.component.BannerAdView
 import com.Chenkham.Echofy.ui.component.ChipsRow
+import com.Chenkham.Echofy.ui.component.ExpressivePullToRefreshBox
 import com.Chenkham.Echofy.utils.rememberEnumPreference
 import com.Chenkham.Echofy.viewmodels.LibraryAlbumsViewModel
 import com.Chenkham.Echofy.viewmodels.LibraryArtistsViewModel
 import com.Chenkham.Echofy.viewmodels.LibraryMixViewModel
 import com.Chenkham.Echofy.viewmodels.LibraryPlaylistsViewModel
-import com.Chenkham.Echofy.ads.AdManager
-import com.Chenkham.Echofy.ui.component.BannerAdView
 import com.Chenkham.Echofy.viewmodels.LibrarySongsViewModel
 import kotlinx.coroutines.launch
 
@@ -92,16 +89,17 @@ fun LibraryScreen(
         }
     }
 
-    val onRefresh: () -> Unit = remember(filterType) {
-        {
-            coroutineScope.launch {
-                isRefreshing = true
-                kotlinx.coroutines.delay(500)
-                isRefreshing = false
+    val onRefresh: () -> Unit =
+        remember(filterType) {
+            {
+                coroutineScope.launch {
+                    isRefreshing = true
+                    kotlinx.coroutines.delay(500)
+                    isRefreshing = false
+                }
+                Unit
             }
-            Unit
         }
-    }
 
     BackpaperBackground(screen = BackpaperScreen.LIBRARY) {
         ExpressivePullToRefreshBox(
@@ -118,29 +116,34 @@ fun LibraryScreen(
                     when (filterType) {
                         LibraryFilter.LIBRARY -> LibraryMixScreen(navController, filterContent)
                         LibraryFilter.PLAYLISTS -> LibraryPlaylistsScreen(navController, filterContent)
-                        LibraryFilter.SONGS -> LibrarySongsScreen(
-                            navController,
-                            { filterType = LibraryFilter.LIBRARY },
-                        )
+                        LibraryFilter.SONGS ->
+                            LibrarySongsScreen(
+                                navController,
+                                { filterType = LibraryFilter.LIBRARY },
+                            )
 
-                        LibraryFilter.ALBUMS -> LibraryAlbumsScreen(
-                            navController,
-                            { filterType = LibraryFilter.LIBRARY },
-                        )
+                        LibraryFilter.ALBUMS ->
+                            LibraryAlbumsScreen(
+                                navController,
+                                { filterType = LibraryFilter.LIBRARY },
+                            )
 
-                        LibraryFilter.ARTISTS -> LibraryArtistsScreen(
-                            navController,
-                            { filterType = LibraryFilter.LIBRARY },
-                        )
+                        LibraryFilter.ARTISTS ->
+                            LibraryArtistsScreen(
+                                navController,
+                                { filterType = LibraryFilter.LIBRARY },
+                            )
 
-                        LibraryFilter.DEVICE -> LocalSongsScreen(
-                            navController = navController,
-                            onDeselect = { filterType = LibraryFilter.LIBRARY },
-                        )
-                        LibraryFilter.SPOTIFY -> LibrarySpotifyPlaylistsScreen(
-                            navController,
-                            filterContent,
-                        )
+                        LibraryFilter.DEVICE ->
+                            LocalSongsScreen(
+                                navController = navController,
+                                onDeselect = { filterType = LibraryFilter.LIBRARY },
+                            )
+                        LibraryFilter.SPOTIFY ->
+                            LibrarySpotifyPlaylistsScreen(
+                                navController,
+                                filterContent,
+                            )
                     }
                 }
 
@@ -149,11 +152,13 @@ fun LibraryScreen(
                 adManager?.let { manager ->
                     BannerAdView(
                         adManager = manager,
-                        modifier = Modifier.padding(
-                            bottom = LocalPlayerAwareWindowInsets.current
-                                .asPaddingValues()
-                                .calculateBottomPadding()
-                        )
+                        modifier =
+                            Modifier.padding(
+                                bottom =
+                                    LocalPlayerAwareWindowInsets.current
+                                        .asPaddingValues()
+                                        .calculateBottomPadding(),
+                            ),
                     )
                 }
             }

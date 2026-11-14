@@ -137,7 +137,7 @@ fun LyricsMenu(
             icon = {
                 Icon(
                     painter = painterResource(R.drawable.search),
-                    contentDescription = null
+                    contentDescription = null,
                 )
             },
             title = { Text(stringResource(R.string.search_lyrics)) },
@@ -159,7 +159,7 @@ fun LyricsMenu(
                                 Intent(Intent.ACTION_WEB_SEARCH).apply {
                                     putExtra(
                                         SearchManager.QUERY,
-                                        "${artistField.text} ${titleField.text} lyrics"
+                                        "${artistField.text} ${titleField.text} lyrics",
                                     )
                                 },
                             )
@@ -178,7 +178,7 @@ fun LyricsMenu(
                             searchMediaMetadata.id,
                             titleField.text,
                             artistField.text,
-                            searchMediaMetadata.duration
+                            searchMediaMetadata.duration,
                         )
                         showSearchResultDialog = true
                     },
@@ -317,13 +317,14 @@ fun LyricsMenu(
     }
 
     GridMenu(
-        modifier = Modifier.height(
-            when {
-                onChooseFetchedLyrics != null && onAdjustSync != null -> 320.dp
-                onChooseFetchedLyrics != null || onAdjustSync != null -> 260.dp
-                else -> 200.dp
-            }
-        ),
+        modifier =
+            Modifier.height(
+                when {
+                    onChooseFetchedLyrics != null && onAdjustSync != null -> 320.dp
+                    onChooseFetchedLyrics != null || onAdjustSync != null -> 260.dp
+                    else -> 200.dp
+                },
+            ),
         contentPadding =
             PaddingValues(
                 start = 8.dp,

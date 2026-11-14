@@ -35,8 +35,8 @@ import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.core.content.FileProvider
 import com.Chenkham.Echofy.R
-import com.Chenkham.Echofy.db.entities.SongWithStats
 import com.Chenkham.Echofy.db.entities.Artist
+import com.Chenkham.Echofy.db.entities.SongWithStats
 import com.Chenkham.Echofy.ui.theme.StatsColorPalette
 import com.Chenkham.Echofy.ui.theme.StatsPalettes
 import com.Chenkham.Echofy.ui.theme.StatsTemplate
@@ -53,17 +53,17 @@ fun StatsShareDialog(
     topArtists: List<Artist>,
     totalListenTime: Long,
     periodText: String,
-    onDismiss: () -> Unit
+    onDismiss: () -> Unit,
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
-    
+
     // State
     var selectedTemplate by remember { mutableStateOf<StatsTemplate>(StatsTemplate.Modern) }
     var selectedPalette by remember { mutableStateOf<StatsColorPalette>(StatsPalettes.EchofyPurple) }
     var showTopSongs by remember { mutableStateOf(true) }
     var showTopArtists by remember { mutableStateOf(true) }
-    
+
     // View Capture State
     var captureView by remember { mutableStateOf<View?>(null) }
     var isCapturing by remember { mutableStateOf(false) }
@@ -71,13 +71,17 @@ fun StatsShareDialog(
 
     Dialog(
         onDismissRequest = onDismiss,
-        properties = DialogProperties(usePlatformDefaultWidth = false)
+        properties = DialogProperties(usePlatformDefaultWidth = false),
     ) {
         Scaffold(
             modifier = Modifier.fillMaxSize(),
             topBar = {
                 TopAppBar(
-            colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent, scrolledContainerColor = Color.Transparent),
+                    colors =
+                        TopAppBarDefaults.topAppBarColors(
+                            containerColor = Color.Transparent,
+                            scrolledContainerColor = Color.Transparent,
+                        ),
                     title = { Text("Share Stats") },
                     navigationIcon = {
                         IconButton(onClick = onDismiss) {
@@ -94,90 +98,110 @@ fun StatsShareDialog(
                                         val view = captureView
                                         if (view != null && isViewReady) {
                                             // Use withContext to ensure we're on main thread for view operations
-                                            val bitmap = withContext(Dispatchers.Main) {
-                                                // IMPORTANT: Set layer type to SOFTWARE to handle hardware bitmaps from Coil
-                                                // This must be done BEFORE drawing to avoid "Software rendering doesn't support hardware bitmaps" error
-                                                val originalLayerType = view.layerType
-                                                view.setLayerType(View.LAYER_TYPE_SOFTWARE, null)
-                                                
-                                                try {
-                                                    // Force invalidation and wait for compositions
-                                                    view.invalidate()
-                                                    kotlinx.coroutines.delay(500)
+                                            val bitmap =
+                                                withContext(Dispatchers.Main) {
+                                                    // IMPORTANT: Set layer type to SOFTWARE to handle hardware bitmaps from Coil
+                                                    // This must be done BEFORE drawing to avoid "Software rendering doesn't support hardware bitmaps" error
+                                                    val originalLayerType = view.layerType
+                                                    view.setLayerType(View.LAYER_TYPE_SOFTWARE, null)
 
-                                                    // Get the actual view dimensions or use defaults
-                                                    val targetWidth = 1080
-                                                    val targetHeight = if (view.height > 0) view.height else 1600
+                                                    try {
+                                                        // Force invalidation and wait for compositions
+                                                        view.invalidate()
+                                                        kotlinx.coroutines.delay(500)
 
-                                                    // Force measure and layout with EXACTLY mode for predictable sizing
-                                                    val widthSpec = View.MeasureSpec.makeMeasureSpec(targetWidth, View.MeasureSpec.EXACTLY)
-                                                    val heightSpec = View.MeasureSpec.makeMeasureSpec(targetHeight, View.MeasureSpec.AT_MOST)
-                                                    view.measure(widthSpec, heightSpec)
+                                                        // Get the actual view dimensions or use defaults
+                                                        val targetWidth = 1080
+                                                        val targetHeight = if (view.height > 0) view.height else 1600
 
-                                                    val measuredWidth = view.measuredWidth.coerceAtLeast(targetWidth)
-                                                    val measuredHeight = view.measuredHeight.coerceAtLeast(800)
+                                                        // Force measure and layout with EXACTLY mode for predictable sizing
+                                                        val widthSpec =
+                                                            View.MeasureSpec.makeMeasureSpec(
+                                                                targetWidth,
+                                                                View.MeasureSpec.EXACTLY,
+                                                            )
+                                                        val heightSpec =
+                                                            View.MeasureSpec.makeMeasureSpec(
+                                                                targetHeight,
+                                                                View.MeasureSpec.AT_MOST,
+                                                            )
+                                                        view.measure(widthSpec, heightSpec)
 
-                                                    view.layout(0, 0, measuredWidth, measuredHeight)
+                                                        val measuredWidth = view.measuredWidth.coerceAtLeast(targetWidth)
+                                                        val measuredHeight = view.measuredHeight.coerceAtLeast(800)
 
-                                                    // Force another invalidation and wait for layout to complete
-                                                    view.invalidate()
-                                                    kotlinx.coroutines.delay(300)
+                                                        view.layout(0, 0, measuredWidth, measuredHeight)
 
-                                                    // Create bitmap using Canvas (more reliable than drawToBitmap)
-                                                    val bitmap = Bitmap.createBitmap(measuredWidth, measuredHeight, Bitmap.Config.ARGB_8888)
-                                                    val canvas = Canvas(bitmap)
+                                                        // Force another invalidation and wait for layout to complete
+                                                        view.invalidate()
+                                                        kotlinx.coroutines.delay(300)
 
-                                                    // Draw a background first in case of transparency
-                                                    canvas.drawColor(android.graphics.Color.TRANSPARENT)
+                                                        // Create bitmap using Canvas (more reliable than drawToBitmap)
+                                                        val bitmap =
+                                                            Bitmap.createBitmap(
+                                                                measuredWidth,
+                                                                measuredHeight,
+                                                                Bitmap.Config.ARGB_8888,
+                                                            )
+                                                        val canvas = Canvas(bitmap)
 
-                                                    view.draw(canvas)
-                                                    bitmap
-                                                } finally {
-                                                    // Restore original layer type
-                                                    view.setLayerType(originalLayerType, null)
+                                                        // Draw a background first in case of transparency
+                                                        canvas.drawColor(android.graphics.Color.TRANSPARENT)
+
+                                                        view.draw(canvas)
+                                                        bitmap
+                                                    } finally {
+                                                        // Restore original layer type
+                                                        view.setLayerType(originalLayerType, null)
+                                                    }
                                                 }
-                                            }
 
                                             shareBitmap(context, bitmap)
                                         } else {
                                             Toast.makeText(context, "Please wait for the preview to load", Toast.LENGTH_SHORT).show()
                                         }
                                     } catch (e: Exception) {
-                                        Toast.makeText(context, "Failed to capture image: ${e.message}. Please wait for the preview to load and try again.", Toast.LENGTH_LONG).show()
+                                        Toast.makeText(
+                                            context,
+                                            "Failed to capture image: ${e.message}. Please wait for the preview to load and try again.",
+                                            Toast.LENGTH_LONG,
+                                        ).show()
                                         e.printStackTrace()
                                     } finally {
                                         isCapturing = false
                                     }
                                 }
                             },
-                            enabled = !isCapturing && isViewReady
+                            enabled = !isCapturing && isViewReady,
                         ) {
                             if (isCapturing) {
                                 CircularProgressIndicator(
                                     modifier = Modifier.size(16.dp),
-                                    strokeWidth = 2.dp
+                                    strokeWidth = 2.dp,
                                 )
                             } else {
                                 Text("Share", fontWeight = FontWeight.Bold)
                             }
                         }
-                    }
+                    },
                 )
-            }
+            },
         ) { padding ->
             Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(padding)
-                    .verticalScroll(rememberScrollState()),
-                horizontalAlignment = Alignment.CenterHorizontally
+                modifier =
+                    Modifier
+                        .fillMaxSize()
+                        .padding(padding)
+                        .verticalScroll(rememberScrollState()),
+                horizontalAlignment = Alignment.CenterHorizontally,
             ) {
                 // Preview Area
                 Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(24.dp),
-                    contentAlignment = Alignment.Center
+                    modifier =
+                        Modifier
+                            .fillMaxWidth()
+                            .padding(24.dp),
+                    contentAlignment = Alignment.Center,
                 ) {
                     // We use AndroidView to host the Compose content so we can get a View reference to drawToBitmap
                     AndroidView(
@@ -193,7 +217,7 @@ fun StatsShareDialog(
                                         palette = selectedPalette,
                                         showTopSongs = showTopSongs,
                                         showTopArtists = showTopArtists,
-                                        modifier = Modifier.shadow(16.dp, RoundedCornerShape(24.dp))
+                                        modifier = Modifier.shadow(16.dp, RoundedCornerShape(24.dp)),
                                     )
                                 }
                                 // Ensure view is measured before allowing capture
@@ -204,8 +228,8 @@ fun StatsShareDialog(
                             }
                         },
                         update = { view ->
-                             (view as? ComposeView)?.setContent {
-                                 StatsShareCard(
+                            (view as? ComposeView)?.setContent {
+                                StatsShareCard(
                                     topSongs = topSongs,
                                     topArtists = topArtists,
                                     totalListenTime = totalListenTime,
@@ -214,42 +238,43 @@ fun StatsShareDialog(
                                     palette = selectedPalette,
                                     showTopSongs = showTopSongs,
                                     showTopArtists = showTopArtists,
-                                    modifier = Modifier.shadow(16.dp, RoundedCornerShape(24.dp))
+                                    modifier = Modifier.shadow(16.dp, RoundedCornerShape(24.dp)),
                                 )
-                             }
-                             captureView = view
+                            }
+                            captureView = view
                         },
-                        modifier = Modifier.wrapContentSize()
+                        modifier = Modifier.wrapContentSize(),
                     )
                 }
-                
+
                 // Controls Area
                 Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .background(MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp))
-                        .padding(24.dp)
+                    modifier =
+                        Modifier
+                            .fillMaxWidth()
+                            .background(MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp))
+                            .padding(24.dp),
                 ) {
-                     // Toggles
+                    // Toggles
                     Row(
                         modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween
+                        horizontalArrangement = Arrangement.SpaceBetween,
                     ) {
                         FilterChip(
                             selected = showTopSongs,
                             onClick = { showTopSongs = !showTopSongs },
                             label = { Text("Songs") },
-                            leadingIcon = { if(showTopSongs) Icon(painterResource(R.drawable.check), null) }
+                            leadingIcon = { if (showTopSongs) Icon(painterResource(R.drawable.check), null) },
                         )
                         Spacer(Modifier.width(8.dp))
                         FilterChip(
                             selected = showTopArtists,
                             onClick = { showTopArtists = !showTopArtists },
                             label = { Text("Artists") },
-                            leadingIcon = { if(showTopArtists) Icon(painterResource(R.drawable.check), null) }
+                            leadingIcon = { if (showTopArtists) Icon(painterResource(R.drawable.check), null) },
                         )
                     }
-                    
+
                     Spacer(Modifier.height(16.dp))
                     Text("Template", style = MaterialTheme.typography.titleSmall)
                     Spacer(Modifier.height(8.dp))
@@ -258,13 +283,15 @@ fun StatsShareDialog(
                             SuggestionChip(
                                 onClick = { selectedTemplate = template },
                                 label = { Text(template.name) },
-                                colors = SuggestionChipDefaults.suggestionChipColors(
-                                    containerColor = if (selectedTemplate == template) MaterialTheme.colorScheme.primaryContainer else Color.Transparent
-                                ),
-                                border = SuggestionChipDefaults.suggestionChipBorder(
-                                    enabled = true,
-                                    borderColor = if (selectedTemplate == template) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline
-                                )
+                                colors =
+                                    SuggestionChipDefaults.suggestionChipColors(
+                                        containerColor = if (selectedTemplate == template) MaterialTheme.colorScheme.primaryContainer else Color.Transparent,
+                                    ),
+                                border =
+                                    SuggestionChipDefaults.suggestionChipBorder(
+                                        enabled = true,
+                                        borderColor = if (selectedTemplate == template) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline,
+                                    ),
                             )
                         }
                     }
@@ -275,20 +302,21 @@ fun StatsShareDialog(
                     LazyRow(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                         items(StatsPalettes.getAll()) { palette ->
                             Box(
-                                modifier = Modifier
-                                    .size(48.dp)
-                                    .clip(CircleShape)
-                                    .background(palette.backgroundBrush)
-                                    .border(
-                                        width = if (selectedPalette == palette) 3.dp else 0.dp,
-                                        color = MaterialTheme.colorScheme.primary,
-                                        shape = CircleShape
-                                    )
-                                    .clickable { selectedPalette = palette }
+                                modifier =
+                                    Modifier
+                                        .size(48.dp)
+                                        .clip(CircleShape)
+                                        .background(palette.backgroundBrush)
+                                        .border(
+                                            width = if (selectedPalette == palette) 3.dp else 0.dp,
+                                            color = MaterialTheme.colorScheme.primary,
+                                            shape = CircleShape,
+                                        )
+                                        .clickable { selectedPalette = palette },
                             )
                         }
                     }
-                    
+
                     Spacer(Modifier.height(32.dp)) // Extra padding at bottom
                 }
             }
@@ -296,23 +324,26 @@ fun StatsShareDialog(
     }
 }
 
-private fun shareBitmap(context: Context, bitmap: Bitmap) {
+private fun shareBitmap(
+    context: Context,
+    bitmap: Bitmap,
+) {
     try {
         val cacheDir = File(context.cacheDir, "share")
         if (!cacheDir.exists()) {
             cacheDir.mkdirs()
         }
-        
+
         // Clean up old share files
         cacheDir.listFiles()?.forEach { file ->
             if (file.name.startsWith("echofy_stats_share_")) {
                 file.delete()
             }
         }
-        
+
         // Save to a file
         val file = File(cacheDir, "echofy_stats_share_${System.currentTimeMillis()}.png")
-        
+
         FileOutputStream(file).use { out ->
             val compressed = bitmap.compress(Bitmap.CompressFormat.PNG, 100, out)
             if (!compressed) {
@@ -320,24 +351,26 @@ private fun shareBitmap(context: Context, bitmap: Bitmap) {
             }
             out.flush()
         }
-        
+
         if (!file.exists() || file.length() == 0L) {
             throw Exception("Failed to save image file")
         }
-        
-        val uri = FileProvider.getUriForFile(
-            context,
-            "${context.packageName}.fileprovider",
-            file
-        )
-        
-        val intent = Intent().apply {
-            action = Intent.ACTION_SEND
-            type = "image/png"
-            putExtra(Intent.EXTRA_STREAM, uri)
-            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-        }
-        
+
+        val uri =
+            FileProvider.getUriForFile(
+                context,
+                "${context.packageName}.fileprovider",
+                file,
+            )
+
+        val intent =
+            Intent().apply {
+                action = Intent.ACTION_SEND
+                type = "image/png"
+                putExtra(Intent.EXTRA_STREAM, uri)
+                addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+            }
+
         context.startActivity(Intent.createChooser(intent, "Share Stats"))
     } catch (e: Exception) {
         e.printStackTrace()

@@ -4,8 +4,6 @@
  * Licensed Under GPL-3.0 | see git history for contributors
  */
 
-
-
 package com.Chenkham.Echofy.extensions
 
 import androidx.sqlite.db.SimpleSQLiteQuery

@@ -13,8 +13,7 @@ plugins {
     id("com.google.gms.google-services")
 }
 
-fun String.toBuildConfigString(): String =
-    "\"" + replace("\\", "\\\\").replace("\"", "\\\"") + "\""
+fun String.toBuildConfigString(): String = "\"" + replace("\\", "\\\\").replace("\"", "\\\"") + "\""
 
 android {
     namespace = "com.Chenkham.Echofy"
@@ -38,7 +37,11 @@ android {
 
         val lastFmKey = localProperties.getProperty("LASTFM_API_KEY") ?: System.getenv("LASTFM_API_KEY") ?: "dummy_api_key"
         val lastFmSecret = localProperties.getProperty("LASTFM_SECRET") ?: System.getenv("LASTFM_SECRET") ?: "dummy_api_secret"
-        fun appProperty(name: String, fallback: String): String =
+
+        fun appProperty(
+            name: String,
+            fallback: String,
+        ): String =
             localProperties.getProperty(name)
                 ?: providers.gradleProperty(name).orNull
                 ?: System.getenv(name)
@@ -78,8 +81,8 @@ android {
                 keyPassword = props.getProperty("keyPassword")
                 enableV1Signing = true
                 enableV2Signing = true
-                enableV3Signing = true  // Android 9+ APK Signature Scheme v3
-                enableV4Signing = true  // Android 11+ incremental installs
+                enableV3Signing = true // Android 9+ APK Signature Scheme v3
+                enableV4Signing = true // Android 11+ incremental installs
             }
         }
     }
@@ -91,14 +94,15 @@ android {
             isCrunchPngs = false
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
-                "proguard-rules.pro"
+                "proguard-rules.pro",
             )
             // Use release signing if available, otherwise use debug
-            signingConfig = if (rootProject.file("keystore.properties").exists()) {
-                signingConfigs.getByName("release")
-            } else {
-                signingConfigs.getByName("debug")
-            }
+            signingConfig =
+                if (rootProject.file("keystore.properties").exists()) {
+                    signingConfigs.getByName("release")
+                } else {
+                    signingConfigs.getByName("debug")
+                }
         }
         debug {
             isMinifyEnabled = false
@@ -115,10 +119,10 @@ android {
             reset()
             // Only include common architectures
             include("armeabi-v7a", "arm64-v8a", "x86_64")
-            isUniversalApk = true  // Enable universal APK for sharing
+            isUniversalApk = true // Enable universal APK for sharing
         }
     }
-    
+
     // Custom APK naming: Echofy_version_abi.apk
     applicationVariants.all {
         val variant = this
@@ -126,7 +130,7 @@ android {
             val output = this as com.android.build.gradle.internal.api.BaseVariantOutputImpl
             val abi = output.getFilter(com.android.build.api.variant.FilterConfiguration.FilterType.ABI.name) ?: "universal"
             val versionName = variant.versionName
-            output.outputFileName = "Echofy_${versionName}_${abi}.apk"
+            output.outputFileName = "Echofy_${versionName}_$abi.apk"
         }
     }
 
@@ -189,7 +193,7 @@ android {
         featureFlags.addAll(
             org.jetbrains.kotlin.compose.compiler.gradle.ComposeFeatureFlag.StrongSkipping,
             org.jetbrains.kotlin.compose.compiler.gradle.ComposeFeatureFlag.IntrinsicRemember,
-            org.jetbrains.kotlin.compose.compiler.gradle.ComposeFeatureFlag.OptimizeNonSkippingGroups
+            org.jetbrains.kotlin.compose.compiler.gradle.ComposeFeatureFlag.OptimizeNonSkippingGroups,
         )
         // Additional Compose performance options
         stabilityConfigurationFiles.add(rootProject.layout.projectDirectory.file("compose_compiler_config.conf"))
@@ -208,8 +212,6 @@ android {
         includeInBundle = false
     }
 }
-
-
 
 ksp {
     arg("room.schemaLocation", "$projectDir/schemas")
@@ -282,6 +284,7 @@ dependencies {
     implementation(libs.work.runtime.ktx)
     implementation(libs.profileinstaller)
     implementation(libs.constraintlayout)
+    debugImplementation(libs.leakcanary)
     ksp(libs.room.compiler)
     implementation(libs.room.ktx)
 
@@ -318,10 +321,10 @@ dependencies {
     implementation(libs.ktor.client.core)
     coreLibraryDesugaring(libs.desugaring)
     implementation(libs.timber)
-    
+
     // Appwrite SDK for Listen Together feature
     implementation("io.appwrite:sdk-for-android:5.1.0")
-    
+
     // Firebase — push notifications and analytics
     // firebase-auth and firebase-database removed; Together now uses Appwrite
     implementation(platform("com.google.firebase:firebase-bom:32.7.0"))
@@ -338,7 +341,7 @@ dependencies {
 
     // Lottie for Seasonal Live Wallpapers
     implementation("com.airbnb.android:lottie-compose:6.3.0")
-    
+
     // Google Sign-In / One Tap
     implementation("com.google.android.gms:play-services-auth:20.7.0")
     implementation("androidx.credentials:credentials:1.2.0")

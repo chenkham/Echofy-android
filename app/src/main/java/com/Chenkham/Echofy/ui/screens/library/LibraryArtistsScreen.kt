@@ -78,10 +78,11 @@ fun LibraryArtistsScreen(
     var viewType by rememberEnumPreference(ArtistViewTypeKey, LibraryViewType.GRID)
 
     var filter by rememberEnumPreference(ArtistFilterKey, ArtistFilter.LIKED)
-    val (sortType, onSortTypeChange) = rememberEnumPreference(
-        ArtistSortTypeKey,
-        ArtistSortType.CREATE_DATE
-    )
+    val (sortType, onSortTypeChange) =
+        rememberEnumPreference(
+            ArtistSortTypeKey,
+            ArtistSortType.CREATE_DATE,
+        )
     val (sortDescending, onSortDescendingChange) = rememberPreference(ArtistSortDescendingKey, true)
     val gridItemSize by rememberEnumPreference(GridItemsSizeKey, GridItemSize.SMALL)
 
@@ -104,7 +105,7 @@ fun LibraryArtistsScreen(
                 chips =
                     listOf(
                         ArtistFilter.LIKED to stringResource(R.string.filter_liked),
-                        ArtistFilter.LIBRARY to stringResource(R.string.filter_library)
+                        ArtistFilter.LIBRARY to stringResource(R.string.filter_library),
                     ),
                 currentValue = filter,
                 onValueUpdate = {
@@ -220,7 +221,7 @@ fun LibraryArtistsScreen(
                                 EmptyPlaceholder(
                                     icon = R.drawable.artist,
                                     text = stringResource(R.string.library_artist_empty),
-                                    modifier = Modifier.animateItem()
+                                    modifier = Modifier.animateItem(),
                                 )
                             }
                         }
@@ -235,7 +236,7 @@ fun LibraryArtistsScreen(
                                 menuState = menuState,
                                 coroutineScope = coroutineScope,
                                 modifier = Modifier.animateItem(),
-                                artist = artist
+                                artist = artist,
                             )
                         }
                     }
@@ -272,7 +273,7 @@ fun LibraryArtistsScreen(
                                 EmptyPlaceholder(
                                     icon = R.drawable.artist,
                                     text = stringResource(R.string.library_artist_empty),
-                                    modifier = Modifier.animateItem()
+                                    modifier = Modifier.animateItem(),
                                 )
                             }
                         }
@@ -287,7 +288,7 @@ fun LibraryArtistsScreen(
                                 menuState = menuState,
                                 coroutineScope = coroutineScope,
                                 modifier = Modifier.animateItem(),
-                                artist = artist
+                                artist = artist,
                             )
                         }
                     }

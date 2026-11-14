@@ -120,21 +120,22 @@ class AvatarPreferenceManager(private val context: Context) {
         }
     }
 
-    val getAvatarSelection: Flow<AvatarSelection> = context.avatarDataStore.data
-        .map { preferences ->
-            val type = preferences[SELECTED_AVATAR_TYPE_KEY] ?: "default"
-            when (type) {
-                "dicebear" -> {
-                    val url = preferences[DICEBEAR_AVATAR_URL_KEY]
-                    if (url != null) AvatarSelection.DiceBear(url) else AvatarSelection.Default
+    val getAvatarSelection: Flow<AvatarSelection> =
+        context.avatarDataStore.data
+            .map { preferences ->
+                val type = preferences[SELECTED_AVATAR_TYPE_KEY] ?: "default"
+                when (type) {
+                    "dicebear" -> {
+                        val url = preferences[DICEBEAR_AVATAR_URL_KEY]
+                        if (url != null) AvatarSelection.DiceBear(url) else AvatarSelection.Default
+                    }
+                    "custom" -> {
+                        val uri = preferences[CUSTOM_AVATAR_URI_KEY]
+                        if (uri != null) AvatarSelection.Custom(uri) else AvatarSelection.Default
+                    }
+                    else -> AvatarSelection.Default
                 }
-                "custom" -> {
-                    val uri = preferences[CUSTOM_AVATAR_URI_KEY]
-                    if (uri != null) AvatarSelection.Custom(uri) else AvatarSelection.Default
-                }
-                else -> AvatarSelection.Default
             }
-        }
 }
 
 /**
@@ -142,7 +143,9 @@ class AvatarPreferenceManager(private val context: Context) {
  */
 sealed class AvatarSelection {
     object Default : AvatarSelection()
+
     data class DiceBear(val url: String) : AvatarSelection()
+
     data class Custom(val uri: String) : AvatarSelection()
 }
 
@@ -179,9 +182,8 @@ enum class DiceBearStyle(val value: String, val displayName: String) {
     PIXEL_ART_NEUTRAL("pixel-art-neutral", "Pixel Art Neutral"),
     RINGS("rings", "Rings"),
     SHAPES("shapes", "Shapes"),
-    THUMBS("thumbs", "Thumbs")
+    THUMBS("thumbs", "Thumbs"),
 }
-
 
 /**
  * Generador de URLs de DiceBear
@@ -194,7 +196,7 @@ object DiceBearGenerator {
         seed: String? = null,
         size: Int = 200,
         backgroundColor: String? = null,
-        format: String = "png" // ðŸ‘ˆ antes estaba "svg"
+        format: String = "png", // ðŸ‘ˆ antes estaba "svg"
     ): String {
         val actualSeed = seed ?: generateRandomSeed()
         var url = "$BASE_URL/${style.value}/$format?seed=$actualSeed&size=$size"
@@ -204,37 +206,36 @@ object DiceBearGenerator {
         return url
     }
 
-
     fun generateRandomSeed(): String {
         return Random.nextLong(0, Long.MAX_VALUE).toString()
     }
 
     fun getPresetAvatars(style: DiceBearStyle = DiceBearStyle.SHAPES): List<String> {
-        val seeds = listOf(
-            "Amaya",
-            "Destiny",
-            "Sarah",
-            "Alexander",
-            "Jack",
-            "Wyatt",
-            "Emery",
-            "Jameson",
-            "Avery",
-            "Sara",
-            "Aiden",
-            "Sophia",
-            "Riley",
-            "Brian",
-            "Jude",
-            "Luis",
-            "Christian",
-            "Eliza",
-            "Leo",
-            "Vivian"
-        )
+        val seeds =
+            listOf(
+                "Amaya",
+                "Destiny",
+                "Sarah",
+                "Alexander",
+                "Jack",
+                "Wyatt",
+                "Emery",
+                "Jameson",
+                "Avery",
+                "Sara",
+                "Aiden",
+                "Sophia",
+                "Riley",
+                "Brian",
+                "Jude",
+                "Luis",
+                "Christian",
+                "Eliza",
+                "Leo",
+                "Vivian",
+            )
         return seeds.map { generateAvatarUrl(style, it) }
     }
-
 }
 
 /**
@@ -244,16 +245,14 @@ data class AvatarUiState(
     val isLoading: Boolean = false,
     val error: String? = null,
     val currentSelection: AvatarSelection = AvatarSelection.Default,
-    val showDiceBearDialog: Boolean = false
+    val showDiceBearDialog: Boolean = false,
 )
 
 /**
  * Componente principal del selector de avatar
  */
 @Composable
-fun AvatarSelector(
-    modifier: Modifier = Modifier
-) {
+fun AvatarSelector(modifier: Modifier = Modifier) {
     val context = LocalContext.current
     val avatarManager = remember { AvatarPreferenceManager(context) }
     val currentSelection by avatarManager.getAvatarSelection.collectAsState(initial = AvatarSelection.Default)
@@ -270,31 +269,33 @@ fun AvatarSelector(
     val coroutineScope = rememberCoroutineScope()
 
     // Launcher para seleccionar imagen personalizada
-    val galleryLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.GetContent()
-    ) { uri: Uri? ->
-        uri?.let {
-            uiState = uiState.copy(isLoading = true, error = null)
+    val galleryLauncher =
+        rememberLauncherForActivityResult(
+            contract = ActivityResultContracts.GetContent(),
+        ) { uri: Uri? ->
+            uri?.let {
+                uiState = uiState.copy(isLoading = true, error = null)
 
-            coroutineScope.launch {
-                val result = saveImageToInternalStorage(context, it)
-                result.fold(
-                    onSuccess = { savedFile ->
-                        val savedUri = Uri.fromFile(savedFile)
-                        avatarManager.saveAvatarSelection(AvatarSelection.Custom(savedUri.toString()))
-                    },
-                    onFailure = { exception ->
-                        uiState = uiState.copy(
-                            error = context.getString(R.string.error_saving_image),
-                            isLoading = false
-                        )
-                        Log.e("AvatarSelector", "Error saving image", exception)
-                    }
-                )
-                uiState = uiState.copy(isLoading = false)
+                coroutineScope.launch {
+                    val result = saveImageToInternalStorage(context, it)
+                    result.fold(
+                        onSuccess = { savedFile ->
+                            val savedUri = Uri.fromFile(savedFile)
+                            avatarManager.saveAvatarSelection(AvatarSelection.Custom(savedUri.toString()))
+                        },
+                        onFailure = { exception ->
+                            uiState =
+                                uiState.copy(
+                                    error = context.getString(R.string.error_saving_image),
+                                    isLoading = false,
+                                )
+                            Log.e("AvatarSelector", "Error saving image", exception)
+                        },
+                    )
+                    uiState = uiState.copy(isLoading = false)
+                }
             }
         }
-    }
 
     // Mostrar error temporalmente
     uiState.error?.let { error ->
@@ -307,30 +308,31 @@ fun AvatarSelector(
     Card(
         modifier = modifier.fillMaxWidth(),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
     ) {
         Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp)
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp),
         ) {
             // TÃ­tulo
             Row(
                 verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth(),
             ) {
                 Text(
                     text = stringResource(id = R.string.avatar_selection),
                     style = MaterialTheme.typography.titleMedium,
                     color = MaterialTheme.colorScheme.onSurface,
-                    fontWeight = FontWeight.Medium
+                    fontWeight = FontWeight.Medium,
                 )
                 Spacer(modifier = Modifier.width(8.dp))
                 if (uiState.isLoading) {
                     CircularProgressIndicator(
                         modifier = Modifier.size(16.dp),
                         strokeWidth = 2.dp,
-                        color = MaterialTheme.colorScheme.primary
+                        color = MaterialTheme.colorScheme.primary,
                     )
                 }
             }
@@ -341,7 +343,7 @@ fun AvatarSelector(
             CurrentAvatarDisplay(
                 selection = uiState.currentSelection,
                 isLoading = uiState.isLoading,
-                modifier = Modifier.align(Alignment.CenterHorizontally)
+                modifier = Modifier.align(Alignment.CenterHorizontally),
             )
 
             Spacer(modifier = Modifier.height(16.dp))
@@ -349,17 +351,17 @@ fun AvatarSelector(
             // Botones de acciÃ³n
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
             ) {
                 OutlinedButton(
                     onClick = { galleryLauncher.launch("image/*") },
                     modifier = Modifier.weight(1f),
-                    enabled = !uiState.isLoading
+                    enabled = !uiState.isLoading,
                 ) {
                     Icon(
                         painter = painterResource(R.drawable.add),
                         contentDescription = null,
-                        modifier = Modifier.size(16.dp)
+                        modifier = Modifier.size(16.dp),
                     )
                     Spacer(modifier = Modifier.width(4.dp))
                     Text(stringResource(id = R.string.custom))
@@ -370,12 +372,12 @@ fun AvatarSelector(
                         uiState = uiState.copy(showDiceBearDialog = true)
                     },
                     modifier = Modifier.weight(1f),
-                    enabled = !uiState.isLoading
+                    enabled = !uiState.isLoading,
                 ) {
                     Icon(
                         painter = painterResource(R.drawable.palette),
                         contentDescription = null,
-                        modifier = Modifier.size(16.dp)
+                        modifier = Modifier.size(16.dp),
                     )
                     Spacer(modifier = Modifier.width(4.dp))
                     Text("Avatars")
@@ -393,7 +395,7 @@ fun AvatarSelector(
                     }
                 },
                 modifier = Modifier.fillMaxWidth(),
-                enabled = uiState.currentSelection !is AvatarSelection.Default && !uiState.isLoading
+                enabled = uiState.currentSelection !is AvatarSelection.Default && !uiState.isLoading,
             ) {
                 Text(stringResource(id = R.string.restore_default_avatar))
             }
@@ -403,26 +405,27 @@ fun AvatarSelector(
                 uiState.error?.let { error ->
                     Spacer(modifier = Modifier.height(12.dp))
                     Card(
-                        colors = CardDefaults.cardColors(
-                            containerColor = MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.7f)
-                        ),
-                        modifier = Modifier.fillMaxWidth()
+                        colors =
+                            CardDefaults.cardColors(
+                                containerColor = MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.7f),
+                            ),
+                        modifier = Modifier.fillMaxWidth(),
                     ) {
                         Row(
                             modifier = Modifier.padding(12.dp),
-                            verticalAlignment = Alignment.CenterVertically
+                            verticalAlignment = Alignment.CenterVertically,
                         ) {
                             Icon(
                                 painter = painterResource(R.drawable.info),
                                 contentDescription = null,
                                 tint = MaterialTheme.colorScheme.onErrorContainer,
-                                modifier = Modifier.size(16.dp)
+                                modifier = Modifier.size(16.dp),
                             )
                             Spacer(modifier = Modifier.width(8.dp))
                             Text(
                                 text = error,
                                 color = MaterialTheme.colorScheme.onErrorContainer,
-                                style = MaterialTheme.typography.bodySmall
+                                style = MaterialTheme.typography.bodySmall,
                             )
                         }
                     }
@@ -443,7 +446,7 @@ fun AvatarSelector(
                 }
                 uiState = uiState.copy(showDiceBearDialog = false)
             },
-            currentSelection = uiState.currentSelection
+            currentSelection = uiState.currentSelection,
         )
     }
 }
@@ -456,7 +459,7 @@ fun AvatarSelector(
 private fun DiceBearAvatarDialog(
     onDismiss: () -> Unit,
     onAvatarSelected: (String) -> Unit,
-    currentSelection: AvatarSelection
+    currentSelection: AvatarSelection,
 ) {
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
 
@@ -476,32 +479,33 @@ private fun DiceBearAvatarDialog(
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = sheetState,
-        dragHandle = { BottomSheetDefaults.DragHandle() }
+        dragHandle = { BottomSheetDefaults.DragHandle() },
     ) {
         Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .navigationBarsPadding()
-                .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .navigationBarsPadding()
+                    .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
             // TÃ­tulo
             Text(
                 text = "Selecciona un avatar",
                 style = MaterialTheme.typography.titleLarge,
-                modifier = Modifier.align(Alignment.CenterHorizontally)
+                modifier = Modifier.align(Alignment.CenterHorizontally),
             )
 
             // Fila: estilo actual + randomizar
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
-                verticalAlignment = Alignment.CenterVertically
+                verticalAlignment = Alignment.CenterVertically,
             ) {
                 // BotÃ³n para abrir selecciÃ³n de estilo
                 FilledTonalButton(
                     onClick = { showStyleDialog = true },
-                    modifier = Modifier.weight(1f)
+                    modifier = Modifier.weight(1f),
                 ) {
                     Text(selectedStyle.displayName)
                 }
@@ -512,11 +516,11 @@ private fun DiceBearAvatarDialog(
                         isLoading = true
                         avatarUrls = DiceBearGenerator.getPresetAvatars(selectedStyle)
                         isLoading = false
-                    }
+                    },
                 ) {
                     Icon(
                         painter = painterResource(R.drawable.ia_icon),
-                        contentDescription = "Randomizar avatares"
+                        contentDescription = "Randomizar avatares",
                     )
                 }
             }
@@ -524,10 +528,11 @@ private fun DiceBearAvatarDialog(
             // Grid de avatares
             if (isLoading) {
                 Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(200.dp),
-                    contentAlignment = Alignment.Center
+                    modifier =
+                        Modifier
+                            .fillMaxWidth()
+                            .height(200.dp),
+                    contentAlignment = Alignment.Center,
                 ) {
                     CircularProgressIndicator()
                 }
@@ -537,24 +542,25 @@ private fun DiceBearAvatarDialog(
                     contentPadding = PaddingValues(8.dp),
                     verticalArrangement = Arrangement.spacedBy(8.dp),
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    modifier = Modifier.fillMaxHeight(0.7f)
+                    modifier = Modifier.fillMaxHeight(0.7f),
                 ) {
                     items(avatarUrls) { url ->
                         Card(
-                            modifier = Modifier
-                                .aspectRatio(1f)
-                                .clickable {
-                                    onAvatarSelected(url)
-                                    onDismiss()
-                                },
+                            modifier =
+                                Modifier
+                                    .aspectRatio(1f)
+                                    .clickable {
+                                        onAvatarSelected(url)
+                                        onDismiss()
+                                    },
                             shape = RoundedCornerShape(12.dp),
-                            elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+                            elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
                         ) {
                             AsyncImage(
                                 model = url,
                                 contentDescription = "Avatar DiceBear",
                                 contentScale = ContentScale.Crop,
-                                modifier = Modifier.fillMaxSize()
+                                modifier = Modifier.fillMaxSize(),
                             )
                         }
                     }
@@ -567,28 +573,31 @@ private fun DiceBearAvatarDialog(
     if (showStyleDialog) {
         Dialog(
             onDismissRequest = { showStyleDialog = false },
-            properties = DialogProperties(usePlatformDefaultWidth = false)
+            properties = DialogProperties(usePlatformDefaultWidth = false),
         ) {
             Card(
-                modifier = Modifier
-                    .fillMaxWidth(0.85f)
-                    .fillMaxHeight(0.7f), // mÃ¡ximo 70% de altura de pantalla
-                shape = RoundedCornerShape(16.dp)
+                modifier =
+                    Modifier
+                        .fillMaxWidth(0.85f)
+                        .fillMaxHeight(0.7f),
+                // mÃ¡ximo 70% de altura de pantalla
+                shape = RoundedCornerShape(16.dp),
             ) {
                 Column(
-                    modifier = Modifier
-                        .padding(16.dp)
+                    modifier =
+                        Modifier
+                            .padding(16.dp),
                 ) {
                     Text(
                         text = "Elige un estilo",
                         style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold
+                        fontWeight = FontWeight.Bold,
                     )
                     Spacer(Modifier.height(8.dp))
 
                     LazyColumn(
                         modifier = Modifier.fillMaxHeight(),
-                        verticalArrangement = Arrangement.spacedBy(4.dp)
+                        verticalArrangement = Arrangement.spacedBy(4.dp),
                     ) {
                         items(DiceBearStyle.values()) { style ->
                             TextButton(
@@ -596,13 +605,17 @@ private fun DiceBearAvatarDialog(
                                     selectedStyle = style
                                     showStyleDialog = false
                                 },
-                                modifier = Modifier.fillMaxWidth()
+                                modifier = Modifier.fillMaxWidth(),
                             ) {
                                 Text(
                                     text = style.displayName,
                                     style = MaterialTheme.typography.bodyLarge,
-                                    color = if (style == selectedStyle) MaterialTheme.colorScheme.primary
-                                    else MaterialTheme.colorScheme.onSurface
+                                    color =
+                                        if (style == selectedStyle) {
+                                            MaterialTheme.colorScheme.primary
+                                        } else {
+                                            MaterialTheme.colorScheme.onSurface
+                                        },
                                 )
                             }
                         }
@@ -611,10 +624,7 @@ private fun DiceBearAvatarDialog(
             }
         }
     }
-
 }
-
-
 
 /**
  * Item individual de avatar DiceBear
@@ -623,49 +633,54 @@ private fun DiceBearAvatarDialog(
 private fun DiceBearAvatarItem(
     url: String,
     isSelected: Boolean,
-    onSelected: () -> Unit
+    onSelected: () -> Unit,
 ) {
-    val borderColor = if (isSelected) {
-        MaterialTheme.colorScheme.primary
-    } else {
-        MaterialTheme.colorScheme.outline.copy(alpha = 0.5f)
-    }
+    val borderColor =
+        if (isSelected) {
+            MaterialTheme.colorScheme.primary
+        } else {
+            MaterialTheme.colorScheme.outline.copy(alpha = 0.5f)
+        }
 
     val borderWidth = if (isSelected) 3.dp else 1.dp
 
     Box(
-        modifier = Modifier
-            .aspectRatio(1f)
-            .clip(CircleShape)
-            .border(BorderStroke(borderWidth, borderColor), CircleShape)
-            .clickable { onSelected() },
-        contentAlignment = Alignment.Center
+        modifier =
+            Modifier
+                .aspectRatio(1f)
+                .clip(CircleShape)
+                .border(BorderStroke(borderWidth, borderColor), CircleShape)
+                .clickable { onSelected() },
+        contentAlignment = Alignment.Center,
     ) {
         AsyncImage(
-            model = ImageRequest.Builder(LocalContext.current)
-                .data(url)
-                .crossfade(true)
-                .build(),
+            model =
+                ImageRequest.Builder(LocalContext.current)
+                    .data(url)
+                    .crossfade(true)
+                    .build(),
             contentDescription = "Avatar DiceBear",
             modifier = Modifier.fillMaxSize(),
-            contentScale = ContentScale.Crop
+            contentScale = ContentScale.Crop,
         )
 
         // Indicador de selecciÃ³n
         if (isSelected) {
             Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .clip(CircleShape),
-                contentAlignment = Alignment.Center
+                modifier =
+                    Modifier
+                        .fillMaxSize()
+                        .clip(CircleShape),
+                contentAlignment = Alignment.Center,
             ) {
                 Icon(
                     painter = painterResource(R.drawable.check),
                     contentDescription = "Seleccionado",
-                    modifier = Modifier
-                        .size(24.dp)
-                        .clip(CircleShape),
-                    tint = MaterialTheme.colorScheme.primary
+                    modifier =
+                        Modifier
+                            .size(24.dp)
+                            .clip(CircleShape),
+                    tint = MaterialTheme.colorScheme.primary,
                 )
             }
         }
@@ -679,55 +694,58 @@ private fun DiceBearAvatarItem(
 private fun CurrentAvatarDisplay(
     selection: AvatarSelection,
     isLoading: Boolean,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
 ) {
     val context = LocalContext.current
 
     Box(
-        modifier = modifier
-            .size(80.dp)
-            .clip(CircleShape)
-            .border(
-                width = 3.dp,
-                color = MaterialTheme.colorScheme.primary.copy(alpha = 0.6f),
-                shape = CircleShape
-            ),
-        contentAlignment = Alignment.Center
+        modifier =
+            modifier
+                .size(80.dp)
+                .clip(CircleShape)
+                .border(
+                    width = 3.dp,
+                    color = MaterialTheme.colorScheme.primary.copy(alpha = 0.6f),
+                    shape = CircleShape,
+                ),
+        contentAlignment = Alignment.Center,
     ) {
         when {
             isLoading -> {
                 CircularProgressIndicator(
                     modifier = Modifier.size(40.dp),
                     strokeWidth = 3.dp,
-                    color = MaterialTheme.colorScheme.primary
+                    color = MaterialTheme.colorScheme.primary,
                 )
             }
 
             selection is AvatarSelection.Custom -> {
                 AsyncImage(
-                    model = ImageRequest.Builder(context)
-                        .data(Uri.parse(selection.uri))
-                        .crossfade(true)
-                        .error(R.drawable.person)
-                        .placeholder(R.drawable.person)
-                        .build(),
+                    model =
+                        ImageRequest.Builder(context)
+                            .data(Uri.parse(selection.uri))
+                            .crossfade(true)
+                            .error(R.drawable.person)
+                            .placeholder(R.drawable.person)
+                            .build(),
                     contentDescription = stringResource(id = R.string.custom_avatar),
                     modifier = Modifier.fillMaxSize(),
-                    contentScale = ContentScale.Crop
+                    contentScale = ContentScale.Crop,
                 )
             }
 
             selection is AvatarSelection.DiceBear -> {
                 AsyncImage(
-                    model = ImageRequest.Builder(context)
-                        .data(selection.url)
-                        .crossfade(true)
-                        .error(R.drawable.person)
-                        .placeholder(R.drawable.person)
-                        .build(),
+                    model =
+                        ImageRequest.Builder(context)
+                            .data(selection.url)
+                            .crossfade(true)
+                            .error(R.drawable.person)
+                            .placeholder(R.drawable.person)
+                            .build(),
                     contentDescription = "Avatar DiceBear",
                     modifier = Modifier.fillMaxSize(),
-                    contentScale = ContentScale.Crop
+                    contentScale = ContentScale.Crop,
                 )
             }
 
@@ -747,46 +765,47 @@ private fun DefaultAvatarIcon() {
         painter = painterResource(id = R.drawable.person),
         contentDescription = stringResource(id = R.string.default_avatar),
         modifier = Modifier.size(40.dp),
-        tint = MaterialTheme.colorScheme.onSurfaceVariant
+        tint = MaterialTheme.colorScheme.onSurfaceVariant,
     )
 }
 
 // Funciones utilitarias (las mismas del cÃ³digo anterior)
 private suspend fun saveImageToInternalStorage(
     context: Context,
-    uri: Uri
-): Result<File> = withContext(Dispatchers.IO) {
-    try {
-        context.contentResolver.openInputStream(uri)?.use { inputStream ->
-            cleanupOldAvatars(context)
+    uri: Uri,
+): Result<File> =
+    withContext(Dispatchers.IO) {
+        try {
+            context.contentResolver.openInputStream(uri)?.use { inputStream ->
+                cleanupOldAvatars(context)
 
-            val fileName = "custom_avatar_${System.currentTimeMillis()}.jpg"
-            val outputFile = File(context.filesDir, fileName)
+                val fileName = "custom_avatar_${System.currentTimeMillis()}.jpg"
+                val outputFile = File(context.filesDir, fileName)
 
-            val bitmap = BitmapFactory.decodeStream(inputStream)
-            val compressedBitmap = resizeAndCompressBitmap(bitmap, 500, 500)
+                val bitmap = BitmapFactory.decodeStream(inputStream)
+                val compressedBitmap = resizeAndCompressBitmap(bitmap, 500, 500)
 
-            FileOutputStream(outputFile).use { outputStream ->
-                compressedBitmap.compress(Bitmap.CompressFormat.JPEG, 85, outputStream)
-            }
+                FileOutputStream(outputFile).use { outputStream ->
+                    compressedBitmap.compress(Bitmap.CompressFormat.JPEG, 85, outputStream)
+                }
 
-            if (bitmap != compressedBitmap) {
-                bitmap.recycle()
-            }
-            compressedBitmap.recycle()
+                if (bitmap != compressedBitmap) {
+                    bitmap.recycle()
+                }
+                compressedBitmap.recycle()
 
-            Result.success(outputFile)
-        } ?: Result.failure(Exception("No se pudo abrir el archivo"))
-    } catch (e: Exception) {
-        Log.e("AvatarSelector", "Error saving image to internal storage", e)
-        Result.failure(e)
+                Result.success(outputFile)
+            } ?: Result.failure(Exception("No se pudo abrir el archivo"))
+        } catch (e: Exception) {
+            Log.e("AvatarSelector", "Error saving image to internal storage", e)
+            Result.failure(e)
+        }
     }
-}
 
 private fun resizeAndCompressBitmap(
     bitmap: Bitmap,
     maxWidth: Int,
-    maxHeight: Int
+    maxHeight: Int,
 ): Bitmap {
     val width = bitmap.width
     val height = bitmap.height

@@ -24,9 +24,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.DrawableRes
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateContentSize
-import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
-import androidx.compose.animation.core.tween
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -43,7 +41,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
@@ -57,7 +54,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.AssistChip
 import androidx.compose.material3.AssistChipDefaults
 import androidx.compose.material3.Button
@@ -78,7 +74,6 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.ui.graphics.Color
 import androidx.compose.material3.TopAppBarDefaults
@@ -90,7 +85,6 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
@@ -113,7 +107,6 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -121,11 +114,9 @@ import androidx.navigation.NavController
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.Chenkham.Echofy.LocalPlayerAwareWindowInsets
-import com.Chenkham.Echofy.LocalPlayerConnection
 import com.Chenkham.Echofy.R
 import com.Chenkham.Echofy.constants.ShowSpotifyPlaylistsKey
 import com.Chenkham.Echofy.db.entities.Song
-import com.Chenkham.Echofy.spotify.SpotifyAccountUiState
 import com.Chenkham.Echofy.spotify.SpotifyAccountViewModel
 import com.arturo254.opentune.spotify.SpotifyAuth
 import com.Chenkham.Echofy.ui.component.Material3SettingsGroup
@@ -138,8 +129,6 @@ import com.Chenkham.Echofy.ui.utils.backToMain
 import com.Chenkham.Echofy.utils.rememberPreference
 import com.Chenkham.Echofy.utils.resetAuthWebViewSession
 import com.Chenkham.Echofy.viewmodels.BackupRestoreViewModel
-import com.Chenkham.Echofy.viewmodels.CloudUploadState
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.time.LocalDateTime
@@ -181,10 +170,11 @@ fun BackupAndRestore(
     var showSpotifyLogin by rememberSaveable { mutableStateOf(false) }
 
     val spotifyState by spotifyAccountViewModel.uiState.collectAsState()
-    val (showSpotifyPlaylists, onShowSpotifyPlaylistsChange) = rememberPreference(
-        ShowSpotifyPlaylistsKey,
-        false
-    )
+    val (showSpotifyPlaylists, onShowSpotifyPlaylistsChange) =
+        rememberPreference(
+            ShowSpotifyPlaylistsKey,
+            false,
+        )
 
     val backupRestoreProgress by viewModel.backupRestoreProgress.collectAsState()
     val cloudState by viewModel.cloudUploadState.collectAsState()
@@ -250,7 +240,7 @@ fun BackupAndRestore(
         containerColor = Color.Transparent,
         topBar = {
             TopAppBar(
-            colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent, scrolledContainerColor = Color.Transparent),
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent, scrolledContainerColor = Color.Transparent),
                 title = { Text(stringResource(R.string.backup_restore)) },
                 navigationIcon = {
                     IconButton(
@@ -268,28 +258,33 @@ fun BackupAndRestore(
         },
     ) { innerPadding ->
         LazyColumn(
-            modifier = Modifier
-                .nestedScroll(scrollBehavior.nestedScrollConnection)
-                .padding(innerPadding)
-                .windowInsetsPadding(
-                    LocalPlayerAwareWindowInsets.current.only(
-                        WindowInsetsSides.Horizontal + WindowInsetsSides.Bottom
-                    )
-                ),
+            modifier =
+                Modifier
+                    .nestedScroll(scrollBehavior.nestedScrollConnection)
+                    .padding(innerPadding)
+                    .windowInsetsPadding(
+                        LocalPlayerAwareWindowInsets.current.only(
+                            WindowInsetsSides.Horizontal + WindowInsetsSides.Bottom,
+                        ),
+                    ),
             verticalArrangement = Arrangement.spacedBy(16.dp),
-            contentPadding = PaddingValues(
-                start = 16.dp, end = 16.dp, bottom = 16.dp, top = 8.dp
-            ),
+            contentPadding =
+                PaddingValues(
+                    start = 16.dp,
+                    end = 16.dp,
+                    bottom = 16.dp,
+                    top = 8.dp,
+                ),
         ) {
-
             // ── Backup / Restore card ─────────────────────────────────────────
             item {
                 Card(
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(24.dp),
-                    colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.surfaceContainer
-                    ),
+                    colors =
+                        CardDefaults.cardColors(
+                            containerColor = MaterialTheme.colorScheme.surfaceContainer,
+                        ),
                     elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
                 ) {
                     Column(
@@ -323,34 +318,38 @@ fun BackupAndRestore(
                                     style = MaterialTheme.typography.titleLarge,
                                 )
                                 Row(
-                                    modifier = Modifier
-                                        .padding(top = 10.dp)
-                                        .horizontalScroll(rememberScrollState()),
+                                    modifier =
+                                        Modifier
+                                            .padding(top = 10.dp)
+                                            .horizontalScroll(rememberScrollState()),
                                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                                 ) {
                                     AssistChip(
                                         onClick = {},
                                         label = { Text(".backup") },
-                                        colors = AssistChipDefaults.assistChipColors(
-                                            containerColor = MaterialTheme.colorScheme.surfaceVariant,
-                                            labelColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                                        ),
+                                        colors =
+                                            AssistChipDefaults.assistChipColors(
+                                                containerColor = MaterialTheme.colorScheme.surfaceVariant,
+                                                labelColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                                            ),
                                     )
                                     AssistChip(
                                         onClick = {},
                                         label = { Text(".m3u") },
-                                        colors = AssistChipDefaults.assistChipColors(
-                                            containerColor = MaterialTheme.colorScheme.surfaceVariant,
-                                            labelColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                                        ),
+                                        colors =
+                                            AssistChipDefaults.assistChipColors(
+                                                containerColor = MaterialTheme.colorScheme.surfaceVariant,
+                                                labelColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                                            ),
                                     )
                                     AssistChip(
                                         onClick = {},
                                         label = { Text(".csv") },
-                                        colors = AssistChipDefaults.assistChipColors(
-                                            containerColor = MaterialTheme.colorScheme.surfaceVariant,
-                                            labelColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                                        ),
+                                        colors =
+                                            AssistChipDefaults.assistChipColors(
+                                                containerColor = MaterialTheme.colorScheme.surfaceVariant,
+                                                labelColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                                            ),
                                     )
                                 }
                             }
@@ -371,7 +370,7 @@ fun BackupAndRestore(
                                     backupLauncher.launch(
                                         "${context.getString(R.string.app_name)}_${
                                             LocalDateTime.now().format(formatter)
-                                        }.backup"
+                                        }.backup",
                                     )
                                 },
                                 modifier = Modifier.weight(1f),
@@ -402,9 +401,10 @@ fun BackupAndRestore(
                 Card(
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(24.dp),
-                    colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.surfaceContainer
-                    ),
+                    colors =
+                        CardDefaults.cardColors(
+                            containerColor = MaterialTheme.colorScheme.surfaceContainer,
+                        ),
                     elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
                 ) {
                     Column(
@@ -450,7 +450,7 @@ fun BackupAndRestore(
                                 onCheckedChange = { enabled ->
                                     viewModel.setCloudBackupEnabled(context, enabled)
                                 },
-                                modifier = Modifier.padding(start = 8.dp)
+                                modifier = Modifier.padding(start = 8.dp),
                             )
                         }
 
@@ -489,11 +489,11 @@ fun BackupAndRestore(
                             ) {
                                 Column(
                                     modifier = Modifier.padding(12.dp),
-                                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                                    verticalArrangement = Arrangement.spacedBy(8.dp),
                                 ) {
                                     Row(
                                         verticalAlignment = Alignment.CenterVertically,
-                                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                        horizontalArrangement = Arrangement.spacedBy(8.dp),
                                     ) {
                                         Icon(
                                             painter = painterResource(R.drawable.link),
@@ -511,45 +511,51 @@ fun BackupAndRestore(
 
                                     Row(
                                         horizontalArrangement = Arrangement.spacedBy(8.dp),
-                                        verticalAlignment = Alignment.CenterVertically
+                                        verticalAlignment = Alignment.CenterVertically,
                                     ) {
                                         Text(
                                             text = cloudState.lastUploadUrl.orEmpty(),
                                             style = MaterialTheme.typography.bodySmall,
                                             color = MaterialTheme.colorScheme.onPrimaryContainer,
-                                            modifier = Modifier
-                                                .weight(1f)
-                                                .clickable {
-                                                    clipboardManager.setText(
-                                                        AnnotatedString(
-                                                            cloudState.lastUploadUrl.orEmpty()
+                                            modifier =
+                                                Modifier
+                                                    .weight(1f)
+                                                    .clickable {
+                                                        clipboardManager.setText(
+                                                            AnnotatedString(
+                                                                cloudState.lastUploadUrl.orEmpty(),
+                                                            ),
                                                         )
-                                                    )
-                                                    android.widget.Toast.makeText(
-                                                        context,
-                                                        R.string.link_copied,
-                                                        android.widget.Toast.LENGTH_SHORT
-                                                    ).show()
-                                                }
+                                                        android.widget.Toast.makeText(
+                                                            context,
+                                                            R.string.link_copied,
+                                                            android.widget.Toast.LENGTH_SHORT,
+                                                        ).show()
+                                                    },
                                         )
 
                                         AssistChip(
                                             onClick = {
                                                 clipboardManager.setText(AnnotatedString(cloudState.lastUploadUrl.orEmpty()))
-                                                android.widget.Toast.makeText(context, R.string.link_copied, android.widget.Toast.LENGTH_SHORT).show()
+                                                android.widget.Toast.makeText(
+                                                    context,
+                                                    R.string.link_copied,
+                                                    android.widget.Toast.LENGTH_SHORT,
+                                                ).show()
                                             },
                                             label = { Text(stringResource(R.string.copy_link)) },
                                             leadingIcon = {
                                                 Icon(
                                                     painter = painterResource(R.drawable.content_copy),
                                                     contentDescription = null,
-                                                    modifier = Modifier.size(16.dp)
+                                                    modifier = Modifier.size(16.dp),
                                                 )
                                             },
-                                            colors = AssistChipDefaults.assistChipColors(
-                                                containerColor = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.1f),
-                                                labelColor = MaterialTheme.colorScheme.onPrimaryContainer,
-                                            )
+                                            colors =
+                                                AssistChipDefaults.assistChipColors(
+                                                    containerColor = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.1f),
+                                                    labelColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                                                ),
                                         )
                                     }
                                 }
@@ -570,7 +576,7 @@ fun BackupAndRestore(
                                 Row(
                                     modifier = Modifier.padding(12.dp),
                                     verticalAlignment = Alignment.CenterVertically,
-                                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                    horizontalArrangement = Arrangement.spacedBy(8.dp),
                                 ) {
                                     Icon(
                                         painter = painterResource(R.drawable.error),
@@ -582,7 +588,7 @@ fun BackupAndRestore(
                                         text = stringResource(R.string.cloud_upload_error_detail, cloudState.lastError.orEmpty()),
                                         style = MaterialTheme.typography.bodySmall,
                                         color = MaterialTheme.colorScheme.onErrorContainer,
-                                        modifier = Modifier.weight(1f)
+                                        modifier = Modifier.weight(1f),
                                     )
                                 }
                             }
@@ -595,61 +601,65 @@ fun BackupAndRestore(
             item {
                 Material3SettingsGroup(
                     title = stringResource(R.string.import_playlist),
-                    items = listOf(
-                        Material3SettingsItem(
-                            icon = painterResource(R.drawable.playlist_add),
-                            title = {
-                                Text(
-                                    text = stringResource(R.string.import_online),
-                                    style = MaterialTheme.typography.titleMedium,
-                                    color = MaterialTheme.colorScheme.onSurface,
-                                )
-                            },
-                            description = {
-                                Text(
-                                    text = "audio/*",
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                )
-                            },
-                            onClick = { importM3uLauncherOnline.launch(arrayOf("audio/*")) },
+                    items =
+                        listOf(
+                            Material3SettingsItem(
+                                icon = painterResource(R.drawable.playlist_add),
+                                title = {
+                                    Text(
+                                        text = stringResource(R.string.import_online),
+                                        style = MaterialTheme.typography.titleMedium,
+                                        color = MaterialTheme.colorScheme.onSurface,
+                                    )
+                                },
+                                description = {
+                                    Text(
+                                        text = "audio/*",
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    )
+                                },
+                                onClick = { importM3uLauncherOnline.launch(arrayOf("audio/*")) },
+                            ),
+                            Material3SettingsItem(
+                                icon = painterResource(R.drawable.playlist_add),
+                                title = {
+                                    Text(
+                                        text = stringResource(R.string.import_csv),
+                                        style = MaterialTheme.typography.titleMedium,
+                                        color = MaterialTheme.colorScheme.onSurface,
+                                    )
+                                },
+                                description = {
+                                    Text(
+                                        text = "text/csv",
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    )
+                                },
+                                onClick = { importPlaylistFromCsv.launch(CSV_MIME_TYPES) },
+                            ),
                         ),
-                        Material3SettingsItem(
-                            icon = painterResource(R.drawable.playlist_add),
-                            title = {
-                                Text(
-                                    text = stringResource(R.string.import_csv),
-                                    style = MaterialTheme.typography.titleMedium,
-                                    color = MaterialTheme.colorScheme.onSurface,
-                                )
-                            },
-                            description = {
-                                Text(
-                                    text = "text/csv",
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                )
-                            },
-                            onClick = { importPlaylistFromCsv.launch(CSV_MIME_TYPES) },
-                        ),
-                    )
                 )
             }
 
             // ── Spotify Account card ──────────────────────────────────────────
             item {
                 Card(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .animateContentSize(),
+                    modifier =
+                        Modifier
+                            .fillMaxWidth()
+                            .animateContentSize(),
                     shape = RoundedCornerShape(28.dp),
-                    colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.surfaceContainer
-                    ),
-                    elevation = CardDefaults.cardElevation(
-                        defaultElevation = 4.dp,
-                        pressedElevation = 8.dp
-                    ),
+                    colors =
+                        CardDefaults.cardColors(
+                            containerColor = MaterialTheme.colorScheme.surfaceContainer,
+                        ),
+                    elevation =
+                        CardDefaults.cardElevation(
+                            defaultElevation = 4.dp,
+                            pressedElevation = 8.dp,
+                        ),
                 ) {
                     Column(
                         modifier = Modifier.padding(24.dp),
@@ -657,23 +667,27 @@ fun BackupAndRestore(
                     ) {
                         // ============ HEADER DRAMÁTICO ============
                         Box(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .clip(RoundedCornerShape(24.dp))
-                                .background(
-                                    brush = Brush.linearGradient(
-                                        colors = listOf(
-                                            MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = 0.7f),
-                                            MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = 0.3f)
-                                        ),
-                                        start = Offset(0f, 0f),
-                                        end = Offset(
-                                            Float.POSITIVE_INFINITY,
-                                            Float.POSITIVE_INFINITY
-                                        )
+                            modifier =
+                                Modifier
+                                    .fillMaxWidth()
+                                    .clip(RoundedCornerShape(24.dp))
+                                    .background(
+                                        brush =
+                                            Brush.linearGradient(
+                                                colors =
+                                                    listOf(
+                                                        MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = 0.7f),
+                                                        MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = 0.3f),
+                                                    ),
+                                                start = Offset(0f, 0f),
+                                                end =
+                                                    Offset(
+                                                        Float.POSITIVE_INFINITY,
+                                                        Float.POSITIVE_INFINITY,
+                                                    ),
+                                            ),
                                     )
-                                )
-                                .padding(20.dp),
+                                    .padding(20.dp),
                         ) {
                             Row(
                                 modifier = Modifier.fillMaxWidth(),
@@ -682,19 +696,21 @@ fun BackupAndRestore(
                             ) {
                                 // Icon animado
                                 Box(
-                                    modifier = Modifier
-                                        .size(64.dp)
-                                        .clip(RoundedCornerShape(20.dp))
-                                        .background(MaterialTheme.colorScheme.tertiaryContainer),
+                                    modifier =
+                                        Modifier
+                                            .size(64.dp)
+                                            .clip(RoundedCornerShape(20.dp))
+                                            .background(MaterialTheme.colorScheme.tertiaryContainer),
                                     contentAlignment = Alignment.Center,
                                 ) {
                                     Icon(
                                         painter = painterResource(R.drawable.spotify_icon),
                                         contentDescription = null,
                                         tint = MaterialTheme.colorScheme.onTertiaryContainer,
-                                        modifier = Modifier
-                                            .size(32.dp)
-                                            .animateContentSize(),
+                                        modifier =
+                                            Modifier
+                                                .size(32.dp)
+                                                .animateContentSize(),
                                     )
                                 }
 
@@ -706,17 +722,19 @@ fun BackupAndRestore(
                                     )
 
                                     Text(
-                                        text = if (spotifyState.isAuthenticated) {
-                                            spotifyState.accountName.ifBlank {
-                                                stringResource(R.string.spotify_connected)
-                                            }
-                                        } else {
-                                            stringResource(R.string.spotify_not_connected)
-                                        },
+                                        text =
+                                            if (spotifyState.isAuthenticated) {
+                                                spotifyState.accountName.ifBlank {
+                                                    stringResource(R.string.spotify_connected)
+                                                }
+                                            } else {
+                                                stringResource(R.string.spotify_not_connected)
+                                            },
                                         style = MaterialTheme.typography.labelLarge,
-                                        color = MaterialTheme.colorScheme.onTertiaryContainer.copy(
-                                            alpha = 0.8f
-                                        ),
+                                        color =
+                                            MaterialTheme.colorScheme.onTertiaryContainer.copy(
+                                                alpha = 0.8f,
+                                            ),
                                     )
                                 }
 
@@ -750,16 +768,18 @@ fun BackupAndRestore(
                                     modifier = Modifier.fillMaxWidth(),
                                 ) {
                                     Row(
-                                        modifier = Modifier
-                                            .fillMaxWidth()
-                                            .padding(16.dp),
+                                        modifier =
+                                            Modifier
+                                                .fillMaxWidth()
+                                                .padding(16.dp),
                                         verticalAlignment = Alignment.CenterVertically,
                                         horizontalArrangement = Arrangement.spacedBy(14.dp),
                                     ) {
                                         Surface(
-                                            modifier = Modifier
-                                                .clip(MaterialShapes.Cookie6Sided.toShape())
-                                                .size(56.dp)
+                                            modifier =
+                                                Modifier
+                                                    .clip(MaterialShapes.Cookie6Sided.toShape())
+                                                    .size(56.dp),
                                         ) {
                                             SpotifyAccountIcon(
                                                 avatarUrl = spotifyState.accountAvatarUrl,
@@ -768,21 +788,23 @@ fun BackupAndRestore(
 
                                         Column(modifier = Modifier.weight(1f)) {
                                             Text(
-                                                text = spotifyState.accountName.takeIf { it.isNotBlank() }
-                                                    ?: stringResource(R.string.spotify_account),
+                                                text =
+                                                    spotifyState.accountName.takeIf { it.isNotBlank() }
+                                                        ?: stringResource(R.string.spotify_account),
                                                 style = MaterialTheme.typography.titleMedium,
                                                 fontWeight = FontWeight.SemiBold,
                                             )
 
                                             Text(
-                                                text = if (spotifyState.playlistCount > 0) {
-                                                    stringResource(
-                                                        R.string.spotify_available_count,
-                                                        spotifyState.playlistCount
-                                                    )
-                                                } else {
-                                                    stringResource(R.string.spotify_no_sources)
-                                                },
+                                                text =
+                                                    if (spotifyState.playlistCount > 0) {
+                                                        stringResource(
+                                                            R.string.spotify_available_count,
+                                                            spotifyState.playlistCount,
+                                                        )
+                                                    } else {
+                                                        stringResource(R.string.spotify_no_sources)
+                                                    },
                                                 style = MaterialTheme.typography.labelMedium,
                                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                                             )
@@ -796,9 +818,10 @@ fun BackupAndRestore(
                                     color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.4f),
                                 ) {
                                     Row(
-                                        modifier = Modifier
-                                            .fillMaxWidth()
-                                            .padding(16.dp),
+                                        modifier =
+                                            Modifier
+                                                .fillMaxWidth()
+                                                .padding(16.dp),
                                         verticalAlignment = Alignment.CenterVertically,
                                         horizontalArrangement = Arrangement.SpaceBetween,
                                     ) {
@@ -885,31 +908,35 @@ fun BackupAndRestore(
                         spotifyState.errorMessage?.let { error ->
                             AnimatedVisibility(
                                 visible = true,
-                                enter = slideInVertically(
-                                    animationSpec = spring(dampingRatio = 0.7f),
-                                    initialOffsetY = { it / 2 }
-                                ) + fadeIn(),
+                                enter =
+                                    slideInVertically(
+                                        animationSpec = spring(dampingRatio = 0.7f),
+                                        initialOffsetY = { it / 2 },
+                                    ) + fadeIn(),
                                 exit = slideOutVertically(animationSpec = spring()) + fadeOut(),
                             ) {
                                 Surface(
                                     shape = RoundedCornerShape(18.dp),
                                     color = MaterialTheme.colorScheme.errorContainer,
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .clip(RoundedCornerShape(18.dp)),
+                                    modifier =
+                                        Modifier
+                                            .fillMaxWidth()
+                                            .clip(RoundedCornerShape(18.dp)),
                                 ) {
                                     Row(
-                                        modifier = Modifier
-                                            .fillMaxWidth()
-                                            .padding(16.dp),
+                                        modifier =
+                                            Modifier
+                                                .fillMaxWidth()
+                                                .padding(16.dp),
                                         verticalAlignment = Alignment.CenterVertically,
                                         horizontalArrangement = Arrangement.spacedBy(12.dp),
                                     ) {
                                         Surface(
                                             shape = RoundedCornerShape(12.dp),
-                                            color = MaterialTheme.colorScheme.onErrorContainer.copy(
-                                                alpha = 0.15f
-                                            ),
+                                            color =
+                                                MaterialTheme.colorScheme.onErrorContainer.copy(
+                                                    alpha = 0.15f,
+                                                ),
                                             modifier = Modifier.size(40.dp),
                                         ) {
                                             Box(contentAlignment = Alignment.Center) {
@@ -947,7 +974,6 @@ fun BackupAndRestore(
                     }
                 }
             }
-
         }
     }
 
@@ -959,7 +985,7 @@ fun BackupAndRestore(
         onDismiss = { showChoosePlaylistDialogOnline = false },
         onProgressStart = { newVal -> isProgressStarted = newVal },
         onPercentageChange = { newPercentage -> progressPercentage = newPercentage },
-        onStatusChange = { progressStatus = it }
+        onStatusChange = { progressStatus = it },
     )
 
     LaunchedEffect(progressPercentage, isProgressStarted) {
@@ -1331,10 +1357,10 @@ private fun shouldOverrideSpotifyLoginUrl(
 private fun String.isWebViewLoadableUrl(): Boolean {
     val scheme = runCatching { Uri.parse(this).scheme?.lowercase() }.getOrNull()
     return scheme == "http" ||
-            scheme == "https" ||
-            scheme == "javascript" ||
-            scheme == "data" ||
-            scheme == "blob"
+        scheme == "https" ||
+        scheme == "javascript" ||
+        scheme == "data" ||
+        scheme == "blob"
 }
 
 private fun String.intentBrowserFallbackUrl(): String? =
@@ -1382,10 +1408,11 @@ private fun String.toSpotifyCookieOrigin(): String? {
     val scheme =
         uri.scheme
             ?.takeIf {
-                it.equals("https", ignoreCase = true) || it.equals(
-                    "http",
-                    ignoreCase = true
-                )
+                it.equals("https", ignoreCase = true) ||
+                    it.equals(
+                        "http",
+                        ignoreCase = true,
+                    )
             }
             ?: "https"
     return "$scheme://$host"
@@ -1404,13 +1431,15 @@ fun SpotifyActionButton(
 ) {
     Button(
         onClick = onClick,
-        modifier = modifier
-            .height(56.dp)
-            .clip(RoundedCornerShape(20.dp)),
-        colors = ButtonDefaults.buttonColors(
-            containerColor = backgroundColor,
-            disabledContainerColor = backgroundColor.copy(alpha = 0.5f),
-        ),
+        modifier =
+            modifier
+                .height(56.dp)
+                .clip(RoundedCornerShape(20.dp)),
+        colors =
+            ButtonDefaults.buttonColors(
+                containerColor = backgroundColor,
+                disabledContainerColor = backgroundColor.copy(alpha = 0.5f),
+            ),
         enabled = enabled,
     ) {
         Row(
@@ -1420,9 +1449,10 @@ fun SpotifyActionButton(
         ) {
             if (isLoading) {
                 CircularProgressIndicator(
-                    modifier = Modifier
-                        .size(20.dp)
-                        .padding(end = 8.dp),
+                    modifier =
+                        Modifier
+                            .size(20.dp)
+                            .padding(end = 8.dp),
                     color = contentColor,
                     strokeWidth = 2.dp,
                 )
@@ -1431,9 +1461,10 @@ fun SpotifyActionButton(
                     painter = painterResource(icon),
                     contentDescription = null,
                     tint = contentColor,
-                    modifier = Modifier
-                        .size(20.dp)
-                        .padding(end = 8.dp),
+                    modifier =
+                        Modifier
+                            .size(20.dp)
+                            .padding(end = 8.dp),
                 )
             }
 

@@ -11,18 +11,20 @@ import io.appwrite.services.Realtime
  * Swap [AppwriteConfig.ENDPOINT] to move from cloud → self-hosted VPS.
  */
 object AppwriteClientProvider {
-
     @Volatile private var client: Client? = null
 
-    fun get(context: Context): Client = client ?: synchronized(this) {
-        client ?: Client(context.applicationContext)
-            .setEndpoint(AppwriteConfig.ENDPOINT)
-            .setProject(AppwriteConfig.PROJECT_ID)
-            .setSelfSigned(AppwriteConfig.SELF_SIGNED)
-            .also { client = it }
-    }
+    fun get(context: Context): Client =
+        client ?: synchronized(this) {
+            client ?: Client(context.applicationContext)
+                .setEndpoint(AppwriteConfig.ENDPOINT)
+                .setProject(AppwriteConfig.PROJECT_ID)
+                .setSelfSigned(AppwriteConfig.SELF_SIGNED)
+                .also { client = it }
+        }
 
-    fun account(context: Context)   = Account(get(context))
+    fun account(context: Context) = Account(get(context))
+
     fun databases(context: Context) = Databases(get(context))
-    fun realtime(context: Context)  = Realtime(get(context))
+
+    fun realtime(context: Context) = Realtime(get(context))
 }

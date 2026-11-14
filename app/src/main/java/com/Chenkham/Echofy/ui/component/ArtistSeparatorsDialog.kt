@@ -4,8 +4,6 @@
  * Licensed Under GPL-3.0 | see git history for contributors
  */
 
-
-
 package com.Chenkham.Echofy.ui.component
 
 import androidx.compose.foundation.BorderStroke
@@ -55,12 +53,13 @@ import com.Chenkham.Echofy.R
 fun ArtistSeparatorsDialog(
     currentSeparators: String,
     onDismiss: () -> Unit,
-    onSave: (String) -> Unit
+    onSave: (String) -> Unit,
 ) {
-    val separatorsList = remember(currentSeparators) {
-        currentSeparators.toList().map { it.toString() }.toMutableStateList()
-    }
-    
+    val separatorsList =
+        remember(currentSeparators) {
+            currentSeparators.toList().map { it.toString() }.toMutableStateList()
+        }
+
     var showAddSymbolDialog by remember { mutableStateOf(false) }
     var newSymbolInput by remember { mutableStateOf("") }
 
@@ -71,14 +70,14 @@ fun ArtistSeparatorsDialog(
             text = {
                 OutlinedTextField(
                     value = newSymbolInput,
-                    onValueChange = { 
+                    onValueChange = {
                         if (it.length <= 1) {
                             newSymbolInput = it
                         }
                     },
                     label = { Text(stringResource(R.string.enter_symbol)) },
                     singleLine = true,
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier.fillMaxWidth(),
                 )
             },
             confirmButton = {
@@ -90,41 +89,42 @@ fun ArtistSeparatorsDialog(
                         newSymbolInput = ""
                         showAddSymbolDialog = false
                     },
-                    enabled = newSymbolInput.isNotEmpty()
+                    enabled = newSymbolInput.isNotEmpty(),
                 ) {
                     Text(stringResource(R.string.add_symbol))
                 }
             },
             dismissButton = {
-                TextButton(onClick = { 
+                TextButton(onClick = {
                     newSymbolInput = ""
-                    showAddSymbolDialog = false 
+                    showAddSymbolDialog = false
                 }) {
                     Text(stringResource(android.R.string.cancel))
                 }
-            }
+            },
         )
     }
 
     Dialog(
         onDismissRequest = onDismiss,
-        properties = DialogProperties(usePlatformDefaultWidth = false)
+        properties = DialogProperties(usePlatformDefaultWidth = false),
     ) {
         Surface(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(24.dp),
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .padding(24.dp),
             shape = AlertDialogDefaults.shape,
             color = AlertDialogDefaults.containerColor,
-            tonalElevation = AlertDialogDefaults.TonalElevation
+            tonalElevation = AlertDialogDefaults.TonalElevation,
         ) {
             Column(
-                modifier = Modifier.padding(24.dp)
+                modifier = Modifier.padding(24.dp),
             ) {
                 Text(
                     text = stringResource(R.string.artist_separators),
                     style = MaterialTheme.typography.headlineSmall,
-                    color = MaterialTheme.colorScheme.onSurface
+                    color = MaterialTheme.colorScheme.onSurface,
                 )
 
                 Spacer(modifier = Modifier.height(16.dp))
@@ -132,34 +132,35 @@ fun ArtistSeparatorsDialog(
                 FlowRow(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
                     separatorsList.forEach { symbol ->
                         SeparatorChip(
                             symbol = symbol,
-                            onRemove = { separatorsList.remove(symbol) }
+                            onRemove = { separatorsList.remove(symbol) },
                         )
                     }
 
                     // Add button chip
                     Surface(
-                        modifier = Modifier
-                            .size(40.dp)
-                            .clip(CircleShape)
-                            .clickable { showAddSymbolDialog = true },
+                        modifier =
+                            Modifier
+                                .size(40.dp)
+                                .clip(CircleShape)
+                                .clickable { showAddSymbolDialog = true },
                         shape = CircleShape,
                         color = MaterialTheme.colorScheme.surfaceVariant,
-                        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline)
+                        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
                     ) {
                         Box(
                             contentAlignment = Alignment.Center,
-                            modifier = Modifier.size(40.dp)
+                            modifier = Modifier.size(40.dp),
                         ) {
                             Icon(
                                 painter = painterResource(R.drawable.add),
                                 contentDescription = stringResource(R.string.add_symbol),
                                 tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                                modifier = Modifier.size(20.dp)
+                                modifier = Modifier.size(20.dp),
                             )
                         }
                     }
@@ -169,16 +170,16 @@ fun ArtistSeparatorsDialog(
 
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.End
+                    horizontalArrangement = Arrangement.End,
                 ) {
                     TextButton(onClick = onDismiss) {
                         Text(stringResource(android.R.string.cancel))
                     }
-                    
+
                     Spacer(modifier = Modifier.width(8.dp))
-                    
+
                     Button(
-                        onClick = { onSave(separatorsList.joinToString("")) }
+                        onClick = { onSave(separatorsList.joinToString("")) },
                     ) {
                         Text(stringResource(R.string.save))
                     }
@@ -191,38 +192,39 @@ fun ArtistSeparatorsDialog(
 @Composable
 private fun SeparatorChip(
     symbol: String,
-    onRemove: () -> Unit
+    onRemove: () -> Unit,
 ) {
     Surface(
         shape = RoundedCornerShape(20.dp),
         color = MaterialTheme.colorScheme.surfaceVariant,
-        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline)
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
     ) {
         Row(
             modifier = Modifier.padding(start = 12.dp, end = 4.dp, top = 6.dp, bottom = 6.dp),
-            verticalAlignment = Alignment.CenterVertically
+            verticalAlignment = Alignment.CenterVertically,
         ) {
             Text(
                 text = "\"$symbol\"",
                 style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
-            
+
             Spacer(modifier = Modifier.width(4.dp))
-            
+
             Box(
-                modifier = Modifier
-                    .size(24.dp)
-                    .clip(CircleShape)
-                    .clickable(onClick = onRemove)
-                    .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.5f)),
-                contentAlignment = Alignment.Center
+                modifier =
+                    Modifier
+                        .size(24.dp)
+                        .clip(CircleShape)
+                        .clickable(onClick = onRemove)
+                        .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.5f)),
+                contentAlignment = Alignment.Center,
             ) {
                 Icon(
                     painter = painterResource(R.drawable.close),
                     contentDescription = null,
                     tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.size(14.dp)
+                    modifier = Modifier.size(14.dp),
                 )
             }
         }

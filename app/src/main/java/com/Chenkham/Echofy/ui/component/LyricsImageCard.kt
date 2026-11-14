@@ -9,8 +9,6 @@ package com.Chenkham.Echofy.ui.component
 import android.annotation.SuppressLint
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.rememberTextMeasurer
@@ -40,12 +38,13 @@ fun rememberAdjustedFontSize(
     val measurer = textMeasurer ?: rememberTextMeasurer()
 
     var calculatedFontSize by remember(text, maxWidth, maxHeight, style, density) {
-        val initialSize = when {
-            text.length < 50 -> initialFontSize
-            text.length < 100 -> (initialFontSize.value * 0.8f).sp
-            text.length < 200 -> (initialFontSize.value * 0.6f).sp
-            else -> (initialFontSize.value * 0.5f).sp
-        }
+        val initialSize =
+            when {
+                text.length < 50 -> initialFontSize
+                text.length < 100 -> (initialFontSize.value * 0.8f).sp
+                text.length < 200 -> (initialFontSize.value * 0.6f).sp
+                else -> (initialFontSize.value * 0.5f).sp
+            }
         mutableStateOf(initialSize)
     }
 
@@ -62,10 +61,11 @@ fun rememberAdjustedFontSize(
         when {
             text.length < 20 -> {
                 val largerSize = (initialFontSize.value * 1.1f).sp
-                val result = measurer.measure(
-                    text = AnnotatedString(text),
-                    style = style.copy(fontSize = largerSize),
-                )
+                val result =
+                    measurer.measure(
+                        text = AnnotatedString(text),
+                        style = style.copy(fontSize = largerSize),
+                    )
                 if (result.size.width <= targetWidthPx && result.size.height <= targetHeightPx) {
                     calculatedFontSize = largerSize
                     return@LaunchedEffect
@@ -73,10 +73,11 @@ fun rememberAdjustedFontSize(
             }
             text.length < 30 -> {
                 val largerSize = (initialFontSize.value * 0.9f).sp
-                val result = measurer.measure(
-                    text = AnnotatedString(text),
-                    style = style.copy(fontSize = largerSize),
-                )
+                val result =
+                    measurer.measure(
+                        text = AnnotatedString(text),
+                        style = style.copy(fontSize = largerSize),
+                    )
                 if (result.size.width <= targetWidthPx && result.size.height <= targetHeightPx) {
                     calculatedFontSize = largerSize
                     return@LaunchedEffect
@@ -94,10 +95,11 @@ fun rememberAdjustedFontSize(
             iterations++
             val midSize = (minSize + maxSize) / 2
             val midSizeSp = midSize.sp
-            val result = measurer.measure(
-                text = AnnotatedString(text),
-                style = style.copy(fontSize = midSizeSp),
-            )
+            val result =
+                measurer.measure(
+                    text = AnnotatedString(text),
+                    style = style.copy(fontSize = midSizeSp),
+                )
             if (result.size.width <= targetWidthPx && result.size.height <= targetHeightPx) {
                 bestFit = midSize
                 minSize = midSize + 0.5f
@@ -134,11 +136,12 @@ fun LyricsImageCard(
     LyricsCardByLayout(
         lyricText = lyricText,
         mediaMetadata = mediaMetadata,
-        config = LyricsCardConfig(
-            style = style,
-            accent = accent,
-            aspectRatio = aspectRatio,
-        ),
+        config =
+            LyricsCardConfig(
+                style = style,
+                accent = accent,
+                aspectRatio = aspectRatio,
+            ),
         modifier = modifier,
     )
 }

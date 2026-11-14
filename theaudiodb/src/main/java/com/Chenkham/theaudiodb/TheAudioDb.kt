@@ -50,24 +50,27 @@ object TheAudioDb {
         apiKey: String? = null,
     ) = runCatching {
         val key = apiKey?.takeIf { it.isNotBlank() } ?: PUBLIC_TEST_KEY
-        val response = client
-            .get("$key/search.php") {
-                parameter("s", name)
-            }.body<AudioDbArtistResponse>()
+        val response =
+            client
+                .get("$key/search.php") {
+                    parameter("s", name)
+                }.body<AudioDbArtistResponse>()
 
-        val artist = response.artists?.firstOrNull()
-            ?: error("Artist not found on TheAudioDB")
+        val artist =
+            response.artists?.firstOrNull()
+                ?: error("Artist not found on TheAudioDB")
 
         AudioDbArtistInfo(
             id = artist.idArtist,
             name = artist.strArtist,
             biography = artist.biographyEn?.takeIf { it.isNotBlank() },
             thumbUrl = artist.thumb?.takeIf { it.isNotBlank() },
-            fanartUrls = listOfNotNull(
-                artist.fanart?.takeIf { it.isNotBlank() },
-                artist.fanart2?.takeIf { it.isNotBlank() },
-                artist.fanart3?.takeIf { it.isNotBlank() },
-            ),
+            fanartUrls =
+                listOfNotNull(
+                    artist.fanart?.takeIf { it.isNotBlank() },
+                    artist.fanart2?.takeIf { it.isNotBlank() },
+                    artist.fanart3?.takeIf { it.isNotBlank() },
+                ),
             bannerUrl = artist.banner?.takeIf { it.isNotBlank() },
             logoUrl = artist.logo?.takeIf { it.isNotBlank() },
             genre = artist.genre?.takeIf { it.isNotBlank() },

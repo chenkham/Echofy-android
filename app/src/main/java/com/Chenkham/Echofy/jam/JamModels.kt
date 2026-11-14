@@ -109,24 +109,29 @@ data class JamRoomCode(
         get() = "${shardId.lowercase()}_${roomToken.lowercase()}"
 
     companion object {
-        fun create(shardId: String, tokenLength: Int = 6): JamRoomCode =
+        fun create(
+            shardId: String,
+            tokenLength: Int = 6,
+        ): JamRoomCode =
             JamRoomCode(
                 shardId = shardId,
-                roomToken = buildString(tokenLength) {
-                    repeat(tokenLength) {
-                        append(roomCodeAlphabet[roomCodeRandom.nextInt(roomCodeAlphabet.length)])
-                    }
-                },
+                roomToken =
+                    buildString(tokenLength) {
+                        repeat(tokenLength) {
+                            append(roomCodeAlphabet[roomCodeRandom.nextInt(roomCodeAlphabet.length)])
+                        }
+                    },
             )
 
         fun parse(rawCode: String): JamRoomCode? {
             val normalized = rawCode.trim().uppercase()
             val parts = normalized.split("-", limit = 2)
-            val (shardId, token) = if (parts.size == 2) {
-                parts[0] to parts[1]
-            } else {
-                "01" to normalized
-            }
+            val (shardId, token) =
+                if (parts.size == 2) {
+                    parts[0] to parts[1]
+                } else {
+                    "01" to normalized
+                }
             if (token.length < 4) return null
             if (!token.all { it in roomCodeAlphabet }) return null
             return JamRoomCode(shardId = shardId, roomToken = token)
@@ -153,13 +158,15 @@ data class JamParticipant(
     /** First letter of displayName, uppercased — used for avatar circles */
     val nameInitial: String
         get() = displayName.firstOrNull()?.uppercase() ?: "?"
+
     companion object {
         fun fromMap(map: Map<*, *>): JamParticipant? {
             val participantId = map["participantId"] as? String ?: return null
             val displayName = map["displayName"] as? String ?: "Listener"
-            val role = (map["role"] as? String)
-                ?.let { runCatching { JamParticipantRole.valueOf(it) }.getOrNull() }
-                ?: JamParticipantRole.GUEST
+            val role =
+                (map["role"] as? String)
+                    ?.let { runCatching { JamParticipantRole.valueOf(it) }.getOrNull() }
+                    ?: JamParticipantRole.GUEST
             return JamParticipant(
                 participantId = participantId,
                 displayName = displayName,
@@ -205,33 +212,33 @@ data class JamRoomMeta(
     companion object {
         fun fromMap(map: Map<*, *>): JamRoomMeta? {
             val roomCode = map["roomCode"] as? String ?: return null
-            val roomId   = map["roomId"]   as? String ?: return null
+            val roomId = map["roomId"] as? String ?: return null
             val hostParticipantId = map["hostParticipantId"] as? String ?: return null
             return JamRoomMeta(
-                roomCode             = roomCode,
-                roomId               = roomId,
-                shardId              = map["shardId"] as? String ?: "",
-                hostParticipantId    = hostParticipantId,
-                hostAuthUid          = map["hostAuthUid"] as? String ?: "",
-                hostName             = map["hostName"] as? String ?: "",
-                requireApproval      = map["requireApproval"] as? Boolean ?: false,
-                allowGuestControls   = map["allowGuestControls"] as? Boolean ?: true,
-                createdAtEpochMs     = (map["createdAtEpochMs"] as? Number)?.toLong() ?: 0L,
-                lastActivityAtEpochMs= (map["lastActivityAtEpochMs"] as? Number)?.toLong() ?: 0L,
-                status               = map["status"] as? String ?: "active",
-                closedAtEpochMs      = (map["closedAtEpochMs"] as? Number)?.toLong(),
-                schemaVersion        = (map["schemaVersion"] as? Number)?.toInt() ?: 1,
-                mediaId              = map["mediaId"] as? String ?: "",
-                title                = map["title"] as? String ?: "",
-                artist               = map["artist"] as? String ?: "",
-                thumbnailUrl         = map["thumbnailUrl"] as? String ?: "",
-                durationSeconds      = (map["durationSeconds"] as? Number)?.toInt() ?: -1,
-                playbackState        = map["playbackState"] as? String ?: "PAUSED",
-                playbackSpeed        = (map["playbackSpeed"] as? Number)?.toFloat() ?: 1f,
-                positionMs           = (map["positionMs"] as? Number)?.toLong() ?: 0L,
-                updatedAtEpochMs     = (map["updatedAtEpochMs"] as? Number)?.toLong() ?: 0L,
-                stateVersion         = (map["stateVersion"] as? Number)?.toLong() ?: 0L,
-                issuedByParticipantId= map["issuedByParticipantId"] as? String ?: "",
+                roomCode = roomCode,
+                roomId = roomId,
+                shardId = map["shardId"] as? String ?: "",
+                hostParticipantId = hostParticipantId,
+                hostAuthUid = map["hostAuthUid"] as? String ?: "",
+                hostName = map["hostName"] as? String ?: "",
+                requireApproval = map["requireApproval"] as? Boolean ?: false,
+                allowGuestControls = map["allowGuestControls"] as? Boolean ?: true,
+                createdAtEpochMs = (map["createdAtEpochMs"] as? Number)?.toLong() ?: 0L,
+                lastActivityAtEpochMs = (map["lastActivityAtEpochMs"] as? Number)?.toLong() ?: 0L,
+                status = map["status"] as? String ?: "active",
+                closedAtEpochMs = (map["closedAtEpochMs"] as? Number)?.toLong(),
+                schemaVersion = (map["schemaVersion"] as? Number)?.toInt() ?: 1,
+                mediaId = map["mediaId"] as? String ?: "",
+                title = map["title"] as? String ?: "",
+                artist = map["artist"] as? String ?: "",
+                thumbnailUrl = map["thumbnailUrl"] as? String ?: "",
+                durationSeconds = (map["durationSeconds"] as? Number)?.toInt() ?: -1,
+                playbackState = map["playbackState"] as? String ?: "PAUSED",
+                playbackSpeed = (map["playbackSpeed"] as? Number)?.toFloat() ?: 1f,
+                positionMs = (map["positionMs"] as? Number)?.toLong() ?: 0L,
+                updatedAtEpochMs = (map["updatedAtEpochMs"] as? Number)?.toLong() ?: 0L,
+                stateVersion = (map["stateVersion"] as? Number)?.toLong() ?: 0L,
+                issuedByParticipantId = map["issuedByParticipantId"] as? String ?: "",
             )
         }
     }
@@ -285,12 +292,13 @@ data class JamPlaybackSnapshot(
         MediaMetadata(
             id = mediaId,
             title = title.ifBlank { mediaId },
-            artists = artist
-                .split(",")
-                .map(String::trim)
-                .filter(String::isNotBlank)
-                .ifEmpty { listOf("Unknown Artist") }
-                .map { MediaMetadata.Artist(id = null, name = it) },
+            artists =
+                artist
+                    .split(",")
+                    .map(String::trim)
+                    .filter(String::isNotBlank)
+                    .ifEmpty { listOf("Unknown Artist") }
+                    .map { MediaMetadata.Artist(id = null, name = it) },
             duration = durationSeconds,
             thumbnailUrl = thumbnailUrl.ifBlank { null },
         )
@@ -298,9 +306,10 @@ data class JamPlaybackSnapshot(
     companion object {
         fun fromMap(map: Map<*, *>): JamPlaybackSnapshot? {
             val mediaId = map["mediaId"] as? String ?: return null
-            val playbackState = (map["playbackState"] as? String)
-                ?.let { runCatching { JamPlaybackTransportState.valueOf(it) }.getOrNull() }
-                ?: JamPlaybackTransportState.PAUSED
+            val playbackState =
+                (map["playbackState"] as? String)
+                    ?.let { runCatching { JamPlaybackTransportState.valueOf(it) }.getOrNull() }
+                    ?: JamPlaybackTransportState.PAUSED
             val basePositionMs = (map["basePositionMs"] as? Number)?.toLong() ?: 0L
             val playbackSpeed = (map["playbackSpeed"] as? Number)?.toFloat() ?: 1f
             val updatedAtEpochMs = (map["updatedAtEpochMs"] as? Number)?.toLong() ?: 0L
@@ -355,10 +364,11 @@ data class JamPlaybackState(
     companion object {
         fun fromMap(map: Map<String, Any>): JamPlaybackState {
             val rawState = map["playbackState"] as? String
-            val playbackState = rawState?.let {
-                runCatching { JamPlaybackTransportState.valueOf(it) }.getOrNull()
-            }
-                ?: JamPlaybackTransportState.PAUSED
+            val playbackState =
+                rawState?.let {
+                    runCatching { JamPlaybackTransportState.valueOf(it) }.getOrNull()
+                }
+                    ?: JamPlaybackTransportState.PAUSED
 
             val basePositionMs = (map["basePositionMs"] as? Number)?.toLong() ?: 0L
             val updatedAtEpochMs = (map["updatedAtEpochMs"] as? Number)?.toLong() ?: 0L
@@ -412,12 +422,13 @@ data class JamQueueItem(
         MediaMetadata(
             id = mediaId,
             title = title.ifBlank { mediaId },
-            artists = artist
-                .split(",")
-                .map(String::trim)
-                .filter(String::isNotBlank)
-                .ifEmpty { listOf("Unknown Artist") }
-                .map { MediaMetadata.Artist(id = null, name = it) },
+            artists =
+                artist
+                    .split(",")
+                    .map(String::trim)
+                    .filter(String::isNotBlank)
+                    .ifEmpty { listOf("Unknown Artist") }
+                    .map { MediaMetadata.Artist(id = null, name = it) },
             duration = durationSeconds,
             thumbnailUrl = thumbnailUrl.ifBlank { null },
         )

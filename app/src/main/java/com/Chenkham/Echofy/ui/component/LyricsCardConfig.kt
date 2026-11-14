@@ -111,12 +111,13 @@ fun lyricsCardSize(ratio: LyricsAspectRatio): DpSize {
  * Forma "expresiva" asim├®trica: dos esquinas grandes, dos m├ís contenidas.
  * Da personalidad sin necesitar geometr├¡a de blob compleja.
  */
-fun expressiveShape(scale: LyricsShapeScale): Shape = RoundedCornerShape(
-    topStart = scale.corner,
-    topEnd = scale.corner * 0.42f,
-    bottomEnd = scale.corner,
-    bottomStart = scale.corner * 0.42f,
-)
+fun expressiveShape(scale: LyricsShapeScale): Shape =
+    RoundedCornerShape(
+        topStart = scale.corner,
+        topEnd = scale.corner * 0.42f,
+        bottomEnd = scale.corner,
+        bottomStart = scale.corner * 0.42f,
+    )
 
 // ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ
 // LyricsCardConfig ÔÇö estado inmutable del usuario.
@@ -124,37 +125,28 @@ fun expressiveShape(scale: LyricsShapeScale): Shape = RoundedCornerShape(
 // ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ
 
 data class LyricsCardConfig(
-
     /** Qu├® template visual se renderiza */
     val style: LyricsCardStyle = LyricsCardStyle.Tonal,
-
     /** Color de acento ├║nico; alimenta los 5 estilos */
     val accent: LyricsAccent = LyricsAccents.Indigo,
-
     /** Proporci├│n de salida, pensada para compartir */
     val aspectRatio: LyricsAspectRatio = LyricsAspectRatio.Square,
-
     /** Cu├ín atrevidas son las esquinas en toda la tarjeta */
     val shapeScale: LyricsShapeScale = LyricsShapeScale.Bold,
-
     /** Solo aplica cuando style == Glass */
     val glassIntensity: LyricsGlassIntensity = LyricsGlassIntensity.Medium,
-
     /**
      * Multiplicador sobre el tama├▒o de fuente calculado autom├íticamente.
      * Rango recomendado: 0.6f ÔÇô 1.5f
      */
     val textSizeMultiplier: Float = 1f,
-
     /** Alineaci├│n del bloque de letra */
     val textAlign: TextAlign = TextAlign.Start,
-
     /** Visibilidad de elementos dentro de la tarjeta */
     val showTitle: Boolean = true,
     val showArtist: Boolean = true,
     val showCoverArt: Boolean = true,
     val showBranding: Boolean = true,
-
     /**
      * Padding interno de la tarjeta.
      * Rango recomendado: 12.dp ÔÇô 36.dp

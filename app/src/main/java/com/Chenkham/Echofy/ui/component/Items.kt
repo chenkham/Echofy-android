@@ -4,7 +4,6 @@ package com.Chenkham.Echofy.ui.component
 
 import android.annotation.SuppressLint
 import android.content.Context
-import com.Chenkham.Echofy.db.insert
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.expandIn
@@ -46,6 +45,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -70,20 +70,14 @@ import androidx.media3.exoplayer.offline.Download.STATE_COMPLETED
 import androidx.media3.exoplayer.offline.Download.STATE_DOWNLOADING
 import androidx.media3.exoplayer.offline.Download.STATE_QUEUED
 import coil.compose.AsyncImage
-
 import coil.compose.AsyncImagePainter
 import coil.request.CachePolicy
 import coil.request.ImageRequest
-import com.arturo254.opentune.innertube.YouTube
-import com.arturo254.opentune.innertube.models.AlbumItem
-import com.arturo254.opentune.innertube.models.ArtistItem
-import com.arturo254.opentune.innertube.models.PlaylistItem
-import com.arturo254.opentune.innertube.models.SongItem
-import com.arturo254.opentune.innertube.models.YTItem
 import com.Chenkham.Echofy.LocalDatabase
 import com.Chenkham.Echofy.LocalDownloadUtil
 import com.Chenkham.Echofy.LocalPlayerConnection
 import com.Chenkham.Echofy.R
+import com.Chenkham.Echofy.ads.AdManager
 import com.Chenkham.Echofy.constants.GridThumbnailHeight
 import com.Chenkham.Echofy.constants.ListItemHeight
 import com.Chenkham.Echofy.constants.ListThumbnailSize
@@ -93,6 +87,7 @@ import com.Chenkham.Echofy.db.entities.Album
 import com.Chenkham.Echofy.db.entities.Artist
 import com.Chenkham.Echofy.db.entities.Playlist
 import com.Chenkham.Echofy.db.entities.Song
+import com.Chenkham.Echofy.db.insert
 import com.Chenkham.Echofy.models.MediaMetadata
 import com.Chenkham.Echofy.playback.queues.LocalAlbumRadio
 import com.Chenkham.Echofy.ui.theme.extractThemeColor
@@ -100,14 +95,18 @@ import com.Chenkham.Echofy.utils.getPlaylistImageUri
 import com.Chenkham.Echofy.utils.joinByBullet
 import com.Chenkham.Echofy.utils.makeTimeString
 import com.Chenkham.Echofy.utils.reportException
+import com.arturo254.opentune.innertube.YouTube
+import com.arturo254.opentune.innertube.models.AlbumItem
+import com.arturo254.opentune.innertube.models.ArtistItem
+import com.arturo254.opentune.innertube.models.PlaylistItem
+import com.arturo254.opentune.innertube.models.SongItem
+import com.arturo254.opentune.innertube.models.YTItem
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import androidx.compose.runtime.staticCompositionLocalOf
-import com.Chenkham.Echofy.ads.AdManager
 
 val LocalAdManager = staticCompositionLocalOf<AdManager?> { null }
 
@@ -222,7 +221,6 @@ fun GridItem(
                 modifier
                     .padding(12.dp)
                     .width(GridThumbnailHeight * thumbnailRatio)
-
             },
     ) {
         BoxWithConstraints(
@@ -293,7 +291,7 @@ fun SmallGridItem(
                 Modifier
                     .height(SmallGridThumbnailHeight)
                     .aspectRatio(thumbnailRatio)
-                    .clip(RoundedCornerShape(8.dp))
+                    .clip(RoundedCornerShape(8.dp)),
         ) {
             thumbnailContent()
         }
@@ -437,16 +435,17 @@ fun SongListItem(
                 }
                 // PERFORMANCE: Optimized image loading with caching
                 val context = LocalContext.current
-                val imageRequest = remember(song.song.thumbnailUrl) {
-                    ImageRequest.Builder(context)
-                        .data(song.song.thumbnailUrl)
-                        .size(256) // Fixed size for consistent caching
-                        .memoryCachePolicy(CachePolicy.ENABLED)
-                        .diskCachePolicy(CachePolicy.ENABLED)
-                        .crossfade(false) // Instant display from cache
-                        .allowHardware(true)
-                        .build()
-                }
+                val imageRequest =
+                    remember(song.song.thumbnailUrl) {
+                        ImageRequest.Builder(context)
+                            .data(song.song.thumbnailUrl)
+                            .size(256) // Fixed size for consistent caching
+                            .memoryCachePolicy(CachePolicy.ENABLED)
+                            .diskCachePolicy(CachePolicy.ENABLED)
+                            .crossfade(false) // Instant display from cache
+                            .allowHardware(true)
+                            .build()
+                    }
                 AsyncImage(
                     model = imageRequest,
                     contentDescription = null,
@@ -496,9 +495,10 @@ fun SongGridItem(
                 painter = painterResource(R.drawable.favorite),
                 contentDescription = null,
                 tint = MaterialTheme.colorScheme.error,
-                modifier = Modifier
-                    .size(18.dp)
-                    .padding(end = 2.dp)
+                modifier =
+                    Modifier
+                        .size(18.dp)
+                        .padding(end = 2.dp),
             )
         }
         if (showInLibraryIcon && song.song.inLibrary != null) {
@@ -506,30 +506,35 @@ fun SongGridItem(
                 painter = painterResource(R.drawable.library_add_check),
                 contentDescription = null,
                 tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier
-                    .size(18.dp)
-                    .padding(end = 2.dp)
+                modifier =
+                    Modifier
+                        .size(18.dp)
+                        .padding(end = 2.dp),
             )
         }
         if (showDownloadIcon) {
             val download by LocalDownloadUtil.current.getDownload(song.id)
                 .collectAsState(initial = null)
             when (download?.state) {
-                STATE_COMPLETED -> Icon(
-                    painter = painterResource(R.drawable.offline),
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier
-                        .size(18.dp)
-                        .padding(end = 2.dp)
-                )
+                STATE_COMPLETED ->
+                    Icon(
+                        painter = painterResource(R.drawable.offline),
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier =
+                            Modifier
+                                .size(18.dp)
+                                .padding(end = 2.dp),
+                    )
 
-                STATE_QUEUED, STATE_DOWNLOADING -> CircularProgressIndicator(
-                    strokeWidth = 2.dp,
-                    modifier = Modifier
-                        .size(16.dp)
-                        .padding(end = 2.dp)
-                )
+                STATE_QUEUED, STATE_DOWNLOADING ->
+                    CircularProgressIndicator(
+                        strokeWidth = 2.dp,
+                        modifier =
+                            Modifier
+                                .size(16.dp)
+                                .padding(end = 2.dp),
+                    )
 
                 else -> {}
             }
@@ -540,24 +545,26 @@ fun SongGridItem(
     fillMaxWidth: Boolean = false,
 ) = GridItem(
     title = song.song.title,
-    subtitle = joinByBullet(
-        song.artists.joinToString { it.name },
-        makeTimeString(song.song.duration * 1000L)
-    ),
+    subtitle =
+        joinByBullet(
+            song.artists.joinToString { it.name },
+            makeTimeString(song.song.duration * 1000L),
+        ),
     badges = badges,
     thumbnailContent = {
         // PERFORMANCE: Optimized image loading with caching
         val context = LocalContext.current
-        val imageRequest = remember(song.song.thumbnailUrl) {
-            ImageRequest.Builder(context)
-                .data(song.song.thumbnailUrl)
-                .size(544) // Standard grid thumbnail size
-                .memoryCachePolicy(CachePolicy.ENABLED)
-                .diskCachePolicy(CachePolicy.ENABLED)
-                .crossfade(false) // Instant display from cache
-                .allowHardware(true)
-                .build()
-        }
+        val imageRequest =
+            remember(song.song.thumbnailUrl) {
+                ImageRequest.Builder(context)
+                    .data(song.song.thumbnailUrl)
+                    .size(544) // Standard grid thumbnail size
+                    .memoryCachePolicy(CachePolicy.ENABLED)
+                    .diskCachePolicy(CachePolicy.ENABLED)
+                    .crossfade(false) // Instant display from cache
+                    .allowHardware(true)
+                    .build()
+            }
         AsyncImage(
             model = imageRequest,
             contentDescription = null,
@@ -621,7 +628,7 @@ fun SongGridItem(
     },
     thumbnailShape = RoundedCornerShape(ThumbnailCornerRadius),
     fillMaxWidth = fillMaxWidth,
-    modifier = modifier
+    modifier = modifier,
 )
 
 @Composable
@@ -757,11 +764,11 @@ fun ArtistGridItem(
         AsyncImage(
             model = artist.artist.thumbnailUrl,
             contentDescription = null,
-            modifier = Modifier
-                .fillMaxSize()
-                .clip(RoundedCornerShape(ThumbnailCornerRadius)),
-
-            )
+            modifier =
+                Modifier
+                    .fillMaxSize()
+                    .clip(RoundedCornerShape(ThumbnailCornerRadius)),
+        )
     },
     thumbnailShape = CircleShape,
     fillMaxWidth = fillMaxWidth,
@@ -816,8 +823,8 @@ fun AlbumListItem(
                         STATE_COMPLETED
                     } else if (songs.all {
                             downloads[it.id]?.state == STATE_QUEUED ||
-                                    downloads[it.id]?.state == STATE_DOWNLOADING ||
-                                    downloads[it.id]?.state == STATE_COMPLETED
+                                downloads[it.id]?.state == STATE_DOWNLOADING ||
+                                downloads[it.id]?.state == STATE_COMPLETED
                         }
                     ) {
                         STATE_DOWNLOADING
@@ -950,8 +957,8 @@ fun AlbumGridItem(
                         STATE_COMPLETED
                     } else if (songs.all {
                             downloads[it.id]?.state == STATE_QUEUED ||
-                                    downloads[it.id]?.state == STATE_DOWNLOADING ||
-                                    downloads[it.id]?.state == STATE_COMPLETED
+                                downloads[it.id]?.state == STATE_DOWNLOADING ||
+                                downloads[it.id]?.state == STATE_COMPLETED
                         }
                     ) {
                         STATE_DOWNLOADING
@@ -1063,7 +1070,7 @@ fun AlbumGridItem(
                             coroutineScope.launch {
                                 database.albumWithSongs(album.id).first()?.let { albumWithSongs ->
                                     playerConnection.playQueue(
-                                        LocalAlbumRadio(albumWithSongs)
+                                        LocalAlbumRadio(albumWithSongs),
                                     )
                                 }
                             }
@@ -1141,19 +1148,20 @@ fun PlaylistListItem(
     autoPlaylist: Boolean = false,
 ) = ListItem(
     title = playlist.playlist.name,
-    subtitle = if (autoPlaylist) {
-        ""
-    } else {
-        if (playlist.songCount == 0 && playlist.playlist.remoteSongCount != null) {
-            pluralStringResource(
-                R.plurals.n_song,
-                playlist.playlist.remoteSongCount,
-                playlist.playlist.remoteSongCount
-            )
+    subtitle =
+        if (autoPlaylist) {
+            ""
         } else {
-            pluralStringResource(R.plurals.n_song, playlist.songCount, playlist.songCount)
-        }
-    },
+            if (playlist.songCount == 0 && playlist.playlist.remoteSongCount != null) {
+                pluralStringResource(
+                    R.plurals.n_song,
+                    playlist.playlist.remoteSongCount,
+                    playlist.playlist.remoteSongCount,
+                )
+            } else {
+                pluralStringResource(R.plurals.n_song, playlist.songCount, playlist.songCount)
+            }
+        },
     thumbnailContent = {
         val painter =
             when (playlist.playlist.name) {
@@ -1165,7 +1173,6 @@ fun PlaylistListItem(
                         R.drawable.trending_up
                     } else {
                         R.drawable.queue_music
-
                     }
                 }
             }
@@ -1176,14 +1183,15 @@ fun PlaylistListItem(
                         Modifier
                             .size(ListThumbnailSize)
                             .clip(RoundedCornerShape(ThumbnailCornerRadius))
-                            .background(MaterialTheme.colorScheme.surfaceContainer)
+                            .background(MaterialTheme.colorScheme.surfaceContainer),
                 ) {
                     Icon(
                         painter = painterResource(painter),
                         contentDescription = null,
-                        modifier = Modifier
-                            .size(ListThumbnailSize / 2)
-                            .align(Alignment.Center)
+                        modifier =
+                            Modifier
+                                .size(ListThumbnailSize / 2)
+                                .align(Alignment.Center),
                     )
                 }
 
@@ -1233,22 +1241,23 @@ fun PlaylistGridItem(
     badges: @Composable RowScope.() -> Unit = { },
     fillMaxWidth: Boolean = false,
     autoPlaylist: Boolean = false,
-    context: Context // Agregamos el contexto para obtener la URI de la imagen
+    context: Context, // Agregamos el contexto para obtener la URI de la imagen
 ) = GridItem(
     title = playlist.playlist.name,
-    subtitle = if (autoPlaylist) {
-        ""
-    } else {
-        if (playlist.songCount == 0 && playlist.playlist.remoteSongCount != null) {
-            pluralStringResource(
-                R.plurals.n_song,
-                playlist.playlist.remoteSongCount,
-                playlist.playlist.remoteSongCount
-            )
+    subtitle =
+        if (autoPlaylist) {
+            ""
         } else {
-            pluralStringResource(R.plurals.n_song, playlist.songCount, playlist.songCount)
-        }
-    },
+            if (playlist.songCount == 0 && playlist.playlist.remoteSongCount != null) {
+                pluralStringResource(
+                    R.plurals.n_song,
+                    playlist.playlist.remoteSongCount,
+                    playlist.playlist.remoteSongCount,
+                )
+            } else {
+                pluralStringResource(R.plurals.n_song, playlist.songCount, playlist.songCount)
+            }
+        },
     badges = badges,
     thumbnailContent = {
         val thumbnailUri =
@@ -1288,7 +1297,7 @@ fun PlaylistGridItem(
                             Modifier
                                 .fillMaxSize()
                                 .background(MaterialTheme.colorScheme.surfaceContainer)
-                                .clip(RoundedCornerShape(Libcarditem))
+                                .clip(RoundedCornerShape(Libcarditem)),
                     ) {
                         Icon(
                             painter = painterResource(painter),
@@ -1342,7 +1351,6 @@ fun PlaylistGridItem(
     fillMaxWidth = fillMaxWidth,
     modifier = modifier,
 )
-
 
 @Composable
 fun MediaMetadataListItem(
@@ -1494,15 +1502,17 @@ fun YouTubeListItem(
     title = item.title,
     subtitle =
         when (item) {
-            is SongItem -> joinByBullet(
-                item.artists.joinToString { it.name },
-                makeTimeString(item.duration?.times(1000L))
-            )
+            is SongItem ->
+                joinByBullet(
+                    item.artists.joinToString { it.name },
+                    makeTimeString(item.duration?.times(1000L)),
+                )
 
-            is AlbumItem -> joinByBullet(
-                item.artists?.joinToString { it.name },
-                item.year?.toString()
-            )
+            is AlbumItem ->
+                joinByBullet(
+                    item.artists?.joinToString { it.name },
+                    item.year?.toString(),
+                )
 
             is ArtistItem -> null
             is PlaylistItem -> joinByBullet(item.author?.name, item.songCountText)
@@ -1600,13 +1610,19 @@ fun YouTubeGridItem(
     badges: @Composable RowScope.() -> Unit = {
         val database = LocalDatabase.current
         // If state is not injected, fallback to DB query (laggy but backward compatible)
-        val songState = if (isLiked == null || inLibrary == null) {
-            database.song(item.id).collectAsState(initial = null).value
-        } else null
-        
-        val albumState = if (isBookmarked == null) {
-            database.album(item.id).collectAsState(initial = null).value
-        } else null
+        val songState =
+            if (isLiked == null || inLibrary == null) {
+                database.song(item.id).collectAsState(initial = null).value
+            } else {
+                null
+            }
+
+        val albumState =
+            if (isBookmarked == null) {
+                database.album(item.id).collectAsState(initial = null).value
+            } else {
+                null
+            }
 
         val finalLiked = isLiked ?: (songState?.song?.liked == true)
         val finalInLibrary = inLibrary ?: (songState?.song?.inLibrary != null)
@@ -1702,16 +1718,17 @@ fun YouTubeGridItem(
         ) {
             // PERFORMANCE: Optimized image loading with caching for smooth scrolling
             val context = LocalContext.current
-            val imageRequest = remember(item.thumbnail) {
-                ImageRequest.Builder(context)
-                    .data(item.thumbnail)
-                    .size(544) // Standard grid thumbnail size
-                    .memoryCachePolicy(CachePolicy.ENABLED)
-                    .diskCachePolicy(CachePolicy.ENABLED)
-                    .crossfade(false) // Instant display from cache
-                    .allowHardware(true)
-                    .build()
-            }
+            val imageRequest =
+                remember(item.thumbnail) {
+                    ImageRequest.Builder(context)
+                        .data(item.thumbnail)
+                        .size(544) // Standard grid thumbnail size
+                        .memoryCachePolicy(CachePolicy.ENABLED)
+                        .diskCachePolicy(CachePolicy.ENABLED)
+                        .crossfade(false) // Instant display from cache
+                        .allowHardware(true)
+                        .build()
+                }
             AsyncImage(
                 model = imageRequest,
                 contentDescription = null,
@@ -1848,15 +1865,17 @@ fun YouTubeGridItem(
 
             val subtitle =
                 when (item) {
-                    is SongItem -> joinByBullet(
-                        item.artists.joinToString { it.name },
-                        makeTimeString(item.duration?.times(1000L))
-                    )
+                    is SongItem ->
+                        joinByBullet(
+                            item.artists.joinToString { it.name },
+                            makeTimeString(item.duration?.times(1000L)),
+                        )
 
-                    is AlbumItem -> joinByBullet(
-                        item.artists?.joinToString { it.name },
-                        item.year?.toString()
-                    )
+                    is AlbumItem ->
+                        joinByBullet(
+                            item.artists?.joinToString { it.name },
+                            item.year?.toString(),
+                        )
 
                     is ArtistItem -> null
                     is PlaylistItem -> joinByBullet(item.author?.name, item.songCountText)
@@ -1963,8 +1982,8 @@ fun LocalSongsGrid(
     title: String,
     subtitle: String,
     badges:
-    @Composable()
-    (RowScope.() -> Unit) = {},
+        @Composable()
+        (RowScope.() -> Unit) = {},
     thumbnailUrl: String?,
     isActive: Boolean = false,
     isPlaying: Boolean = false,
@@ -1977,9 +1996,10 @@ fun LocalSongsGrid(
     thumbnailContent = {
         Box(
             contentAlignment = Alignment.Center,
-            modifier = Modifier
-                .fillMaxWidth()
-                .clip(RoundedCornerShape(ThumbnailCornerRadius)),
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(ThumbnailCornerRadius)),
         ) {
             AsyncImage(
                 model = thumbnailUrl,
@@ -2053,8 +2073,8 @@ fun LocalArtistsGrid(
     title: String,
     subtitle: String,
     badges:
-    @Composable()
-    (RowScope.() -> Unit) = {},
+        @Composable()
+        (RowScope.() -> Unit) = {},
     thumbnailUrl: String?,
     isActive: Boolean = false,
     isPlaying: Boolean = false,
@@ -2067,9 +2087,10 @@ fun LocalArtistsGrid(
     thumbnailContent = {
         Box(
             contentAlignment = Alignment.Center,
-            modifier = Modifier
-                .fillMaxSize()
-                .clip(CircleShape),
+            modifier =
+                Modifier
+                    .fillMaxSize()
+                    .clip(CircleShape),
         ) {
             AsyncImage(
                 model = thumbnailUrl,
@@ -2118,8 +2139,8 @@ fun LocalAlbumsGrid(
     title: String,
     subtitle: String,
     badges:
-    @Composable()
-    (RowScope.() -> Unit) = {},
+        @Composable()
+        (RowScope.() -> Unit) = {},
     thumbnailUrl: String?,
     isActive: Boolean = false,
     isPlaying: Boolean = false,

@@ -89,7 +89,7 @@ object TTMLParser {
                                     .firstOrNull {
                                         it.nodeName.endsWith(
                                             "agent",
-                                            ignoreCase = true
+                                            ignoreCase = true,
                                         )
                                     }
                                     ?.nodeValue
@@ -158,7 +158,7 @@ object TTMLParser {
                                     .firstOrNull {
                                         it.nodeName.endsWith(
                                             "agent",
-                                            ignoreCase = true
+                                            ignoreCase = true,
                                         )
                                     }
                                     ?.nodeValue
@@ -215,9 +215,11 @@ object TTMLParser {
             val transliterationElement = elements.item(i) as? Element ?: continue
             if (!transliterationElement.tagName.endsWith(
                     "transliteration",
-                    ignoreCase = true
+                    ignoreCase = true,
                 )
-            ) continue
+            ) {
+                continue
+            }
 
             val language = readAttributeBySuffix(transliterationElement, "lang")
             val target =
@@ -502,9 +504,10 @@ object TTMLParser {
         for (i in 0 until attrs.length) {
             val node = attrs.item(i) ?: continue
             val name = node.nodeName ?: continue
-            if (name.equals(suffix, ignoreCase = true) || name.endsWith(
+            if (name.equals(suffix, ignoreCase = true) ||
+                name.endsWith(
                     ":$suffix",
-                    ignoreCase = true
+                    ignoreCase = true,
                 )
             ) {
                 val value = node.nodeValue?.trim()

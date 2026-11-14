@@ -16,8 +16,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.CornerRadius
@@ -34,23 +34,26 @@ fun RealTimeAudioVisualizer(
     isActive: Boolean,
     barCount: Int = 28,
 ) {
-    val amplitudes = remember(barCount) {
-        mutableStateListOf<Float>().apply {
-            repeat(barCount) { add(0.08f) }
+    val amplitudes =
+        remember(barCount) {
+            mutableStateListOf<Float>().apply {
+                repeat(barCount) { add(0.08f) }
+            }
         }
-    }
     var hasLiveCapture by remember(audioSessionId, isActive, barCount) { mutableStateOf(false) }
     val mainHandler = remember { Handler(Looper.getMainLooper()) }
     val fallbackTransition = rememberInfiniteTransition(label = "visualizerFallback")
-    val fallbackPhase = fallbackTransition.animateFloat(
-        initialValue = 0f,
-        targetValue = 1f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(durationMillis = 1400, easing = LinearEasing),
-            repeatMode = RepeatMode.Restart,
-        ),
-        label = "fallbackPhase",
-    ).value
+    val fallbackPhase =
+        fallbackTransition.animateFloat(
+            initialValue = 0f,
+            targetValue = 1f,
+            animationSpec =
+                infiniteRepeatable(
+                    animation = tween(durationMillis = 1400, easing = LinearEasing),
+                    repeatMode = RepeatMode.Restart,
+                ),
+            label = "fallbackPhase",
+        ).value
 
     DisposableEffect(audioSessionId, isActive, barCount) {
         amplitudes.indices.forEach { index -> amplitudes[index] = 0.08f }
@@ -59,41 +62,42 @@ fun RealTimeAudioVisualizer(
         if (!isActive || audioSessionId <= 0) {
             onDispose { }
         } else {
-            val visualizer = try {
-                Visualizer(audioSessionId).apply {
-                    captureSize = Visualizer.getCaptureSizeRange()[1].coerceAtMost(1024)
-                    setDataCaptureListener(
-                        object : Visualizer.OnDataCaptureListener {
-                            override fun onWaveFormDataCapture(
-                                visualizer: Visualizer?,
-                                waveform: ByteArray?,
-                                samplingRate: Int,
-                            ) {
-                                val snapshot = waveform ?: return
-                                val grouped = mapWaveformToAmplitudes(snapshot, barCount)
-                                mainHandler.post {
-                                    grouped.forEachIndexed { index, value ->
-                                        val current = amplitudes[index]
-                                        amplitudes[index] = (current * 0.42f) + (value * 0.58f)
+            val visualizer =
+                try {
+                    Visualizer(audioSessionId).apply {
+                        captureSize = Visualizer.getCaptureSizeRange()[1].coerceAtMost(1024)
+                        setDataCaptureListener(
+                            object : Visualizer.OnDataCaptureListener {
+                                override fun onWaveFormDataCapture(
+                                    visualizer: Visualizer?,
+                                    waveform: ByteArray?,
+                                    samplingRate: Int,
+                                ) {
+                                    val snapshot = waveform ?: return
+                                    val grouped = mapWaveformToAmplitudes(snapshot, barCount)
+                                    mainHandler.post {
+                                        grouped.forEachIndexed { index, value ->
+                                            val current = amplitudes[index]
+                                            amplitudes[index] = (current * 0.42f) + (value * 0.58f)
+                                        }
                                     }
                                 }
-                            }
 
-                            override fun onFftDataCapture(
-                                visualizer: Visualizer?,
-                                fft: ByteArray?,
-                                samplingRate: Int,
-                            ) = Unit
-                        },
-                        Visualizer.getMaxCaptureRate() / 2,
-                        true,
-                        false,
-                    )
-                    enabled = true
+                                override fun onFftDataCapture(
+                                    visualizer: Visualizer?,
+                                    fft: ByteArray?,
+                                    samplingRate: Int,
+                                ) = Unit
+                            },
+                            Visualizer.getMaxCaptureRate() / 2,
+                            true,
+                            false,
+                        )
+                        enabled = true
+                    }
+                } catch (_: Throwable) {
+                    null
                 }
-            } catch (_: Throwable) {
-                null
-            }
             hasLiveCapture = visualizer != null
 
             onDispose {
@@ -107,9 +111,10 @@ fun RealTimeAudioVisualizer(
     }
 
     Canvas(
-        modifier = modifier
-            .fillMaxWidth()
-            .height(32.dp),
+        modifier =
+            modifier
+                .fillMaxWidth()
+                .height(32.dp),
     ) {
         val barWidth = size.width / (barCount * 1.7f)
         val gap = barWidth * 0.7f
@@ -119,8 +124,11 @@ fun RealTimeAudioVisualizer(
             val fallbackWave =
                 0.18f + (((fallbackPhase + (index * 0.07f)) % 1f) * (1f - ((fallbackPhase + (index * 0.07f)) % 1f))) * 0.9f
             val amplitude =
-                if (hasLiveCapture) amplitudes[index].coerceIn(0.08f, 1f)
-                else fallbackWave
+                if (hasLiveCapture) {
+                    amplitudes[index].coerceIn(0.08f, 1f)
+                } else {
+                    fallbackWave
+                }
             val barHeight = max(minBarHeight, size.height * amplitude)
             val left = index * (barWidth + gap)
             val top = (size.height - barHeight) / 2f

@@ -4,8 +4,6 @@
  * Licensed Under GPL-3.0 | see git history for contributors
  */
 
-
-
 package com.Chenkham.Echofy.ui.theme
 
 import android.graphics.Bitmap
@@ -64,14 +62,15 @@ fun EchofyTheme(
     val useSystemDynamicColor =
         (seedPalette == null && themeColor == DefaultThemeColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S)
 
-    val typography = remember(appFont, useSystemFont) {
-        if (useSystemFont) {
-            SystemTypography
-        } else {
-            val family = appFont.toFontFamily()
-            if (family != null) buildTypography(family) else AppTypography
+    val typography =
+        remember(appFont, useSystemFont) {
+            if (useSystemFont) {
+                SystemTypography
+            } else {
+                val family = appFont.toFontFamily()
+                if (family != null) buildTypography(family) else AppTypography
+            }
         }
-    }
 
     val appColorScheme =
         remember(seedPalette, themeColor, darkTheme) {
@@ -96,16 +95,17 @@ fun EchofyTheme(
             appColorScheme
         }
 
-    val colorScheme = remember(baseColorScheme, pureBlack, darkTheme) {
-        if (darkTheme && pureBlack) baseColorScheme.pureBlack(true) else baseColorScheme
-    }
+    val colorScheme =
+        remember(baseColorScheme, pureBlack, darkTheme) {
+            if (darkTheme && pureBlack) baseColorScheme.pureBlack(true) else baseColorScheme
+        }
 
     val animatedColorScheme = updateTransition(colorScheme)
 
     MaterialTheme(
         colorScheme = animatedColorScheme,
         typography = typography,
-        content = content
+        content = content,
     )
 }
 
@@ -113,178 +113,217 @@ fun EchofyTheme(
 private fun updateTransition(targetColorScheme: ColorScheme): ColorScheme {
     val animationSpec = spring<Color>(stiffness = Spring.StiffnessLow)
     return ColorScheme(
-        primary = animateColorAsState(
-            targetColorScheme.primary,
-            animationSpec,
-            label = "primary"
-        ).value,
-        onPrimary = animateColorAsState(
-            targetColorScheme.onPrimary,
-            animationSpec,
-            label = "onPrimary"
-        ).value,
-        primaryContainer = animateColorAsState(
-            targetColorScheme.primaryContainer,
-            animationSpec,
-            label = "primaryContainer"
-        ).value,
-        onPrimaryContainer = animateColorAsState(
-            targetColorScheme.onPrimaryContainer,
-            animationSpec,
-            label = "onPrimaryContainer"
-        ).value,
-        inversePrimary = animateColorAsState(
-            targetColorScheme.inversePrimary,
-            animationSpec,
-            label = "inversePrimary"
-        ).value,
-        secondary = animateColorAsState(
-            targetColorScheme.secondary,
-            animationSpec,
-            label = "secondary"
-        ).value,
-        onSecondary = animateColorAsState(
-            targetColorScheme.onSecondary,
-            animationSpec,
-            label = "onSecondary"
-        ).value,
-        secondaryContainer = animateColorAsState(
-            targetColorScheme.secondaryContainer,
-            animationSpec,
-            label = "secondaryContainer"
-        ).value,
-        onSecondaryContainer = animateColorAsState(
-            targetColorScheme.onSecondaryContainer,
-            animationSpec,
-            label = "onSecondaryContainer"
-        ).value,
-        tertiary = animateColorAsState(
-            targetColorScheme.tertiary,
-            animationSpec,
-            label = "tertiary"
-        ).value,
-        onTertiary = animateColorAsState(
-            targetColorScheme.onTertiary,
-            animationSpec,
-            label = "onTertiary"
-        ).value,
-        tertiaryContainer = animateColorAsState(
-            targetColorScheme.tertiaryContainer,
-            animationSpec,
-            label = "tertiaryContainer"
-        ).value,
-        onTertiaryContainer = animateColorAsState(
-            targetColorScheme.onTertiaryContainer,
-            animationSpec,
-            label = "onTertiaryContainer"
-        ).value,
-        background = animateColorAsState(
-            targetColorScheme.background,
-            animationSpec,
-            label = "background"
-        ).value,
-        onBackground = animateColorAsState(
-            targetColorScheme.onBackground,
-            animationSpec,
-            label = "onBackground"
-        ).value,
-        surface = animateColorAsState(
-            targetColorScheme.surface,
-            animationSpec,
-            label = "surface"
-        ).value,
-        onSurface = animateColorAsState(
-            targetColorScheme.onSurface,
-            animationSpec,
-            label = "onSurface"
-        ).value,
-        surfaceVariant = animateColorAsState(
-            targetColorScheme.surfaceVariant,
-            animationSpec,
-            label = "surfaceVariant"
-        ).value,
-        onSurfaceVariant = animateColorAsState(
-            targetColorScheme.onSurfaceVariant,
-            animationSpec,
-            label = "onSurfaceVariant"
-        ).value,
-        surfaceTint = animateColorAsState(
-            targetColorScheme.surfaceTint,
-            animationSpec,
-            label = "surfaceTint"
-        ).value,
-        inverseSurface = animateColorAsState(
-            targetColorScheme.inverseSurface,
-            animationSpec,
-            label = "inverseSurface"
-        ).value,
-        inverseOnSurface = animateColorAsState(
-            targetColorScheme.inverseOnSurface,
-            animationSpec,
-            label = "inverseOnSurface"
-        ).value,
-        error = animateColorAsState(targetColorScheme.error, animationSpec, label = "error").value,
-        onError = animateColorAsState(
-            targetColorScheme.onError,
-            animationSpec,
-            label = "onError"
-        ).value,
-        errorContainer = animateColorAsState(
-            targetColorScheme.errorContainer,
-            animationSpec,
-            label = "errorContainer"
-        ).value,
-        onErrorContainer = animateColorAsState(
-            targetColorScheme.onErrorContainer,
-            animationSpec,
-            label = "onErrorContainer"
-        ).value,
-        outline = animateColorAsState(
-            targetColorScheme.outline,
-            animationSpec,
-            label = "outline"
-        ).value,
-        outlineVariant = animateColorAsState(
-            targetColorScheme.outlineVariant,
-            animationSpec,
-            label = "outlineVariant"
-        ).value,
+        primary =
+            animateColorAsState(
+                targetColorScheme.primary,
+                animationSpec,
+                label = "primary",
+            ).value,
+        onPrimary =
+            animateColorAsState(
+                targetColorScheme.onPrimary,
+                animationSpec,
+                label = "onPrimary",
+            ).value,
+        primaryContainer =
+            animateColorAsState(
+                targetColorScheme.primaryContainer,
+                animationSpec,
+                label = "primaryContainer",
+            ).value,
+        onPrimaryContainer =
+            animateColorAsState(
+                targetColorScheme.onPrimaryContainer,
+                animationSpec,
+                label = "onPrimaryContainer",
+            ).value,
+        inversePrimary =
+            animateColorAsState(
+                targetColorScheme.inversePrimary,
+                animationSpec,
+                label = "inversePrimary",
+            ).value,
+        secondary =
+            animateColorAsState(
+                targetColorScheme.secondary,
+                animationSpec,
+                label = "secondary",
+            ).value,
+        onSecondary =
+            animateColorAsState(
+                targetColorScheme.onSecondary,
+                animationSpec,
+                label = "onSecondary",
+            ).value,
+        secondaryContainer =
+            animateColorAsState(
+                targetColorScheme.secondaryContainer,
+                animationSpec,
+                label = "secondaryContainer",
+            ).value,
+        onSecondaryContainer =
+            animateColorAsState(
+                targetColorScheme.onSecondaryContainer,
+                animationSpec,
+                label = "onSecondaryContainer",
+            ).value,
+        tertiary =
+            animateColorAsState(
+                targetColorScheme.tertiary,
+                animationSpec,
+                label = "tertiary",
+            ).value,
+        onTertiary =
+            animateColorAsState(
+                targetColorScheme.onTertiary,
+                animationSpec,
+                label = "onTertiary",
+            ).value,
+        tertiaryContainer =
+            animateColorAsState(
+                targetColorScheme.tertiaryContainer,
+                animationSpec,
+                label = "tertiaryContainer",
+            ).value,
+        onTertiaryContainer =
+            animateColorAsState(
+                targetColorScheme.onTertiaryContainer,
+                animationSpec,
+                label = "onTertiaryContainer",
+            ).value,
+        background =
+            animateColorAsState(
+                targetColorScheme.background,
+                animationSpec,
+                label = "background",
+            ).value,
+        onBackground =
+            animateColorAsState(
+                targetColorScheme.onBackground,
+                animationSpec,
+                label = "onBackground",
+            ).value,
+        surface =
+            animateColorAsState(
+                targetColorScheme.surface,
+                animationSpec,
+                label = "surface",
+            ).value,
+        onSurface =
+            animateColorAsState(
+                targetColorScheme.onSurface,
+                animationSpec,
+                label = "onSurface",
+            ).value,
+        surfaceVariant =
+            animateColorAsState(
+                targetColorScheme.surfaceVariant,
+                animationSpec,
+                label = "surfaceVariant",
+            ).value,
+        onSurfaceVariant =
+            animateColorAsState(
+                targetColorScheme.onSurfaceVariant,
+                animationSpec,
+                label = "onSurfaceVariant",
+            ).value,
+        surfaceTint =
+            animateColorAsState(
+                targetColorScheme.surfaceTint,
+                animationSpec,
+                label = "surfaceTint",
+            ).value,
+        inverseSurface =
+            animateColorAsState(
+                targetColorScheme.inverseSurface,
+                animationSpec,
+                label = "inverseSurface",
+            ).value,
+        inverseOnSurface =
+            animateColorAsState(
+                targetColorScheme.inverseOnSurface,
+                animationSpec,
+                label = "inverseOnSurface",
+            ).value,
+        error =
+            animateColorAsState(
+                targetColorScheme.error,
+                animationSpec,
+                label = "error",
+            ).value,
+        onError =
+            animateColorAsState(
+                targetColorScheme.onError,
+                animationSpec,
+                label = "onError",
+            ).value,
+        errorContainer =
+            animateColorAsState(
+                targetColorScheme.errorContainer,
+                animationSpec,
+                label = "errorContainer",
+            ).value,
+        onErrorContainer =
+            animateColorAsState(
+                targetColorScheme.onErrorContainer,
+                animationSpec,
+                label = "onErrorContainer",
+            ).value,
+        outline =
+            animateColorAsState(
+                targetColorScheme.outline,
+                animationSpec,
+                label = "outline",
+            ).value,
+        outlineVariant =
+            animateColorAsState(
+                targetColorScheme.outlineVariant,
+                animationSpec,
+                label = "outlineVariant",
+            ).value,
         scrim = animateColorAsState(targetColorScheme.scrim, animationSpec, label = "scrim").value,
-        surfaceBright = animateColorAsState(
-            targetColorScheme.surfaceBright,
-            animationSpec,
-            label = "surfaceBright"
-        ).value,
-        surfaceDim = animateColorAsState(
-            targetColorScheme.surfaceDim,
-            animationSpec,
-            label = "surfaceDim"
-        ).value,
-        surfaceContainer = animateColorAsState(
-            targetColorScheme.surfaceContainer,
-            animationSpec,
-            label = "surfaceContainer"
-        ).value,
-        surfaceContainerHigh = animateColorAsState(
-            targetColorScheme.surfaceContainerHigh,
-            animationSpec,
-            label = "surfaceContainerHigh"
-        ).value,
-        surfaceContainerHighest = animateColorAsState(
-            targetColorScheme.surfaceContainerHighest,
-            animationSpec,
-            label = "surfaceContainerHighest"
-        ).value,
-        surfaceContainerLow = animateColorAsState(
-            targetColorScheme.surfaceContainerLow,
-            animationSpec,
-            label = "surfaceContainerLow"
-        ).value,
-        surfaceContainerLowest = animateColorAsState(
-            targetColorScheme.surfaceContainerLowest,
-            animationSpec,
-            label = "surfaceContainerLowest"
-        ).value,
+        surfaceBright =
+            animateColorAsState(
+                targetColorScheme.surfaceBright,
+                animationSpec,
+                label = "surfaceBright",
+            ).value,
+        surfaceDim =
+            animateColorAsState(
+                targetColorScheme.surfaceDim,
+                animationSpec,
+                label = "surfaceDim",
+            ).value,
+        surfaceContainer =
+            animateColorAsState(
+                targetColorScheme.surfaceContainer,
+                animationSpec,
+                label = "surfaceContainer",
+            ).value,
+        surfaceContainerHigh =
+            animateColorAsState(
+                targetColorScheme.surfaceContainerHigh,
+                animationSpec,
+                label = "surfaceContainerHigh",
+            ).value,
+        surfaceContainerHighest =
+            animateColorAsState(
+                targetColorScheme.surfaceContainerHighest,
+                animationSpec,
+                label = "surfaceContainerHighest",
+            ).value,
+        surfaceContainerLow =
+            animateColorAsState(
+                targetColorScheme.surfaceContainerLow,
+                animationSpec,
+                label = "surfaceContainerLow",
+            ).value,
+        surfaceContainerLowest =
+            animateColorAsState(
+                targetColorScheme.surfaceContainerLowest,
+                animationSpec,
+                label = "surfaceContainerLowest",
+            ).value,
     )
 }
 
@@ -336,7 +375,6 @@ private fun exactPaletteColorScheme(
         surfaceContainerLowest = neutralScheme.surfaceContainerLowest.toComposeColor(),
     )
 }
-
 
 private fun m3DynamicColorScheme(
     seedPalette: ThemeSeedPalette?,
@@ -394,21 +432,25 @@ private fun m3DynamicColorScheme(
     )
 }
 
-private fun m3Scheme(seedColor: Color, isDark: Boolean, contrastLevel: Double) =
-    Hct.fromInt(seedColor.toArgb()).let { hct ->
-        when {
-            hct.chroma < 4.0 -> SchemeMonochrome(hct, isDark, contrastLevel)
-            hct.chroma < 12.0 -> SchemeNeutral(hct, isDark, contrastLevel)
-            else -> SchemeTonalSpot(hct, isDark, contrastLevel)
-        }
+private fun m3Scheme(
+    seedColor: Color,
+    isDark: Boolean,
+    contrastLevel: Double,
+) = Hct.fromInt(seedColor.toArgb()).let { hct ->
+    when {
+        hct.chroma < 4.0 -> SchemeMonochrome(hct, isDark, contrastLevel)
+        hct.chroma < 12.0 -> SchemeNeutral(hct, isDark, contrastLevel)
+        else -> SchemeTonalSpot(hct, isDark, contrastLevel)
     }
+}
 
 private fun Int.toComposeColor(): Color = Color(this.toLong() and 0xFFFFFFFFL)
 
 fun Bitmap.extractThemeColor(): Color {
-    val palette = Palette.from(this)
-        .maximumColorCount(16)
-        .generate()
+    val palette =
+        Palette.from(this)
+            .maximumColorCount(16)
+            .generate()
 
     val swatch =
         palette.vibrantSwatch
@@ -423,13 +465,15 @@ fun Bitmap.extractThemeColor(): Color {
 }
 
 fun Bitmap.extractGradientColors(): List<Color> {
-    val palette = Palette.from(this)
-        .maximumColorCount(48)
-        .generate()
+    val palette =
+        Palette.from(this)
+            .maximumColorCount(48)
+            .generate()
 
-    val swatches = palette.swatches
-        .filter { it.population > 0 }
-        .sortedByDescending { it.population }
+    val swatches =
+        palette.swatches
+            .filter { it.population > 0 }
+            .sortedByDescending { it.population }
 
     if (swatches.isEmpty()) {
         return listOf(Color(0xFF595959), Color(0xFF0D0D0D))
@@ -460,21 +504,27 @@ fun Bitmap.extractGradientColors(): List<Color> {
 }
 
 fun ColorScheme.pureBlack(apply: Boolean) =
-    if (apply) copy(
-        surface = Color(0xFF0B0E17),
-        background = Color(0xFF000000),
-        surfaceContainerLowest = Color(0xFF000000),
-        surfaceContainerLow = Color(0xFF060910),
-        surfaceContainer = Color(0xFF0E1320),
-        surfaceContainerHigh = Color(0xFF151C2C),
-        surfaceContainerHighest = Color(0xFF1E263B),
-        outlineVariant = Color(0xFF2B3652),
-    ) else this
+    if (apply) {
+        copy(
+            surface = Color(0xFF0B0E17),
+            background = Color(0xFF000000),
+            surfaceContainerLowest = Color(0xFF000000),
+            surfaceContainerLow = Color(0xFF060910),
+            surfaceContainer = Color(0xFF0E1320),
+            surfaceContainerHigh = Color(0xFF151C2C),
+            surfaceContainerHighest = Color(0xFF1E263B),
+            outlineVariant = Color(0xFF2B3652),
+        )
+    } else {
+        this
+    }
 
-val ColorSaver = object : Saver<Color, Int> {
-    override fun restore(value: Int): Color = value.toComposeColor()
-    override fun SaverScope.save(value: Color): Int = value.toArgb()
-}
+val ColorSaver =
+    object : Saver<Color, Int> {
+        override fun restore(value: Int): Color = value.toComposeColor()
+
+        override fun SaverScope.save(value: Color): Int = value.toArgb()
+    }
 
 @Serializable
 data class ThemeExportV1(
@@ -488,23 +538,28 @@ data class ThemeExportV1(
 
 object ThemeSeedPaletteCodec {
     private const val PreferencePrefix = "seedPalette:"
-    private val json = Json {
-        prettyPrint = true
-        ignoreUnknownKeys = true
-        encodeDefaults = true
-        isLenient = true
-    }
+    private val json =
+        Json {
+            prettyPrint = true
+            ignoreUnknownKeys = true
+            encodeDefaults = true
+            isLenient = true
+        }
 
-    fun encodeForPreference(palette: ThemeSeedPalette, name: String? = null): String {
-        val payload = json.encodeToString(
-            ThemeExportV1(
-                name = name,
-                primary = palette.primary.toHexArgbString(),
-                secondary = palette.secondary.toHexArgbString(),
-                tertiary = palette.tertiary.toHexArgbString(),
-                neutral = palette.neutral.toHexArgbString(),
+    fun encodeForPreference(
+        palette: ThemeSeedPalette,
+        name: String? = null,
+    ): String {
+        val payload =
+            json.encodeToString(
+                ThemeExportV1(
+                    name = name,
+                    primary = palette.primary.toHexArgbString(),
+                    secondary = palette.secondary.toHexArgbString(),
+                    tertiary = palette.tertiary.toHexArgbString(),
+                    neutral = palette.neutral.toHexArgbString(),
+                ),
             )
-        )
         val b64 = Base64.encodeToString(payload.toByteArray(Charsets.UTF_8), Base64.URL_SAFE or Base64.NO_WRAP)
         return PreferencePrefix + b64
     }
@@ -521,7 +576,10 @@ object ThemeSeedPaletteCodec {
         return decodeFromJson(decoded)
     }
 
-    fun encodeAsJson(palette: ThemeSeedPalette, name: String? = null): String =
+    fun encodeAsJson(
+        palette: ThemeSeedPalette,
+        name: String? = null,
+    ): String =
         json.encodeToString(
             ThemeExportV1(
                 name = name,
@@ -529,7 +587,7 @@ object ThemeSeedPaletteCodec {
                 secondary = palette.secondary.toHexArgbString(),
                 tertiary = palette.tertiary.toHexArgbString(),
                 neutral = palette.neutral.toHexArgbString(),
-            )
+            ),
         )
 
     fun decodeFromJson(text: String): ThemeSeedPalette? {

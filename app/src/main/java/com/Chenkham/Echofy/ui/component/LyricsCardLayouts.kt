@@ -17,6 +17,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.geometry.Offset
@@ -35,12 +36,10 @@ import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.rememberTextMeasurer
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.*
 import coil.compose.rememberAsyncImagePainter
 import coil.request.ImageRequest
-import androidx.compose.ui.draw.blur
 import com.Chenkham.Echofy.R
 import com.Chenkham.Echofy.constants.UseSystemFontKey
 import com.Chenkham.Echofy.models.MediaMetadata
@@ -66,7 +65,7 @@ internal fun rememberArtworkPainter(thumbnailUrl: String?): Painter =
         ImageRequest.Builder(LocalContext.current)
             .data(thumbnailUrl)
             .crossfade(true)
-            .build()
+            .build(),
     )
 
 /** Fila de marca Echofy ÔÇö aparece en el pie si showBranding=true */
@@ -83,20 +82,25 @@ internal fun LyricsBrandingRow(
         modifier = modifier,
     ) {
         Box(
-            modifier = Modifier
-                .size(22.dp)
-                .clip(CircleShape)
-                .background(color.copy(alpha = 0.9f)),
+            modifier =
+                Modifier
+                    .size(22.dp)
+                    .clip(CircleShape)
+                    .background(color.copy(alpha = 0.9f)),
             contentAlignment = Alignment.Center,
         ) {
             Image(
                 painter = painterResource(R.drawable.opentune),
                 contentDescription = null,
                 modifier = Modifier.size(15.dp),
-                colorFilter = ColorFilter.tint(
-                    if (isDark) Color.Black.copy(alpha = 0.85f)
-                    else Color.White.copy(alpha = 0.9f)
-                ),
+                colorFilter =
+                    ColorFilter.tint(
+                        if (isDark) {
+                            Color.Black.copy(alpha = 0.85f)
+                        } else {
+                            Color.White.copy(alpha = 0.9f)
+                        },
+                    ),
             )
         }
         Spacer(Modifier.width(8.dp))
@@ -126,19 +130,21 @@ internal fun LyricsMetadataRow(
 ) {
     Row(
         verticalAlignment = Alignment.CenterVertically,
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(bottom = 10.dp),
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .padding(bottom = 10.dp),
     ) {
         if (config.showCoverArt) {
             Image(
                 painter = artworkPainter,
                 contentDescription = null,
                 contentScale = ContentScale.Crop,
-                modifier = Modifier
-                    .size(coverArtSize)
-                    .clip(coverArtShape)
-                    .border(1.dp, Color.White.copy(alpha = 0.15f), coverArtShape),
+                modifier =
+                    Modifier
+                        .size(coverArtSize)
+                        .clip(coverArtShape)
+                        .border(1.dp, Color.White.copy(alpha = 0.15f), coverArtShape),
             )
             Spacer(Modifier.width(14.dp))
         }
@@ -173,7 +179,13 @@ internal fun LyricsMetadataRow(
 }
 
 /** Tama├▒o de letra inicial heur├¡stico compartido entre estilos, seg├║n longitud del texto. */
-private fun heuristicInitialSize(length: Int, big: Float, mid: Float, small: Float, tiny: Float): TextUnit =
+private fun heuristicInitialSize(
+    length: Int,
+    big: Float,
+    mid: Float,
+    small: Float,
+    tiny: Float,
+): TextUnit =
     when {
         length < 50 -> big.sp
         length < 100 -> mid.sp
@@ -231,25 +243,28 @@ fun TonalLayout(
         contentAlignment = Alignment.Center,
     ) {
         Box(
-            modifier = Modifier
-                .size(cardSize.width, cardSize.height)
-                .clip(shape)
-                .background(bgColor),
+            modifier =
+                Modifier
+                    .size(cardSize.width, cardSize.height)
+                    .clip(shape)
+                    .background(bgColor),
         ) {
             // Blob decorativo ÔÇö esquina superior derecha
             Box(
-                modifier = Modifier
-                    .size(cardSize.width * 0.7f)
-                    .align(Alignment.TopEnd)
-                    .offset(x = cardSize.width * 0.28f, y = -cardSize.width * 0.22f)
-                    .clip(CircleShape)
-                    .background(seed.copy(alpha = 0.16f))
+                modifier =
+                    Modifier
+                        .size(cardSize.width * 0.7f)
+                        .align(Alignment.TopEnd)
+                        .offset(x = cardSize.width * 0.28f, y = -cardSize.width * 0.22f)
+                        .clip(CircleShape)
+                        .background(seed.copy(alpha = 0.16f)),
             )
 
             Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(config.cardPadding),
+                modifier =
+                    Modifier
+                        .fillMaxSize()
+                        .padding(config.cardPadding),
                 verticalArrangement = Arrangement.SpaceBetween,
             ) {
                 LyricsMetadataRow(
@@ -262,36 +277,40 @@ fun TonalLayout(
                 )
 
                 BoxWithConstraints(
-                    modifier = Modifier
-                        .weight(1f)
-                        .fillMaxWidth()
-                        .padding(vertical = 8.dp),
+                    modifier =
+                        Modifier
+                            .weight(1f)
+                            .fillMaxWidth()
+                            .padding(vertical = 8.dp),
                     contentAlignment = Alignment.CenterStart,
                 ) {
-                    val textStyle = TextStyle(
-                        color = mainText,
-                        fontWeight = FontWeight.ExtraBold,
-                        textAlign = config.textAlign,
-                        letterSpacing = (-0.02).em,
-                        fontFamily = fontFamily,
-                    )
+                    val textStyle =
+                        TextStyle(
+                            color = mainText,
+                            fontWeight = FontWeight.ExtraBold,
+                            textAlign = config.textAlign,
+                            letterSpacing = (-0.02).em,
+                            fontFamily = fontFamily,
+                        )
                     val initialSize = heuristicInitialSize(lyricText.length, 24f, 20f, 17f, 13f)
-                    val dynamicFontSize = rememberAdjustedFontSize(
-                        text = lyricText,
-                        maxWidth = maxWidth - 6.dp,
-                        maxHeight = maxHeight - 6.dp,
-                        density = density,
-                        initialFontSize = (initialSize.value * config.textSizeMultiplier).sp,
-                        minFontSize = 11.sp,
-                        style = textStyle,
-                        textMeasurer = rememberTextMeasurer(),
-                    )
+                    val dynamicFontSize =
+                        rememberAdjustedFontSize(
+                            text = lyricText,
+                            maxWidth = maxWidth - 6.dp,
+                            maxHeight = maxHeight - 6.dp,
+                            density = density,
+                            initialFontSize = (initialSize.value * config.textSizeMultiplier).sp,
+                            minFontSize = 11.sp,
+                            style = textStyle,
+                            textMeasurer = rememberTextMeasurer(),
+                        )
                     Text(
                         text = lyricText,
-                        style = textStyle.copy(
-                            fontSize = dynamicFontSize,
-                            lineHeight = dynamicFontSize.value.sp * 1.28f,
-                        ),
+                        style =
+                            textStyle.copy(
+                                fontSize = dynamicFontSize,
+                                lineHeight = dynamicFontSize.value.sp * 1.28f,
+                            ),
                         overflow = TextOverflow.Ellipsis,
                         textAlign = config.textAlign,
                         modifier = Modifier.fillMaxWidth(),
@@ -301,10 +320,11 @@ fun TonalLayout(
                 if (config.showBranding) {
                     // Chip tonal ÔÇö no una fila plana, un pill con superficie propia
                     Box(
-                        modifier = Modifier
-                            .clip(RoundedCornerShape(50))
-                            .background(seed.copy(alpha = 0.14f))
-                            .padding(horizontal = 12.dp, vertical = 6.dp),
+                        modifier =
+                            Modifier
+                                .clip(RoundedCornerShape(50))
+                                .background(seed.copy(alpha = 0.14f))
+                                .padding(horizontal = 12.dp, vertical = 6.dp),
                     ) {
                         LyricsBrandingRow(color = mainText, isDark = false)
                     }
@@ -340,21 +360,24 @@ fun GlassLayout(
     val secondaryColor = Color.White.copy(alpha = 0.72f)
 
     var glassComponentSize by remember { mutableStateOf(Size.Zero) }
-    val lensCenter = remember(glassComponentSize) {
-        Offset(glassComponentSize.width / 2f, glassComponentSize.height / 2f)
-    }
-    val lensSize = remember(glassComponentSize) {
-        Size(glassComponentSize.width, glassComponentSize.height)
-    }
+    val lensCenter =
+        remember(glassComponentSize) {
+            Offset(glassComponentSize.width / 2f, glassComponentSize.height / 2f)
+        }
+    val lensSize =
+        remember(glassComponentSize) {
+            Size(glassComponentSize.width, glassComponentSize.height)
+        }
 
     Box(
         modifier = modifier.fillMaxSize(),
         contentAlignment = Alignment.Center,
     ) {
         Box(
-            modifier = Modifier
-                .size(cardSize.width, cardSize.height)
-                .clip(shape),
+            modifier =
+                Modifier
+                    .size(cardSize.width, cardSize.height)
+                    .clip(shape),
             contentAlignment = Alignment.Center,
         ) {
             // Fondo desenfocado
@@ -366,76 +389,84 @@ fun GlassLayout(
             )
             // Gradiente oscurecedor
             Box(
-                modifier = Modifier.fillMaxSize().background(
-                    Brush.verticalGradient(
-                        listOf(
-                            Color.Black.copy(alpha = intensity.dimAlpha * 0.8f),
-                            Color.Black.copy(alpha = intensity.dimAlpha),
-                            Color.Black.copy(alpha = intensity.dimAlpha * 1.25f),
-                        )
-                    )
-                )
+                modifier =
+                    Modifier.fillMaxSize().background(
+                        Brush.verticalGradient(
+                            listOf(
+                                Color.Black.copy(alpha = intensity.dimAlpha * 0.8f),
+                                Color.Black.copy(alpha = intensity.dimAlpha),
+                                Color.Black.copy(alpha = intensity.dimAlpha * 1.25f),
+                            ),
+                        ),
+                    ),
             )
 
             // Panel de vidrio l├¡quido
             Box(
-                modifier = Modifier
-                    .padding(14.dp)
-                    .fillMaxSize()
-                    .onSizeChanged { glassComponentSize = Size(it.width.toFloat(), it.height.toFloat()) }
-                    .clip(RoundedCornerShape(config.shapeScale.corner * 0.6f)),
+                modifier =
+                    Modifier
+                        .padding(14.dp)
+                        .fillMaxSize()
+                        .onSizeChanged { glassComponentSize = Size(it.width.toFloat(), it.height.toFloat()) }
+                        .clip(RoundedCornerShape(config.shapeScale.corner * 0.6f)),
                 contentAlignment = Alignment.Center,
             ) {
                 Box(
-                    modifier = Modifier
-                        .matchParentSize()
-                        .blur(radius = intensity.cloudyRadius.dp)
-                        .drawWithContent {
-                            drawContent()
-                            drawRect(seed.copy(alpha = intensity.tintAlpha * 0.55f))
-                            drawRect(Color.Black.copy(alpha = intensity.tintAlpha * 0.5f))
-                        }
+                    modifier =
+                        Modifier
+                            .matchParentSize()
+                            .blur(radius = intensity.cloudyRadius.dp)
+                            .drawWithContent {
+                                drawContent()
+                                drawRect(seed.copy(alpha = intensity.tintAlpha * 0.55f))
+                                drawRect(Color.Black.copy(alpha = intensity.tintAlpha * 0.5f))
+                            },
                 )
 
                 Column(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(config.cardPadding),
+                    modifier =
+                        Modifier
+                            .fillMaxSize()
+                            .padding(config.cardPadding),
                     verticalArrangement = Arrangement.SpaceBetween,
                 ) {
                     LyricsMetadataRow(mediaMetadata, artworkPainter, config, mainTextColor, secondaryColor)
 
                     BoxWithConstraints(
-                        modifier = Modifier
-                            .weight(1f)
-                            .fillMaxWidth()
-                            .padding(vertical = 8.dp),
+                        modifier =
+                            Modifier
+                                .weight(1f)
+                                .fillMaxWidth()
+                                .padding(vertical = 8.dp),
                         contentAlignment = Alignment.Center,
                     ) {
-                        val textStyle = TextStyle(
-                            color = mainTextColor,
-                            fontWeight = FontWeight.SemiBold,
-                            textAlign = config.textAlign,
-                            letterSpacing = (-0.01).em,
-                            fontFamily = fontFamily,
-                        )
+                        val textStyle =
+                            TextStyle(
+                                color = mainTextColor,
+                                fontWeight = FontWeight.SemiBold,
+                                textAlign = config.textAlign,
+                                letterSpacing = (-0.01).em,
+                                fontFamily = fontFamily,
+                            )
                         val initialSize = heuristicInitialSize(lyricText.length, 22f, 19f, 16f, 13f)
-                        val dynamicFontSize = rememberAdjustedFontSize(
-                            text = lyricText,
-                            maxWidth = maxWidth - 6.dp,
-                            maxHeight = maxHeight - 6.dp,
-                            density = density,
-                            initialFontSize = (initialSize.value * config.textSizeMultiplier).sp,
-                            minFontSize = 11.sp,
-                            style = textStyle,
-                            textMeasurer = rememberTextMeasurer(),
-                        )
+                        val dynamicFontSize =
+                            rememberAdjustedFontSize(
+                                text = lyricText,
+                                maxWidth = maxWidth - 6.dp,
+                                maxHeight = maxHeight - 6.dp,
+                                density = density,
+                                initialFontSize = (initialSize.value * config.textSizeMultiplier).sp,
+                                minFontSize = 11.sp,
+                                style = textStyle,
+                                textMeasurer = rememberTextMeasurer(),
+                            )
                         Text(
                             text = lyricText,
-                            style = textStyle.copy(
-                                fontSize = dynamicFontSize,
-                                lineHeight = dynamicFontSize.value.sp * 1.35f,
-                            ),
+                            style =
+                                textStyle.copy(
+                                    fontSize = dynamicFontSize,
+                                    lineHeight = dynamicFontSize.value.sp * 1.35f,
+                                ),
                             overflow = TextOverflow.Ellipsis,
                             textAlign = config.textAlign,
                             modifier = Modifier.fillMaxWidth(),
@@ -478,9 +509,10 @@ fun CoverBloomLayout(
         contentAlignment = Alignment.Center,
     ) {
         Box(
-            modifier = Modifier
-                .size(cardSize.width, cardSize.height)
-                .clip(shape),
+            modifier =
+                Modifier
+                    .size(cardSize.width, cardSize.height)
+                    .clip(shape),
         ) {
             if (config.showCoverArt) {
                 Image(
@@ -495,64 +527,71 @@ fun CoverBloomLayout(
 
             // Scrim degradado ÔÇö m├ís denso hacia abajo, te├▒ido con el acento
             Box(
-                modifier = Modifier.fillMaxSize().background(
-                    Brush.verticalGradient(
-                        0.0f to Color.Transparent,
-                        0.45f to scrimBase.copy(alpha = 0.35f),
-                        0.72f to scrimBase.copy(alpha = 0.82f),
-                        1.0f to scrimBase.copy(alpha = 0.95f),
-                    )
-                )
+                modifier =
+                    Modifier.fillMaxSize().background(
+                        Brush.verticalGradient(
+                            0.0f to Color.Transparent,
+                            0.45f to scrimBase.copy(alpha = 0.35f),
+                            0.72f to scrimBase.copy(alpha = 0.82f),
+                            1.0f to scrimBase.copy(alpha = 0.95f),
+                        ),
+                    ),
             )
 
             // Comilla insignia ÔÇö esquina superior
             Box(
-                modifier = Modifier
-                    .padding(config.cardPadding)
-                    .size(34.dp)
-                    .clip(CircleShape)
-                    .background(seed.copy(alpha = 0.9f)),
+                modifier =
+                    Modifier
+                        .padding(config.cardPadding)
+                        .size(34.dp)
+                        .clip(CircleShape)
+                        .background(seed.copy(alpha = 0.9f)),
                 contentAlignment = Alignment.Center,
             ) {
                 Text("\u275D", color = Color.White, fontSize = 15.sp, fontWeight = FontWeight.Bold)
             }
 
             Column(
-                modifier = Modifier
-                    .align(Alignment.BottomStart)
-                    .fillMaxWidth()
-                    .padding(config.cardPadding),
+                modifier =
+                    Modifier
+                        .align(Alignment.BottomStart)
+                        .fillMaxWidth()
+                        .padding(config.cardPadding),
             ) {
                 BoxWithConstraints(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .heightIn(max = cardSize.height * 0.5f),
+                    modifier =
+                        Modifier
+                            .fillMaxWidth()
+                            .heightIn(max = cardSize.height * 0.5f),
                     contentAlignment = Alignment.BottomStart,
                 ) {
-                    val textStyle = TextStyle(
-                        color = Color.White,
-                        fontWeight = FontWeight.Bold,
-                        textAlign = config.textAlign,
-                        letterSpacing = (-0.02).em,
-                        fontFamily = fontFamily,
-                    )
+                    val textStyle =
+                        TextStyle(
+                            color = Color.White,
+                            fontWeight = FontWeight.Bold,
+                            textAlign = config.textAlign,
+                            letterSpacing = (-0.02).em,
+                            fontFamily = fontFamily,
+                        )
                     val initialSize = heuristicInitialSize(lyricText.length, 22f, 18f, 15f, 12f)
-                    val dynamicFontSize = rememberAdjustedFontSize(
-                        text = lyricText,
-                        maxWidth = maxWidth - 6.dp,
-                        maxHeight = maxHeight - 6.dp,
-                        density = density,
-                        initialFontSize = (initialSize.value * config.textSizeMultiplier).sp,
-                        minFontSize = 11.sp,
-                        style = textStyle,
-                        textMeasurer = rememberTextMeasurer(),
-                    )
+                    val dynamicFontSize =
+                        rememberAdjustedFontSize(
+                            text = lyricText,
+                            maxWidth = maxWidth - 6.dp,
+                            maxHeight = maxHeight - 6.dp,
+                            density = density,
+                            initialFontSize = (initialSize.value * config.textSizeMultiplier).sp,
+                            minFontSize = 11.sp,
+                            style = textStyle,
+                            textMeasurer = rememberTextMeasurer(),
+                        )
                     Text(
                         text = lyricText,
-                        style = textStyle.copy(
-                            fontSize = dynamicFontSize,
-                            lineHeight = dynamicFontSize.value.sp * 1.3f,
-                        ),
+                        style =
+                            textStyle.copy(
+                                fontSize = dynamicFontSize,
+                                lineHeight = dynamicFontSize.value.sp * 1.3f,
+                            ),
                         overflow = TextOverflow.Ellipsis,
                         textAlign = config.textAlign,
                         modifier = Modifier.fillMaxWidth(),
@@ -624,15 +663,17 @@ fun QuoteLayout(
         contentAlignment = Alignment.Center,
     ) {
         Box(
-            modifier = Modifier
-                .size(cardSize.width, cardSize.height)
-                .clip(shape)
-                .background(bgColor),
+            modifier =
+                Modifier
+                    .size(cardSize.width, cardSize.height)
+                    .clip(shape)
+                    .background(bgColor),
         ) {
             Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(config.cardPadding),
+                modifier =
+                    Modifier
+                        .fillMaxSize()
+                        .padding(config.cardPadding),
                 verticalArrangement = Arrangement.SpaceBetween,
             ) {
                 Text(
@@ -644,35 +685,39 @@ fun QuoteLayout(
                 )
 
                 BoxWithConstraints(
-                    modifier = Modifier
-                        .weight(1f)
-                        .fillMaxWidth(),
+                    modifier =
+                        Modifier
+                            .weight(1f)
+                            .fillMaxWidth(),
                     contentAlignment = Alignment.CenterStart,
                 ) {
-                    val textStyle = TextStyle(
-                        color = mainText,
-                        fontWeight = FontWeight.Medium,
-                        textAlign = config.textAlign,
-                        fontFamily = fontFamily,
-                        letterSpacing = (-0.01).em,
-                    )
+                    val textStyle =
+                        TextStyle(
+                            color = mainText,
+                            fontWeight = FontWeight.Medium,
+                            textAlign = config.textAlign,
+                            fontFamily = fontFamily,
+                            letterSpacing = (-0.01).em,
+                        )
                     val initialSize = heuristicInitialSize(lyricText.length, 24f, 20f, 17f, 13f)
-                    val dynamicFontSize = rememberAdjustedFontSize(
-                        text = lyricText,
-                        maxWidth = maxWidth - 6.dp,
-                        maxHeight = maxHeight - 6.dp,
-                        density = density,
-                        initialFontSize = (initialSize.value * config.textSizeMultiplier).sp,
-                        minFontSize = 11.sp,
-                        style = textStyle,
-                        textMeasurer = rememberTextMeasurer(),
-                    )
+                    val dynamicFontSize =
+                        rememberAdjustedFontSize(
+                            text = lyricText,
+                            maxWidth = maxWidth - 6.dp,
+                            maxHeight = maxHeight - 6.dp,
+                            density = density,
+                            initialFontSize = (initialSize.value * config.textSizeMultiplier).sp,
+                            minFontSize = 11.sp,
+                            style = textStyle,
+                            textMeasurer = rememberTextMeasurer(),
+                        )
                     Text(
                         text = lyricText,
-                        style = textStyle.copy(
-                            fontSize = dynamicFontSize,
-                            lineHeight = dynamicFontSize * 1.42f,
-                        ),
+                        style =
+                            textStyle.copy(
+                                fontSize = dynamicFontSize,
+                                lineHeight = dynamicFontSize * 1.42f,
+                            ),
                         overflow = TextOverflow.Ellipsis,
                         textAlign = config.textAlign,
                         modifier = Modifier.fillMaxWidth(),
@@ -682,10 +727,11 @@ fun QuoteLayout(
                 Column {
                     if (config.showTitle || config.showArtist) {
                         Box(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(1.dp)
-                                .background(mainText.copy(alpha = 0.12f))
+                            modifier =
+                                Modifier
+                                    .fillMaxWidth()
+                                    .height(1.dp)
+                                    .background(mainText.copy(alpha = 0.12f)),
                         )
                         Spacer(Modifier.height(10.dp))
                     }
@@ -695,9 +741,10 @@ fun QuoteLayout(
                                 painter = artworkPainter,
                                 contentDescription = null,
                                 contentScale = ContentScale.Crop,
-                                modifier = Modifier
-                                    .size(28.dp)
-                                    .clip(CircleShape),
+                                modifier =
+                                    Modifier
+                                        .size(28.dp)
+                                        .clip(CircleShape),
                             )
                             Spacer(Modifier.width(10.dp))
                         }
@@ -763,38 +810,43 @@ fun AuroraLayout(
         contentAlignment = Alignment.Center,
     ) {
         Box(
-            modifier = Modifier
-                .size(cardSize.width, cardSize.height)
-                .clip(shape)
-                .background(base),
+            modifier =
+                Modifier
+                    .size(cardSize.width, cardSize.height)
+                    .clip(shape)
+                    .background(base),
         ) {
             // Malla de degradados ÔÇö tres resplandores radiales superpuestos
             Box(
-                modifier = Modifier
-                    .size(cardSize.width * 0.9f)
-                    .align(Alignment.TopStart)
-                    .offset(x = -cardSize.width * 0.25f, y = -cardSize.width * 0.2f)
-                    .background(Brush.radialGradient(listOf(seed.copy(alpha = 0.55f), Color.Transparent)))
+                modifier =
+                    Modifier
+                        .size(cardSize.width * 0.9f)
+                        .align(Alignment.TopStart)
+                        .offset(x = -cardSize.width * 0.25f, y = -cardSize.width * 0.2f)
+                        .background(Brush.radialGradient(listOf(seed.copy(alpha = 0.55f), Color.Transparent))),
             )
             Box(
-                modifier = Modifier
-                    .size(cardSize.width * 0.95f)
-                    .align(Alignment.TopEnd)
-                    .offset(x = cardSize.width * 0.3f, y = -cardSize.width * 0.15f)
-                    .background(Brush.radialGradient(listOf(accentB.copy(alpha = 0.40f), Color.Transparent)))
+                modifier =
+                    Modifier
+                        .size(cardSize.width * 0.95f)
+                        .align(Alignment.TopEnd)
+                        .offset(x = cardSize.width * 0.3f, y = -cardSize.width * 0.15f)
+                        .background(Brush.radialGradient(listOf(accentB.copy(alpha = 0.40f), Color.Transparent))),
             )
             Box(
-                modifier = Modifier
-                    .size(cardSize.width * 0.85f)
-                    .align(Alignment.BottomCenter)
-                    .offset(y = cardSize.width * 0.28f)
-                    .background(Brush.radialGradient(listOf(accentC.copy(alpha = 0.38f), Color.Transparent)))
+                modifier =
+                    Modifier
+                        .size(cardSize.width * 0.85f)
+                        .align(Alignment.BottomCenter)
+                        .offset(y = cardSize.width * 0.28f)
+                        .background(Brush.radialGradient(listOf(accentC.copy(alpha = 0.38f), Color.Transparent))),
             )
 
             Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(config.cardPadding),
+                modifier =
+                    Modifier
+                        .fillMaxSize()
+                        .padding(config.cardPadding),
                 verticalArrangement = Arrangement.SpaceBetween,
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
@@ -803,10 +855,11 @@ fun AuroraLayout(
                             painter = artworkPainter,
                             contentDescription = null,
                             contentScale = ContentScale.Crop,
-                            modifier = Modifier
-                                .size(44.dp)
-                                .clip(RoundedCornerShape(config.shapeScale.corner * 0.3f))
-                                .border(1.dp, seed.copy(alpha = 0.5f), RoundedCornerShape(config.shapeScale.corner * 0.3f)),
+                            modifier =
+                                Modifier
+                                    .size(44.dp)
+                                    .clip(RoundedCornerShape(config.shapeScale.corner * 0.3f))
+                                    .border(1.dp, seed.copy(alpha = 0.5f), RoundedCornerShape(config.shapeScale.corner * 0.3f)),
                         )
                         Spacer(Modifier.width(12.dp))
                     }
@@ -835,36 +888,40 @@ fun AuroraLayout(
                 }
 
                 BoxWithConstraints(
-                    modifier = Modifier
-                        .weight(1f)
-                        .fillMaxWidth()
-                        .padding(vertical = 6.dp),
+                    modifier =
+                        Modifier
+                            .weight(1f)
+                            .fillMaxWidth()
+                            .padding(vertical = 6.dp),
                     contentAlignment = Alignment.Center,
                 ) {
-                    val textStyle = TextStyle(
-                        color = Color.White,
-                        fontWeight = FontWeight.Black,
-                        textAlign = config.textAlign,
-                        fontFamily = fontFamily,
-                        letterSpacing = (-0.02).em,
-                    )
+                    val textStyle =
+                        TextStyle(
+                            color = Color.White,
+                            fontWeight = FontWeight.Black,
+                            textAlign = config.textAlign,
+                            fontFamily = fontFamily,
+                            letterSpacing = (-0.02).em,
+                        )
                     val initialSize = heuristicInitialSize(lyricText.length, 26f, 21f, 18f, 14f)
-                    val dynamicFontSize = rememberAdjustedFontSize(
-                        text = lyricText,
-                        maxWidth = maxWidth - 6.dp,
-                        maxHeight = maxHeight - 6.dp,
-                        density = density,
-                        initialFontSize = (initialSize.value * config.textSizeMultiplier).sp,
-                        minFontSize = 11.sp,
-                        style = textStyle,
-                        textMeasurer = rememberTextMeasurer(),
-                    )
+                    val dynamicFontSize =
+                        rememberAdjustedFontSize(
+                            text = lyricText,
+                            maxWidth = maxWidth - 6.dp,
+                            maxHeight = maxHeight - 6.dp,
+                            density = density,
+                            initialFontSize = (initialSize.value * config.textSizeMultiplier).sp,
+                            minFontSize = 11.sp,
+                            style = textStyle,
+                            textMeasurer = rememberTextMeasurer(),
+                        )
                     Text(
                         text = lyricText,
-                        style = textStyle.copy(
-                            fontSize = dynamicFontSize,
-                            lineHeight = dynamicFontSize * 1.24f,
-                        ),
+                        style =
+                            textStyle.copy(
+                                fontSize = dynamicFontSize,
+                                lineHeight = dynamicFontSize * 1.24f,
+                            ),
                         overflow = TextOverflow.Ellipsis,
                         textAlign = config.textAlign,
                         modifier = Modifier.fillMaxWidth(),

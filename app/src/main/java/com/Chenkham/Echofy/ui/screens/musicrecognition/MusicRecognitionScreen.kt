@@ -36,8 +36,6 @@ import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -52,10 +50,11 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AssistChip
 import androidx.compose.material3.AssistChipDefaults
 import androidx.compose.material3.Button
@@ -74,10 +73,9 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.ToggleButton
 import androidx.compose.material3.ToggleButtonDefaults
-import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.Immutable
@@ -101,6 +99,7 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalHapticFeedback
@@ -114,24 +113,22 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
+import com.Chenkham.Echofy.R
+import com.Chenkham.Echofy.ui.utils.appBarScrollBehavior
+import com.arturo254.opentune.shazamkit.Shazam
+import com.arturo254.opentune.shazamkit.ShazamSignatureGenerator
+import com.arturo254.opentune.shazamkit.models.RecognitionResult
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import com.Chenkham.Echofy.R
-import com.arturo254.opentune.shazamkit.Shazam
-import com.arturo254.opentune.shazamkit.ShazamSignatureGenerator
-import com.arturo254.opentune.shazamkit.models.RecognitionResult
-import com.Chenkham.Echofy.ui.utils.appBarScrollBehavior
 
 @SuppressLint("LocalContextGetResourceValueCall", "UnrememberedGetBackStackEntry")
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun MusicRecognitionScreen(
-    navController: NavHostController,
-) {
+fun MusicRecognitionScreen(navController: NavHostController) {
     val context = LocalContext.current
     val haptic = LocalHapticFeedback.current
     val scope = rememberCoroutineScope()
@@ -181,7 +178,7 @@ fun MusicRecognitionScreen(
     fun startOrRequestPermission() {
         val permission =
             ContextCompat.checkSelfPermission(context, Manifest.permission.RECORD_AUDIO) ==
-                    PackageManager.PERMISSION_GRANTED
+                PackageManager.PERMISSION_GRANTED
         if (permission) {
             launchRecognition(
                 scope = scope,
@@ -244,9 +241,10 @@ fun MusicRecognitionScreen(
             )
         },
         containerColor = Color.Transparent,
-        modifier = Modifier
-            .fillMaxSize()
-            .nestedScroll(scrollBehavior.nestedScrollConnection),
+        modifier =
+            Modifier
+                .fillMaxSize()
+                .nestedScroll(scrollBehavior.nestedScrollConnection),
     ) { padding ->
         val primary = MaterialTheme.colorScheme.primary
         val tertiary = MaterialTheme.colorScheme.tertiary
@@ -425,9 +423,10 @@ private fun RecognitionListenPane(
             exit = fadeOut(tween(120)),
         ) {
             Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(top = 18.dp),
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .padding(top = 18.dp),
                 horizontalArrangement = Arrangement.Center,
             ) {
                 LoadingIndicator(modifier = Modifier.size(36.dp))
@@ -441,9 +440,10 @@ private fun RecognitionListenPane(
         ) {
             OutlinedButton(
                 onClick = onCancel,
-                modifier = Modifier
-                    .padding(top = 16.dp)
-                    .heightIn(min = 48.dp),
+                modifier =
+                    Modifier
+                        .padding(top = 16.dp)
+                        .heightIn(min = 48.dp),
                 shapes = ButtonDefaults.shapes(),
             ) {
                 Text(stringResource(R.string.cancel))
@@ -454,11 +454,17 @@ private fun RecognitionListenPane(
 
 private sealed interface MusicRecognitionState {
     data object Ready : MusicRecognitionState
+
     data object Listening : MusicRecognitionState
+
     data object Processing : MusicRecognitionState
+
     data object PermissionRequired : MusicRecognitionState
+
     data class Success(val result: RecognitionResult) : MusicRecognitionState
+
     data class NoMatch(val message: String) : MusicRecognitionState
+
     data class Error(val message: String) : MusicRecognitionState
 }
 
@@ -552,71 +558,73 @@ private fun buildMetadata(result: RecognitionResult): String {
 private suspend fun recordMicPcm16Mono(
     sampleRateHz: Int,
     recordMs: Long,
-): Pair<ShortArray, Int> = withContext(Dispatchers.IO) {
-    val channel = AudioFormat.CHANNEL_IN_MONO
-    val encoding = AudioFormat.ENCODING_PCM_16BIT
-
-    try {
-        val minBuffer =
-            AudioRecord.getMinBufferSize(sampleRateHz, channel, encoding).coerceAtLeast(4096)
-
-        val record = AudioRecord(
-            MediaRecorder.AudioSource.MIC,
-            sampleRateHz,
-            channel,
-            encoding,
-            minBuffer,
-        )
-
-        // Verificar si AudioRecord est├í inicializado correctamente
-        if (record.state != AudioRecord.STATE_INITIALIZED) {
-            return@withContext ShortArray(0) to sampleRateHz
-        }
-
-        val totalSamples = ((recordMs / 1000.0) * sampleRateHz).toInt().coerceAtLeast(sampleRateHz)
-        val output = ShortArray(totalSamples)
-        val buffer = ShortArray(minBuffer / 2)
+): Pair<ShortArray, Int> =
+    withContext(Dispatchers.IO) {
+        val channel = AudioFormat.CHANNEL_IN_MONO
+        val encoding = AudioFormat.ENCODING_PCM_16BIT
 
         try {
-            record.startRecording()
+            val minBuffer =
+                AudioRecord.getMinBufferSize(sampleRateHz, channel, encoding).coerceAtLeast(4096)
 
-            // Verificar que est├í grabando
-            if (record.recordingState != AudioRecord.RECORDSTATE_RECORDING) {
+            val record =
+                AudioRecord(
+                    MediaRecorder.AudioSource.MIC,
+                    sampleRateHz,
+                    channel,
+                    encoding,
+                    minBuffer,
+                )
+
+            // Verificar si AudioRecord est├í inicializado correctamente
+            if (record.state != AudioRecord.STATE_INITIALIZED) {
                 return@withContext ShortArray(0) to sampleRateHz
             }
 
-            var written = 0
-            while (written < output.size && isActive) {
-                val read = record.read(buffer, 0, minOf(buffer.size, output.size - written))
-                if (read > 0) {
-                    System.arraycopy(buffer, 0, output, written, read)
-                    written += read
-                } else if (read == AudioRecord.ERROR_INVALID_OPERATION ||
-                    read == AudioRecord.ERROR_BAD_VALUE
-                ) {
-                    break
-                }
-            }
+            val totalSamples = ((recordMs / 1000.0) * sampleRateHz).toInt().coerceAtLeast(sampleRateHz)
+            val output = ShortArray(totalSamples)
+            val buffer = ShortArray(minBuffer / 2)
 
-            if (written <= 0) {
-                ShortArray(0) to sampleRateHz
-            } else {
-                output.copyOf(written) to sampleRateHz
-            }
-        } finally {
-            runCatching {
-                if (record.recordingState == AudioRecord.RECORDSTATE_RECORDING) {
-                    record.stop()
+            try {
+                record.startRecording()
+
+                // Verificar que est├í grabando
+                if (record.recordingState != AudioRecord.RECORDSTATE_RECORDING) {
+                    return@withContext ShortArray(0) to sampleRateHz
                 }
+
+                var written = 0
+                while (written < output.size && isActive) {
+                    val read = record.read(buffer, 0, minOf(buffer.size, output.size - written))
+                    if (read > 0) {
+                        System.arraycopy(buffer, 0, output, written, read)
+                        written += read
+                    } else if (read == AudioRecord.ERROR_INVALID_OPERATION ||
+                        read == AudioRecord.ERROR_BAD_VALUE
+                    ) {
+                        break
+                    }
+                }
+
+                if (written <= 0) {
+                    ShortArray(0) to sampleRateHz
+                } else {
+                    output.copyOf(written) to sampleRateHz
+                }
+            } finally {
+                runCatching {
+                    if (record.recordingState == AudioRecord.RECORDSTATE_RECORDING) {
+                        record.stop()
+                    }
+                }
+                runCatching { record.release() }
             }
-            runCatching { record.release() }
+        } catch (e: SecurityException) {
+            // Permiso denegado en tiempo de ejecuci├│n
+            e.printStackTrace()
+            ShortArray(0) to sampleRateHz
         }
-    } catch (e: SecurityException) {
-        // Permiso denegado en tiempo de ejecuci├│n
-        e.printStackTrace()
-        ShortArray(0) to sampleRateHz
     }
-}
 
 @Composable
 private fun IdleHeader() {
@@ -756,9 +764,7 @@ private fun ResultFirstSheet(
 }
 
 @Composable
-private fun ResultDetailSections(
-    result: RecognitionResult,
-) {
+private fun ResultDetailSections(result: RecognitionResult) {
     val lyrics =
         remember(result.lyrics) {
             result.lyrics
@@ -933,9 +939,10 @@ private fun ListeningOrb(
         Icon(
             painter = painterResource(icon),
             contentDescription = null,
-            modifier = Modifier
-                .size(54.dp)
-                .alpha(iconAlpha),
+            modifier =
+                Modifier
+                    .size(54.dp)
+                    .alpha(iconAlpha),
             tint = MaterialTheme.colorScheme.onSurface,
         )
     }
@@ -992,15 +999,14 @@ private fun StatusPill(
 }
 
 @Composable
-private fun PermissionCard(
-    onAllow: () -> Unit,
-) {
+private fun PermissionCard(onAllow: () -> Unit) {
     ElevatedCard(
         modifier = Modifier.fillMaxWidth(),
         shape = MaterialTheme.shapes.extraLarge,
-        colors = CardDefaults.elevatedCardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
-        ),
+        colors =
+            CardDefaults.elevatedCardColors(
+                containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+            ),
     ) {
         Column(modifier = Modifier.padding(18.dp)) {
             Text(
@@ -1036,9 +1042,10 @@ private fun FailureCard(
     ElevatedCard(
         modifier = Modifier.fillMaxWidth(),
         shape = MaterialTheme.shapes.extraLarge,
-        colors = CardDefaults.elevatedCardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
-        ),
+        colors =
+            CardDefaults.elevatedCardColors(
+                containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+            ),
     ) {
         Column(modifier = Modifier.padding(18.dp)) {
             Text(
@@ -1074,16 +1081,18 @@ private fun SuccessActions(
         ToggleButton(
             checked = false,
             onCheckedChange = { onListenAgain() },
-            modifier = Modifier
-                .weight(1f)
-                .heightIn(min = 48.dp),
+            modifier =
+                Modifier
+                    .weight(1f)
+                    .heightIn(min = 48.dp),
             shapes = ButtonGroupDefaults.connectedLeadingButtonShapes(),
-            colors = ToggleButtonDefaults.toggleButtonColors(
-                containerColor = MaterialTheme.colorScheme.secondaryContainer,
-                contentColor = MaterialTheme.colorScheme.onSecondaryContainer,
-                checkedContainerColor = MaterialTheme.colorScheme.secondaryContainer,
-                checkedContentColor = MaterialTheme.colorScheme.onSecondaryContainer,
-            ),
+            colors =
+                ToggleButtonDefaults.toggleButtonColors(
+                    containerColor = MaterialTheme.colorScheme.secondaryContainer,
+                    contentColor = MaterialTheme.colorScheme.onSecondaryContainer,
+                    checkedContainerColor = MaterialTheme.colorScheme.secondaryContainer,
+                    checkedContentColor = MaterialTheme.colorScheme.onSecondaryContainer,
+                ),
         ) {
             Icon(
                 painter = painterResource(R.drawable.replay),
@@ -1102,15 +1111,17 @@ private fun SuccessActions(
         ToggleButton(
             checked = false,
             onCheckedChange = { onSearch() },
-            modifier = Modifier
-                .weight(1f)
-                .heightIn(min = 48.dp),
-            colors = ToggleButtonDefaults.toggleButtonColors(
-                containerColor = MaterialTheme.colorScheme.primary,
-                contentColor = MaterialTheme.colorScheme.onPrimary,
-                checkedContainerColor = MaterialTheme.colorScheme.primary,
-                checkedContentColor = MaterialTheme.colorScheme.onPrimary,
-            ),
+            modifier =
+                Modifier
+                    .weight(1f)
+                    .heightIn(min = 48.dp),
+            colors =
+                ToggleButtonDefaults.toggleButtonColors(
+                    containerColor = MaterialTheme.colorScheme.primary,
+                    contentColor = MaterialTheme.colorScheme.onPrimary,
+                    checkedContainerColor = MaterialTheme.colorScheme.primary,
+                    checkedContentColor = MaterialTheme.colorScheme.onPrimary,
+                ),
             shapes = ButtonGroupDefaults.connectedTrailingButtonShapes(),
         ) {
             Icon(
@@ -1233,13 +1244,12 @@ const val MusicRecognitionRoute = "music_recognition"
 const val ACTION_MUSIC_RECOGNITION = "moe.koiverse.archivetune.action.MUSIC_RECOGNITION"
 const val MusicRecognitionAutoStartRequestKey = "music_recognition_auto_start_request"
 
-fun NavHostController.openMusicRecognition(
-    autoStartRequestId: Long = System.currentTimeMillis(),
-) {
+fun NavHostController.openMusicRecognition(autoStartRequestId: Long = System.currentTimeMillis()) {
     val currentRoute = currentDestination?.route
-    if (currentRoute != MusicRecognitionRoute && !popBackStack(
+    if (currentRoute != MusicRecognitionRoute &&
+        !popBackStack(
             MusicRecognitionRoute,
-            inclusive = false
+            inclusive = false,
         )
     ) {
         navigate(MusicRecognitionRoute) {

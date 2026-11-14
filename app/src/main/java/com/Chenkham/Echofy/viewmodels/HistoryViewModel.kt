@@ -3,11 +3,11 @@ package com.Chenkham.Echofy.viewmodels
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.arturo254.opentune.innertube.YouTube
-import com.arturo254.opentune.innertube.pages.HistoryPage
 import com.Chenkham.Echofy.constants.HistorySource
 import com.Chenkham.Echofy.db.MusicDatabase
 import com.Chenkham.Echofy.utils.reportException
+import com.arturo254.opentune.innertube.YouTube
+import com.arturo254.opentune.innertube.pages.HistoryPage
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -22,78 +22,78 @@ import javax.inject.Inject
 
 @HiltViewModel
 class HistoryViewModel
-@Inject
-constructor(
-    val database: MusicDatabase,
-) : ViewModel() {
-    var historySource = MutableStateFlow(HistorySource.LOCAL)
+    @Inject
+    constructor(
+        val database: MusicDatabase,
+    ) : ViewModel() {
+        var historySource = MutableStateFlow(HistorySource.LOCAL)
 
-    private val today = LocalDate.now()
-    private val thisMonday = today.with(DayOfWeek.MONDAY)
-    private val lastMonday = thisMonday.minusDays(7)
+        private val today = LocalDate.now()
+        private val thisMonday = today.with(DayOfWeek.MONDAY)
+        private val lastMonday = thisMonday.minusDays(7)
 
-    val historyPage = mutableStateOf<HistoryPage?>(null)
+        val historyPage = mutableStateOf<HistoryPage?>(null)
 
-    val events =
-        database
-            .events()
-            .map { events ->
-                events
-                    .groupBy {
-                        val date = it.event.timestamp.toLocalDate()
-                        val daysAgo = ChronoUnit.DAYS.between(date, today).toInt()
-                        when {
-                            daysAgo == 0 -> DateAgo.Today
-                            daysAgo == 1 -> DateAgo.Yesterday
-                            date >= thisMonday -> DateAgo.ThisWeek
-                            date >= lastMonday -> DateAgo.LastWeek
-                            else -> DateAgo.Other(date.withDayOfMonth(1))
-                        }
-                    }.toSortedMap(
-                        compareBy { dateAgo ->
-                            when (dateAgo) {
-                                DateAgo.Today -> 0L
-                                DateAgo.Yesterday -> 1L
-                                DateAgo.ThisWeek -> 2L
-                                DateAgo.LastWeek -> 3L
-                                is DateAgo.Other -> ChronoUnit.DAYS.between(dateAgo.date, today)
+        val events =
+            database
+                .events()
+                .map { events ->
+                    events
+                        .groupBy {
+                            val date = it.event.timestamp.toLocalDate()
+                            val daysAgo = ChronoUnit.DAYS.between(date, today).toInt()
+                            when {
+                                daysAgo == 0 -> DateAgo.Today
+                                daysAgo == 1 -> DateAgo.Yesterday
+                                date >= thisMonday -> DateAgo.ThisWeek
+                                date >= lastMonday -> DateAgo.LastWeek
+                                else -> DateAgo.Other(date.withDayOfMonth(1))
                             }
-                        },
-                    ).mapValues { entry ->
-                        entry.value.distinctBy { it.song.id }
-                    }
-            }.stateIn(viewModelScope, SharingStarted.Lazily, emptyMap())
+                        }.toSortedMap(
+                            compareBy { dateAgo ->
+                                when (dateAgo) {
+                                    DateAgo.Today -> 0L
+                                    DateAgo.Yesterday -> 1L
+                                    DateAgo.ThisWeek -> 2L
+                                    DateAgo.LastWeek -> 3L
+                                    is DateAgo.Other -> ChronoUnit.DAYS.between(dateAgo.date, today)
+                                }
+                            },
+                        ).mapValues { entry ->
+                            entry.value.distinctBy { it.song.id }
+                        }
+                }.stateIn(viewModelScope, SharingStarted.Lazily, emptyMap())
 
-    init {
-        fetchRemoteHistory()
-    }
-
-    fun fetchRemoteHistory() {
-        viewModelScope.launch(Dispatchers.IO) {
-            YouTube.musicHistory().onSuccess {
-                historyPage.value = it
-            }.onFailure {
-                reportException(it)
-            }
+        init {
+            fetchRemoteHistory()
         }
-    }
 
-    /**
-     * Clears all local listening history/stats (event table)
-     */
-    fun clearListeningHistory() {
-        viewModelScope.launch(Dispatchers.IO) {
-            try {
-                database.query {
-                    clearAllEvents()
+        fun fetchRemoteHistory() {
+            viewModelScope.launch(Dispatchers.IO) {
+                YouTube.musicHistory().onSuccess {
+                    historyPage.value = it
+                }.onFailure {
+                    reportException(it)
                 }
-                timber.log.Timber.d("Listening history cleared successfully")
-            } catch (e: Exception) {
-                timber.log.Timber.e(e, "Failed to clear listening history")
+            }
+        }
+
+        /**
+         * Clears all local listening history/stats (event table)
+         */
+        fun clearListeningHistory() {
+            viewModelScope.launch(Dispatchers.IO) {
+                try {
+                    database.query {
+                        clearAllEvents()
+                    }
+                    timber.log.Timber.d("Listening history cleared successfully")
+                } catch (e: Exception) {
+                    timber.log.Timber.e(e, "Failed to clear listening history")
+                }
             }
         }
     }
-}
 
 sealed class DateAgo {
     data object Today : DateAgo()

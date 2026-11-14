@@ -31,7 +31,6 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.SnackbarHost
@@ -49,10 +48,10 @@ import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.toMutableStateList
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.toMutableStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
@@ -79,8 +78,6 @@ import androidx.compose.ui.util.fastAny
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import coil.compose.AsyncImage
-import com.arturo254.opentune.innertube.models.SongItem
-import com.arturo254.opentune.innertube.models.WatchEndpoint
 import com.Chenkham.Echofy.LocalDatabase
 import com.Chenkham.Echofy.LocalPlayerAwareWindowInsets
 import com.Chenkham.Echofy.LocalPlayerConnection
@@ -112,6 +109,8 @@ import com.Chenkham.Echofy.ui.menu.YouTubeSongMenu
 import com.Chenkham.Echofy.ui.utils.ItemWrapper
 import com.Chenkham.Echofy.utils.rememberPreference
 import com.Chenkham.Echofy.viewmodels.OnlinePlaylistViewModel
+import com.arturo254.opentune.innertube.models.SongItem
+import com.arturo254.opentune.innertube.models.WatchEndpoint
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
@@ -153,12 +152,12 @@ fun OnlinePlaylistScreen(
                     .mapIndexed { index, song -> index to song }
                     .filter { (_, song) ->
                         song.title.contains(query.text, ignoreCase = true) ||
-                                song.artists.fastAny {
-                                    it.name.contains(
-                                        query.text,
-                                        ignoreCase = true
-                                    )
-                                }
+                            song.artists.fastAny {
+                                it.name.contains(
+                                    query.text,
+                                    ignoreCase = true,
+                                )
+                            }
                     }
             }
         }
@@ -175,13 +174,6 @@ fun OnlinePlaylistScreen(
         }
     }
 
-
-
-
-
-
-
-
     LaunchedEffect(playlist?.id) {
         // Restaurar posición si cambias de playlist
         if (playlist?.id != null) {
@@ -196,11 +188,13 @@ fun OnlinePlaylistScreen(
     }
 
     // Calcular el padding del contenido considerando WindowInsets
-    val contentPadding = LocalPlayerAwareWindowInsets.current.union(WindowInsets.ime)
-        .asPaddingValues()
-    val wrappedSongs = remember(filteredSongs) {
-        filteredSongs.map { item -> ItemWrapper(item) }.toMutableStateList()
-    }
+    val contentPadding =
+        LocalPlayerAwareWindowInsets.current.union(WindowInsets.ime)
+            .asPaddingValues()
+    val wrappedSongs =
+        remember(filteredSongs) {
+            filteredSongs.map { item -> ItemWrapper(item) }.toMutableStateList()
+        }
 
     Box(
         modifier = Modifier.fillMaxSize(),
@@ -208,7 +202,7 @@ fun OnlinePlaylistScreen(
         VerticalFastScroller(
             listState = lazyListState,
             topContentPadding = contentPadding.calculateTopPadding(),
-            endContentPadding = 0.dp
+            endContentPadding = 0.dp,
         ) {
             LazyColumn(
                 state = lazyListState,
@@ -231,17 +225,19 @@ fun OnlinePlaylistScreen(
                                     ) {
                                         Box(
                                             contentAlignment = Alignment.Center,
-                                            modifier = Modifier
-                                                .size(AlbumThumbnailSize)
-                                                .clip(RoundedCornerShape(ThumbnailCornerRadius))
-                                                .fillMaxWidth(),
+                                            modifier =
+                                                Modifier
+                                                    .size(AlbumThumbnailSize)
+                                                    .clip(RoundedCornerShape(ThumbnailCornerRadius))
+                                                    .fillMaxWidth(),
                                         ) {
                                             AsyncImage(
                                                 model = playlist.thumbnail,
                                                 contentDescription = null,
-                                                modifier = Modifier
-                                                    .fillMaxWidth()
-                                                    .clip(RoundedCornerShape(ThumbnailCornerRadius)),
+                                                modifier =
+                                                    Modifier
+                                                        .fillMaxWidth()
+                                                        .clip(RoundedCornerShape(ThumbnailCornerRadius)),
                                             )
                                         }
 
@@ -307,7 +303,7 @@ fun OnlinePlaylistScreen(
                                                                             isEditable = playlist.isEditable,
                                                                             playEndpointParams = playlist.playEndpoint?.params,
                                                                             shuffleEndpointParams = playlist.shuffleEndpoint?.params,
-                                                                            radioEndpointParams = playlist.radioEndpoint?.params
+                                                                            radioEndpointParams = playlist.radioEndpoint?.params,
                                                                         ).toggleLike()
                                                                     insert(playlistEntity)
                                                                     songs.map(SongItem::toMediaMetadata)
@@ -316,7 +312,7 @@ fun OnlinePlaylistScreen(
                                                                             PlaylistSongMap(
                                                                                 songId = song.id,
                                                                                 playlistId = playlistEntity.id,
-                                                                                position = index
+                                                                                position = index,
                                                                             )
                                                                         }
                                                                         .forEach(::insert)
@@ -326,14 +322,15 @@ fun OnlinePlaylistScreen(
                                                                     update(dbPlaylist!!.playlist.toggleLike())
                                                                 }
                                                             }
-                                                        }
+                                                        },
                                                     ) {
                                                         Icon(
-                                                            painter = painterResource(
-                                                                if (dbPlaylist?.playlist?.bookmarkedAt != null) R.drawable.favorite else R.drawable.favorite_border
-                                                            ),
+                                                            painter =
+                                                                painterResource(
+                                                                    if (dbPlaylist?.playlist?.bookmarkedAt != null) R.drawable.favorite else R.drawable.favorite_border,
+                                                                ),
                                                             contentDescription = null,
-                                                            tint = if (dbPlaylist?.playlist?.bookmarkedAt != null) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurface
+                                                            tint = if (dbPlaylist?.playlist?.bookmarkedAt != null) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurface,
                                                         )
                                                     }
                                                 }
@@ -352,7 +349,11 @@ fun OnlinePlaylistScreen(
                                                         }
                                                     },
                                                 ) {
-                                                    Icon(painter = painterResource(R.drawable.more_vert), tint = MaterialTheme.colorScheme.onSurface, contentDescription = null)
+                                                    Icon(
+                                                        painter = painterResource(R.drawable.more_vert),
+                                                        tint = MaterialTheme.colorScheme.onSurface,
+                                                        contentDescription = null,
+                                                    )
                                                 }
                                             }
                                         }
@@ -366,17 +367,17 @@ fun OnlinePlaylistScreen(
                                                 onClick = {
                                                     playerConnection.playQueue(
                                                         YouTubeQueue(
-                                                            shuffleEndpoint
-                                                        )
+                                                            shuffleEndpoint,
+                                                        ),
                                                     )
                                                 },
                                                 contentPadding = ButtonDefaults.ButtonWithIconContentPadding,
-                                                modifier = Modifier.weight(1f)
+                                                modifier = Modifier.weight(1f),
                                             ) {
                                                 Icon(
                                                     painter = painterResource(R.drawable.shuffle),
                                                     contentDescription = null,
-                                                    modifier = Modifier.size(ButtonDefaults.IconSize)
+                                                    modifier = Modifier.size(ButtonDefaults.IconSize),
                                                 )
                                                 Spacer(Modifier.size(ButtonDefaults.IconSpacing))
                                                 Text(stringResource(R.string.shuffle))
@@ -388,8 +389,8 @@ fun OnlinePlaylistScreen(
                                                 onClick = {
                                                     playerConnection.playQueue(
                                                         YouTubeQueue(
-                                                            radioEndpoint
-                                                        )
+                                                            radioEndpoint,
+                                                        ),
                                                     )
                                                 },
                                                 contentPadding = ButtonDefaults.ButtonWithIconContentPadding,
@@ -414,7 +415,7 @@ fun OnlinePlaylistScreen(
                         ) { song ->
                             // INSTANT PLAYBACK: Prefetch URL when song becomes visible
                             PrefetchOnVisible(mediaId = song.item.second.id)
-                            
+
                             YouTubeListItem(
                                 item = song.item.second,
                                 isActive = mediaMetadata?.id == song.item.second.id,
@@ -432,7 +433,11 @@ fun OnlinePlaylistScreen(
                                             }
                                         },
                                     ) {
-                                        Icon(painter = painterResource(R.drawable.more_vert), tint = MaterialTheme.colorScheme.onSurface, contentDescription = null)
+                                        Icon(
+                                            painter = painterResource(R.drawable.more_vert),
+                                            tint = MaterialTheme.colorScheme.onSurface,
+                                            contentDescription = null,
+                                        )
                                     }
                                 },
                                 modifier =
@@ -445,7 +450,7 @@ fun OnlinePlaylistScreen(
                                                         playerConnection.togglePlayPause()
                                                     } else {
                                                         playerConnection.service.getAutomix(
-                                                            playlistId = playlist.id
+                                                            playlistId = playlist.id,
                                                         )
                                                         playerConnection.playQueue(
                                                             YouTubeQueue(
@@ -528,7 +533,7 @@ fun OnlinePlaylistScreen(
                     val count = wrappedSongs.count { it.isSelected }
                     Text(
                         text = pluralStringResource(R.plurals.n_song, count, count),
-                        style = MaterialTheme.typography.titleLarge
+                        style = MaterialTheme.typography.titleLarge,
                     )
                 } else if (isSearching) {
                     TextField(
@@ -537,22 +542,24 @@ fun OnlinePlaylistScreen(
                         placeholder = {
                             Text(
                                 text = stringResource(R.string.search),
-                                style = MaterialTheme.typography.titleLarge
+                                style = MaterialTheme.typography.titleLarge,
                             )
                         },
                         singleLine = true,
                         textStyle = MaterialTheme.typography.titleLarge,
                         keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
-                        colors = TextFieldDefaults.colors(
-                            focusedContainerColor = Color.Transparent,
-                            unfocusedContainerColor = Color.Transparent,
-                            focusedIndicatorColor = Color.Transparent,
-                            unfocusedIndicatorColor = Color.Transparent,
-                            disabledIndicatorColor = Color.Transparent,
-                        ),
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .focusRequester(focusRequester)
+                        colors =
+                            TextFieldDefaults.colors(
+                                focusedContainerColor = Color.Transparent,
+                                unfocusedContainerColor = Color.Transparent,
+                                focusedIndicatorColor = Color.Transparent,
+                                unfocusedIndicatorColor = Color.Transparent,
+                                disabledIndicatorColor = Color.Transparent,
+                            ),
+                        modifier =
+                            Modifier
+                                .fillMaxWidth()
+                                .focusRequester(focusRequester),
                     )
                 } else if (showTopBarTitle) {
                     Text(playlist?.title.orEmpty())
@@ -572,10 +579,11 @@ fun OnlinePlaylistScreen(
                     },
                 ) {
                     Icon(
-                        painter = painterResource(
-                            if (selection) R.drawable.close else R.drawable.arrow_back
-                        ),
-                        contentDescription = null
+                        painter =
+                            painterResource(
+                                if (selection) R.drawable.close else R.drawable.arrow_back,
+                            ),
+                        contentDescription = null,
                     )
                 }
             },
@@ -592,40 +600,46 @@ fun OnlinePlaylistScreen(
                         },
                     ) {
                         Icon(
-                            painter = painterResource(
-                                if (count == wrappedSongs.size) R.drawable.deselect else R.drawable.select_all
-                            ),
-                            contentDescription = null
+                            painter =
+                                painterResource(
+                                    if (count == wrappedSongs.size) R.drawable.deselect else R.drawable.select_all,
+                                ),
+                            contentDescription = null,
                         )
                     }
                     IconButton(
                         onClick = {
                             menuState.show {
                                 SelectionMediaMetadataMenu(
-                                    songSelection = wrappedSongs.filter { it.isSelected }
-                                        .map { it.item.second.toMediaItem().metadata!! },
+                                    songSelection =
+                                        wrappedSongs.filter { it.isSelected }
+                                            .map { it.item.second.toMediaItem().metadata!! },
                                     onDismiss = menuState::dismiss,
                                     clearAction = { selection = false },
-                                    currentItems = emptyList()
+                                    currentItems = emptyList(),
                                 )
                             }
                         },
                     ) {
-                        Icon(painter = painterResource(R.drawable.more_vert), tint = MaterialTheme.colorScheme.onSurface, contentDescription = null)
+                        Icon(
+                            painter = painterResource(R.drawable.more_vert),
+                            tint = MaterialTheme.colorScheme.onSurface,
+                            contentDescription = null,
+                        )
                     }
                 } else {
                     if (!isSearching) {
                         IconButton(
-                            onClick = { isSearching = true }
+                            onClick = { isSearching = true },
                         ) {
                             Icon(
                                 painter = painterResource(R.drawable.search),
-                                contentDescription = null
+                                contentDescription = null,
                             )
                         }
                     }
                 }
-            }
+            },
         )
 
         SnackbarHost(

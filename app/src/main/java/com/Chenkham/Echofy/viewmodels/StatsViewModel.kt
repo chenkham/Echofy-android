@@ -2,15 +2,15 @@ package com.Chenkham.Echofy.viewmodels
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.arturo254.opentune.innertube.YouTube
-import com.Chenkham.Echofy.constants.statToPeriod
 import com.Chenkham.Echofy.constants.ListeningStreakBestKey
+import com.Chenkham.Echofy.constants.statToPeriod
 import com.Chenkham.Echofy.db.MusicDatabase
 import com.Chenkham.Echofy.db.update
 import com.Chenkham.Echofy.ui.screens.OptionStats
 import com.Chenkham.Echofy.utils.ListeningStreak
 import com.Chenkham.Echofy.utils.dataStore
 import com.Chenkham.Echofy.utils.reportException
+import com.arturo254.opentune.innertube.YouTube
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -30,81 +30,105 @@ import javax.inject.Inject
 @OptIn(ExperimentalCoroutinesApi::class)
 @HiltViewModel
 class StatsViewModel
-@Inject
-constructor(
-    @ApplicationContext private val context: android.content.Context,
-    val database: MusicDatabase,
-) : ViewModel() {
-    val selectedOption = MutableStateFlow(OptionStats.CONTINUOUS)
-    val indexChips = MutableStateFlow(0)
+    @Inject
+    constructor(
+        @ApplicationContext private val context: android.content.Context,
+        val database: MusicDatabase,
+    ) : ViewModel() {
+        val selectedOption = MutableStateFlow(OptionStats.CONTINUOUS)
+        val indexChips = MutableStateFlow(0)
 
-    /** Current consecutive-day listening streak, or 0 when the feature is off. */
-    val listeningStreak = MutableStateFlow(0)
+        /** Current consecutive-day listening streak, or 0 when the feature is off. */
+        val listeningStreak = MutableStateFlow(0)
 
-    /** Longest streak ever reached. */
-    val bestStreak = MutableStateFlow(0)
+        /** Longest streak ever reached. */
+        val bestStreak = MutableStateFlow(0)
 
-    init {
-        viewModelScope.launch {
-            listeningStreak.value = ListeningStreak.refresh(context, database)
-            bestStreak.value = context.dataStore.data.first()[ListeningStreakBestKey] ?: 0
+        init {
+            viewModelScope.launch {
+                listeningStreak.value = ListeningStreak.refresh(context, database)
+                bestStreak.value = context.dataStore.data.first()[ListeningStreakBestKey] ?: 0
+            }
         }
-    }
 
-    val mostPlayedSongsStats =
-        combine(
-            selectedOption,
-            indexChips,
-        ) { first, second -> Pair(first, second) }
-            .flatMapLatest { (selection, t) ->
-                database
-                    .mostPlayedSongsStats(
-                        fromTimeStamp = statToPeriod(selection, t),
-                        limit = -1,
-                        toTimeStamp =
-                            if (selection == OptionStats.CONTINUOUS || t == 0) {
-                                LocalDateTime
-                                    .now()
-                                    .toInstant(
-                                        ZoneOffset.UTC,
-                                    ).toEpochMilli()
-                            } else {
-                                statToPeriod(selection, t - 1)
-                            },
-                    )
-            }.stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
+        val mostPlayedSongsStats =
+            combine(
+                selectedOption,
+                indexChips,
+            ) { first, second -> Pair(first, second) }
+                .flatMapLatest { (selection, t) ->
+                    database
+                        .mostPlayedSongsStats(
+                            fromTimeStamp = statToPeriod(selection, t),
+                            limit = -1,
+                            toTimeStamp =
+                                if (selection == OptionStats.CONTINUOUS || t == 0) {
+                                    LocalDateTime
+                                        .now()
+                                        .toInstant(
+                                            ZoneOffset.UTC,
+                                        ).toEpochMilli()
+                                } else {
+                                    statToPeriod(selection, t - 1)
+                                },
+                        )
+                }.stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
 
-    val mostPlayedSongs =
-        combine(
-            selectedOption,
-            indexChips,
-        ) { first, second -> Pair(first, second) }
-            .flatMapLatest { (selection, t) ->
-                database
-                    .mostPlayedSongs(
-                        fromTimeStamp = statToPeriod(selection, t),
-                        limit = -1,
-                        toTimeStamp =
-                            if (selection == OptionStats.CONTINUOUS || t == 0) {
-                                LocalDateTime
-                                    .now()
-                                    .toInstant(
-                                        ZoneOffset.UTC,
-                                    ).toEpochMilli()
-                            } else {
-                                statToPeriod(selection, t - 1)
-                            },
-                    )
-            }.stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
+        val mostPlayedSongs =
+            combine(
+                selectedOption,
+                indexChips,
+            ) { first, second -> Pair(first, second) }
+                .flatMapLatest { (selection, t) ->
+                    database
+                        .mostPlayedSongs(
+                            fromTimeStamp = statToPeriod(selection, t),
+                            limit = -1,
+                            toTimeStamp =
+                                if (selection == OptionStats.CONTINUOUS || t == 0) {
+                                    LocalDateTime
+                                        .now()
+                                        .toInstant(
+                                            ZoneOffset.UTC,
+                                        ).toEpochMilli()
+                                } else {
+                                    statToPeriod(selection, t - 1)
+                                },
+                        )
+                }.stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
 
-    val mostPlayedArtists =
-        combine(
-            selectedOption,
-            indexChips,
-        ) { first, second -> Pair(first, second) }
-            .flatMapLatest { (selection, t) ->
-                database
-                    .mostPlayedArtists(
+        val mostPlayedArtists =
+            combine(
+                selectedOption,
+                indexChips,
+            ) { first, second -> Pair(first, second) }
+                .flatMapLatest { (selection, t) ->
+                    database
+                        .mostPlayedArtists(
+                            statToPeriod(selection, t),
+                            limit = -1,
+                            toTimeStamp =
+                                if (selection == OptionStats.CONTINUOUS || t == 0) {
+                                    LocalDateTime
+                                        .now()
+                                        .toInstant(
+                                            ZoneOffset.UTC,
+                                        ).toEpochMilli()
+                                } else {
+                                    statToPeriod(selection, t - 1)
+                                },
+                        ).map { artists ->
+                            artists.filter { it.artist.isYouTubeArtist }
+                        }
+                }.stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
+
+        val mostPlayedAlbums =
+            combine(
+                selectedOption,
+                indexChips,
+            ) { first, second -> Pair(first, second) }
+                .flatMapLatest { (selection, t) ->
+                    database.mostPlayedAlbums(
                         statToPeriod(selection, t),
                         limit = -1,
                         toTimeStamp =
@@ -117,79 +141,55 @@ constructor(
                             } else {
                                 statToPeriod(selection, t - 1)
                             },
-                    ).map { artists ->
-                        artists.filter { it.artist.isYouTubeArtist }
-                    }
-            }.stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
+                    )
+                }.stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
 
-    val mostPlayedAlbums =
-        combine(
-            selectedOption,
-            indexChips,
-        ) { first, second -> Pair(first, second) }
-            .flatMapLatest { (selection, t) ->
-                database.mostPlayedAlbums(
-                    statToPeriod(selection, t),
-                    limit = -1,
-                    toTimeStamp =
-                        if (selection == OptionStats.CONTINUOUS || t == 0) {
-                            LocalDateTime
-                                .now()
-                                .toInstant(
-                                    ZoneOffset.UTC,
-                                ).toEpochMilli()
-                        } else {
-                            statToPeriod(selection, t - 1)
-                        },
-                )
-            }.stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
+        val firstEvent =
+            database
+                .firstEvent()
+                .stateIn(viewModelScope, SharingStarted.Lazily, null)
 
-    val firstEvent =
-        database
-            .firstEvent()
-            .stateIn(viewModelScope, SharingStarted.Lazily, null)
-
-    init {
-        viewModelScope.launch {
-            mostPlayedArtists.collect { artists ->
-                artists
-                    .map { it.artist }
-                    .filter {
-                        it.thumbnailUrl == null || Duration.between(
-                            it.lastUpdateTime,
-                            LocalDateTime.now()
-                        ) > Duration.ofDays(10)
-                    }.forEach { artist ->
-                        YouTube.artist(artist.id).onSuccess { artistPage ->
-                            database.query {
-                                update(artist, artistPage)
+        init {
+            viewModelScope.launch {
+                mostPlayedArtists.collect { artists ->
+                    artists
+                        .map { it.artist }
+                        .filter {
+                            it.thumbnailUrl == null || Duration.between(
+                                it.lastUpdateTime,
+                                LocalDateTime.now(),
+                            ) > Duration.ofDays(10)
+                        }.forEach { artist ->
+                            YouTube.artist(artist.id).onSuccess { artistPage ->
+                                database.query {
+                                    update(artist, artistPage)
+                                }
                             }
                         }
-                    }
+                }
             }
-        }
-        viewModelScope.launch {
-            mostPlayedAlbums.collect { albums ->
-                albums
-                    .filter {
-                        it.album.songCount == 0
-                    }.forEach { album ->
-                        YouTube
-                            .album(album.id)
-                            .onSuccess { albumPage ->
-                                database.query {
-                                    update(album.album, albumPage, album.artists)
-                                }
-                            }.onFailure {
-                                reportException(it)
-                                if (it.message?.contains("NOT_FOUND") == true) {
+            viewModelScope.launch {
+                mostPlayedAlbums.collect { albums ->
+                    albums
+                        .filter {
+                            it.album.songCount == 0
+                        }.forEach { album ->
+                            YouTube
+                                .album(album.id)
+                                .onSuccess { albumPage ->
                                     database.query {
-                                        delete(album.album)
+                                        update(album.album, albumPage, album.artists)
+                                    }
+                                }.onFailure {
+                                    reportException(it)
+                                    if (it.message?.contains("NOT_FOUND") == true) {
+                                        database.query {
+                                            delete(album.album)
+                                        }
                                     }
                                 }
-                            }
-                    }
+                        }
+                }
             }
         }
     }
-}

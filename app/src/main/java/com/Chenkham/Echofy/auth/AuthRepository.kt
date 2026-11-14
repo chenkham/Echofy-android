@@ -14,67 +14,73 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 @Singleton
-class AuthRepository @Inject constructor(
-    @ApplicationContext private val context: Context
-) {
-    private val userDao = AuthDatabase.getInstance(context).userDao()
-    
-    fun getActiveUser(): Flow<UserEntity?> = userDao.getActiveUser()
-    
-    suspend fun getActiveUserOnce(): UserEntity? = userDao.getActiveUserOnce()
+class AuthRepository
+    @Inject
+    constructor(
+        @ApplicationContext private val context: Context,
+    ) {
+        private val userDao = AuthDatabase.getInstance(context).userDao()
 
-    suspend fun setPremiumStatus(isPremium: Boolean): Int =
-        userDao.updateActiveUserPremiumStatus(isPremium)
-    
-    suspend fun signInWithGoogle(webClientId: String, activityContext: Context): Result<UserEntity> {
-        return try {
-            val credentialManager = CredentialManager.create(activityContext)
-            
-            val googleIdOption = GetGoogleIdOption.Builder()
-                .setFilterByAuthorizedAccounts(false)
-                .setServerClientId(webClientId)
-                .build()
-            
-            val request = GetCredentialRequest.Builder()
-                .addCredentialOption(googleIdOption)
-                .build()
-            
-            val result = credentialManager.getCredential(
-                request = request,
-                context = activityContext
-            )
-            
-            val credential = GoogleIdTokenCredential.createFrom(result.credential.data)
-            
-            val user = UserEntity(
-                googleId = credential.id,
-                email = credential.id, // Google ID is email
-                displayName = credential.displayName,
-                photoUrl = credential.profilePictureUri?.toString(),
-                signInTimestamp = System.currentTimeMillis(),
-                isActive = true,
-                isPremium = false
-            )
-            
-            // Deactivate all users and save new user
+        fun getActiveUser(): Flow<UserEntity?> = userDao.getActiveUser()
+
+        suspend fun getActiveUserOnce(): UserEntity? = userDao.getActiveUserOnce()
+
+        suspend fun setPremiumStatus(isPremium: Boolean): Int = userDao.updateActiveUserPremiumStatus(isPremium)
+
+        suspend fun signInWithGoogle(
+            webClientId: String,
+            activityContext: Context,
+        ): Result<UserEntity> {
+            return try {
+                val credentialManager = CredentialManager.create(activityContext)
+
+                val googleIdOption =
+                    GetGoogleIdOption.Builder()
+                        .setFilterByAuthorizedAccounts(false)
+                        .setServerClientId(webClientId)
+                        .build()
+
+                val request =
+                    GetCredentialRequest.Builder()
+                        .addCredentialOption(googleIdOption)
+                        .build()
+
+                val result =
+                    credentialManager.getCredential(
+                        request = request,
+                        context = activityContext,
+                    )
+
+                val credential = GoogleIdTokenCredential.createFrom(result.credential.data)
+
+                val user =
+                    UserEntity(
+                        googleId = credential.id,
+                        email = credential.id, // Google ID is email
+                        displayName = credential.displayName,
+                        photoUrl = credential.profilePictureUri?.toString(),
+                        signInTimestamp = System.currentTimeMillis(),
+                        isActive = true,
+                        isPremium = false,
+                    )
+
+                // Deactivate all users and save new user
+                userDao.deactivateAllUsers()
+                userDao.insertUser(user)
+
+                Result.success(user)
+            } catch (e: GetCredentialException) {
+                Result.failure(e)
+            } catch (e: Exception) {
+                Result.failure(e)
+            }
+        }
+
+        suspend fun signOut() {
             userDao.deactivateAllUsers()
-            userDao.insertUser(user)
-            
-            Result.success(user)
-        } catch (e: GetCredentialException) {
-            Result.failure(e)
-        } catch (e: Exception) {
-            Result.failure(e)
+        }
+
+        suspend fun deleteAccount(googleId: String) {
+            userDao.deleteUser(googleId)
         }
     }
-    
-    suspend fun signOut() {
-        userDao.deactivateAllUsers()
-    }
-    
-    suspend fun deleteAccount(googleId: String) {
-        userDao.deleteUser(googleId)
-    }
-
-
-}

@@ -44,9 +44,10 @@ open class KizzyRPC(token: String) {
         if (!isRpcRunning()) {
             discordWebSocket.connect()
         }
-        val presence = Presence(
-            activities = emptyList()
-        )
+        val presence =
+            Presence(
+                activities = emptyList(),
+            )
         discordWebSocket.sendActivity(presence)
     }
 
@@ -73,33 +74,36 @@ open class KizzyRPC(token: String) {
         if (!isRpcRunning()) {
             discordWebSocket.connect()
         }
-        val presence = Presence(
-            activities = listOf(
-                Activity(
-                    name = name,
-                    state = state,
-                    stateUrl = stateUrl,
-                    details = details,
-                    detailsUrl = detailsUrl,
-                    type = type.value,
-                    statusDisplayType = statusDisplayType.value,
-                    timestamps = Timestamps(startTime, endTime),
-                    assets = Assets(
-                        largeImage = largeImage?.resolveImage(kizzyRepository),
-                        smallImage = smallImage?.resolveImage(kizzyRepository),
-                        largeText = largeText,
-                        smallText = smallText
+        val presence =
+            Presence(
+                activities =
+                    listOf(
+                        Activity(
+                            name = name,
+                            state = state,
+                            stateUrl = stateUrl,
+                            details = details,
+                            detailsUrl = detailsUrl,
+                            type = type.value,
+                            statusDisplayType = statusDisplayType.value,
+                            timestamps = Timestamps(startTime, endTime),
+                            assets =
+                                Assets(
+                                    largeImage = largeImage?.resolveImage(kizzyRepository),
+                                    smallImage = smallImage?.resolveImage(kizzyRepository),
+                                    largeText = largeText,
+                                    smallText = smallText,
+                                ),
+                            buttons = buttons?.map { it.first },
+                            metadata = Metadata(buttonUrls = buttons?.map { it.second }),
+                            applicationId = applicationId.takeIf { !buttons.isNullOrEmpty() },
+                            url = streamUrl,
+                        ),
                     ),
-                    buttons = buttons?.map { it.first },
-                    metadata = Metadata(buttonUrls = buttons?.map { it.second }),
-                    applicationId = applicationId.takeIf { !buttons.isNullOrEmpty() },
-                    url = streamUrl
-                )
-            ),
-            afk = true,
-            since = since,
-            status = status ?: "online"
-        )
+                afk = true,
+                since = since,
+                status = status ?: "online",
+            )
         discordWebSocket.sendActivity(presence)
     }
 
@@ -108,27 +112,29 @@ open class KizzyRPC(token: String) {
         STREAMING(1),
         LISTENING(2),
         WATCHING(3),
-        COMPETING(5)
+        COMPETING(5),
     }
 
     enum class StatusDisplayType(val value: Int) {
         NAME(0),
         STATE(1),
-        DETAILS(2)
+        DETAILS(2),
     }
 
     companion object {
-        suspend fun getUserInfo(token: String): Result<UserInfo> = runCatching {
-            val client = HttpClient()
-            val response = client.get("https://discord.com/api/v9/users/@me") {
-                header("Authorization", token)
-            }.bodyAsText()
-            val json = JSONObject(response)
-            val username = json.getString("username")
-            val name = json.getString("global_name")
-            client.close()
+        suspend fun getUserInfo(token: String): Result<UserInfo> =
+            runCatching {
+                val client = HttpClient()
+                val response =
+                    client.get("https://discord.com/api/v9/users/@me") {
+                        header("Authorization", token)
+                    }.bodyAsText()
+                val json = JSONObject(response)
+                val username = json.getString("username")
+                val name = json.getString("global_name")
+                client.close()
 
-            UserInfo(username, name)
-        }
+                UserInfo(username, name)
+            }
     }
 }

@@ -2,8 +2,6 @@ package com.Chenkham.Echofy.utils
 
 import android.content.Context
 import com.Chenkham.Echofy.constants.CustomShareDomainKey
-import com.Chenkham.Echofy.utils.dataStore
-import com.Chenkham.Echofy.utils.get
 import java.net.URLEncoder
 import java.nio.charset.StandardCharsets
 
@@ -31,7 +29,7 @@ object ShareUtils {
         context: Context,
         songId: String,
         title: String? = null,
-        artist: String? = null
+        artist: String? = null,
     ): String {
         val base = getBaseShareUrl(context)
         val builder = StringBuilder("$base/?track=$songId")
@@ -48,7 +46,7 @@ object ShareUtils {
         context: Context,
         songId: String,
         title: String,
-        artist: String
+        artist: String,
     ): String {
         ShareStatsTracker.increment(context, songId)
         val url = buildTrackShareUrl(context, songId, title, artist)
@@ -57,7 +55,7 @@ object ShareUtils {
 
     fun buildJamShareUrl(
         context: Context,
-        roomCode: String
+        roomCode: String,
     ): String {
         val base = getBaseShareUrl(context)
         return "$base/?jam=${roomCode.trim().uppercase()}"
@@ -65,7 +63,7 @@ object ShareUtils {
 
     fun buildJamShareText(
         context: Context,
-        roomCode: String
+        roomCode: String,
     ): String {
         val url = buildJamShareUrl(context, roomCode)
         return "Join my Echofy Jam Together session! 🎧\nRoom code: ${roomCode.trim().uppercase()}\nTap to listen together: $url"
@@ -74,7 +72,7 @@ object ShareUtils {
     fun buildPlaylistShareUrl(
         context: Context,
         playlistId: String,
-        title: String? = null
+        title: String? = null,
     ): String {
         val base = getBaseShareUrl(context)
         val builder = StringBuilder("$base/?playlist=$playlistId")
@@ -87,7 +85,7 @@ object ShareUtils {
     fun buildPlaylistShareText(
         context: Context,
         playlistId: String,
-        title: String
+        title: String,
     ): String {
         val url = buildPlaylistShareUrl(context, playlistId, title)
         return "Listen to playlist \"$title\" on Echofy:\n$url"
@@ -96,7 +94,7 @@ object ShareUtils {
     fun buildAlbumShareUrl(
         context: Context,
         albumId: String,
-        title: String? = null
+        title: String? = null,
     ): String {
         val base = getBaseShareUrl(context)
         val builder = StringBuilder("$base/?album=$albumId")
@@ -110,7 +108,7 @@ object ShareUtils {
         context: Context,
         albumId: String,
         title: String,
-        artist: String? = null
+        artist: String? = null,
     ): String {
         val url = buildAlbumShareUrl(context, albumId, title)
         val byArtist = if (!artist.isNullOrBlank()) " by $artist" else ""
@@ -120,7 +118,7 @@ object ShareUtils {
     fun buildArtistShareUrl(
         context: Context,
         artistId: String,
-        name: String? = null
+        name: String? = null,
     ): String {
         val base = getBaseShareUrl(context)
         val builder = StringBuilder("$base/?artist=$artistId")
@@ -133,7 +131,7 @@ object ShareUtils {
     fun buildArtistShareText(
         context: Context,
         artistId: String,
-        name: String
+        name: String,
     ): String {
         val url = buildArtistShareUrl(context, artistId, name)
         return "Check out $name on Echofy:\n$url"

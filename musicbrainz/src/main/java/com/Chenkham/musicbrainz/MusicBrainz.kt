@@ -73,34 +73,39 @@ object MusicBrainz {
      * Get detailed artist info by MBID, including tags (genres), relations
      * (official homepage, Wikipedia), and life span.
      */
-    suspend fun getArtist(mbid: String) = runCatching {
-        rateLimit()
-        val response = client
-            .get("artist/$mbid") {
-                parameter("inc", "tags+url-rels")
-                parameter("fmt", "json")
-            }.body<MusicBrainzArtist>()
+    suspend fun getArtist(mbid: String) =
+        runCatching {
+            rateLimit()
+            val response =
+                client
+                    .get("artist/$mbid") {
+                        parameter("inc", "tags+url-rels")
+                        parameter("fmt", "json")
+                    }.body<MusicBrainzArtist>()
 
-        // Flatten to UI-friendly model
-        ArtistInfo(
-            mbid = response.id,
-            name = response.name,
-            disambiguation = response.disambiguation,
-            country = response.country,
-            type = response.type,
-            beginDate = response.lifeSpan?.begin,
-            endDate = response.lifeSpan?.end,
-            isEnded = response.lifeSpan?.ended ?: false,
-            genres = response.tags
-                .sortedByDescending { it.count }
-                .map { it.name }
-                .take(10),
-            officialHomepage = response.relations
-                .firstOrNull { it.type == "official homepage" }
-                ?.url?.resource,
-            wikipediaUrl = response.relations
-                .firstOrNull { it.type == "wikipedia" && it.url?.resource?.contains("en.wikipedia") == true }
-                ?.url?.resource,
-        )
-    }
+            // Flatten to UI-friendly model
+            ArtistInfo(
+                mbid = response.id,
+                name = response.name,
+                disambiguation = response.disambiguation,
+                country = response.country,
+                type = response.type,
+                beginDate = response.lifeSpan?.begin,
+                endDate = response.lifeSpan?.end,
+                isEnded = response.lifeSpan?.ended ?: false,
+                genres =
+                    response.tags
+                        .sortedByDescending { it.count }
+                        .map { it.name }
+                        .take(10),
+                officialHomepage =
+                    response.relations
+                        .firstOrNull { it.type == "official homepage" }
+                        ?.url?.resource,
+                wikipediaUrl =
+                    response.relations
+                        .firstOrNull { it.type == "wikipedia" && it.url?.resource?.contains("en.wikipedia") == true }
+                        ?.url?.resource,
+            )
+        }
 }

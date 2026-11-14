@@ -5,6 +5,7 @@ import android.util.Log
 import com.arturo254.opentune.canvas.CanvasCacheManager
 import com.arturo254.opentune.canvas.models.CanvasArtwork
 import io.ktor.client.HttpClient
+import io.ktor.client.call.body
 import io.ktor.client.engine.okhttp.OkHttp
 import io.ktor.client.plugins.HttpTimeout
 import io.ktor.client.plugins.cache.HttpCache
@@ -12,33 +13,32 @@ import io.ktor.client.plugins.compression.ContentEncoding
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.client.request.get
 import io.ktor.client.request.parameter
-import io.ktor.client.call.body
 import io.ktor.client.statement.bodyAsText
 import io.ktor.http.HttpStatusCode
 import io.ktor.serialization.kotlinx.json.json
+import kotlinx.serialization.decodeFromString
+import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.contentOrNull
 import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
-import kotlinx.serialization.encodeToString
-import kotlinx.serialization.decodeFromString
 import timber.log.Timber
+import java.io.File
 import java.text.Normalizer
 import java.util.Locale
 import java.util.concurrent.ConcurrentHashMap
-import java.io.File
 
 object CustomCanvasProvider {
-
     private const val API_BASE_URL =
         "https://opentune-canvas-api.cervantesarturo777.workers.dev"
 
-    private val jsonParser = Json {
-        ignoreUnknownKeys = true
-        isLenient = true
-        explicitNulls = false
-    }
+    private val jsonParser =
+        Json {
+            ignoreUnknownKeys = true
+            isLenient = true
+            explicitNulls = false
+        }
 
     private val client by lazy {
         HttpClient(OkHttp) {
@@ -48,7 +48,10 @@ object CustomCanvasProvider {
                 requestTimeoutMillis = 25_000
                 socketTimeoutMillis = 25_000
             }
-            install(ContentEncoding) { gzip(); deflate() }
+            install(ContentEncoding) {
+                gzip()
+                deflate()
+            }
             install(HttpCache)
             expectSuccess = false
         }
@@ -68,6 +71,7 @@ object CustomCanvasProvider {
     private const val LIST_CACHE_TTL_MS = 1000L * 60 * 60 * 24
 
     private data class CacheEntry(val value: CanvasArtwork?, val expiresAtMs: Long)
+
     private val cache = ConcurrentHashMap<String, CacheEntry>()
     private const val CACHE_TTL_MS = 1000L * 60 * 60 * 24
 
@@ -113,7 +117,7 @@ object CustomCanvasProvider {
         return getBySongArtist(
             song = null,
             artist = artist,
-            album = album
+            album = album,
         )
     }
 
@@ -155,9 +159,10 @@ object CustomCanvasProvider {
         val normAlbum = normalize(album)
         val normSong = song?.let { normalize(it) }
 
-        val candidates = entries.filter { entry ->
-            artistMatches(normArtist, normalize(entry.artist))
-        }
+        val candidates =
+            entries.filter { entry ->
+                artistMatches(normArtist, normalize(entry.artist))
+            }
 
         if (candidates.isEmpty()) {
             val msg = "🎵 CustomCanvas - Sin coincidencias de artista"
@@ -166,24 +171,28 @@ object CustomCanvasProvider {
             return null
         }
 
-        val albumCandidates = if (normAlbum.isNotBlank()) {
-            candidates.filter { entry ->
-                albumMatches(normAlbum, normalize(entry.album))
-            }
-        } else {
-            if (!normSong.isNullOrBlank()) {
-                val songMatches = candidates.filter { entry ->
-                    entry.song.isNotBlank() &&
-                            (normalize(entry.song) == normSong ||
-                                    normalize(entry.song).contains(normSong) ||
-                                    normSong.contains(normalize(entry.song)))
+        val albumCandidates =
+            if (normAlbum.isNotBlank()) {
+                candidates.filter { entry ->
+                    albumMatches(normAlbum, normalize(entry.album))
                 }
-                if (songMatches.isNotEmpty()) {
-                    return createArtworkWithCache(songMatches.first(), "canción (sin álbum)")
+            } else {
+                if (!normSong.isNullOrBlank()) {
+                    val songMatches =
+                        candidates.filter { entry ->
+                            entry.song.isNotBlank() &&
+                                (
+                                    normalize(entry.song) == normSong ||
+                                        normalize(entry.song).contains(normSong) ||
+                                        normSong.contains(normalize(entry.song))
+                                )
+                        }
+                    if (songMatches.isNotEmpty()) {
+                        return createArtworkWithCache(songMatches.first(), "canción (sin álbum)")
+                    }
                 }
+                candidates
             }
-            candidates
-        }
 
         if (albumCandidates.isEmpty()) {
             val msg = "🎵 CustomCanvas - Sin coincidencias de álbum"
@@ -192,29 +201,33 @@ object CustomCanvasProvider {
             return null
         }
 
-        val best = if (!normSong.isNullOrBlank()) {
-            albumCandidates.firstOrNull { entry ->
-                entry.song.isNotBlank() &&
-                        (normalize(entry.song) == normSong ||
+        val best =
+            if (!normSong.isNullOrBlank()) {
+                albumCandidates.firstOrNull { entry ->
+                    entry.song.isNotBlank() &&
+                        (
+                            normalize(entry.song) == normSong ||
                                 normalize(entry.song).contains(normSong) ||
-                                normSong.contains(normalize(entry.song)))
-            } ?: albumCandidates.first()
-        } else {
-            albumCandidates.first()
-        }
+                                normSong.contains(normalize(entry.song))
+                        )
+                } ?: albumCandidates.first()
+            } else {
+                albumCandidates.first()
+            }
 
-        val matchType = when {
-            best.song.isBlank() -> "álbum (sin canción específica)"
-            !normSong.isNullOrBlank() && normalize(best.song) == normSong -> "canción exacta"
-            else -> "álbum (con canción: ${best.song})"
-        }
+        val matchType =
+            when {
+                best.song.isBlank() -> "álbum (sin canción específica)"
+                !normSong.isNullOrBlank() && normalize(best.song) == normSong -> "canción exacta"
+                else -> "álbum (con canción: ${best.song})"
+            }
 
         return createArtworkWithCache(best, matchType)
     }
 
     private suspend fun createArtworkWithCache(
         entry: CanvasEntry,
-        matchType: String
+        matchType: String,
     ): CanvasArtwork? {
         val cacheKey = "${entry.artist}|${entry.album}|${entry.song}"
 
@@ -244,7 +257,7 @@ object CustomCanvasProvider {
                 album = entry.album,
                 song = entry.song,
                 url = entry.url,
-                videoData = videoData
+                videoData = videoData,
             )
             val msg2 = "🎵 CustomCanvas - ✅ Video cacheado: ${entry.url}"
             Timber.d(msg2)
@@ -328,9 +341,10 @@ object CustomCanvasProvider {
 
     private suspend fun fetchCatalogFromNetwork(): List<CanvasEntry>? {
         return try {
-            val response = client.get(API_BASE_URL) {
-                parameter("action", "list")
-            }
+            val response =
+                client.get(API_BASE_URL) {
+                    parameter("action", "list")
+                }
 
             if (response.status != HttpStatusCode.OK) {
                 val msg = "🎵 CustomCanvas - Error HTTP: ${response.status}"
@@ -437,12 +451,16 @@ object CustomCanvasProvider {
         return withoutAccents.lowercase(Locale.ROOT).trim().replace(Regex("\\s+"), " ")
     }
 
-    private val artistSplitRegex = Regex(
-        "(?:\\s*,\\s*|\\s*&\\s*|\\s+x\\s+|\\bfeat\\.?\\b|\\bft\\.?\\b|\\bfeaturing\\b|\\bwith\\b)",
-        RegexOption.IGNORE_CASE,
-    )
+    private val artistSplitRegex =
+        Regex(
+            "(?:\\s*,\\s*|\\s*&\\s*|\\s+x\\s+|\\bfeat\\.?\\b|\\bft\\.?\\b|\\bfeaturing\\b|\\bwith\\b)",
+            RegexOption.IGNORE_CASE,
+        )
 
-    private fun artistMatches(normRequested: String, normEntry: String): Boolean {
+    private fun artistMatches(
+        normRequested: String,
+        normEntry: String,
+    ): Boolean {
         if (normRequested == normEntry) return true
         val requestedTokens = normRequested.split(artistSplitRegex).map { it.trim() }.filter { it.isNotBlank() }
         val entryTokens = normEntry.split(artistSplitRegex).map { it.trim() }.filter { it.isNotBlank() }
@@ -451,14 +469,20 @@ object CustomCanvasProvider {
         }
     }
 
-    private fun albumMatches(normRequested: String, normEntry: String): Boolean {
+    private fun albumMatches(
+        normRequested: String,
+        normEntry: String,
+    ): Boolean {
         if (normEntry.isBlank()) return normRequested.isBlank()
         if (normRequested.isBlank()) return true
         return normEntry == normRequested ||
-                normEntry.contains(normRequested) ||
-                normRequested.contains(normEntry)
+            normEntry.contains(normRequested) ||
+            normRequested.contains(normEntry)
     }
 
-    private fun cacheKey(artist: String, album: String, song: String?): String =
-        "custom|${artist.lowercase()}|${album.lowercase()}|${song?.lowercase() ?: ""}"
+    private fun cacheKey(
+        artist: String,
+        album: String,
+        song: String?,
+    ): String = "custom|${artist.lowercase()}|${album.lowercase()}|${song?.lowercase() ?: ""}"
 }

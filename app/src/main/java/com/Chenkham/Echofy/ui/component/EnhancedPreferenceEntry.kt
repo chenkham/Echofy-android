@@ -52,55 +52,69 @@ fun EnhancedPreferenceEntry(
         modifier = modifier.fillMaxWidth(),
         color = Color.Transparent,
         enabled = enabled,
-        onClick = onClick
+        onClick = onClick,
     ) {
         Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 12.dp),
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 12.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Box(
-                modifier = Modifier
-                    .size(40.dp)
-                    .clip(CircleShape)
-                    .background(
-                        Brush.radialGradient(
-                            colors = listOf(
-                                iconTint.copy(alpha = 0.2f),
-                                iconTint.copy(alpha = 0.05f)
-                            )
-                        )
-                    ),
-                contentAlignment = Alignment.Center
+                modifier =
+                    Modifier
+                        .size(40.dp)
+                        .clip(CircleShape)
+                        .background(
+                            Brush.radialGradient(
+                                colors =
+                                    listOf(
+                                        iconTint.copy(alpha = 0.2f),
+                                        iconTint.copy(alpha = 0.05f),
+                                    ),
+                            ),
+                        ),
+                contentAlignment = Alignment.Center,
             ) {
                 Icon(
                     painter = painterResource(icon),
                     contentDescription = null,
                     tint = iconTint,
-                    modifier = Modifier.size(24.dp)
+                    modifier = Modifier.size(24.dp),
                 )
             }
 
             Column(
-                modifier = Modifier
-                    .weight(1f)
-                    .padding(start = 16.dp)
+                modifier =
+                    Modifier
+                        .weight(1f)
+                        .padding(start = 16.dp),
             ) {
                 Text(
                     text = title,
                     style = MaterialTheme.typography.titleMedium,
-                    color = if (enabled) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurface.copy(
-                        alpha = 0.6f
-                    )
+                    color =
+                        if (enabled) {
+                            MaterialTheme.colorScheme.onSurface
+                        } else {
+                            MaterialTheme.colorScheme.onSurface.copy(
+                                alpha = 0.6f,
+                            )
+                        },
                 )
                 if (subtitle != null) {
                     Text(
                         text = subtitle,
                         style = MaterialTheme.typography.bodyMedium,
-                        color = if (enabled) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.onSurfaceVariant.copy(
-                            alpha = 0.6f
-                        )
+                        color =
+                            if (enabled) {
+                                MaterialTheme.colorScheme.onSurfaceVariant
+                            } else {
+                                MaterialTheme.colorScheme.onSurfaceVariant.copy(
+                                    alpha = 0.6f,
+                                )
+                            },
                     )
                 }
             }
@@ -108,9 +122,14 @@ fun EnhancedPreferenceEntry(
             Icon(
                 painter = painterResource(R.drawable.chevron_right),
                 contentDescription = null,
-                tint = if (enabled) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.onSurfaceVariant.copy(
-                    alpha = .6f
-                )
+                tint =
+                    if (enabled) {
+                        MaterialTheme.colorScheme.onSurfaceVariant
+                    } else {
+                        MaterialTheme.colorScheme.onSurfaceVariant.copy(
+                            alpha = .6f,
+                        )
+                    },
             )
         }
     }
@@ -144,39 +163,40 @@ fun <T> EnhancedListPreference(
             title = { Text(title) },
             text = {
                 Column(
-                    modifier = Modifier.animateContentSize()
+                    modifier = Modifier.animateContentSize(),
                 ) {
                     values.forEach { value ->
                         val isSelected = value == selectedValue
                         Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .clip(RoundedCornerShape(8.dp))
-                                .clickable {
-                                    onValueSelected(value)
-                                    showDialog = false
-                                }
-                                .padding(vertical = 12.dp, horizontal = 16.dp),
+                            modifier =
+                                Modifier
+                                    .fillMaxWidth()
+                                    .clip(RoundedCornerShape(8.dp))
+                                    .clickable {
+                                        onValueSelected(value)
+                                        showDialog = false
+                                    }
+                                    .padding(vertical = 12.dp, horizontal = 16.dp),
                             verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(16.dp)
+                            horizontalArrangement = Arrangement.spacedBy(16.dp),
                         ) {
                             RadioButton(
                                 selected = isSelected,
                                 onClick = {
                                     onValueSelected(value)
                                     showDialog = false
-                                }
+                                },
                             )
                             Text(
                                 text = valueText(value),
                                 style = MaterialTheme.typography.bodyLarge,
-                                color = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
+                                color = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface,
                             )
                         }
                         if (value != values.last()) {
                             Divider(
                                 modifier = Modifier.padding(horizontal = 16.dp),
-                                color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
+                                color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f),
                             )
                         }
                     }
@@ -186,7 +206,7 @@ fun <T> EnhancedListPreference(
                 TextButton(onClick = { showDialog = false }) {
                     Text(stringResource(R.string.close))
                 }
-            }
+            },
         )
     }
 }
@@ -199,31 +219,32 @@ fun AnimatedIconButton(
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
     onLongClick: (() -> Unit)? = null,
-    content: @Composable () -> Unit
+    content: @Composable () -> Unit,
 ) {
     Surface(
         shape = CircleShape,
         color = Color.Transparent,
-        modifier = modifier
-            .size(48.dp)
-            .then(
-                if (onLongClick != null) {
-                    Modifier.combinedClickable(
-                        onClick = onClick,
-                        onLongClick = onLongClick,
-                        enabled = enabled
-                    )
-                } else {
-                    Modifier.clickable(
-                        onClick = onClick,
-                        enabled = enabled
-                    )
-                }
-            )
+        modifier =
+            modifier
+                .size(48.dp)
+                .then(
+                    if (onLongClick != null) {
+                        Modifier.combinedClickable(
+                            onClick = onClick,
+                            onLongClick = onLongClick,
+                            enabled = enabled,
+                        )
+                    } else {
+                        Modifier.clickable(
+                            onClick = onClick,
+                            enabled = enabled,
+                        )
+                    },
+                ),
     ) {
         Box(
             modifier = Modifier.fillMaxWidth(),
-            contentAlignment = Alignment.Center
+            contentAlignment = Alignment.Center,
         ) {
             content()
         }

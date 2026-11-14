@@ -21,19 +21,23 @@ import javax.inject.Singleton
  */
 @Singleton
 class ReleaseEnrichmentRepository
-@Inject
-constructor(
-    @ApplicationContext private val context: Context,
-) {
-    suspend fun findRelease(artist: String, album: String): ReleaseInfo? {
-        if (artist.isBlank() || album.isBlank()) return null
-        if (context.dataStore[DiscogsEnabledKey] != true) return null
+    @Inject
+    constructor(
+        @ApplicationContext private val context: Context,
+    ) {
+        suspend fun findRelease(
+            artist: String,
+            album: String,
+        ): ReleaseInfo? {
+            if (artist.isBlank() || album.isBlank()) return null
+            if (context.dataStore[DiscogsEnabledKey] != true) return null
 
-        val token = context.dataStore[DiscogsTokenKey]?.takeIf { it.isNotBlank() }
-            ?: return null
+            val token =
+                context.dataStore[DiscogsTokenKey]?.takeIf { it.isNotBlank() }
+                    ?: return null
 
-        return Discogs.findReleaseInfo(artist, album, token)
-            .onFailure { Timber.d("Enrichment: Discogs miss for '$album' (${it.message})") }
-            .getOrNull()
+            return Discogs.findReleaseInfo(artist, album, token)
+                .onFailure { Timber.d("Enrichment: Discogs miss for '$album' (${it.message})") }
+                .getOrNull()
+        }
     }
-}

@@ -29,22 +29,24 @@ fun QrCodeView(
     qrColor: Int = android.graphics.Color.BLACK,
     backgroundColor: Int = android.graphics.Color.WHITE,
 ) {
-    val bitmap = remember(content, sizeDp, qrColor, backgroundColor) {
-        generateQrBitmap(content, 512, qrColor, backgroundColor)
-    }
+    val bitmap =
+        remember(content, sizeDp, qrColor, backgroundColor) {
+            generateQrBitmap(content, 512, qrColor, backgroundColor)
+        }
 
     Box(
-        modifier = modifier
-            .clip(RoundedCornerShape(20.dp))
-            .background(Color.White)
-            .padding(14.dp),
-        contentAlignment = Alignment.Center
+        modifier =
+            modifier
+                .clip(RoundedCornerShape(20.dp))
+                .background(Color.White)
+                .padding(14.dp),
+        contentAlignment = Alignment.Center,
     ) {
         if (bitmap != null) {
             Image(
                 bitmap = bitmap.asImageBitmap(),
                 contentDescription = "QR Code",
-                modifier = Modifier.size(sizeDp)
+                modifier = Modifier.size(sizeDp),
             )
         }
     }
@@ -54,15 +56,16 @@ fun generateQrBitmap(
     content: String,
     size: Int = 512,
     qrColor: Int = android.graphics.Color.BLACK,
-    backgroundColor: Int = android.graphics.Color.WHITE
+    backgroundColor: Int = android.graphics.Color.WHITE,
 ): Bitmap? {
     if (content.isBlank()) return null
     return try {
-        val hints = mapOf(
-            EncodeHintType.CHARACTER_SET to "UTF-8",
-            EncodeHintType.ERROR_CORRECTION to ErrorCorrectionLevel.M,
-            EncodeHintType.MARGIN to 1
-        )
+        val hints =
+            mapOf(
+                EncodeHintType.CHARACTER_SET to "UTF-8",
+                EncodeHintType.ERROR_CORRECTION to ErrorCorrectionLevel.M,
+                EncodeHintType.MARGIN to 1,
+            )
         val matrix = QRCodeWriter().encode(content, BarcodeFormat.QR_CODE, size, size, hints)
         val width = matrix.width
         val height = matrix.height

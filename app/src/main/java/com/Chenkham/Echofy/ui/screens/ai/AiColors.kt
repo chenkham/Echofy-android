@@ -62,7 +62,7 @@ internal val Tertiary: Color
 // Chat bubble specific. The user bubble keeps a fixed saturated gradient in every
 // theme so its white text stays legible; only the AI bubble tracks the surface stack.
 internal val UserBubbleGradientStart = Color(0xFF2563EB) // blue-600
-internal val UserBubbleGradientEnd = Color(0xFF7C3AED)   // violet-600
+internal val UserBubbleGradientEnd = Color(0xFF7C3AED) // violet-600
 
 internal val AiBubbleBg: Color
     @Composable get() = MaterialTheme.colorScheme.surfaceContainerHigh

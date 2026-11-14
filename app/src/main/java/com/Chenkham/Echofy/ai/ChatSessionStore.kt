@@ -9,11 +9,10 @@ data class ChatSession(
     val id: String = UUID.randomUUID().toString(),
     val title: String,
     val timestamp: Long = System.currentTimeMillis(),
-    val messages: List<ChatMessage> = emptyList()
+    val messages: List<ChatMessage> = emptyList(),
 )
 
 class ChatSessionStore(private val context: Context) {
-
     private val prefs = context.getSharedPreferences("echofy_chat_sessions_prefs", Context.MODE_PRIVATE)
 
     fun loadSessions(): List<ChatSession> {
@@ -36,14 +35,15 @@ class ChatSessionStore(private val context: Context) {
                             id = mObj.optString("id", UUID.randomUUID().toString()),
                             text = mObj.optString("text", ""),
                             isUser = mObj.optBoolean("isUser", false),
-                            timestamp = mObj.optLong("timestamp", System.currentTimeMillis())
-                        )
+                            timestamp = mObj.optLong("timestamp", System.currentTimeMillis()),
+                        ),
                     )
                 }
 
                 list.add(ChatSession(id = id, title = title, timestamp = timestamp, messages = msgsList))
             }
-        } catch (_: Exception) {}
+        } catch (_: Exception) {
+        }
 
         return list.ifEmpty { listOf(createNewSession()) }
     }
@@ -52,33 +52,37 @@ class ChatSessionStore(private val context: Context) {
         try {
             val arr = JSONArray()
             sessions.forEach { s ->
-                val obj = JSONObject().apply {
-                    put("id", s.id)
-                    put("title", s.title)
-                    put("timestamp", s.timestamp)
+                val obj =
+                    JSONObject().apply {
+                        put("id", s.id)
+                        put("title", s.title)
+                        put("timestamp", s.timestamp)
 
-                    val msgsArr = JSONArray()
-                    s.messages.forEach { m ->
-                        msgsArr.put(JSONObject().apply {
-                            put("id", m.id)
-                            put("text", m.text)
-                            put("isUser", m.isUser)
-                            put("timestamp", m.timestamp)
-                        })
+                        val msgsArr = JSONArray()
+                        s.messages.forEach { m ->
+                            msgsArr.put(
+                                JSONObject().apply {
+                                    put("id", m.id)
+                                    put("text", m.text)
+                                    put("isUser", m.isUser)
+                                    put("timestamp", m.timestamp)
+                                },
+                            )
+                        }
+                        put("messages", msgsArr)
                     }
-                    put("messages", msgsArr)
-                }
                 arr.put(obj)
             }
             prefs.edit().putString("sessions_json", arr.toString()).apply()
-        } catch (_: Exception) {}
+        } catch (_: Exception) {
+        }
     }
 
     fun createNewSession(): ChatSession {
         return ChatSession(
             title = "New Chat",
             timestamp = System.currentTimeMillis(),
-            messages = emptyList()
+            messages = emptyList(),
         )
     }
 }

@@ -63,243 +63,263 @@ fun VerticalFastScroller(
         val contentHeight = contentPlaceable.maxByOrNull { it.height }?.height ?: 0
         val contentWidth = contentPlaceable.maxByOrNull { it.width }?.width ?: 0
 
-        val scrollerPlaceable = subcompose("scroller") {
-            val layoutInfo = listState.layoutInfo
-            val showScroller = layoutInfo.visibleItemsInfo.size < layoutInfo.totalItemsCount
-            if (!showScroller) return@subcompose
+        val scrollerPlaceable =
+            subcompose("scroller") {
+                val layoutInfo = listState.layoutInfo
+                val showScroller = layoutInfo.visibleItemsInfo.size < layoutInfo.totalItemsCount
+                if (!showScroller) return@subcompose
 
-            val thumbTopPadding = with(LocalDensity.current) { topContentPadding.toPx() }
-            var thumbOffsetY by remember(thumbTopPadding) { mutableStateOf(thumbTopPadding) }
+                val thumbTopPadding = with(LocalDensity.current) { topContentPadding.toPx() }
+                var thumbOffsetY by remember(thumbTopPadding) { mutableStateOf(thumbTopPadding) }
 
-            val dragInteractionSource = remember { MutableInteractionSource() }
-            val isThumbDragged by dragInteractionSource.collectIsDraggedAsState()
-            val scrolled = remember {
-                MutableSharedFlow<Unit>(
-                    extraBufferCapacity = 1,
-                    onBufferOverflow = BufferOverflow.DROP_OLDEST,
+                val dragInteractionSource = remember { MutableInteractionSource() }
+                val isThumbDragged by dragInteractionSource.collectIsDraggedAsState()
+                val scrolled =
+                    remember {
+                        MutableSharedFlow<Unit>(
+                            extraBufferCapacity = 1,
+                            onBufferOverflow = BufferOverflow.DROP_OLDEST,
+                        )
+                    }
+
+                val heightPx =
+                    contentHeight.toFloat() - thumbTopPadding - listState.layoutInfo.afterContentPadding
+                val thumbHeightPx = with(LocalDensity.current) { ThumbLength.toPx() }
+                val trackHeightPx = heightPx - thumbHeightPx
+
+                // Haptic feedback
+                val hapticFeedback = LocalHapticFeedback.current
+
+                // Animaciones mejoradas para Material Design 3
+                val thumbScale = remember { Animatable(1f) }
+                val thumbElevation = remember { Animatable(3f) } // ElevaciÃ³n base
+
+                // Colores animados para transiciones suaves
+                val thumbColorAnimated by animateColorAsState(
+                    targetValue =
+                        if (isThumbDragged) {
+                            MaterialTheme.colorScheme.primary
+                        } else {
+                            thumbColor
+                        },
+                    animationSpec = tween(300),
+                    label = "thumb_color",
                 )
-            }
 
-            val heightPx =
-                contentHeight.toFloat() - thumbTopPadding - listState.layoutInfo.afterContentPadding
-            val thumbHeightPx = with(LocalDensity.current) { ThumbLength.toPx() }
-            val trackHeightPx = heightPx - thumbHeightPx
+                // AnimaciÃ³n de grosor del track
+                val trackAlphaAnimated by animateFloatAsState(
+                    targetValue = if (isThumbDragged) 0.5f else 0.3f,
+                    animationSpec = tween(300),
+                    label = "track_alpha",
+                )
 
-            // Haptic feedback
-            val hapticFeedback = LocalHapticFeedback.current
-
-            // Animaciones mejoradas para Material Design 3
-            val thumbScale = remember { Animatable(1f) }
-            val thumbElevation = remember { Animatable(3f) } // ElevaciÃ³n base
-
-            // Colores animados para transiciones suaves
-            val thumbColorAnimated by animateColorAsState(
-                targetValue = if (isThumbDragged) {
-                    MaterialTheme.colorScheme.primary
-                } else {
-                    thumbColor
-                },
-                animationSpec = tween(300),
-                label = "thumb_color"
-            )
-
-            // AnimaciÃ³n de grosor del track
-            val trackAlphaAnimated by animateFloatAsState(
-                targetValue = if (isThumbDragged) 0.5f else 0.3f,
-                animationSpec = tween(300),
-                label = "track_alpha"
-            )
-
-            // Efectos de interacciÃ³n mejorados con mÃ¡s dinamismo
-            LaunchedEffect(isThumbDragged) {
-                if (isThumbDragged) {
-                    hapticFeedback.performHapticFeedback(HapticFeedbackType.LongPress)
-                    thumbScale.animateTo(
-                        targetValue = 1.3f, // MÃ¡s escala para mejor feedback
-                        animationSpec = spring(
-                            dampingRatio = Spring.DampingRatioMediumBouncy,
-                            stiffness = Spring.StiffnessHigh
+                // Efectos de interacciÃ³n mejorados con mÃ¡s dinamismo
+                LaunchedEffect(isThumbDragged) {
+                    if (isThumbDragged) {
+                        hapticFeedback.performHapticFeedback(HapticFeedbackType.LongPress)
+                        thumbScale.animateTo(
+                            targetValue = 1.3f, // MÃ¡s escala para mejor feedback
+                            animationSpec =
+                                spring(
+                                    dampingRatio = Spring.DampingRatioMediumBouncy,
+                                    stiffness = Spring.StiffnessHigh,
+                                ),
                         )
-                    )
-                    thumbElevation.animateTo(
-                        targetValue = 12f, // Mayor elevaciÃ³n
-                        animationSpec = spring(stiffness = Spring.StiffnessHigh)
-                    )
-                } else {
-                    thumbScale.animateTo(
-                        targetValue = 1f,
-                        animationSpec = spring(
-                            dampingRatio = Spring.DampingRatioMediumBouncy,
-                            stiffness = Spring.StiffnessMedium
+                        thumbElevation.animateTo(
+                            targetValue = 12f, // Mayor elevaciÃ³n
+                            animationSpec = spring(stiffness = Spring.StiffnessHigh),
                         )
-                    )
-                    thumbElevation.animateTo(
-                        targetValue = 3f, // ElevaciÃ³n base mÃ¡s pronunciada
-                        animationSpec = spring(stiffness = Spring.StiffnessMedium)
-                    )
-                }
-            }
-
-            // When thumb dragged - Mejorado para mejor precisiÃ³n
-            LaunchedEffect(thumbOffsetY) {
-                if (layoutInfo.totalItemsCount == 0 || !isThumbDragged) return@LaunchedEffect
-                val scrollRatio = (thumbOffsetY - thumbTopPadding) / trackHeightPx
-                val scrollItem = layoutInfo.totalItemsCount * scrollRatio
-                val scrollItemRounded = scrollItem.roundToInt().coerceIn(0, layoutInfo.totalItemsCount - 1)
-
-                // Mejora: CÃ¡lculo mÃ¡s preciso del offset dentro del item
-                val scrollItemSize = layoutInfo.visibleItemsInfo
-                    .find { it.index == scrollItemRounded }?.size
-                    ?: run {
-                        // Fallback: usar tamaÃ±o promedio si el item no estÃ¡ visible
-                        val averageItemSize = layoutInfo.visibleItemsInfo
-                            .takeIf { it.isNotEmpty() }
-                            ?.map { it.size }
-                            ?.average()?.toInt()
-                            ?: 200 // Valor por defecto razonable
-                        averageItemSize
+                    } else {
+                        thumbScale.animateTo(
+                            targetValue = 1f,
+                            animationSpec =
+                                spring(
+                                    dampingRatio = Spring.DampingRatioMediumBouncy,
+                                    stiffness = Spring.StiffnessMedium,
+                                ),
+                        )
+                        thumbElevation.animateTo(
+                            targetValue = 3f, // ElevaciÃ³n base mÃ¡s pronunciada
+                            animationSpec = spring(stiffness = Spring.StiffnessMedium),
+                        )
                     }
-
-                val scrollItemOffset = (scrollItemSize * (scrollItem - scrollItemRounded))
-                    .coerceIn(0f, scrollItemSize.toFloat())
-
-                try {
-                    listState.scrollToItem(
-                        index = scrollItemRounded,
-                        scrollOffset = scrollItemOffset.roundToInt()
-                    )
-                    scrolled.tryEmit(Unit)
-                } catch (e: Exception) {
-                    // Fallback silencioso si hay error de scroll
                 }
-            }
 
-            // When list scrolled - Optimizado para mÃ¡xima fluidez
-            LaunchedEffect(listState.firstVisibleItemIndex, listState.firstVisibleItemScrollOffset) {
-                if (listState.layoutInfo.totalItemsCount == 0 || isThumbDragged) return@LaunchedEffect
+                // When thumb dragged - Mejorado para mejor precisiÃ³n
+                LaunchedEffect(thumbOffsetY) {
+                    if (layoutInfo.totalItemsCount == 0 || !isThumbDragged) return@LaunchedEffect
+                    val scrollRatio = (thumbOffsetY - thumbTopPadding) / trackHeightPx
+                    val scrollItem = layoutInfo.totalItemsCount * scrollRatio
+                    val scrollItemRounded = scrollItem.roundToInt().coerceIn(0, layoutInfo.totalItemsCount - 1)
 
-                // Usar snapshotFlow para mejor rendimiento
-                snapshotFlow {
-                    Triple(
-                        listState.firstVisibleItemIndex,
-                        listState.firstVisibleItemScrollOffset,
-                        listState.layoutInfo.totalItemsCount
-                    )
-                }.collect { (_, _, totalItems) ->
-                    if (totalItems == 0) return@collect
+                    // Mejora: CÃ¡lculo mÃ¡s preciso del offset dentro del item
+                    val scrollItemSize =
+                        layoutInfo.visibleItemsInfo
+                            .find { it.index == scrollItemRounded }?.size
+                            ?: run {
+                                // Fallback: usar tamaÃ±o promedio si el item no estÃ¡ visible
+                                val averageItemSize =
+                                    layoutInfo.visibleItemsInfo
+                                        .takeIf { it.isNotEmpty() }
+                                        ?.map { it.size }
+                                        ?.average()?.toInt()
+                                        ?: 200 // Valor por defecto razonable
+                                averageItemSize
+                            }
 
-                    val scrollOffset = computeScrollOffset(state = listState)
-                    val scrollRange = computeScrollRange(state = listState)
+                    val scrollItemOffset =
+                        (scrollItemSize * (scrollItem - scrollItemRounded))
+                            .coerceIn(0f, scrollItemSize.toFloat())
 
-                    if (scrollRange > heightPx) {
-                        val proportion = scrollOffset.toFloat() / (scrollRange.toFloat() - heightPx)
-                        val newThumbOffset = (trackHeightPx * proportion.coerceIn(0f, 1f) + thumbTopPadding)
-
-                        // InterpolaciÃ³n suave para reducir jank
-                        val smoothFactor = 0.8f
-                        thumbOffsetY = thumbOffsetY * (1f - smoothFactor) + newThumbOffset * smoothFactor
+                    try {
+                        listState.scrollToItem(
+                            index = scrollItemRounded,
+                            scrollOffset = scrollItemOffset.roundToInt(),
+                        )
                         scrolled.tryEmit(Unit)
+                    } catch (e: Exception) {
+                        // Fallback silencioso si hay error de scroll
                     }
                 }
-            }
 
-            // Thumb alpha con transiciÃ³n mÃ¡s suave y inteligente
-            val alpha = remember { Animatable(0f) }
-            val isThumbVisible = alpha.value > 0f
+                // When list scrolled - Optimizado para mÃ¡xima fluidez
+                LaunchedEffect(listState.firstVisibleItemIndex, listState.firstVisibleItemScrollOffset) {
+                    if (listState.layoutInfo.totalItemsCount == 0 || isThumbDragged) return@LaunchedEffect
 
-            // DetecciÃ³n de velocidad de scroll para mejor UX
-            var lastScrollTime by remember { mutableStateOf(0L) }
-            var scrollVelocity by remember { mutableStateOf(0f) }
-
-            LaunchedEffect(scrolled, alpha) {
-                scrolled.collectLatest {
-                    val currentTime = System.currentTimeMillis()
-                    scrollVelocity = if (lastScrollTime > 0) {
-                        1000f / (currentTime - lastScrollTime).coerceAtLeast(1)
-                    } else 0f
-                    lastScrollTime = currentTime
-
-                    alpha.snapTo(1f)
-                    // Tiempo de fade adaptativo segÃºn velocidad
-                    val fadeDelay = if (scrollVelocity > 10f) 3000 else 2000
-                    alpha.animateTo(
-                        targetValue = 0f,
-                        animationSpec = tween(
-                            durationMillis = ViewConfiguration.getScrollBarFadeDuration(),
-                            delayMillis = fadeDelay
+                    // Usar snapshotFlow para mejor rendimiento
+                    snapshotFlow {
+                        Triple(
+                            listState.firstVisibleItemIndex,
+                            listState.firstVisibleItemScrollOffset,
+                            listState.layoutInfo.totalItemsCount,
                         )
-                    )
+                    }.collect { (_, _, totalItems) ->
+                        if (totalItems == 0) return@collect
+
+                        val scrollOffset = computeScrollOffset(state = listState)
+                        val scrollRange = computeScrollRange(state = listState)
+
+                        if (scrollRange > heightPx) {
+                            val proportion = scrollOffset.toFloat() / (scrollRange.toFloat() - heightPx)
+                            val newThumbOffset = (trackHeightPx * proportion.coerceIn(0f, 1f) + thumbTopPadding)
+
+                            // InterpolaciÃ³n suave para reducir jank
+                            val smoothFactor = 0.8f
+                            thumbOffsetY = thumbOffsetY * (1f - smoothFactor) + newThumbOffset * smoothFactor
+                            scrolled.tryEmit(Unit)
+                        }
+                    }
                 }
-            }
 
-            // Indicador de track mejorado con animaciones
-            Box(
-                modifier = Modifier
-                    .offset { IntOffset(0, thumbTopPadding.roundToInt()) }
-                    .height(with(LocalDensity.current) { trackHeightPx.toDp() })
-                    .padding(horizontal = 8.dp)
-                    .padding(end = endContentPadding)
-                    .width(TrackThickness)
-                    .alpha(alpha.value * trackAlphaAnimated)
-                    .background(
-                        color = MaterialTheme.colorScheme.outline.copy(alpha = 0.2f),
-                        shape = RoundedCornerShape(TrackThickness / 2)
-                    )
-            )
+                // Thumb alpha con transiciÃ³n mÃ¡s suave y inteligente
+                val alpha = remember { Animatable(0f) }
+                val isThumbVisible = alpha.value > 0f
 
-            // Thumb principal mejorado con mÃ¡s caracterÃ­sticas
-            Box(
-                modifier = Modifier
-                    .offset { IntOffset(0, thumbOffsetY.roundToInt()) }
-                    .height(ThumbLength)
-                    .then(
-                        // Exclude thumb from gesture area only when needed
-                        if (isThumbVisible && !isThumbDragged && !listState.isScrollInProgress) {
-                            Modifier.systemGestureExclusion()
-                        } else Modifier,
-                    )
-                    .padding(horizontal = 6.dp) // Menos padding para thumb mÃ¡s ancho
-                    .padding(end = endContentPadding)
-                    .width(ThumbThickness)
-                    .scale(thumbScale.value)
-                    .alpha(alpha.value)
-                    .shadow(
-                        elevation = thumbElevation.value.dp,
-                        shape = ThumbShape,
-                        clip = false,
-                        spotColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.3f)
-                    )
-                    .background(
-                        color = thumbColorAnimated,
-                        shape = ThumbShape
-                    )
-                    .then(
-                        // Recompose opts
-                        if (!listState.isScrollInProgress) {
-                            Modifier.draggable(
-                                interactionSource = dragInteractionSource,
-                                orientation = Orientation.Vertical,
-                                enabled = isThumbVisible,
-                                state = rememberDraggableState { delta ->
-                                    val sensitivity = 1.2f // Factor de sensibilidad ajustable
-                                    val adjustedDelta = delta * sensitivity
+                // DetecciÃ³n de velocidad de scroll para mejor UX
+                var lastScrollTime by remember { mutableStateOf(0L) }
+                var scrollVelocity by remember { mutableStateOf(0f) }
 
-                                    val newOffsetY = thumbOffsetY + adjustedDelta
-                                    thumbOffsetY = newOffsetY.coerceIn(
-                                        thumbTopPadding,
-                                        thumbTopPadding + trackHeightPx
-                                    )
+                LaunchedEffect(scrolled, alpha) {
+                    scrolled.collectLatest {
+                        val currentTime = System.currentTimeMillis()
+                        scrollVelocity =
+                            if (lastScrollTime > 0) {
+                                1000f / (currentTime - lastScrollTime).coerceAtLeast(1)
+                            } else {
+                                0f
+                            }
+                        lastScrollTime = currentTime
 
-                                    // Haptic feedback mÃ¡s inteligente
-                                    if (abs(adjustedDelta) > 3f) {
-                                        hapticFeedback.performHapticFeedback(HapticFeedbackType.TextHandleMove)
-                                    }
+                        alpha.snapTo(1f)
+                        // Tiempo de fade adaptativo segÃºn velocidad
+                        val fadeDelay = if (scrollVelocity > 10f) 3000 else 2000
+                        alpha.animateTo(
+                            targetValue = 0f,
+                            animationSpec =
+                                tween(
+                                    durationMillis = ViewConfiguration.getScrollBarFadeDuration(),
+                                    delayMillis = fadeDelay,
+                                ),
+                        )
+                    }
+                }
+
+                // Indicador de track mejorado con animaciones
+                Box(
+                    modifier =
+                        Modifier
+                            .offset { IntOffset(0, thumbTopPadding.roundToInt()) }
+                            .height(with(LocalDensity.current) { trackHeightPx.toDp() })
+                            .padding(horizontal = 8.dp)
+                            .padding(end = endContentPadding)
+                            .width(TrackThickness)
+                            .alpha(alpha.value * trackAlphaAnimated)
+                            .background(
+                                color = MaterialTheme.colorScheme.outline.copy(alpha = 0.2f),
+                                shape = RoundedCornerShape(TrackThickness / 2),
+                            ),
+                )
+
+                // Thumb principal mejorado con mÃ¡s caracterÃ­sticas
+                Box(
+                    modifier =
+                        Modifier
+                            .offset { IntOffset(0, thumbOffsetY.roundToInt()) }
+                            .height(ThumbLength)
+                            .then(
+                                // Exclude thumb from gesture area only when needed
+                                if (isThumbVisible && !isThumbDragged && !listState.isScrollInProgress) {
+                                    Modifier.systemGestureExclusion()
+                                } else {
+                                    Modifier
                                 },
                             )
-                        } else Modifier,
-                    ),
-            )
-        }.map { it.measure(constraints.copy(minWidth = 0, minHeight = 0)) }
+                            .padding(horizontal = 6.dp) // Menos padding para thumb mÃ¡s ancho
+                            .padding(end = endContentPadding)
+                            .width(ThumbThickness)
+                            .scale(thumbScale.value)
+                            .alpha(alpha.value)
+                            .shadow(
+                                elevation = thumbElevation.value.dp,
+                                shape = ThumbShape,
+                                clip = false,
+                                spotColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.3f),
+                            )
+                            .background(
+                                color = thumbColorAnimated,
+                                shape = ThumbShape,
+                            )
+                            .then(
+                                // Recompose opts
+                                if (!listState.isScrollInProgress) {
+                                    Modifier.draggable(
+                                        interactionSource = dragInteractionSource,
+                                        orientation = Orientation.Vertical,
+                                        enabled = isThumbVisible,
+                                        state =
+                                            rememberDraggableState { delta ->
+                                                val sensitivity = 1.2f // Factor de sensibilidad ajustable
+                                                val adjustedDelta = delta * sensitivity
+
+                                                val newOffsetY = thumbOffsetY + adjustedDelta
+                                                thumbOffsetY =
+                                                    newOffsetY.coerceIn(
+                                                        thumbTopPadding,
+                                                        thumbTopPadding + trackHeightPx,
+                                                    )
+
+                                                // Haptic feedback mÃ¡s inteligente
+                                                if (abs(adjustedDelta) > 3f) {
+                                                    hapticFeedback.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                                                }
+                                            },
+                                    )
+                                } else {
+                                    Modifier
+                                },
+                            ),
+                )
+            }.map { it.measure(constraints.copy(minWidth = 0, minHeight = 0)) }
         val scrollerWidth = scrollerPlaceable.maxByOrNull { it.width }?.width ?: 0
 
         layout(contentWidth, contentHeight) {
@@ -328,11 +348,12 @@ private fun computeScrollOffset(state: LazyListState): Int {
     val itemRange = abs(minPosition - maxPosition) + 1
 
     // Mejora: Manejo mÃ¡s robusto de divisiones por cero
-    val avgSizePerRow = if (itemRange > 0 && laidOutArea > 0) {
-        laidOutArea.toFloat() / itemRange
-    } else {
-        200f // Valor por defecto
-    }
+    val avgSizePerRow =
+        if (itemRange > 0 && laidOutArea > 0) {
+            laidOutArea.toFloat() / itemRange
+        } else {
+            200f // Valor por defecto
+        }
 
     return (itemsBefore * avgSizePerRow + (0 - startDecoratedTop)).roundToInt().coerceAtLeast(0)
 }
@@ -348,11 +369,12 @@ private fun computeScrollRange(state: LazyListState): Int {
     val laidOutRange = abs(startChild.index - endChild.index) + 1
 
     // Mejora: CÃ¡lculo mÃ¡s preciso del rango total
-    val averageItemSize = if (laidOutRange > 0 && laidOutArea > 0) {
-        laidOutArea.toFloat() / laidOutRange
-    } else {
-        200f // Valor por defecto
-    }
+    val averageItemSize =
+        if (laidOutRange > 0 && laidOutArea > 0) {
+            laidOutArea.toFloat() / laidOutRange
+        } else {
+            200f // Valor por defecto
+        }
 
     val totalRange = (averageItemSize * state.layoutInfo.totalItemsCount).roundToInt()
 
@@ -365,10 +387,11 @@ private val ThumbLength = 48.dp
 private val ThumbThickness = 12.dp // MÃ¡s ancho para mejor agarre
 private val TrackThickness = 6.dp
 private val ThumbShape = RoundedCornerShape(ThumbThickness / 2)
-private val FadeOutAnimationSpec = tween<Float>(
-    durationMillis = ViewConfiguration.getScrollBarFadeDuration(),
-    delayMillis = 2000,
-)
+private val FadeOutAnimationSpec =
+    tween<Float>(
+        durationMillis = ViewConfiguration.getScrollBarFadeDuration(),
+        delayMillis = 2000,
+    )
 
 private val LazyListItemInfo.top: Int
     get() = offset

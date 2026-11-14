@@ -10,42 +10,43 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
-class PremiumViewModel @Inject constructor(
-    private val donationRepository: DonationRepository,
-) : ViewModel() {
+class PremiumViewModel
+    @Inject
+    constructor(
+        private val donationRepository: DonationRepository,
+    ) : ViewModel() {
+        private val _uiState = MutableStateFlow(SupportUiState())
+        val uiState = _uiState.asStateFlow()
 
-    private val _uiState = MutableStateFlow(SupportUiState())
-    val uiState = _uiState.asStateFlow()
+        init {
+            refreshSupporters()
+        }
 
-    init {
-        refreshSupporters()
-    }
-
-    fun refreshSupporters() {
-        viewModelScope.launch {
-            _uiState.update { it.copy(isLoading = true, errorMessage = null) }
-            runCatching {
-                val topSupporters = donationRepository.loadTopSupporters()
-                val latestSupporters = donationRepository.loadLatestSupporters()
-                _uiState.update {
-                    it.copy(
-                        topSupporters = topSupporters,
-                        latestSupporters = latestSupporters,
-                        isLoading = false,
-                        errorMessage = null,
-                    )
-                }
-            }.onFailure { error ->
-                _uiState.update {
-                    it.copy(
-                        isLoading = false,
-                        errorMessage = error.message ?: "Unable to load supporters",
-                    )
+        fun refreshSupporters() {
+            viewModelScope.launch {
+                _uiState.update { it.copy(isLoading = true, errorMessage = null) }
+                runCatching {
+                    val topSupporters = donationRepository.loadTopSupporters()
+                    val latestSupporters = donationRepository.loadLatestSupporters()
+                    _uiState.update {
+                        it.copy(
+                            topSupporters = topSupporters,
+                            latestSupporters = latestSupporters,
+                            isLoading = false,
+                            errorMessage = null,
+                        )
+                    }
+                }.onFailure { error ->
+                    _uiState.update {
+                        it.copy(
+                            isLoading = false,
+                            errorMessage = error.message ?: "Unable to load supporters",
+                        )
+                    }
                 }
             }
         }
     }
-}
 
 data class SupportUiState(
     val topSupporters: List<DonationSupporter> = emptyList(),

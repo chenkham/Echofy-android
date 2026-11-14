@@ -20,7 +20,6 @@ import androidx.compose.material3.ButtonGroupDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.Icon
-import androidx.compose.material3.LargeFlexibleTopAppBar
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
@@ -34,7 +33,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -64,46 +62,56 @@ fun AndroidAutoSettings(
     scrollBehavior: TopAppBarScrollBehavior,
     context: Context = androidx.compose.ui.platform.LocalContext.current,
 ) {
-    val (androidAutoEnabled, onAndroidAutoEnabledChange) = rememberPreference(
-        AndroidAutoConstants.AndroidAutoEnabledKey,
-        defaultValue = true,
-    )
-    val (showLikedSongs, onShowLikedSongsChange) = rememberPreference(
-        AndroidAutoConstants.AndroidAutoShowLikedSongsKey,
-        defaultValue = true,
-    )
-    val (showDownloaded, onShowDownloadedChange) = rememberPreference(
-        AndroidAutoConstants.AndroidAutoShowDownloadedKey,
-        defaultValue = true,
-    )
-    val (showYouTubePlaylists, onShowYouTubePlaylistsChange) = rememberPreference(
-        AndroidAutoConstants.AndroidAutoShowYouTubePlaylistsKey,
-        defaultValue = true,
-    )
-    val (showHistory, onShowHistoryChange) = rememberPreference(
-        AndroidAutoConstants.AndroidAutoShowHistoryKey,
-        defaultValue = true,
-    )
-    val (simplifiedMode, onSimplifiedModeChange) = rememberPreference(
-        AndroidAutoConstants.AndroidAutoSimplifiedModeKey,
-        defaultValue = false,
-    )
-    val (songSortType, onSongSortTypeChange) = rememberEnumPreference(
-        AndroidAutoConstants.AndroidAutoSongSortTypeKey,
-        defaultValue = SongSortType.CREATE_DATE,
-    )
-    val (albumSortType, onAlbumSortTypeChange) = rememberEnumPreference(
-        AndroidAutoConstants.AndroidAutoAlbumSortTypeKey,
-        defaultValue = AlbumSortType.CREATE_DATE,
-    )
-    val (artistSortType, onArtistSortTypeChange) = rememberEnumPreference(
-        AndroidAutoConstants.AndroidAutoArtistSortTypeKey,
-        defaultValue = ArtistSortType.CREATE_DATE,
-    )
-    val (itemLimit, onItemLimitChange) = rememberPreference(
-        AndroidAutoConstants.AndroidAutoItemLimitKey,
-        defaultValue = 500,
-    )
+    val (androidAutoEnabled, onAndroidAutoEnabledChange) =
+        rememberPreference(
+            AndroidAutoConstants.AndroidAutoEnabledKey,
+            defaultValue = true,
+        )
+    val (showLikedSongs, onShowLikedSongsChange) =
+        rememberPreference(
+            AndroidAutoConstants.AndroidAutoShowLikedSongsKey,
+            defaultValue = true,
+        )
+    val (showDownloaded, onShowDownloadedChange) =
+        rememberPreference(
+            AndroidAutoConstants.AndroidAutoShowDownloadedKey,
+            defaultValue = true,
+        )
+    val (showYouTubePlaylists, onShowYouTubePlaylistsChange) =
+        rememberPreference(
+            AndroidAutoConstants.AndroidAutoShowYouTubePlaylistsKey,
+            defaultValue = true,
+        )
+    val (showHistory, onShowHistoryChange) =
+        rememberPreference(
+            AndroidAutoConstants.AndroidAutoShowHistoryKey,
+            defaultValue = true,
+        )
+    val (simplifiedMode, onSimplifiedModeChange) =
+        rememberPreference(
+            AndroidAutoConstants.AndroidAutoSimplifiedModeKey,
+            defaultValue = false,
+        )
+    val (songSortType, onSongSortTypeChange) =
+        rememberEnumPreference(
+            AndroidAutoConstants.AndroidAutoSongSortTypeKey,
+            defaultValue = SongSortType.CREATE_DATE,
+        )
+    val (albumSortType, onAlbumSortTypeChange) =
+        rememberEnumPreference(
+            AndroidAutoConstants.AndroidAutoAlbumSortTypeKey,
+            defaultValue = AlbumSortType.CREATE_DATE,
+        )
+    val (artistSortType, onArtistSortTypeChange) =
+        rememberEnumPreference(
+            AndroidAutoConstants.AndroidAutoArtistSortTypeKey,
+            defaultValue = ArtistSortType.CREATE_DATE,
+        )
+    val (itemLimit, onItemLimitChange) =
+        rememberPreference(
+            AndroidAutoConstants.AndroidAutoItemLimitKey,
+            defaultValue = 500,
+        )
 
     Scaffold(
         modifier = Modifier.fillMaxSize(),
@@ -124,23 +132,25 @@ fun AndroidAutoSettings(
                         )
                     }
                 },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = Color.Transparent,
-                    scrolledContainerColor = Color.Transparent,
-                    titleContentColor = MaterialTheme.colorScheme.onSurface,
-                    navigationIconContentColor = MaterialTheme.colorScheme.onSurface,
-                ),
+                colors =
+                    TopAppBarDefaults.topAppBarColors(
+                        containerColor = Color.Transparent,
+                        scrolledContainerColor = Color.Transparent,
+                        titleContentColor = MaterialTheme.colorScheme.onSurface,
+                        navigationIconContentColor = MaterialTheme.colorScheme.onSurface,
+                    ),
                 windowInsets = WindowInsets.systemBars.only(WindowInsetsSides.Top),
             )
         },
     ) { paddingValues ->
         Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues)
-                .windowInsetsPadding(LocalPlayerAwareWindowInsets.current.only(WindowInsetsSides.Horizontal + WindowInsetsSides.Bottom))
-                .verticalScroll(rememberScrollState())
-                .padding(bottom = 24.dp),
+            modifier =
+                Modifier
+                    .fillMaxSize()
+                    .padding(paddingValues)
+                    .windowInsetsPadding(LocalPlayerAwareWindowInsets.current.only(WindowInsetsSides.Horizontal + WindowInsetsSides.Bottom))
+                    .verticalScroll(rememberScrollState())
+                    .padding(bottom = 24.dp),
             verticalArrangement = Arrangement.spacedBy(24.dp),
         ) {
             AndroidAutoHeroCard(
@@ -274,45 +284,52 @@ private fun AndroidAutoHeroCard(
 ) {
     val view = LocalView.current
 
-    val heroBrush = Brush.linearGradient(
-        colors = listOf(
-            MaterialTheme.colorScheme.primary.copy(alpha = 0.20f),
-            MaterialTheme.colorScheme.tertiary.copy(alpha = 0.14f),
-            MaterialTheme.colorScheme.surfaceContainerHigh,
-        ),
-    )
+    val heroBrush =
+        Brush.linearGradient(
+            colors =
+                listOf(
+                    MaterialTheme.colorScheme.primary.copy(alpha = 0.20f),
+                    MaterialTheme.colorScheme.tertiary.copy(alpha = 0.14f),
+                    MaterialTheme.colorScheme.surfaceContainerHigh,
+                ),
+        )
 
-    val uncheckedColors = ToggleButtonDefaults.toggleButtonColors(
-        containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.72f),
-        contentColor = MaterialTheme.colorScheme.onSurface,
-    )
+    val uncheckedColors =
+        ToggleButtonDefaults.toggleButtonColors(
+            containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.72f),
+            contentColor = MaterialTheme.colorScheme.onSurface,
+        )
 
-    val checkedColors = ToggleButtonDefaults.toggleButtonColors(
-        checkedContainerColor = MaterialTheme.colorScheme.primary,
-        checkedContentColor = MaterialTheme.colorScheme.onPrimary,
-        containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.72f),
-        contentColor = MaterialTheme.colorScheme.onSurface,
-    )
+    val checkedColors =
+        ToggleButtonDefaults.toggleButtonColors(
+            checkedContainerColor = MaterialTheme.colorScheme.primary,
+            checkedContentColor = MaterialTheme.colorScheme.onPrimary,
+            containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.72f),
+            contentColor = MaterialTheme.colorScheme.onSurface,
+        )
 
-    val simplifiedColors = ToggleButtonDefaults.toggleButtonColors(
-        checkedContainerColor = MaterialTheme.colorScheme.tertiaryContainer,
-        checkedContentColor = MaterialTheme.colorScheme.onTertiaryContainer,
-        containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.72f),
-        contentColor = MaterialTheme.colorScheme.onSurface,
-    )
+    val simplifiedColors =
+        ToggleButtonDefaults.toggleButtonColors(
+            checkedContainerColor = MaterialTheme.colorScheme.tertiaryContainer,
+            checkedContentColor = MaterialTheme.colorScheme.onTertiaryContainer,
+            containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.72f),
+            contentColor = MaterialTheme.colorScheme.onSurface,
+        )
 
     Surface(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp),
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp),
         shape = RoundedCornerShape(32.dp),
         color = MaterialTheme.colorScheme.surfaceContainerHigh,
         tonalElevation = 6.dp,
     ) {
         Column(
-            modifier = Modifier
-                .background(heroBrush)
-                .padding(20.dp),
+            modifier =
+                Modifier
+                    .background(heroBrush)
+                    .padding(20.dp),
             verticalArrangement = Arrangement.spacedBy(18.dp),
         ) {
             Row(
@@ -361,10 +378,11 @@ private fun AndroidAutoHeroCard(
                 ) {
                     Text(
                         text = stringResource(R.string.android_auto_simplified_mode),
-                        modifier = Modifier.padding(
-                            horizontal = 12.dp,
-                            vertical = 8.dp,
-                        ),
+                        modifier =
+                            Modifier.padding(
+                                horizontal = 12.dp,
+                                vertical = 8.dp,
+                            ),
                         style = MaterialTheme.typography.labelLarge,
                         color = MaterialTheme.colorScheme.onSecondaryContainer,
                     )
@@ -376,10 +394,11 @@ private fun AndroidAutoHeroCard(
                 ) {
                     Text(
                         text = "$itemLimit items",
-                        modifier = Modifier.padding(
-                            horizontal = 12.dp,
-                            vertical = 8.dp,
-                        ),
+                        modifier =
+                            Modifier.padding(
+                                horizontal = 12.dp,
+                                vertical = 8.dp,
+                            ),
                         style = MaterialTheme.typography.labelLarge,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
@@ -388,9 +407,10 @@ private fun AndroidAutoHeroCard(
 
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(
-                    ButtonGroupDefaults.ConnectedSpaceBetween
-                ),
+                horizontalArrangement =
+                    Arrangement.spacedBy(
+                        ButtonGroupDefaults.ConnectedSpaceBetween,
+                    ),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 ToggleButton(
@@ -398,7 +418,7 @@ private fun AndroidAutoHeroCard(
                     onCheckedChange = {
                         view.performHapticFeedback(
                             HapticFeedbackConstants.CONTEXT_CLICK,
-                            HapticFeedbackConstants.FLAG_IGNORE_GLOBAL_SETTING
+                            HapticFeedbackConstants.FLAG_IGNORE_GLOBAL_SETTING,
                         )
 
                         onAndroidAutoEnabledChange(it)
@@ -408,11 +428,12 @@ private fun AndroidAutoHeroCard(
                     colors = if (androidAutoEnabled) checkedColors else uncheckedColors,
                 ) {
                     ToggleButtonLabel(
-                        icon = if (androidAutoEnabled) {
-                            R.drawable.check
-                        } else {
-                            R.drawable.close
-                        },
+                        icon =
+                            if (androidAutoEnabled) {
+                                R.drawable.check
+                            } else {
+                                R.drawable.close
+                            },
                         text = stringResource(R.string.android_auto_enable),
                     )
                 }
@@ -422,7 +443,7 @@ private fun AndroidAutoHeroCard(
                     onCheckedChange = {
                         view.performHapticFeedback(
                             HapticFeedbackConstants.CONTEXT_CLICK,
-                            HapticFeedbackConstants.FLAG_IGNORE_GLOBAL_SETTING
+                            HapticFeedbackConstants.FLAG_IGNORE_GLOBAL_SETTING,
                         )
 
                         onSimplifiedModeChange(it)
@@ -493,13 +514,14 @@ private fun SettingsSectionHeader(
 
 @Composable
 private fun AndroidAutoTutorialCard() {
-    val steps = listOf(
-        stringResource(R.string.android_auto_tutorial_step1) to R.drawable.android_auto,
-        stringResource(R.string.android_auto_tutorial_step2) to R.drawable.settings,
-        stringResource(R.string.android_auto_tutorial_step3) to R.drawable.code,
-        stringResource(R.string.android_auto_tutorial_step4) to R.drawable.replay,
-        stringResource(R.string.android_auto_tutorial_step5) to R.drawable.check,
-    )
+    val steps =
+        listOf(
+            stringResource(R.string.android_auto_tutorial_step1) to R.drawable.android_auto,
+            stringResource(R.string.android_auto_tutorial_step2) to R.drawable.settings,
+            stringResource(R.string.android_auto_tutorial_step3) to R.drawable.code,
+            stringResource(R.string.android_auto_tutorial_step4) to R.drawable.replay,
+            stringResource(R.string.android_auto_tutorial_step5) to R.drawable.check,
+        )
 
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
         SettingsSectionHeader(
@@ -509,9 +531,10 @@ private fun AndroidAutoTutorialCard() {
         )
 
         Surface(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp),
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp),
             shape = RoundedCornerShape(28.dp),
             color = MaterialTheme.colorScheme.surfaceContainerHigh,
             tonalElevation = 2.dp,
@@ -538,9 +561,10 @@ private fun ToggleButtonLabel(
     text: String,
 ) {
     Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 8.dp, vertical = 12.dp),
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 8.dp, vertical = 12.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {

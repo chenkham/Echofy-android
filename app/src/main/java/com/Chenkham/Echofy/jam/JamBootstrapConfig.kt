@@ -7,22 +7,22 @@ import android.content.Context
  * No Firebase Realtime Database config needed here anymore.
  */
 object JamBootstrapConfig {
-
     fun defaultRegistry(context: Context): JamRegistry {
         return JamRegistry(
             version = 1,
             defaultTtlSeconds = 86_400,
             inviteBaseUrl = context.optionalString("jam_invite_base_url").orEmpty(),
-            shards = listOf(
-                JamShardConfig(
-                    id = "01",
-                    status = JamShardStatus.ACTIVE,
-                    region = "bootstrap",
-                    weight = 100,
-                    capacity = JamShardCapacity(softRooms = 10_000, hardRooms = 15_000),
-                    features = JamShardFeatures(canCreateRooms = true, canJoinRooms = true),
+            shards =
+                listOf(
+                    JamShardConfig(
+                        id = "01",
+                        status = JamShardStatus.ACTIVE,
+                        region = "bootstrap",
+                        weight = 100,
+                        capacity = JamShardCapacity(softRooms = 10_000, hardRooms = 15_000),
+                        features = JamShardFeatures(canCreateRooms = true, canJoinRooms = true),
+                    ),
                 ),
-            ),
         )
     }
 

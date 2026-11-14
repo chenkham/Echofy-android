@@ -21,18 +21,20 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 class CompactMusicWidget : AppWidgetProvider() {
-
     override fun onUpdate(
         context: Context,
         appWidgetManager: AppWidgetManager,
-        appWidgetIds: IntArray
+        appWidgetIds: IntArray,
     ) {
         appWidgetIds.forEach { appWidgetId ->
             updateWidget(context, appWidgetManager, appWidgetId)
         }
     }
 
-    override fun onReceive(context: Context, intent: Intent) {
+    override fun onReceive(
+        context: Context,
+        intent: Intent,
+    ) {
         super.onReceive(context, intent)
         val action = intent.action ?: return
 
@@ -73,16 +75,19 @@ class CompactMusicWidget : AppWidgetProvider() {
 
         val pendingResult = goAsync()
         CoroutineScope(Dispatchers.Main).launch {
-            val sessionToken = SessionToken(
-                context.applicationContext,
-                ComponentName(context.applicationContext, com.Chenkham.Echofy.playback.MusicService::class.java)
-            )
+            val sessionToken =
+                SessionToken(
+                    context.applicationContext,
+                    ComponentName(context.applicationContext, com.Chenkham.Echofy.playback.MusicService::class.java),
+                )
             val controllerFuture = MediaController.Builder(context.applicationContext, sessionToken).buildAsync()
             try {
                 val controller = withContext(Dispatchers.IO) { controllerFuture.get() }
                 when (action) {
                     MusicWidget.ACTION_PLAY_PAUSE -> {
-                        if (controller.playWhenReady) controller.pause() else {
+                        if (controller.playWhenReady) {
+                            controller.pause()
+                        } else {
                             if (controller.playbackState == Player.STATE_IDLE || controller.playbackState == Player.STATE_ENDED) {
                                 controller.prepare()
                             }
@@ -116,9 +121,10 @@ class CompactMusicWidget : AppWidgetProvider() {
         fun updateAllWidgets(context: Context) {
             val appContext = context.applicationContext
             val appWidgetManager = AppWidgetManager.getInstance(appContext)
-            val widgetIds = appWidgetManager.getAppWidgetIds(
-                ComponentName(appContext, CompactMusicWidget::class.java)
-            )
+            val widgetIds =
+                appWidgetManager.getAppWidgetIds(
+                    ComponentName(appContext, CompactMusicWidget::class.java),
+                )
             if (widgetIds.isNotEmpty()) {
                 val activePlayer = PlayerConnection.instance?.player ?: com.Chenkham.Echofy.playback.MusicService.instance?.player
                 widgetIds.forEach {
@@ -152,7 +158,7 @@ class CompactMusicWidget : AppWidgetProvider() {
             views.setInt(
                 R.id.widget_compact_scrim_overlay,
                 "setBackgroundColor",
-                android.graphics.Color.argb((scrim * 255).toInt(), 0, 0, 0)
+                android.graphics.Color.argb((scrim * 255).toInt(), 0, 0, 0),
             )
 
             when (bgMode) {
@@ -170,23 +176,28 @@ class CompactMusicWidget : AppWidgetProvider() {
                 }
             }
 
-            val songTitle = player?.mediaMetadata?.title?.toString()
-                ?: context.getString(R.string.app_name)
-            val artist = player?.mediaMetadata?.artist?.toString()
-                ?: context.getString(R.string.tap_to_open)
+            val songTitle =
+                player?.mediaMetadata?.title?.toString()
+                    ?: context.getString(R.string.app_name)
+            val artist =
+                player?.mediaMetadata?.artist?.toString()
+                    ?: context.getString(R.string.tap_to_open)
 
             views.setTextViewText(R.id.widget_compact_song_title, songTitle)
             views.setTextViewText(R.id.widget_compact_artist, artist)
             views.setImageViewResource(
                 R.id.widget_compact_play_pause,
-                if (player?.isPlaying == true) R.drawable.pause else R.drawable.play
+                if (player?.isPlaying == true) R.drawable.pause else R.drawable.play,
             )
 
             val currentPos = player?.currentPosition ?: 0
             val duration = player?.duration ?: 0
-            val progress = if (duration > 0 && duration != Long.MAX_VALUE) {
-                (currentPos * 100 / duration).toInt()
-            } else 0
+            val progress =
+                if (duration > 0 && duration != Long.MAX_VALUE) {
+                    (currentPos * 100 / duration).toInt()
+                } else {
+                    0
+                }
 
             if (showProgress && duration > 0 && duration != Long.MAX_VALUE) {
                 views.setProgressBar(R.id.widget_compact_progress_bar, 100, progress, false)
@@ -200,12 +211,13 @@ class CompactMusicWidget : AppWidgetProvider() {
                 CoroutineScope(Dispatchers.IO).launch {
                     try {
                         val appContext = context.applicationContext
-                        val drawable = widgetImageLoader(appContext).execute(
-                            ImageRequest.Builder(appContext)
-                                .data(thumbnailUrl)
-                                .size(300, 300)
-                                .build()
-                        ).drawable
+                        val drawable =
+                            widgetImageLoader(appContext).execute(
+                                ImageRequest.Builder(appContext)
+                                    .data(thumbnailUrl)
+                                    .size(300, 300)
+                                    .build(),
+                            ).drawable
                         drawable?.let {
                             views.setImageViewBitmap(R.id.widget_compact_background_image, it.toBitmap())
                             appWidgetManager.partiallyUpdateAppWidget(appWidgetId, views)
@@ -218,18 +230,21 @@ class CompactMusicWidget : AppWidgetProvider() {
             appWidgetManager.updateAppWidget(appWidgetId, views)
         }
 
-        private fun setPendingIntents(context: Context, views: RemoteViews) {
+        private fun setPendingIntents(
+            context: Context,
+            views: RemoteViews,
+        ) {
             views.setOnClickPendingIntent(
                 R.id.widget_compact_prev,
-                getBroadcastPendingIntent(context, MusicWidget.ACTION_PREV)
+                getBroadcastPendingIntent(context, MusicWidget.ACTION_PREV),
             )
             views.setOnClickPendingIntent(
                 R.id.widget_compact_play_pause,
-                getBroadcastPendingIntent(context, MusicWidget.ACTION_PLAY_PAUSE)
+                getBroadcastPendingIntent(context, MusicWidget.ACTION_PLAY_PAUSE),
             )
             views.setOnClickPendingIntent(
                 R.id.widget_compact_next,
-                getBroadcastPendingIntent(context, MusicWidget.ACTION_NEXT)
+                getBroadcastPendingIntent(context, MusicWidget.ACTION_NEXT),
             )
 
             val openAppIntent = getActivityPendingIntent(context)
@@ -240,29 +255,36 @@ class CompactMusicWidget : AppWidgetProvider() {
             views.setOnClickPendingIntent(R.id.widget_compact_artist, openAppIntent)
         }
 
-        private fun getBroadcastPendingIntent(context: Context, action: String): PendingIntent {
-            val intent = Intent(context, CompactMusicWidget::class.java).apply {
-                this.action = action
-            }
-            val flags = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-            } else {
-                PendingIntent.FLAG_UPDATE_CURRENT
-            }
+        private fun getBroadcastPendingIntent(
+            context: Context,
+            action: String,
+        ): PendingIntent {
+            val intent =
+                Intent(context, CompactMusicWidget::class.java).apply {
+                    this.action = action
+                }
+            val flags =
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                    PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+                } else {
+                    PendingIntent.FLAG_UPDATE_CURRENT
+                }
             return PendingIntent.getBroadcast(context, action.hashCode(), intent, flags)
         }
 
         private fun getActivityPendingIntent(context: Context): PendingIntent {
-            val launchIntent = context.packageManager.getLaunchIntentForPackage(context.packageName)
-                ?: Intent(context, MainActivity::class.java)
+            val launchIntent =
+                context.packageManager.getLaunchIntentForPackage(context.packageName)
+                    ?: Intent(context, MainActivity::class.java)
             launchIntent.apply {
                 flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
             }
-            val flags = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-            } else {
-                PendingIntent.FLAG_UPDATE_CURRENT
-            }
+            val flags =
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                    PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+                } else {
+                    PendingIntent.FLAG_UPDATE_CURRENT
+                }
             return PendingIntent.getActivity(context, 0, launchIntent, flags)
         }
 

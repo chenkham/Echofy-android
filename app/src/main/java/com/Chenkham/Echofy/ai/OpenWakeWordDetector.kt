@@ -15,7 +15,7 @@ import timber.log.Timber
  */
 class OpenWakeWordDetector(
     private val context: Context,
-    private val onWakeWordDetected: () -> Unit
+    private val onWakeWordDetected: () -> Unit,
 ) {
     private val scope = CoroutineScope(Dispatchers.IO + Job())
     private var listeningJob: Job? = null

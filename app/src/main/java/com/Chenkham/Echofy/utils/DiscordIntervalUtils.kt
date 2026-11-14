@@ -4,7 +4,6 @@ import android.content.Context
 import androidx.datastore.preferences.core.stringPreferencesKey
 import com.Chenkham.Echofy.constants.DiscordPresenceIntervalUnitKey
 import com.Chenkham.Echofy.constants.DiscordPresenceIntervalValueKey
-import com.Chenkham.Echofy.utils.dataStore
 
 fun getPresenceIntervalMillis(context: Context): Long {
     val intervalPreset = context.dataStore[stringPreferencesKey("discordPresenceIntervalPreset")] ?: "20s"
@@ -19,11 +18,12 @@ fun getPresenceIntervalMillis(context: Context): Long {
         "5m" -> 300_000L
         "Custom" -> {
             val safeValue = if (customUnit == "S" && customValue < 30) 30 else customValue
-            val multiplier = when (customUnit) {
-                "M" -> 60_000L
-                "H" -> 3_600_000L
-                else -> 1_000L
-            }
+            val multiplier =
+                when (customUnit) {
+                    "M" -> 60_000L
+                    "H" -> 3_600_000L
+                    else -> 1_000L
+                }
             safeValue * multiplier
         }
         else -> 20_000L

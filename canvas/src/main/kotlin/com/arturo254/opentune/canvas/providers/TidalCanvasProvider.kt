@@ -9,7 +9,7 @@
 
 package com.arturo254.opentune.canvas.providers
 
-import com.arturo254.opentune.canvas.models.CanvasArtwork  // ← Import CORRECTO
+import com.arturo254.opentune.canvas.models.CanvasArtwork // ← Import CORRECTO
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.engine.okhttp.OkHttp
@@ -34,15 +34,15 @@ import java.util.Locale
 import java.util.concurrent.ConcurrentHashMap
 
 object TidalCanvasProvider {
-
     private const val BASE_URL = "https://api.tidal.com/v1/"
     private const val TIDAL_TOKEN = "vNVdglQOjFJJGG2U"
 
-    private val json = Json {
-        ignoreUnknownKeys = true
-        isLenient = true
-        explicitNulls = false
-    }
+    private val json =
+        Json {
+            ignoreUnknownKeys = true
+            isLenient = true
+            explicitNulls = false
+        }
 
     private val client by lazy {
         HttpClient(OkHttp) {
@@ -52,7 +52,10 @@ object TidalCanvasProvider {
                 requestTimeoutMillis = 30_000
                 socketTimeoutMillis = 30_000
             }
-            install(ContentEncoding) { gzip(); deflate() }
+            install(ContentEncoding) {
+                gzip()
+                deflate()
+            }
             install(HttpCache)
             expectSuccess = false
         }
@@ -77,12 +80,13 @@ object TidalCanvasProvider {
         cache[key]?.takeIf { it.expiresAtMs > System.currentTimeMillis() }?.let { return it.value }
 
         val query = if (!album.isNullOrBlank()) "$album $artist $song" else "$artist $song"
-        val result = searchOnTidal(
-            query = query,
-            types = "TRACKS",
-            songValidation = song,
-            artistValidation = artist,
-        )
+        val result =
+            searchOnTidal(
+                query = query,
+                types = "TRACKS",
+                songValidation = song,
+                artistValidation = artist,
+            )
         cache[key] = CacheEntry(result, System.currentTimeMillis() + CACHE_TTL_MS)
         return result
     }
@@ -94,13 +98,14 @@ object TidalCanvasProvider {
         val key = cacheKey("album", album, artist)
         cache[key]?.takeIf { it.expiresAtMs > System.currentTimeMillis() }?.let { return it.value }
 
-        val result = searchOnTidal(
-            query = "$album $artist",
-            types = "ALBUMS",
-            songValidation = null,
-            artistValidation = artist,
-            albumValidation = album,
-        )
+        val result =
+            searchOnTidal(
+                query = "$album $artist",
+                types = "ALBUMS",
+                songValidation = null,
+                artistValidation = artist,
+                albumValidation = album,
+            )
         cache[key] = CacheEntry(result, System.currentTimeMillis() + CACHE_TTL_MS)
         return result
     }
@@ -113,13 +118,14 @@ object TidalCanvasProvider {
         albumValidation: String? = null,
     ): CanvasArtwork? {
         return runCatching {
-            val response = client.get("${BASE_URL}search") {
-                header("X-Tidal-Token", TIDAL_TOKEN)
-                parameter("query", query)
-                parameter("limit", "10")
-                parameter("types", types)
-                parameter("countryCode", countryCode)
-            }
+            val response =
+                client.get("${BASE_URL}search") {
+                    header("X-Tidal-Token", TIDAL_TOKEN)
+                    parameter("query", query)
+                    parameter("limit", "10")
+                    parameter("types", types)
+                    parameter("countryCode", countryCode)
+                }
             if (response.status != HttpStatusCode.OK) return@runCatching null
 
             val root = response.body<JsonObject>()
@@ -134,13 +140,17 @@ object TidalCanvasProvider {
                 val resultTitle = obj["title"]?.jsonPrimitive?.contentOrNull
                 if (songValidation != null && resultTitle != null &&
                     !resultTitle.contains(songValidation, ignoreCase = true)
-                ) continue
+                ) {
+                    continue
+                }
 
                 // Validar título de álbum
                 if (albumValidation != null && resultTitle != null &&
                     !resultTitle.contains(albumValidation, ignoreCase = true) &&
                     !albumValidation.contains(resultTitle, ignoreCase = true)
-                ) continue
+                ) {
+                    continue
+                }
 
                 // Validar artista
                 val artists = obj["artists"]?.jsonArray
@@ -149,17 +159,21 @@ object TidalCanvasProvider {
                         ?: artists?.firstOrNull()?.jsonObject?.get("name")?.jsonPrimitive?.contentOrNull
 
                 if (artistValidation != null && primaryArtist != null) {
-                    val splitDelimiters = Regex(
-                        "(?:\\s*,\\s*|\\s*&\\s*|\\s+×\\s+|\\s+x\\s+|\\bfeat\\.?\\b|\\bft\\.?\\b|\\bfeaturing\\b|\\bwith\\b)",
-                        RegexOption.IGNORE_CASE
-                    )
-                    val requestedList = artistValidation.split(splitDelimiters)
-                        .map { it.trim().lowercase(Locale.ROOT) }.filter { it.isNotBlank() }
-                    val returnedList = primaryArtist.split(splitDelimiters)
-                        .map { it.trim().lowercase(Locale.ROOT) }.filter { it.isNotBlank() }
-                    val artistMatches = requestedList.any { req ->
-                        returnedList.any { res -> res.contains(req) || req.contains(res) }
-                    }
+                    val splitDelimiters =
+                        Regex(
+                            "(?:\\s*,\\s*|\\s*&\\s*|\\s+×\\s+|\\s+x\\s+|\\bfeat\\.?\\b|\\bft\\.?\\b|\\bfeaturing\\b|\\bwith\\b)",
+                            RegexOption.IGNORE_CASE,
+                        )
+                    val requestedList =
+                        artistValidation.split(splitDelimiters)
+                            .map { it.trim().lowercase(Locale.ROOT) }.filter { it.isNotBlank() }
+                    val returnedList =
+                        primaryArtist.split(splitDelimiters)
+                            .map { it.trim().lowercase(Locale.ROOT) }.filter { it.isNotBlank() }
+                    val artistMatches =
+                        requestedList.any { req ->
+                            returnedList.any { res -> res.contains(req) || req.contains(res) }
+                        }
                     if (!artistMatches) continue
                 }
 
@@ -174,9 +188,12 @@ object TidalCanvasProvider {
                             name = resultTitle ?: songValidation ?: albumValidation ?: "",
                             artist = primaryArtist ?: artistValidation ?: "",
                             videoUrl = videoUrl,
-                            albumName = if (types == "TRACKS")
-                                albumObj?.get("title")?.jsonPrimitive?.contentOrNull
-                            else resultTitle,
+                            albumName =
+                                if (types == "TRACKS") {
+                                    albumObj?.get("title")?.jsonPrimitive?.contentOrNull
+                                } else {
+                                    resultTitle
+                                },
                         )
                     }
                 }
@@ -185,7 +202,10 @@ object TidalCanvasProvider {
         }.getOrNull()
     }
 
-    private fun findSearchSection(source: JsonElement, key: String): JsonElement? {
+    private fun findSearchSection(
+        source: JsonElement,
+        key: String,
+    ): JsonElement? {
         if (source is JsonObject) {
             if (source.containsKey("items") && source["items"] is JsonArray) return source
             if (source.containsKey(key)) {
@@ -211,6 +231,8 @@ object TidalCanvasProvider {
         return "https://resources.tidal.com/videos/${parts[0]}/${parts[1]}/${parts[2]}/${parts[3]}/${parts[4]}/1280x1280.mp4"
     }
 
-    private fun cacheKey(prefix: String, vararg parts: String) =
-        "$prefix|" + parts.joinToString("|") { it.trim().lowercase(Locale.ROOT) }
+    private fun cacheKey(
+        prefix: String,
+        vararg parts: String,
+    ) = "$prefix|" + parts.joinToString("|") { it.trim().lowercase(Locale.ROOT) }
 }

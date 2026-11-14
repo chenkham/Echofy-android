@@ -86,8 +86,6 @@ fun BottomSheetPage(
                     .background(MaterialTheme.colorScheme.scrim.copy(alpha = 0.5f))
                     .fillMaxSize(),
         )
-
-
     }
 
     AnimatedVisibility(

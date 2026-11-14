@@ -6,7 +6,6 @@ import androidx.compose.foundation.basicMarquee
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
@@ -17,8 +16,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -36,14 +35,13 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import com.arturo254.opentune.innertube.models.ArtistItem
 import com.Chenkham.Echofy.LocalDatabase
 import com.Chenkham.Echofy.LocalPlayerConnection
 import com.Chenkham.Echofy.R
 import com.Chenkham.Echofy.db.entities.ArtistEntity
 import com.Chenkham.Echofy.playback.queues.YouTubeQueue
 import com.Chenkham.Echofy.ui.component.YouTubeListItem
-
+import com.arturo254.opentune.innertube.models.ArtistItem
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -58,9 +56,10 @@ fun YouTubeArtistMenu(
 
     // Root container for vertical scrolling
     Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .verticalScroll(rememberScrollState())
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .verticalScroll(rememberScrollState()),
     ) {
         YouTubeListItem(
             item = artist,
@@ -73,26 +72,28 @@ fun YouTubeArtistMenu(
 
         // Row for "Start Radio", "Shuffle", and "Share" buttons with grid-like background
         Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(start = 24.dp, end = 24.dp, top = 8.dp, bottom = 8.dp),
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .padding(start = 24.dp, end = 24.dp, top = 8.dp, bottom = 8.dp),
             horizontalArrangement = Arrangement.spacedBy(8.dp),
         ) {
             // Start Radio button
             artist.radioEndpoint?.let { watchEndpoint ->
                 Column(
-                    modifier = Modifier
-                        .weight(1f)
-                        .background(
-                            color = MaterialTheme.colorScheme.surfaceVariant,
-                            shape = RoundedCornerShape(8.dp)
-                        )
-                        .clip(RoundedCornerShape(8.dp))
-                        .clickable {
-                            playerConnection.playQueue(YouTubeQueue(watchEndpoint))
-                            onDismiss()
-                        }
-                        .padding(12.dp),
+                    modifier =
+                        Modifier
+                            .weight(1f)
+                            .background(
+                                color = MaterialTheme.colorScheme.surfaceVariant,
+                                shape = RoundedCornerShape(8.dp),
+                            )
+                            .clip(RoundedCornerShape(8.dp))
+                            .clickable {
+                                playerConnection.playQueue(YouTubeQueue(watchEndpoint))
+                                onDismiss()
+                            }
+                            .padding(12.dp),
                     horizontalAlignment = Alignment.CenterHorizontally,
                 ) {
                     Icon(
@@ -104,9 +105,10 @@ fun YouTubeArtistMenu(
                         text = stringResource(R.string.start_radio),
                         style = MaterialTheme.typography.labelMedium,
                         textAlign = TextAlign.Center,
-                        modifier = Modifier
-                            .basicMarquee()
-                            .padding(top = 4.dp),
+                        modifier =
+                            Modifier
+                                .basicMarquee()
+                                .padding(top = 4.dp),
                     )
                 }
             }
@@ -114,18 +116,19 @@ fun YouTubeArtistMenu(
             // Shuffle button
             artist.shuffleEndpoint?.let { watchEndpoint ->
                 Column(
-                    modifier = Modifier
-                        .weight(1f)
-                        .background(
-                            color = MaterialTheme.colorScheme.surfaceVariant,
-                            shape = RoundedCornerShape(8.dp)
-                        )
-                        .clip(RoundedCornerShape(8.dp))
-                        .clickable {
-                            playerConnection.playQueue(YouTubeQueue(watchEndpoint))
-                            onDismiss()
-                        }
-                        .padding(12.dp),
+                    modifier =
+                        Modifier
+                            .weight(1f)
+                            .background(
+                                color = MaterialTheme.colorScheme.surfaceVariant,
+                                shape = RoundedCornerShape(8.dp),
+                            )
+                            .clip(RoundedCornerShape(8.dp))
+                            .clickable {
+                                playerConnection.playQueue(YouTubeQueue(watchEndpoint))
+                                onDismiss()
+                            }
+                            .padding(12.dp),
                     horizontalAlignment = Alignment.CenterHorizontally,
                 ) {
                     Icon(
@@ -137,39 +140,42 @@ fun YouTubeArtistMenu(
                         text = stringResource(R.string.shuffle),
                         style = MaterialTheme.typography.labelMedium,
                         textAlign = TextAlign.Center,
-                        modifier = Modifier
-                            .basicMarquee()
-                            .padding(top = 4.dp),
+                        modifier =
+                            Modifier
+                                .basicMarquee()
+                                .padding(top = 4.dp),
                     )
                 }
             }
 
             // Share button
             Column(
-                modifier = Modifier
-                    .weight(1f)
-                    .background(
-                        color = MaterialTheme.colorScheme.surfaceVariant,
-                        shape = RoundedCornerShape(8.dp)
-                    )
-                    .clip(RoundedCornerShape(8.dp))
-                    .clickable {
-                        val intent = Intent().apply {
-                            action = Intent.ACTION_SEND
-                            type = "text/plain"
-                            putExtra(
-                                Intent.EXTRA_TEXT,
-                                com.Chenkham.Echofy.utils.ShareUtils.buildArtistShareText(
-                                    context = context,
-                                    artistId = artist.id,
-                                    name = artist.title
-                                )
-                            )
+                modifier =
+                    Modifier
+                        .weight(1f)
+                        .background(
+                            color = MaterialTheme.colorScheme.surfaceVariant,
+                            shape = RoundedCornerShape(8.dp),
+                        )
+                        .clip(RoundedCornerShape(8.dp))
+                        .clickable {
+                            val intent =
+                                Intent().apply {
+                                    action = Intent.ACTION_SEND
+                                    type = "text/plain"
+                                    putExtra(
+                                        Intent.EXTRA_TEXT,
+                                        com.Chenkham.Echofy.utils.ShareUtils.buildArtistShareText(
+                                            context = context,
+                                            artistId = artist.id,
+                                            name = artist.title,
+                                        ),
+                                    )
+                                }
+                            context.startActivity(Intent.createChooser(intent, null))
+                            onDismiss()
                         }
-                        context.startActivity(Intent.createChooser(intent, null))
-                        onDismiss()
-                    }
-                    .padding(12.dp),
+                        .padding(12.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
                 Icon(
@@ -181,9 +187,10 @@ fun YouTubeArtistMenu(
                     text = stringResource(R.string.share),
                     style = MaterialTheme.typography.labelMedium,
                     textAlign = TextAlign.Center,
-                    modifier = Modifier
-                        .basicMarquee()
-                        .padding(top = 4.dp),
+                    modifier =
+                        Modifier
+                            .basicMarquee()
+                            .padding(top = 4.dp),
                 )
             }
         }
@@ -192,42 +199,49 @@ fun YouTubeArtistMenu(
         ListItem(
             headlineContent = {
                 Text(
-                    text = if (libraryArtist?.artist?.bookmarkedAt != null) stringResource(R.string.subscribed) else stringResource(
-                        R.string.subscribe
-                    )
+                    text =
+                        if (libraryArtist?.artist?.bookmarkedAt != null) {
+                            stringResource(R.string.subscribed)
+                        } else {
+                            stringResource(
+                                R.string.subscribe,
+                            )
+                        },
                 )
             },
             leadingContent = {
                 Icon(
-                    painter = painterResource(
-                        if (libraryArtist?.artist?.bookmarkedAt != null) {
-                            R.drawable.subscribed
-                        } else {
-                            R.drawable.subscribe
-                        }
-                    ),
+                    painter =
+                        painterResource(
+                            if (libraryArtist?.artist?.bookmarkedAt != null) {
+                                R.drawable.subscribed
+                            } else {
+                                R.drawable.subscribe
+                            },
+                        ),
                     contentDescription = null,
                 )
             },
-            modifier = Modifier.clickable {
-                database.query {
-                    val libraryArtist = libraryArtist
-                    if (libraryArtist != null) {
-                        update(libraryArtist.artist.toggleLike())
-                    } else {
-                        insert(
-                            ArtistEntity(
-                                id = artist.id,
-                                name = artist.title,
-                                channelId = artist.channelId,
-                                thumbnailUrl = artist.thumbnail,
-                            ).toggleLike()
-                        )
+            modifier =
+                Modifier.clickable {
+                    database.query {
+                        val libraryArtist = libraryArtist
+                        if (libraryArtist != null) {
+                            update(libraryArtist.artist.toggleLike())
+                        } else {
+                            insert(
+                                ArtistEntity(
+                                    id = artist.id,
+                                    name = artist.title,
+                                    channelId = artist.channelId,
+                                    thumbnailUrl = artist.thumbnail,
+                                ).toggleLike(),
+                            )
+                        }
                     }
-                }
-            }
+                },
         )
-        
+
         Spacer(modifier = Modifier.height(WindowInsets.systemBars.asPaddingValues().calculateBottomPadding() + 8.dp))
     }
 }

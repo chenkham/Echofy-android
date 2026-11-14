@@ -43,10 +43,11 @@ class JamRemoteConfigRepository(
     context: Context,
 ) : JamConfigRepository {
     private val appContext = context.applicationContext
-    private val json = Json {
-        ignoreUnknownKeys = true
-        encodeDefaults = true
-    }
+    private val json =
+        Json {
+            ignoreUnknownKeys = true
+            encodeDefaults = true
+        }
     private val bootstrapRegistry = JamBootstrapConfig.defaultRegistry(appContext)
     private val cacheFile = File(appContext.filesDir, "jam/registry-cache.json")
     private val _registry = MutableStateFlow(loadCachedRegistry() ?: bootstrapRegistry)
@@ -69,11 +70,12 @@ class JamRemoteConfigRepository(
             return
         }
 
-        val remoteRegistry = runCatching {
-            fetchRemoteRegistry(registryUrl)
-        }.onFailure { throwable ->
-            Timber.tag(TAG).w(throwable, "Failed to fetch Jam registry from control plane")
-        }.getOrNull()
+        val remoteRegistry =
+            runCatching {
+                fetchRemoteRegistry(registryUrl)
+            }.onFailure { throwable ->
+                Timber.tag(TAG).w(throwable, "Failed to fetch Jam registry from control plane")
+            }.getOrNull()
 
         when {
             remoteRegistry != null && remoteRegistry.shards.isNotEmpty() -> {
@@ -97,61 +99,66 @@ class JamRemoteConfigRepository(
         }
     }
 
-    private suspend fun fetchRemoteRegistry(registryUrl: String): JamRegistry = withContext(Dispatchers.IO) {
-        val connection = (URL(registryUrl).openConnection() as HttpURLConnection).apply {
-            requestMethod = "GET"
-            connectTimeout = 5_000
-            readTimeout = 5_000
-            setRequestProperty("Accept", "application/json")
+    private suspend fun fetchRemoteRegistry(registryUrl: String): JamRegistry =
+        withContext(Dispatchers.IO) {
+            val connection =
+                (URL(registryUrl).openConnection() as HttpURLConnection).apply {
+                    requestMethod = "GET"
+                    connectTimeout = 5_000
+                    readTimeout = 5_000
+                    setRequestProperty("Accept", "application/json")
+                }
+
+            try {
+                val statusCode = connection.responseCode
+                if (statusCode !in 200..299) {
+                    error("Jam registry request failed with HTTP $statusCode")
+                }
+
+                val body = connection.inputStream.bufferedReader().use { it.readText() }
+                json.decodeFromString(JamRegistry.serializer(), body)
+            } finally {
+                connection.disconnect()
+            }
         }
 
-        try {
-            val statusCode = connection.responseCode
-            if (statusCode !in 200..299) {
-                error("Jam registry request failed with HTTP $statusCode")
-            }
+    private suspend fun fetchRoomAllocation(allocateUrl: String): JamRoomAllocation? =
+        withContext(Dispatchers.IO) {
+            val connection =
+                (URL(allocateUrl).openConnection() as HttpURLConnection).apply {
+                    requestMethod = "POST"
+                    connectTimeout = 5_000
+                    readTimeout = 5_000
+                    doOutput = true
+                    setRequestProperty("Accept", "application/json")
+                    setRequestProperty("Content-Type", "application/json; charset=utf-8")
+                }
 
-            val body = connection.inputStream.bufferedReader().use { it.readText() }
-            json.decodeFromString(JamRegistry.serializer(), body)
-        } finally {
-            connection.disconnect()
+            try {
+                val requestBody =
+                    json.encodeToString(
+                        mapOf(
+                            "registryVersion" to registry.value.version.toString(),
+                        ),
+                    )
+                connection.outputStream.bufferedWriter().use { writer ->
+                    writer.write(requestBody)
+                }
+
+                val statusCode = connection.responseCode
+                if (statusCode == HttpURLConnection.HTTP_NOT_FOUND || statusCode == 405) {
+                    return@withContext null
+                }
+                if (statusCode !in 200..299) {
+                    error("Jam allocation request failed with HTTP $statusCode")
+                }
+
+                val body = connection.inputStream.bufferedReader().use { it.readText() }
+                json.decodeFromString(JamRoomAllocation.serializer(), body)
+            } finally {
+                connection.disconnect()
+            }
         }
-    }
-
-    private suspend fun fetchRoomAllocation(allocateUrl: String): JamRoomAllocation? = withContext(Dispatchers.IO) {
-        val connection = (URL(allocateUrl).openConnection() as HttpURLConnection).apply {
-            requestMethod = "POST"
-            connectTimeout = 5_000
-            readTimeout = 5_000
-            doOutput = true
-            setRequestProperty("Accept", "application/json")
-            setRequestProperty("Content-Type", "application/json; charset=utf-8")
-        }
-
-        try {
-            val requestBody = json.encodeToString(
-                mapOf(
-                    "registryVersion" to registry.value.version.toString(),
-                ),
-            )
-            connection.outputStream.bufferedWriter().use { writer ->
-                writer.write(requestBody)
-            }
-
-            val statusCode = connection.responseCode
-            if (statusCode == HttpURLConnection.HTTP_NOT_FOUND || statusCode == 405) {
-                return@withContext null
-            }
-            if (statusCode !in 200..299) {
-                error("Jam allocation request failed with HTTP $statusCode")
-            }
-
-            val body = connection.inputStream.bufferedReader().use { it.readText() }
-            json.decodeFromString(JamRoomAllocation.serializer(), body)
-        } finally {
-            connection.disconnect()
-        }
-    }
 
     private fun persistRegistry(registry: JamRegistry) {
         runCatching {
@@ -173,9 +180,10 @@ class JamRemoteConfigRepository(
     }
 
     private suspend fun resolveRegistryUrl(): String? {
-        val override = appContext.dataStore.data.first()[JamRegistryUrlKey]
-            ?.trim()
-            ?.takeIf { it.isNotBlank() }
+        val override =
+            appContext.dataStore.data.first()[JamRegistryUrlKey]
+                ?.trim()
+                ?.takeIf { it.isNotBlank() }
         if (override != null) return override
 
         return appContext.optionalString("jam_registry_url")
@@ -185,9 +193,10 @@ class JamRemoteConfigRepository(
     }
 
     private suspend fun resolveAllocationUrl(): String? {
-        val override = appContext.dataStore.data.first()[JamAllocationUrlKey]
-            ?.trim()
-            ?.takeIf { it.isNotBlank() }
+        val override =
+            appContext.dataStore.data.first()[JamAllocationUrlKey]
+                ?.trim()
+                ?.takeIf { it.isNotBlank() }
         if (override != null) return override
 
         appContext.optionalString("jam_room_allocate_url")
@@ -200,12 +209,13 @@ class JamRemoteConfigRepository(
     }
 
     private suspend fun applyInviteBaseOverride(registry: JamRegistry): JamRegistry {
-        val inviteBaseOverride = appContext.dataStore.data.first()[JamInviteBaseUrlKey]
-            ?.trim()
-            ?.takeIf { it.isNotBlank() }
-            ?: appContext.optionalString("jam_invite_base_url")
+        val inviteBaseOverride =
+            appContext.dataStore.data.first()[JamInviteBaseUrlKey]
                 ?.trim()
                 ?.takeIf { it.isNotBlank() }
+                ?: appContext.optionalString("jam_invite_base_url")
+                    ?.trim()
+                    ?.takeIf { it.isNotBlank() }
         if (inviteBaseOverride.isNullOrBlank()) return registry
         return registry.copy(inviteBaseUrl = inviteBaseOverride)
     }

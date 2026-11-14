@@ -22,8 +22,9 @@ data class ArtistEnrichment(
     val similarArtists: List<Recommendation> = emptyList(),
 ) {
     val isEmpty: Boolean
-        get() = info == null &&
-            bio == null &&
-            concerts.isEmpty() &&
-            similarArtists.isEmpty()
+        get() =
+            info == null &&
+                bio == null &&
+                concerts.isEmpty() &&
+                similarArtists.isEmpty()
 }

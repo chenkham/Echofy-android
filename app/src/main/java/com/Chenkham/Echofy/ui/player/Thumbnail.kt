@@ -4,14 +4,17 @@ import android.content.Context
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.aspectRatio
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -26,38 +29,31 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.core.content.edit
 import coil.compose.AsyncImage
 import com.Chenkham.Echofy.LocalPlayerConnection
-import com.Chenkham.Echofy.constants.PlayerHorizontalPadding
-import com.Chenkham.Echofy.constants.PlaybackMode
-import com.Chenkham.Echofy.constants.PlaybackModeKey
-import com.Chenkham.Echofy.constants.VideoPlaybackEnabledKey
-import com.Chenkham.Echofy.constants.ShowLyricsKey
-import com.Chenkham.Echofy.constants.SwipeThumbnailKey
+import com.Chenkham.Echofy.R
 import com.Chenkham.Echofy.constants.DoubleTapSeekKey
 import com.Chenkham.Echofy.constants.DoubleTapSeekSecondsKey
+import com.Chenkham.Echofy.constants.PlaybackMode
+import com.Chenkham.Echofy.constants.PlaybackModeKey
+import com.Chenkham.Echofy.constants.PlayerHorizontalPadding
+import com.Chenkham.Echofy.constants.ShowLyricsKey
+import com.Chenkham.Echofy.constants.SwipeThumbnailKey
+import com.Chenkham.Echofy.constants.VideoPlaybackEnabledKey
 import com.Chenkham.Echofy.ui.component.AppConfig
 import com.Chenkham.Echofy.ui.component.Lyrics
 import com.Chenkham.Echofy.utils.rememberEnumPreference
 import com.Chenkham.Echofy.utils.rememberPreference
 import kotlin.math.roundToInt
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.res.painterResource
-import com.Chenkham.Echofy.R
 
 private fun guessedThumbnailAspectRatio(url: String?): Float {
     if (url.isNullOrBlank()) return 1f
@@ -90,7 +86,7 @@ fun Thumbnail(
     val doubleTapSeekSeconds by rememberPreference(DoubleTapSeekSecondsKey, 10)
     val playbackModeSelected by rememberEnumPreference(PlaybackModeKey, PlaybackMode.AUDIO)
     val videoPlaybackEnabled by rememberPreference(VideoPlaybackEnabledKey, true)
-    
+
     // Only use video mode if both: user selected VIDEO mode AND video playback is enabled
     val playbackMode = if (videoPlaybackEnabled) playbackModeSelected else PlaybackMode.AUDIO
 
@@ -122,11 +118,17 @@ fun Thumbnail(
                 modifier =
                     Modifier
                         .then(
-                            if (isLand) Modifier.fillMaxHeight()
-                            else Modifier.fillMaxWidth().then(
-                                if (playbackMode == PlaybackMode.VIDEO || isWideThumbnail) Modifier
-                                else Modifier.padding(horizontal = PlayerHorizontalPadding)
-                            )
+                            if (isLand) {
+                                Modifier.fillMaxHeight()
+                            } else {
+                                Modifier.fillMaxWidth().then(
+                                    if (playbackMode == PlaybackMode.VIDEO || isWideThumbnail) {
+                                        Modifier
+                                    } else {
+                                        Modifier.padding(horizontal = PlayerHorizontalPadding)
+                                    },
+                                )
+                            },
                         )
                         .pointerInput(Unit) {
                             detectHorizontalDragGestures(
@@ -159,13 +161,14 @@ fun Thumbnail(
                                     // Left half rewinds, right half fast-forwards, like a video player.
                                     val step = doubleTapSeekSeconds * 1000L
                                     val player = playerConnection.player
-                                    val target = if (offset.x < size.width / 2f) {
-                                        (player.currentPosition - step).coerceAtLeast(0L)
-                                    } else {
-                                        val duration = player.duration
-                                        val raw = player.currentPosition + step
-                                        if (duration > 0) raw.coerceAtMost(duration) else raw
-                                    }
+                                    val target =
+                                        if (offset.x < size.width / 2f) {
+                                            (player.currentPosition - step).coerceAtLeast(0L)
+                                        } else {
+                                            val duration = player.duration
+                                            val raw = player.currentPosition + step
+                                            if (duration > 0) raw.coerceAtMost(duration) else raw
+                                        }
                                     player.seekTo(target)
                                 },
                             )
@@ -186,25 +189,33 @@ fun Thumbnail(
                 if (playbackMode == PlaybackMode.VIDEO) {
                     VideoPlayerView(
                         exoPlayer = playerConnection.player,
-                        modifier = Modifier
-                            .offset { IntOffset(offsetX.roundToInt(), 0) }
-                            .then(
-                                if (isLandscape) Modifier.fillMaxHeight().aspectRatio(16f / 9f, matchHeightConstraintsFirst = true)
-                                else Modifier.fillMaxWidth().aspectRatio(16f / 9f)
-                            ),
-                        cornerRadius = if (isLandscape) 12f else 0f
+                        modifier =
+                            Modifier
+                                .offset { IntOffset(offsetX.roundToInt(), 0) }
+                                .then(
+                                    if (isLandscape) {
+                                        Modifier.fillMaxHeight().aspectRatio(16f / 9f, matchHeightConstraintsFirst = true)
+                                    } else {
+                                        Modifier.fillMaxWidth().aspectRatio(16f / 9f)
+                                    },
+                                ),
+                        cornerRadius = if (isLandscape) 12f else 0f,
                     )
                 } else if (mediaMetadata?.thumbnailUrl.isNullOrBlank()) {
                     val isRadio = mediaMetadata?.id?.startsWith(com.Chenkham.Echofy.playback.MusicService.RADIO_MEDIA_ID_PREFIX) == true
                     Box(
-                        modifier = Modifier
-                            .offset { IntOffset(offsetX.roundToInt(), 0) }
-                            .then(
-                                if (isLandscape) Modifier.fillMaxHeight().aspectRatio(1f, matchHeightConstraintsFirst = true)
-                                else Modifier.fillMaxWidth().aspectRatio(1f)
-                            )
-                            .clip(RoundedCornerShape(cornerRadius * 2))
-                            .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.6f)),
+                        modifier =
+                            Modifier
+                                .offset { IntOffset(offsetX.roundToInt(), 0) }
+                                .then(
+                                    if (isLandscape) {
+                                        Modifier.fillMaxHeight().aspectRatio(1f, matchHeightConstraintsFirst = true)
+                                    } else {
+                                        Modifier.fillMaxWidth().aspectRatio(1f)
+                                    },
+                                )
+                                .clip(RoundedCornerShape(cornerRadius * 2))
+                                .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.6f)),
                         contentAlignment = Alignment.Center,
                     ) {
                         Icon(
@@ -227,25 +238,29 @@ fun Thumbnail(
                                 thumbnailAspectRatio = (width.toFloat() / height.toFloat()).coerceIn(0.75f, 1.9f)
                             }
                         },
-                        modifier = Modifier
-                            .offset { IntOffset(offsetX.roundToInt(), 0) }
-                            .then(
-                                if (isLandscape) Modifier.fillMaxHeight().aspectRatio(thumbnailAspectRatio, matchHeightConstraintsFirst = true)
-                                else Modifier.fillMaxWidth().aspectRatio(thumbnailAspectRatio)
-                            )
-                            .clip(RoundedCornerShape(cornerRadius * 2))
-                            .background(Color.Black.copy(alpha = 0.10f))
-                            .pointerInput(Unit) {
-                                detectTapGestures(
-                                    onDoubleTap = { offset ->
-                                        if (offset.x < size.width / 2) {
-                                            playerConnection.player.seekBack()
-                                        } else {
-                                            playerConnection.player.seekForward()
-                                        }
+                        modifier =
+                            Modifier
+                                .offset { IntOffset(offsetX.roundToInt(), 0) }
+                                .then(
+                                    if (isLandscape) {
+                                        Modifier.fillMaxHeight().aspectRatio(thumbnailAspectRatio, matchHeightConstraintsFirst = true)
+                                    } else {
+                                        Modifier.fillMaxWidth().aspectRatio(thumbnailAspectRatio)
                                     },
                                 )
-                            },
+                                .clip(RoundedCornerShape(cornerRadius * 2))
+                                .background(Color.Black.copy(alpha = 0.10f))
+                                .pointerInput(Unit) {
+                                    detectTapGestures(
+                                        onDoubleTap = { offset ->
+                                            if (offset.x < size.width / 2) {
+                                                playerConnection.player.seekBack()
+                                            } else {
+                                                playerConnection.player.seekForward()
+                                            }
+                                        },
+                                    )
+                                },
                     )
                 }
             }
@@ -285,5 +300,5 @@ class AppPreferences(context: Context) {
 
     var thumbnailCornerRadiusV2: Float
         get() = prefs.getFloat("THUMBNAIL_CORNER_RADIUS", 16f)
-        set(value) = prefs.edit() { putFloat("THUMBNAIL_CORNER_RADIUS", value) }
+        set(value) = prefs.edit { putFloat("THUMBNAIL_CORNER_RADIUS", value) }
 }

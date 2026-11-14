@@ -27,7 +27,6 @@ import io.ktor.serialization.kotlinx.json.json
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.contentOrNull
-import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import timber.log.Timber
@@ -45,18 +44,18 @@ import java.util.concurrent.ConcurrentHashMap
  *   GET /api/v1/artwork/history
  */
 object AppleMusicArtworkProvider {
-
     // URL base del servicio
     private const val API_BASE_URL = "https://artwork.m8tec.top/api/v1"
 
     // Tiempo de espera para la descarga de URLs de Apple Music
     private const val APPLE_MUSIC_TIMEOUT_MS = 30_000L
 
-    private val json = Json {
-        ignoreUnknownKeys = true
-        isLenient = true
-        explicitNulls = false
-    }
+    private val json =
+        Json {
+            ignoreUnknownKeys = true
+            isLenient = true
+            explicitNulls = false
+        }
 
     private val client by lazy {
         HttpClient(OkHttp) {
@@ -66,7 +65,10 @@ object AppleMusicArtworkProvider {
                 requestTimeoutMillis = APPLE_MUSIC_TIMEOUT_MS
                 socketTimeoutMillis = APPLE_MUSIC_TIMEOUT_MS
             }
-            install(ContentEncoding) { gzip(); deflate() }
+            install(ContentEncoding) {
+                gzip()
+                deflate()
+            }
             install(HttpCache)
             expectSuccess = false
         }
@@ -98,11 +100,12 @@ object AppleMusicArtworkProvider {
 
         Timber.d("🎵 Apple Music Artwork - Buscando: $song - $artist")
 
-        val result = searchArtwork(
-            artist = artist,
-            album = album ?: song, // Si no hay álbum, usar la canción como álbum
-            title = song
-        )
+        val result =
+            searchArtwork(
+                artist = artist,
+                album = album ?: song, // Si no hay álbum, usar la canción como álbum
+                title = song,
+            )
         cache[key] = CacheEntry(result, System.currentTimeMillis() + CACHE_TTL_MS)
         return result
     }
@@ -123,11 +126,12 @@ object AppleMusicArtworkProvider {
 
         Timber.d("🎵 Apple Music Artwork - Buscando álbum: $album - $artist")
 
-        val result = searchArtwork(
-            artist = artist,
-            album = album,
-            title = null
-        )
+        val result =
+            searchArtwork(
+                artist = artist,
+                album = album,
+                title = null,
+            )
         cache[key] = CacheEntry(result, System.currentTimeMillis() + CACHE_TTL_MS)
         return result
     }
@@ -168,11 +172,12 @@ object AppleMusicArtworkProvider {
         return runCatching {
             Timber.d("🎵 Apple Music Artwork - Search: artist=$artist, album=$album, title=$title")
 
-            val response = client.get("$API_BASE_URL/artwork/search") {
-                parameter("artist", artist)
-                parameter("album", album)
-                title?.let { parameter("title", it) }
-            }
+            val response =
+                client.get("$API_BASE_URL/artwork/search") {
+                    parameter("artist", artist)
+                    parameter("album", album)
+                    title?.let { parameter("title", it) }
+                }
 
             if (response.status != HttpStatusCode.OK) {
                 Timber.d("🎵 Apple Music Artwork - Error: ${response.status}")
@@ -200,9 +205,10 @@ object AppleMusicArtworkProvider {
         return runCatching {
             Timber.d("🎵 Apple Music Artwork - URL: $url")
 
-            val response = client.get("$API_BASE_URL/artwork/url") {
-                parameter("url", url)
-            }
+            val response =
+                client.get("$API_BASE_URL/artwork/url") {
+                    parameter("url", url)
+                }
 
             if (response.status != HttpStatusCode.OK) {
                 Timber.d("🎵 Apple Music Artwork - Error: ${response.status}")
@@ -242,33 +248,40 @@ object AppleMusicArtworkProvider {
             val name = json["name"]?.jsonPrimitive?.contentOrNull
             val artist = json["artistName"]?.jsonPrimitive?.contentOrNull
             val albumId = json["albumId"]?.jsonPrimitive?.contentOrNull
-            val albumName = json["albumName"]?.jsonPrimitive?.contentOrNull
-                ?: json["album"]?.jsonPrimitive?.contentOrNull
+            val albumName =
+                json["albumName"]?.jsonPrimitive?.contentOrNull
+                    ?: json["album"]?.jsonPrimitive?.contentOrNull
 
             // Extraer URLs de videos - Prioridad: url (HLS) > tallUrl (vertical)
-            val animatedUrl = json["url"]?.jsonPrimitive?.contentOrNull
-                ?: json["hlsUrl"]?.jsonPrimitive?.contentOrNull
-                ?: json["videoUrl"]?.jsonPrimitive?.contentOrNull
+            val animatedUrl =
+                json["url"]?.jsonPrimitive?.contentOrNull
+                    ?: json["hlsUrl"]?.jsonPrimitive?.contentOrNull
+                    ?: json["videoUrl"]?.jsonPrimitive?.contentOrNull
 
-            val animatedVerticalUrl = json["tallUrl"]?.jsonPrimitive?.contentOrNull
-                ?: json["verticalUrl"]?.jsonPrimitive?.contentOrNull
-                ?: json["tall"]?.jsonPrimitive?.contentOrNull
+            val animatedVerticalUrl =
+                json["tallUrl"]?.jsonPrimitive?.contentOrNull
+                    ?: json["verticalUrl"]?.jsonPrimitive?.contentOrNull
+                    ?: json["tall"]?.jsonPrimitive?.contentOrNull
 
-            val staticUrl = json["static"]?.jsonPrimitive?.contentOrNull
-                ?: json["staticUrl"]?.jsonPrimitive?.contentOrNull
-                ?: json["image"]?.jsonPrimitive?.contentOrNull
+            val staticUrl =
+                json["static"]?.jsonPrimitive?.contentOrNull
+                    ?: json["staticUrl"]?.jsonPrimitive?.contentOrNull
+                    ?: json["image"]?.jsonPrimitive?.contentOrNull
 
             // Buscar en "data" si existe
             val data = json["data"]?.jsonObject
-            val finalAnimatedUrl = animatedUrl
-                ?: data?.get("url")?.jsonPrimitive?.contentOrNull
-                ?: data?.get("hlsUrl")?.jsonPrimitive?.contentOrNull
-            val finalTallUrl = animatedVerticalUrl
-                ?: data?.get("tallUrl")?.jsonPrimitive?.contentOrNull
-                ?: data?.get("verticalUrl")?.jsonPrimitive?.contentOrNull
-            val finalStaticUrl = staticUrl
-                ?: data?.get("static")?.jsonPrimitive?.contentOrNull
-                ?: data?.get("image")?.jsonPrimitive?.contentOrNull
+            val finalAnimatedUrl =
+                animatedUrl
+                    ?: data?.get("url")?.jsonPrimitive?.contentOrNull
+                    ?: data?.get("hlsUrl")?.jsonPrimitive?.contentOrNull
+            val finalTallUrl =
+                animatedVerticalUrl
+                    ?: data?.get("tallUrl")?.jsonPrimitive?.contentOrNull
+                    ?: data?.get("verticalUrl")?.jsonPrimitive?.contentOrNull
+            val finalStaticUrl =
+                staticUrl
+                    ?: data?.get("static")?.jsonPrimitive?.contentOrNull
+                    ?: data?.get("image")?.jsonPrimitive?.contentOrNull
 
             return if (finalAnimatedUrl != null || finalTallUrl != null) {
                 CanvasArtwork(
@@ -280,7 +293,7 @@ object AppleMusicArtworkProvider {
                     animated = finalAnimatedUrl,
                     animatedVertical = finalTallUrl,
                     videoUrl = finalAnimatedUrl,
-                    videoUrlVertical = finalTallUrl
+                    videoUrlVertical = finalTallUrl,
                 )
             } else {
                 Timber.d("🎵 Apple Music Artwork - No se encontraron URLs en la respuesta")
@@ -292,6 +305,8 @@ object AppleMusicArtworkProvider {
         }
     }
 
-    private fun cacheKey(prefix: String, vararg parts: String) =
-        "$prefix|" + parts.joinToString("|") { it.trim().lowercase(Locale.ROOT) }
+    private fun cacheKey(
+        prefix: String,
+        vararg parts: String,
+    ) = "$prefix|" + parts.joinToString("|") { it.trim().lowercase(Locale.ROOT) }
 }

@@ -89,9 +89,6 @@ import coil.compose.AsyncImage
 import coil.imageLoader
 import coil.request.ImageRequest
 import coil.request.SuccessResult
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import com.Chenkham.Echofy.LocalPlayerAwareWindowInsets
 import com.Chenkham.Echofy.LocalPlayerConnection
 import com.Chenkham.Echofy.R
@@ -99,13 +96,12 @@ import com.Chenkham.Echofy.constants.AppBarHeight
 import com.Chenkham.Echofy.constants.DisableBlurKey
 import com.Chenkham.Echofy.extensions.togglePlayPause
 import com.Chenkham.Echofy.models.MediaMetadata
-import com.arturo254.opentune.spotify.SpotifyMapper
 import com.Chenkham.Echofy.spotify.SpotifyPlaybackResolver
 import com.Chenkham.Echofy.spotify.SpotifyPlaylistQueue
 import com.Chenkham.Echofy.spotify.SpotifyPlaylistViewModel
-import com.arturo254.opentune.spotify.models.SpotifyTrack
 import com.Chenkham.Echofy.ui.component.DraggableScrollbar
 import com.Chenkham.Echofy.ui.component.EmptyPlaceholder
+import com.Chenkham.Echofy.ui.component.ExpressivePullToRefreshBox
 import com.Chenkham.Echofy.ui.component.IconButton
 import com.Chenkham.Echofy.ui.component.SpotifyTrackListItem
 import com.Chenkham.Echofy.ui.theme.PlayerColorExtractor
@@ -113,7 +109,11 @@ import com.Chenkham.Echofy.ui.utils.backToMain
 import com.Chenkham.Echofy.ui.utils.resize
 import com.Chenkham.Echofy.utils.makeTimeString
 import com.Chenkham.Echofy.utils.rememberPreference
-import com.Chenkham.Echofy.ui.component.ExpressivePullToRefreshBox
+import com.arturo254.opentune.spotify.SpotifyMapper
+import com.arturo254.opentune.spotify.models.SpotifyTrack
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import kotlin.math.abs
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -152,13 +152,13 @@ fun SpotifyPlaylistScreen(
             } else {
                 tracks.filter { track ->
                     track.name.contains(query.text, ignoreCase = true) ||
-                            track.artists.any { artist ->
-                                artist.name.contains(
-                                    query.text,
-                                    ignoreCase = true
-                                )
-                            } ||
-                            track.album?.name?.contains(query.text, ignoreCase = true) == true
+                        track.artists.any { artist ->
+                            artist.name.contains(
+                                query.text,
+                                ignoreCase = true,
+                            )
+                        } ||
+                        track.album?.name?.contains(query.text, ignoreCase = true) == true
                 }
             }
         }
@@ -175,7 +175,7 @@ fun SpotifyPlaylistScreen(
 
     val thumbnailUrl =
         remember(playlist) {
-            playlist?.let { SpotifyMapper.getPlaylistThumbnail(it)?.resize(544, 544,) }
+            playlist?.let { SpotifyMapper.getPlaylistThumbnail(it)?.resize(544, 544) }
         }
 
     LaunchedEffect(thumbnailUrl) {
@@ -186,7 +186,7 @@ fun SpotifyPlaylistScreen(
                     .data(thumbnailUrl)
                     .size(
                         PlayerColorExtractor.Config.IMAGE_SIZE,
-                        PlayerColorExtractor.Config.IMAGE_SIZE
+                        PlayerColorExtractor.Config.IMAGE_SIZE,
                     )
                     .allowHardware(false)
                     .build()
@@ -417,8 +417,9 @@ fun SpotifyPlaylistScreen(
 
         LazyColumn(
             state = lazyListState,
-            contentPadding = LocalPlayerAwareWindowInsets.current.union(WindowInsets.ime)
-                .asPaddingValues(),
+            contentPadding =
+                LocalPlayerAwareWindowInsets.current.union(WindowInsets.ime)
+                    .asPaddingValues(),
             modifier = Modifier.fillMaxSize(),
         ) {
             if (!isSearching) {
@@ -446,7 +447,7 @@ fun SpotifyPlaylistScreen(
                                                 spotColor =
                                                     gradientColors.getOrNull(0)?.copy(alpha = 0.5f)
                                                         ?: MaterialTheme.colorScheme.primary.copy(
-                                                            alpha = 0.3f
+                                                            alpha = 0.3f,
                                                         ),
                                             ),
                                     shape = RoundedCornerShape(16.dp),
@@ -514,11 +515,12 @@ fun SpotifyPlaylistScreen(
                                 val trackCount = currentPlaylist.tracks?.total ?: tracks.size
                                 MetadataChip(
                                     icon = R.drawable.music_note,
-                                    text = pluralStringResource(
-                                        R.plurals.n_song,
-                                        trackCount,
-                                        trackCount
-                                    ),
+                                    text =
+                                        pluralStringResource(
+                                            R.plurals.n_song,
+                                            trackCount,
+                                            trackCount,
+                                        ),
                                 )
 
                                 if (loadedDurationMs > 0L) {
@@ -835,22 +837,22 @@ private fun SpotifyTrack.isResolvedAs(mediaMetadata: MediaMetadata?): Boolean {
     val titleMatches = name.equals(mediaMetadata.title, ignoreCase = true)
     val durationMatches =
         durationMs <= 0 ||
-                mediaMetadata.duration <= 0 ||
-                abs(durationMs.toLong() - mediaMetadata.duration * 1000L) <= 1_000L
+            mediaMetadata.duration <= 0 ||
+            abs(durationMs.toLong() - mediaMetadata.duration * 1000L) <= 1_000L
     val albumMatches =
         album?.let { spotifyAlbum ->
             val currentAlbum = mediaMetadata.album ?: return false
             spotifyAlbum.id.isNotBlank() && spotifyAlbum.id == currentAlbum.id ||
-                    spotifyAlbum.name.equals(currentAlbum.title, ignoreCase = true)
+                spotifyAlbum.name.equals(currentAlbum.title, ignoreCase = true)
         } ?: true
     val artistMatches =
         artists.isEmpty() ||
-                mediaMetadata.artists.isEmpty() ||
-                artists.any { spotifyArtist ->
-                    mediaMetadata.artists.any { artist ->
-                        spotifyArtist.name.equals(artist.name, ignoreCase = true)
-                    }
+            mediaMetadata.artists.isEmpty() ||
+            artists.any { spotifyArtist ->
+                mediaMetadata.artists.any { artist ->
+                    spotifyArtist.name.equals(artist.name, ignoreCase = true)
                 }
+            }
     val thumbnailMatches =
         SpotifyMapper.getTrackThumbnail(this)?.let { thumbnail ->
             thumbnail == mediaMetadata.thumbnailUrl

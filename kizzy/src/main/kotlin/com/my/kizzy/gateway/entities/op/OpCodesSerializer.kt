@@ -16,7 +16,10 @@ class OpCodeSerializer : KSerializer<OpCode> {
         return OpCode.values().firstOrNull { it.value == opCode } ?: throw IllegalArgumentException("Unknown OpCode $opCode")
     }
 
-    override fun serialize(encoder: Encoder, value: OpCode) {
+    override fun serialize(
+        encoder: Encoder,
+        value: OpCode,
+    ) {
         encoder.encodeInt(value.value)
     }
 }

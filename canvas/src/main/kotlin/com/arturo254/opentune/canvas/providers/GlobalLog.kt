@@ -4,8 +4,6 @@
  * Licensed Under GPL-3.0 | see git history for contributors
  */
 
-
-
 package com.arturo254.opentune.canvas.providers
 
 import android.util.Log
@@ -24,7 +22,11 @@ object GlobalLog {
 
     private val timeFormat = SimpleDateFormat("HH:mm:ss.SSS", Locale.getDefault())
 
-    fun append(level: Int, tag: String?, message: String) {
+    fun append(
+        level: Int,
+        tag: String?,
+        message: String,
+    ) {
         val entry = LogEntry(System.currentTimeMillis(), level, tag, message)
         val new = (_logs.value + entry).takeLast(MAX_ENTRIES)
         _logs.value = new
@@ -36,14 +38,15 @@ object GlobalLog {
 
     fun format(entry: LogEntry): String {
         val ts = timeFormat.format(Date(entry.time))
-        val lvl = when (entry.level) {
-            Log.VERBOSE -> "V"
-            Log.DEBUG -> "D"
-            Log.INFO -> "I"
-            Log.WARN -> "W"
-            Log.ERROR -> "E"
-            else -> "?"
-        }
+        val lvl =
+            when (entry.level) {
+                Log.VERBOSE -> "V"
+                Log.DEBUG -> "D"
+                Log.INFO -> "I"
+                Log.WARN -> "W"
+                Log.ERROR -> "E"
+                else -> "?"
+            }
         val tag = entry.tag ?: ""
         return "[$ts] $lvl/$tag: ${entry.message}"
     }
@@ -51,7 +54,12 @@ object GlobalLog {
 
 /** Timber Tree that forwards logs to GlobalLog */
 class GlobalLogTree : Timber.Tree() {
-    override fun log(priority: Int, tag: String?, message: String, t: Throwable?) {
+    override fun log(
+        priority: Int,
+        tag: String?,
+        message: String,
+        t: Throwable?,
+    ) {
         try {
             val final = if (t != null) "$message\n$t" else message
             GlobalLog.append(priority, tag, final)

@@ -11,6 +11,9 @@ import androidx.compose.runtime.Immutable
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.Chenkham.Echofy.utils.reportException
+import com.arturo254.opentune.spotify.models.SpotifyPlaylist
+import com.arturo254.opentune.spotify.models.SpotifyTrack
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
@@ -19,57 +22,54 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import com.arturo254.opentune.spotify.models.SpotifyPlaylist
-import com.arturo254.opentune.spotify.models.SpotifyTrack
-import com.Chenkham.Echofy.utils.reportException
 import javax.inject.Inject
 
 @HiltViewModel
 class SpotifyPlaylistViewModel
-@Inject
-constructor(
-    savedStateHandle: SavedStateHandle,
-    private val repository: SpotifyLibraryRepository,
-) : ViewModel() {
-    private val playlistId: String = savedStateHandle.get<String>("playlistId").orEmpty()
+    @Inject
+    constructor(
+        savedStateHandle: SavedStateHandle,
+        private val repository: SpotifyLibraryRepository,
+    ) : ViewModel() {
+        private val playlistId: String = savedStateHandle.get<String>("playlistId").orEmpty()
 
-    private val _uiState = MutableStateFlow(SpotifyPlaylistUiState(isLoading = true))
-    val uiState: StateFlow<SpotifyPlaylistUiState> = _uiState.asStateFlow()
+        private val _uiState = MutableStateFlow(SpotifyPlaylistUiState(isLoading = true))
+        val uiState: StateFlow<SpotifyPlaylistUiState> = _uiState.asStateFlow()
 
-    init {
-        reload()
-    }
-
-    fun reload() {
-        if (playlistId.isBlank()) {
-            _uiState.value = SpotifyPlaylistUiState(errorMessage = "Missing Spotify playlist")
-            return
+        init {
+            reload()
         }
-        viewModelScope.launch(Dispatchers.IO) {
-            _uiState.update { it.copy(isLoading = true, errorMessage = null) }
-            try {
-                val playlist = repository.playlist(playlistId)
-                val tracks = repository.playlistTracks(playlistId)
-                _uiState.value =
-                    SpotifyPlaylistUiState(
-                        playlist = playlist,
-                        tracks = tracks,
-                        isLoading = false,
-                    )
-            } catch (error: CancellationException) {
-                throw error
-            } catch (error: Throwable) {
-                reportException(error)
-                _uiState.update {
-                    it.copy(
-                        isLoading = false,
-                        errorMessage = error.message,
-                    )
+
+        fun reload() {
+            if (playlistId.isBlank()) {
+                _uiState.value = SpotifyPlaylistUiState(errorMessage = "Missing Spotify playlist")
+                return
+            }
+            viewModelScope.launch(Dispatchers.IO) {
+                _uiState.update { it.copy(isLoading = true, errorMessage = null) }
+                try {
+                    val playlist = repository.playlist(playlistId)
+                    val tracks = repository.playlistTracks(playlistId)
+                    _uiState.value =
+                        SpotifyPlaylistUiState(
+                            playlist = playlist,
+                            tracks = tracks,
+                            isLoading = false,
+                        )
+                } catch (error: CancellationException) {
+                    throw error
+                } catch (error: Throwable) {
+                    reportException(error)
+                    _uiState.update {
+                        it.copy(
+                            isLoading = false,
+                            errorMessage = error.message,
+                        )
+                    }
                 }
             }
         }
     }
-}
 
 @Immutable
 data class SpotifyPlaylistUiState(

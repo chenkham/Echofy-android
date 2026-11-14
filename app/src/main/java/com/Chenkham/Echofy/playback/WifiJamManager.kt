@@ -15,8 +15,8 @@ import java.net.Socket
 
 @Serializable
 data class WifiJamEvent(
-    val type: String,          // "SYNC", "PLAY", "PAUSE", "NEXT", "PREV", "SEEK"
-    val mediaId: String = "",  // Current videoId/mediaId
+    val type: String, // "SYNC", "PLAY", "PAUSE", "NEXT", "PREV", "SEEK"
+    val mediaId: String = "", // Current videoId/mediaId
     val positionMs: Long = 0L, // Current playback position
     val playbackSpeed: Float = 1f,
 )
@@ -25,7 +25,6 @@ data class WifiJamEvent(
  * Handles dependency-free local network listening together using raw TCP sockets.
  */
 class WifiJamManager(private val scope: CoroutineScope) {
-
     private val SERVER_PORT = 50505
 
     // State exposing connection info
@@ -62,24 +61,25 @@ class WifiJamManager(private val scope: CoroutineScope) {
         _isHost.value = true
         _connectedClientsCount.value = 0
 
-        hostJob = scope.launch(Dispatchers.IO) {
-            try {
-                serverSocket = ServerSocket(SERVER_PORT)
-                Timber.tag("WifiJam").d("Host server started on port $SERVER_PORT")
+        hostJob =
+            scope.launch(Dispatchers.IO) {
+                try {
+                    serverSocket = ServerSocket(SERVER_PORT)
+                    Timber.tag("WifiJam").d("Host server started on port $SERVER_PORT")
 
-                while (isActive) {
-                    val client = serverSocket?.accept() ?: break
-                    Timber.tag("WifiJam").d("Client connected: ${client.inetAddress.hostAddress}")
-                    handleClientConnection(client)
+                    while (isActive) {
+                        val client = serverSocket?.accept() ?: break
+                        Timber.tag("WifiJam").d("Client connected: ${client.inetAddress.hostAddress}")
+                        handleClientConnection(client)
+                    }
+                } catch (e: Exception) {
+                    if (e !is java.net.SocketException) {
+                        Timber.tag("WifiJam").e(e, "Host server error")
+                    }
+                } finally {
+                    _isHost.value = false
                 }
-            } catch (e: Exception) {
-                if (e !is java.net.SocketException) {
-                    Timber.tag("WifiJam").e(e, "Host server error")
-                }
-            } finally {
-                _isHost.value = false
             }
-        }
     }
 
     private fun handleClientConnection(client: Socket) {
@@ -87,15 +87,15 @@ class WifiJamManager(private val scope: CoroutineScope) {
             try {
                 val reader = BufferedReader(InputStreamReader(client.inputStream))
                 val writer = PrintWriter(client.outputStream, true)
-                
+
                 synchronized(clientWriters) {
                     clientWriters.add(writer)
                     _connectedClientsCount.value = clientWriters.size
                 }
 
-                // Wait, if we want Guests to send commands (like PLAY/PAUSE/SEEK), 
+                // Wait, if we want Guests to send commands (like PLAY/PAUSE/SEEK),
                 // we'd read from `reader` here and broadcast it.
-                // The user requested: "pause,next,previous... restricted". "restricted" to host? 
+                // The user requested: "pause,next,previous... restricted". "restricted" to host?
                 // Wait, the user specifically answered "1. restricted" which means Guest CANNOT control playback.
                 // So the host ignores any read lines from the guest, except maybe a "PING" or just waits for disconnect.
 
@@ -107,13 +107,15 @@ class WifiJamManager(private val scope: CoroutineScope) {
                     }
                     // Guest commands ignored based on user preference (restricted mode).
                 }
-
             } catch (e: Exception) {
                 Timber.tag("WifiJam").w(e, "Client disconnected abruptly")
             } finally {
                 synchronized(clientWriters) {
                     clientWriters.removeIf { it.checkError() }
-                    try { client.close() } catch (ignored: Exception) {}
+                    try {
+                        client.close()
+                    } catch (ignored: Exception) {
+                    }
                     _connectedClientsCount.value = clientWriters.size
                 }
             }
@@ -129,35 +131,39 @@ class WifiJamManager(private val scope: CoroutineScope) {
 
         _isGuest.value = true
 
-        guestJob = scope.launch(Dispatchers.IO) {
-            try {
-                guestSocket = Socket(hostIp, SERVER_PORT)
-                guestWriter = PrintWriter(guestSocket!!.outputStream, true)
-                val reader = BufferedReader(InputStreamReader(guestSocket!!.inputStream))
-                
-                Timber.tag("WifiJam").d("Connected to host at $hostIp")
+        guestJob =
+            scope.launch(Dispatchers.IO) {
+                try {
+                    guestSocket = Socket(hostIp, SERVER_PORT)
+                    guestWriter = PrintWriter(guestSocket!!.outputStream, true)
+                    val reader = BufferedReader(InputStreamReader(guestSocket!!.inputStream))
 
-                while (isActive) {
-                    val message = reader.readLine()
-                    if (message == null) {
-                        Timber.tag("WifiJam").d("Host disconnected.")
-                        break
+                    Timber.tag("WifiJam").d("Connected to host at $hostIp")
+
+                    while (isActive) {
+                        val message = reader.readLine()
+                        if (message == null) {
+                            Timber.tag("WifiJam").d("Host disconnected.")
+                            break
+                        }
+
+                        try {
+                            val event = Json.decodeFromString<WifiJamEvent>(message)
+                            _incomingEvents.value = event
+                        } catch (e: Exception) {
+                            Timber.tag("WifiJam").e(e, "Failed to parse incoming Jam Event: $message")
+                        }
                     }
-                    
+                } catch (e: Exception) {
+                    Timber.tag("WifiJam").e(e, "Failed to connect to host")
+                } finally {
+                    _isGuest.value = false
                     try {
-                        val event = Json.decodeFromString<WifiJamEvent>(message)
-                        _incomingEvents.value = event
-                    } catch (e: Exception) {
-                        Timber.tag("WifiJam").e(e, "Failed to parse incoming Jam Event: $message")
+                        guestSocket?.close()
+                    } catch (ignored: Exception) {
                     }
                 }
-            } catch (e: Exception) {
-                Timber.tag("WifiJam").e(e, "Failed to connect to host")
-            } finally {
-                _isGuest.value = false
-                try { guestSocket?.close() } catch (ignored: Exception) {}
             }
-        }
     }
 
     /**
@@ -165,13 +171,14 @@ class WifiJamManager(private val scope: CoroutineScope) {
      */
     fun broadcastEvent(event: WifiJamEvent) {
         if (!_isHost.value) return
-        
+
         scope.launch(Dispatchers.IO) {
-            val message = try {
-                Json.encodeToString(event)
-            } catch (e: Exception) {
-                return@launch
-            }
+            val message =
+                try {
+                    Json.encodeToString(event)
+                } catch (e: Exception) {
+                    return@launch
+                }
 
             synchronized(clientWriters) {
                 val iterator = clientWriters.iterator()
@@ -196,11 +203,22 @@ class WifiJamManager(private val scope: CoroutineScope) {
         hostJob?.cancel()
         guestJob?.cancel()
 
-        try { serverSocket?.close() } catch (ignored: Exception) {}
-        try { guestSocket?.close() } catch (ignored: Exception) {}
-        
+        try {
+            serverSocket?.close()
+        } catch (ignored: Exception) {
+        }
+        try {
+            guestSocket?.close()
+        } catch (ignored: Exception) {
+        }
+
         synchronized(clientWriters) {
-            clientWriters.forEach { try { it.close() } catch (ignored: Exception){} }
+            clientWriters.forEach {
+                try {
+                    it.close()
+                } catch (ignored: Exception) {
+                }
+            }
             clientWriters.clear()
         }
     }

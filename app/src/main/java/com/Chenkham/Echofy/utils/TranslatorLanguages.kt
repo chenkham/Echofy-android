@@ -35,7 +35,7 @@ object TranslatorLanguages {
             TranslatorLang("Chinese", "CHINESE"),
             TranslatorLang("Korean", "KOREAN"),
             TranslatorLang("French", "FRENCH"),
-            TranslatorLang("German", "GERMAN")
+            TranslatorLang("German", "GERMAN"),
         )
     }
 }

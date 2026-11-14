@@ -1,6 +1,11 @@
 package com.Chenkham.Echofy.ui.screens.settings
 
+import android.Manifest
 import android.content.Context
+import android.content.pm.PackageManager
+import android.os.Build
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.AlertDialog
@@ -20,6 +25,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
+import androidx.core.content.ContextCompat
 import androidx.navigation.NavController
 import com.Chenkham.Echofy.R
 import com.Chenkham.Echofy.ai.AiPresets
@@ -32,13 +38,6 @@ import com.Chenkham.Echofy.ui.component.SwitchPreference
 import com.Chenkham.Echofy.ui.screens.ai.MultiProviderSettingsDialog
 import com.Chenkham.Echofy.utils.rememberPreference
 import kotlinx.coroutines.launch
-
-import android.Manifest
-import android.content.pm.PackageManager
-import android.os.Build
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
-import androidx.core.content.ContextCompat
 
 /**
  * Dedicated AI & Voice Settings Screen.
@@ -77,26 +76,28 @@ fun AiSettings(
     /** Which toggle triggered the permission request, so the grant enables that one. */
     var pendingEnableDrivingMode by remember { mutableStateOf(false) }
 
-    val permissionsToRequest = mutableListOf(Manifest.permission.RECORD_AUDIO).apply {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            add(Manifest.permission.POST_NOTIFICATIONS)
-        }
-    }.toTypedArray()
+    val permissionsToRequest =
+        mutableListOf(Manifest.permission.RECORD_AUDIO).apply {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                add(Manifest.permission.POST_NOTIFICATIONS)
+            }
+        }.toTypedArray()
 
-    val permissionLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.RequestMultiplePermissions()
-    ) { results ->
-        val audioGranted = results[Manifest.permission.RECORD_AUDIO] == true
-        val forDrivingMode = pendingEnableDrivingMode
-        pendingEnableDrivingMode = false
-        coroutineScope.launch {
-            if (forDrivingMode) {
-                aiSettingsDataStore.setDrivingModeEnabled(audioGranted)
-            } else {
-                aiSettingsDataStore.setWakeWordEnabled(audioGranted)
+    val permissionLauncher =
+        rememberLauncherForActivityResult(
+            contract = ActivityResultContracts.RequestMultiplePermissions(),
+        ) { results ->
+            val audioGranted = results[Manifest.permission.RECORD_AUDIO] == true
+            val forDrivingMode = pendingEnableDrivingMode
+            pendingEnableDrivingMode = false
+            coroutineScope.launch {
+                if (forDrivingMode) {
+                    aiSettingsDataStore.setDrivingModeEnabled(audioGranted)
+                } else {
+                    aiSettingsDataStore.setWakeWordEnabled(audioGranted)
+                }
             }
         }
-    }
 
     val (voiceControlEnabled, setVoiceControlEnabled) = rememberPreference(VoiceControlEnabledKey, defaultValue = false)
 
@@ -108,83 +109,87 @@ fun AiSettings(
         // Section 1: Voice Activation
         SettingsGeneralCategory(
             title = "Voice Activation",
-            items = listOf(
-                {
-                    SwitchPreference(
-                        title = { Text("Google Assistant & Gemini Voice Control") },
-                        description = if (drivingModeEnabled) {
-                            "Required by Driving Mode \u2014 turn Driving Mode off to disable"
-                        } else {
-                            "Say \"Hey Google, play [song] on Echofy\" to start instant music playback via Google Assistant or Gemini."
-                        },
-                        icon = { Icon(painterResource(R.drawable.auto_awesome), contentDescription = null) },
-                        checked = wakeWordEnabled,
-                        // Driving mode depends on the assistant, so it is locked on.
-                        isEnabled = !drivingModeEnabled,
-                        onCheckedChange = { checked ->
-                            if (!checked) {
-                                coroutineScope.launch {
-                                    aiSettingsDataStore.setWakeWordEnabled(false)
-                                }
-                            } else {
-                                val audioPermission = ContextCompat.checkSelfPermission(
-                                    context,
-                                    Manifest.permission.RECORD_AUDIO
-                                ) == PackageManager.PERMISSION_GRANTED
-
-                                if (audioPermission) {
+            items =
+                listOf(
+                    {
+                        SwitchPreference(
+                            title = { Text("Google Assistant & Gemini Voice Control") },
+                            description =
+                                if (drivingModeEnabled) {
+                                    "Required by Driving Mode \u2014 turn Driving Mode off to disable"
+                                } else {
+                                    "Say \"Hey Google, play [song] on Echofy\" to start instant music playback via Google Assistant or Gemini."
+                                },
+                            icon = { Icon(painterResource(R.drawable.auto_awesome), contentDescription = null) },
+                            checked = wakeWordEnabled,
+                            // Driving mode depends on the assistant, so it is locked on.
+                            isEnabled = !drivingModeEnabled,
+                            onCheckedChange = { checked ->
+                                if (!checked) {
                                     coroutineScope.launch {
-                                        aiSettingsDataStore.setWakeWordEnabled(true)
+                                        aiSettingsDataStore.setWakeWordEnabled(false)
                                     }
                                 } else {
-                                    pendingEnableDrivingMode = false
-                                    showPermissionRationaleDialog = true
-                                }
-                            }
-                        }
-                    )
-                },
-                {
-                    SwitchPreference(
-                        title = { Text("Driving Mode") },
-                        description = "Hands-free: no wake word needed, just speak your command. Best used alone in a quiet car \u2014 background voices may trigger it.",
-                        icon = { Icon(painterResource(R.drawable.assistant), contentDescription = null) },
-                        checked = drivingModeEnabled,
-                        onCheckedChange = { checked ->
-                            if (!checked) {
-                                coroutineScope.launch {
-                                    aiSettingsDataStore.setDrivingModeEnabled(false)
-                                }
-                            } else {
-                                val audioPermission = ContextCompat.checkSelfPermission(
-                                    context,
-                                    Manifest.permission.RECORD_AUDIO
-                                ) == PackageManager.PERMISSION_GRANTED
+                                    val audioPermission =
+                                        ContextCompat.checkSelfPermission(
+                                            context,
+                                            Manifest.permission.RECORD_AUDIO,
+                                        ) == PackageManager.PERMISSION_GRANTED
 
-                                if (audioPermission) {
-                                    // Explain the trade-offs before enabling always-on
-                                    // recognition, rather than silently taking the mic.
-                                    showDrivingModeInfoDialog = true
-                                } else {
-                                    // Remember what the user actually asked for so the
-                                    // permission callback enables the right toggle.
-                                    pendingEnableDrivingMode = true
-                                    showPermissionRationaleDialog = true
+                                    if (audioPermission) {
+                                        coroutineScope.launch {
+                                            aiSettingsDataStore.setWakeWordEnabled(true)
+                                        }
+                                    } else {
+                                        pendingEnableDrivingMode = false
+                                        showPermissionRationaleDialog = true
+                                    }
                                 }
-                            }
-                        }
-                    )
-                },
-                {
-                    SwitchPreference(
-                        title = { Text("Google Assistant Integration") },
-                        description = "Let Google Assistant play music here, e.g. \"Play Bohemian Rhapsody on Echofy\"",
-                        icon = { Icon(painterResource(R.drawable.settings), contentDescription = null) },
-                        checked = voiceControlEnabled,
-                        onCheckedChange = setVoiceControlEnabled
-                    )
-                }
-            )
+                            },
+                        )
+                    },
+                    {
+                        SwitchPreference(
+                            title = { Text("Driving Mode") },
+                            description = "Hands-free: no wake word needed, just speak your command. Best used alone in a quiet car \u2014 background voices may trigger it.",
+                            icon = { Icon(painterResource(R.drawable.assistant), contentDescription = null) },
+                            checked = drivingModeEnabled,
+                            onCheckedChange = { checked ->
+                                if (!checked) {
+                                    coroutineScope.launch {
+                                        aiSettingsDataStore.setDrivingModeEnabled(false)
+                                    }
+                                } else {
+                                    val audioPermission =
+                                        ContextCompat.checkSelfPermission(
+                                            context,
+                                            Manifest.permission.RECORD_AUDIO,
+                                        ) == PackageManager.PERMISSION_GRANTED
+
+                                    if (audioPermission) {
+                                        // Explain the trade-offs before enabling always-on
+                                        // recognition, rather than silently taking the mic.
+                                        showDrivingModeInfoDialog = true
+                                    } else {
+                                        // Remember what the user actually asked for so the
+                                        // permission callback enables the right toggle.
+                                        pendingEnableDrivingMode = true
+                                        showPermissionRationaleDialog = true
+                                    }
+                                }
+                            },
+                        )
+                    },
+                    {
+                        SwitchPreference(
+                            title = { Text("Google Assistant Integration") },
+                            description = "Let Google Assistant play music here, e.g. \"Play Bohemian Rhapsody on Echofy\"",
+                            icon = { Icon(painterResource(R.drawable.settings), contentDescription = null) },
+                            checked = voiceControlEnabled,
+                            onCheckedChange = setVoiceControlEnabled,
+                        )
+                    },
+                ),
         )
 
         Spacer(Modifier.padding(8.dp))
@@ -192,16 +197,17 @@ fun AiSettings(
         // Section 2: AI Provider
         SettingsGeneralCategory(
             title = "AI Provider",
-            items = listOf(
-                {
-                    PreferenceEntry(
-                        title = { Text("Manage AI Providers") },
-                        description = activeProfileText,
-                        icon = { Icon(painterResource(R.drawable.tune), contentDescription = null) },
-                        onClick = { showProviderDialog = true }
-                    )
-                }
-            )
+            items =
+                listOf(
+                    {
+                        PreferenceEntry(
+                            title = { Text("Manage AI Providers") },
+                            description = activeProfileText,
+                            icon = { Icon(painterResource(R.drawable.tune), contentDescription = null) },
+                            onClick = { showProviderDialog = true },
+                        )
+                    },
+                ),
         )
 
         Spacer(Modifier.padding(8.dp))
@@ -209,47 +215,48 @@ fun AiSettings(
         // Section 3: AI Behavior
         SettingsGeneralCategory(
             title = "AI Behavior",
-            items = listOf(
-                {
-                    SwitchPreference(
-                        title = { Text("Voice Replies (Text-to-Speech)") },
-                        description = "Read AI responses aloud using system voice synthesizer",
-                        icon = { Icon(painterResource(R.drawable.volume_up), contentDescription = null) },
-                        checked = ttsEnabled,
-                        onCheckedChange = { checked ->
-                            coroutineScope.launch {
-                                aiSettingsDataStore.setTtsEnabled(checked)
-                            }
-                        }
-                    )
-                },
-                {
-                    SwitchPreference(
-                        title = { Text("Include Listening History") },
-                        description = "Provide recent history context to AI for personalized chat",
-                        icon = { Icon(painterResource(R.drawable.info), contentDescription = null) },
-                        checked = includeHistoryContext,
-                        onCheckedChange = { checked ->
-                            coroutineScope.launch {
-                                aiSettingsDataStore.setIncludeHistoryContextEnabled(checked)
-                            }
-                        }
-                    )
-                },
-                {
-                    SwitchPreference(
-                        title = { Text("Include Liked Songs") },
-                        description = "Provide liked songs context to AI for better recommendations",
-                        icon = { Icon(painterResource(R.drawable.info), contentDescription = null) },
-                        checked = includeLikesContext,
-                        onCheckedChange = { checked ->
-                            coroutineScope.launch {
-                                aiSettingsDataStore.setIncludeLikesContextEnabled(checked)
-                            }
-                        }
-                    )
-                }
-            )
+            items =
+                listOf(
+                    {
+                        SwitchPreference(
+                            title = { Text("Voice Replies (Text-to-Speech)") },
+                            description = "Read AI responses aloud using system voice synthesizer",
+                            icon = { Icon(painterResource(R.drawable.volume_up), contentDescription = null) },
+                            checked = ttsEnabled,
+                            onCheckedChange = { checked ->
+                                coroutineScope.launch {
+                                    aiSettingsDataStore.setTtsEnabled(checked)
+                                }
+                            },
+                        )
+                    },
+                    {
+                        SwitchPreference(
+                            title = { Text("Include Listening History") },
+                            description = "Provide recent history context to AI for personalized chat",
+                            icon = { Icon(painterResource(R.drawable.info), contentDescription = null) },
+                            checked = includeHistoryContext,
+                            onCheckedChange = { checked ->
+                                coroutineScope.launch {
+                                    aiSettingsDataStore.setIncludeHistoryContextEnabled(checked)
+                                }
+                            },
+                        )
+                    },
+                    {
+                        SwitchPreference(
+                            title = { Text("Include Liked Songs") },
+                            description = "Provide liked songs context to AI for better recommendations",
+                            icon = { Icon(painterResource(R.drawable.info), contentDescription = null) },
+                            checked = includeLikesContext,
+                            onCheckedChange = { checked ->
+                                coroutineScope.launch {
+                                    aiSettingsDataStore.setIncludeLikesContextEnabled(checked)
+                                }
+                            },
+                        )
+                    },
+                ),
         )
 
         Spacer(Modifier.padding(8.dp))
@@ -257,24 +264,25 @@ fun AiSettings(
         // Section 4: Data & Privacy
         SettingsGeneralCategory(
             title = "Data & Privacy",
-            items = listOf(
-                {
-                    PreferenceEntry(
-                        title = { Text("Clear All Chat History") },
-                        description = "Delete all saved AI chat sessions and messages",
-                        icon = { Icon(painterResource(R.drawable.delete), contentDescription = null) },
-                        onClick = { showClearHistoryDialog = true }
-                    )
-                },
-                {
-                    PreferenceEntry(
-                        title = { Text("Privacy Info") },
-                        description = "API keys are stored locally on-device and never shared.",
-                        icon = { Icon(painterResource(R.drawable.security), contentDescription = null) },
-                        onClick = null
-                    )
-                }
-            )
+            items =
+                listOf(
+                    {
+                        PreferenceEntry(
+                            title = { Text("Clear All Chat History") },
+                            description = "Delete all saved AI chat sessions and messages",
+                            icon = { Icon(painterResource(R.drawable.delete), contentDescription = null) },
+                            onClick = { showClearHistoryDialog = true },
+                        )
+                    },
+                    {
+                        PreferenceEntry(
+                            title = { Text("Privacy Info") },
+                            description = "API keys are stored locally on-device and never shared.",
+                            icon = { Icon(painterResource(R.drawable.security), contentDescription = null) },
+                            onClick = null,
+                        )
+                    },
+                ),
         )
     }
 
@@ -288,7 +296,7 @@ fun AiSettings(
                     aiSettingsDataStore.saveProfiles(updatedProfiles, newActiveId)
                 }
                 showProviderDialog = false
-            }
+            },
         )
     }
 
@@ -305,7 +313,7 @@ fun AiSettings(
                         aiChatPrefs.edit().clear().apply()
                         chatSessionsPrefs.edit().clear().apply()
                         showClearHistoryDialog = false
-                    }
+                    },
                 ) {
                     Text("Clear")
                 }
@@ -314,7 +322,7 @@ fun AiSettings(
                 TextButton(onClick = { showClearHistoryDialog = false }) {
                     Text("Cancel")
                 }
-            }
+            },
         )
     }
 
@@ -322,13 +330,17 @@ fun AiSettings(
         AlertDialog(
             onDismissRequest = { showPermissionRationaleDialog = false },
             title = { Text("Microphone Permission Required") },
-            text = { Text("Echofy needs microphone permission to listen for the 'Google Assistant & Gemini' wake word on-device while playing music. Audio is processed strictly locally on your device.") },
+            text = {
+                Text(
+                    "Echofy needs microphone permission to listen for the 'Google Assistant & Gemini' wake word on-device while playing music. Audio is processed strictly locally on your device.",
+                )
+            },
             confirmButton = {
                 TextButton(
                     onClick = {
                         showPermissionRationaleDialog = false
                         permissionLauncher.launch(permissionsToRequest)
-                    }
+                    },
                 ) {
                     Text("Grant Permission")
                 }
@@ -337,7 +349,7 @@ fun AiSettings(
                 TextButton(onClick = { showPermissionRationaleDialog = false }) {
                     Text("Cancel")
                 }
-            }
+            },
         )
     }
 
@@ -351,7 +363,7 @@ fun AiSettings(
                         "\"Google Assistant & Gemini\" wake word, so you never touch your phone.\n\n" +
                         "For best results, use it alone in a quiet car. Passengers " +
                         "talking, radio audio or road noise can be picked up as " +
-                        "commands.\n\nThe wake word stays enabled while Driving Mode is on."
+                        "commands.\n\nThe wake word stays enabled while Driving Mode is on.",
                 )
             },
             confirmButton = {
@@ -361,7 +373,7 @@ fun AiSettings(
                         coroutineScope.launch {
                             aiSettingsDataStore.setDrivingModeEnabled(true)
                         }
-                    }
+                    },
                 ) {
                     Text("Turn On")
                 }
@@ -370,7 +382,7 @@ fun AiSettings(
                 TextButton(onClick = { showDrivingModeInfoDialog = false }) {
                     Text("Cancel")
                 }
-            }
+            },
         )
     }
 }

@@ -1,5 +1,6 @@
 package com.Chenkham.Echofy.ui.component
 
+import android.content.Intent
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -10,7 +11,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import android.content.Intent
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -63,9 +63,10 @@ fun SonglinkShareDialog(
     var failed by remember { mutableStateOf(false) }
 
     LaunchedEffect(videoId) {
-        val apiKey = withContext(Dispatchers.IO) {
-            context.dataStore[SonglinkApiKeyKey]?.takeIf { it.isNotBlank() }
-        }
+        val apiKey =
+            withContext(Dispatchers.IO) {
+                context.dataStore[SonglinkApiKeyKey]?.takeIf { it.isNotBlank() }
+            }
 
         Songlink.resolveYouTubeVideo(videoId, apiKey = apiKey)
             .onSuccess { links ->
@@ -112,17 +113,19 @@ fun SonglinkShareDialog(
                 )
             }
 
-            val echofyShareText = remember(videoId, songTitle, artistName) {
-                com.Chenkham.Echofy.utils.ShareUtils.buildTrackShareText(context, videoId, songTitle, artistName)
-            }
+            val echofyShareText =
+                remember(videoId, songTitle, artistName) {
+                    com.Chenkham.Echofy.utils.ShareUtils.buildTrackShareText(context, videoId, songTitle, artistName)
+                }
             ShareOptionRow(
                 label = "Share Echofy Universal Link",
                 icon = R.drawable.share,
             ) {
-                val intent = Intent(Intent.ACTION_SEND).apply {
-                    type = "text/plain"
-                    putExtra(Intent.EXTRA_TEXT, echofyShareText)
-                }
+                val intent =
+                    Intent(Intent.ACTION_SEND).apply {
+                        type = "text/plain"
+                        putExtra(Intent.EXTRA_TEXT, echofyShareText)
+                    }
                 context.startActivity(Intent.createChooser(intent, null))
                 onDismiss()
             }
@@ -132,18 +135,19 @@ fun SonglinkShareDialog(
             Spacer(Modifier.height(8.dp))
 
             when {
-                isLoading -> Row(
-                    modifier = Modifier.fillMaxWidth().padding(vertical = 16.dp),
-                    horizontalArrangement = Arrangement.Center,
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    CircularProgressIndicator(modifier = Modifier.size(24.dp))
-                    Spacer(Modifier.width(12.dp))
-                    Text(
-                        text = "Finding links…",
-                        style = MaterialTheme.typography.bodyMedium,
-                    )
-                }
+                isLoading ->
+                    Row(
+                        modifier = Modifier.fillMaxWidth().padding(vertical = 16.dp),
+                        horizontalArrangement = Arrangement.Center,
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        CircularProgressIndicator(modifier = Modifier.size(24.dp))
+                        Spacer(Modifier.width(12.dp))
+                        Text(
+                            text = "Finding links…",
+                            style = MaterialTheme.typography.bodyMedium,
+                        )
+                    }
 
                 failed -> {
                     Text(
@@ -210,10 +214,11 @@ private fun ShareOptionRow(
     onClick: () -> Unit,
 ) {
     Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .combinedClickable(onLongClick = onLongClick, onClick = onClick)
-            .padding(vertical = 12.dp),
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .combinedClickable(onLongClick = onLongClick, onClick = onClick)
+                .padding(vertical = 12.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Icon(
@@ -230,7 +235,10 @@ private fun ShareOptionRow(
     }
 }
 
-private fun openUrl(context: android.content.Context, url: String) {
+private fun openUrl(
+    context: android.content.Context,
+    url: String,
+) {
     runCatching {
         context.startActivity(
             android.content.Intent(
@@ -247,20 +255,21 @@ private fun shareText(
     songTitle: String,
     artistName: String,
 ) {
-    val intent = android.content.Intent().apply {
-        action = android.content.Intent.ACTION_SEND
-        type = "text/plain"
-        putExtra(
-            android.content.Intent.EXTRA_TEXT,
-            buildString {
-                append("Check out this song on Echofy!\n")
-                append(songTitle)
-                if (artistName.isNotBlank()) append(" - $artistName")
-                append("\n")
-                append(url)
-            },
-        )
-    }
+    val intent =
+        android.content.Intent().apply {
+            action = android.content.Intent.ACTION_SEND
+            type = "text/plain"
+            putExtra(
+                android.content.Intent.EXTRA_TEXT,
+                buildString {
+                    append("Check out this song on Echofy!\n")
+                    append(songTitle)
+                    if (artistName.isNotBlank()) append(" - $artistName")
+                    append("\n")
+                    append(url)
+                },
+            )
+        }
     context.startActivity(
         android.content.Intent.createChooser(intent, context.getString(R.string.share)),
     )

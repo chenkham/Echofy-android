@@ -14,20 +14,19 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
-import androidx.compose.ui.graphics.Color
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -36,17 +35,17 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import com.Chenkham.Echofy.R
-import com.arturo254.opentune.innertube.utils.PoTokenGenerator
 import com.Chenkham.Echofy.ui.component.IconButton
+import com.arturo254.opentune.innertube.utils.PoTokenGenerator
 
 class PoTokenExtractionActivity : ComponentActivity() {
-
     companion object {
         const val EXTRA_SOURCE_URL = "source_url"
         const val EXTRA_GVS_TOKEN = "gvs_token"
@@ -100,7 +99,10 @@ class PoTokenExtractionActivity : ComponentActivity() {
             return if (path.isBlank()) "/" else path
         }
 
-        fun isAtDestination(current: String, destination: String): Boolean {
+        fun isAtDestination(
+            current: String,
+            destination: String,
+        ): Boolean {
             if (current.isBlank() || destination.isBlank()) return false
             val currentHost = normalizeHost(current)
             val destinationHost = normalizeHost(destination)
@@ -134,11 +136,12 @@ class PoTokenExtractionActivity : ComponentActivity() {
 
         fun closeCanceled(error: String? = null) {
             isExtracting = false
-            val data = Intent().apply {
-                if (!error.isNullOrBlank()) {
-                    putExtra(EXTRA_ERROR, error)
+            val data =
+                Intent().apply {
+                    if (!error.isNullOrBlank()) {
+                        putExtra(EXTRA_ERROR, error)
+                    }
                 }
-            }
             setResult(Activity.RESULT_CANCELED, data)
             finish()
         }
@@ -156,7 +159,7 @@ class PoTokenExtractionActivity : ComponentActivity() {
                     putExtra(EXTRA_VISITOR_DATA, visitorData)
                     putExtra(EXTRA_GVS_TOKEN, gvsToken)
                     putExtra(EXTRA_PLAYER_TOKEN, playerToken)
-                }
+                },
             )
             finish()
         }
@@ -174,7 +177,7 @@ class PoTokenExtractionActivity : ComponentActivity() {
             extractedGvsToken = null
 
             webView?.evaluateJavascript(
-                "(function(){try{return window.yt?.config_?.VISITOR_DATA || window.ytcfg?.get?.('VISITOR_DATA') || '';}catch(e){return '';}})();"
+                "(function(){try{return window.yt?.config_?.VISITOR_DATA || window.ytcfg?.get?.('VISITOR_DATA') || '';}catch(e){return '';}})();",
             ) { result ->
                 val visitor = parseJsResult(result)
                 if (visitor.isNotBlank()) {
@@ -184,7 +187,7 @@ class PoTokenExtractionActivity : ComponentActivity() {
             }
 
             webView?.evaluateJavascript(
-                "(function(){try{var c=window.ytcfg;if(c&&c.get){var t=c.get('PO_TOKEN');if(t)return t;}var s=document.querySelectorAll('script');for(var i=0;i<s.length;i++){var m=s[i].textContent.match(/\"PO_TOKEN\":\"([^\"]+)\"/);if(m)return m[1];}return '';}catch(e){return '';}})();"
+                "(function(){try{var c=window.ytcfg;if(c&&c.get){var t=c.get('PO_TOKEN');if(t)return t;}var s=document.querySelectorAll('script');for(var i=0;i<s.length;i++){var m=s[i].textContent.match(/\"PO_TOKEN\":\"([^\"]+)\"/);if(m)return m[1];}return '';}catch(e){return '';}})();",
             ) { result ->
                 val gvs = parseJsResult(result)
                 if (gvs.isNotBlank()) {
@@ -219,9 +222,10 @@ class PoTokenExtractionActivity : ComponentActivity() {
 
         Box(modifier = Modifier.fillMaxSize()) {
             AndroidView(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .windowInsetsPadding(WindowInsets.systemBars),
+                modifier =
+                    Modifier
+                        .fillMaxSize()
+                        .windowInsetsPadding(WindowInsets.systemBars),
                 factory = { ctx ->
                     WebView(ctx).apply {
                         val cookieManager = CookieManager.getInstance()
@@ -240,29 +244,36 @@ class PoTokenExtractionActivity : ComponentActivity() {
                         settings.builtInZoomControls = true
                         settings.displayZoomControls = false
 
-                        addJavascriptInterface(object {
-                            @JavascriptInterface
-                            fun onRetrieveVisitorData(newVisitorData: String?) {
-                                if (!newVisitorData.isNullOrBlank()) {
-                                    extractedVisitorData = newVisitorData
-                                    runOnUiThread { completeIfReady() }
+                        addJavascriptInterface(
+                            object {
+                                @JavascriptInterface
+                                fun onRetrieveVisitorData(newVisitorData: String?) {
+                                    if (!newVisitorData.isNullOrBlank()) {
+                                        extractedVisitorData = newVisitorData
+                                        runOnUiThread { completeIfReady() }
+                                    }
+                                }
+
+                                @JavascriptInterface
+                                fun onRetrievePoToken(newPoToken: String?) {
+                                    if (!newPoToken.isNullOrBlank()) {
+                                        extractedGvsToken = newPoToken
+                                        runOnUiThread { completeIfReady() }
+                                    }
+                                }
+                            },
+                            "Android",
+                        )
+
+                        webViewClient =
+                            object : WebViewClient() {
+                                override fun onPageFinished(
+                                    view: WebView,
+                                    url: String?,
+                                ) {
+                                    currentUrl = url.orEmpty()
                                 }
                             }
-
-                            @JavascriptInterface
-                            fun onRetrievePoToken(newPoToken: String?) {
-                                if (!newPoToken.isNullOrBlank()) {
-                                    extractedGvsToken = newPoToken
-                                    runOnUiThread { completeIfReady() }
-                                }
-                            }
-                        }, "Android")
-
-                        webViewClient = object : WebViewClient() {
-                            override fun onPageFinished(view: WebView, url: String?) {
-                                currentUrl = url.orEmpty()
-                            }
-                        }
 
                         loadUrl(targetUrl)
                         webView = this
@@ -272,23 +283,23 @@ class PoTokenExtractionActivity : ComponentActivity() {
                 update = { view ->
                     webView = view
                     activeWebView = view
-                }
+                },
             )
 
             TopAppBar(
-            colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent, scrolledContainerColor = Color.Transparent),
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent, scrolledContainerColor = Color.Transparent),
                 title = { Text(stringResource(R.string.extracting_from_url)) },
                 navigationIcon = {
                     IconButton(
                         onClick = { closeCanceled() },
-                        onLongClick = { closeCanceled() }
+                        onLongClick = { closeCanceled() },
                     ) {
                         Icon(
                             painter = painterResource(R.drawable.arrow_back),
                             contentDescription = null,
                         )
                     }
-                }
+                },
             )
 
             ExtendedFloatingActionButton(
@@ -298,7 +309,7 @@ class PoTokenExtractionActivity : ComponentActivity() {
                             stringResource(R.string.generating_tokens)
                         } else {
                             stringResource(R.string.regenerate_token)
-                        }
+                        },
                     )
                 },
                 icon = {
@@ -319,21 +330,24 @@ class PoTokenExtractionActivity : ComponentActivity() {
                         triggerExtraction()
                     }
                 },
-                modifier = Modifier
-                    .align(Alignment.BottomEnd)
-                    .windowInsetsPadding(WindowInsets.systemBars)
-                    .padding(16.dp),
+                modifier =
+                    Modifier
+                        .align(Alignment.BottomEnd)
+                        .windowInsetsPadding(WindowInsets.systemBars)
+                        .padding(16.dp),
                 expanded = true,
-                containerColor = if (canExtract) {
-                    MaterialTheme.colorScheme.primary
-                } else {
-                    MaterialTheme.colorScheme.surfaceVariant
-                },
-                contentColor = if (canExtract) {
-                    MaterialTheme.colorScheme.onPrimary
-                } else {
-                    MaterialTheme.colorScheme.onSurfaceVariant
-                },
+                containerColor =
+                    if (canExtract) {
+                        MaterialTheme.colorScheme.primary
+                    } else {
+                        MaterialTheme.colorScheme.surfaceVariant
+                    },
+                contentColor =
+                    if (canExtract) {
+                        MaterialTheme.colorScheme.onPrimary
+                    } else {
+                        MaterialTheme.colorScheme.onSurfaceVariant
+                    },
             )
         }
     }

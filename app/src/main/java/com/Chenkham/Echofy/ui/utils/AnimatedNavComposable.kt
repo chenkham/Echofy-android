@@ -17,9 +17,7 @@ import androidx.compose.ui.input.pointer.pointerInput
  * the screen underneath.
  */
 @Composable
-fun AnimatedVisibilityScope.TouchBlockingWrapper(
-    content: @Composable () -> Unit
-) {
+fun AnimatedVisibilityScope.TouchBlockingWrapper(content: @Composable () -> Unit) {
     // Only block touches while this screen is actually animating out. The previous version
     // read transition.currentState outside the derivedStateOf and compared targetState, so
     // the blocker could stay mounted after the animation settled and swallow the first tap
@@ -37,17 +35,18 @@ fun AnimatedVisibilityScope.TouchBlockingWrapper(
             // Invisible overlay that consumes all pointer events to prevent
             // taps from passing through to the screen behind this one.
             Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .pointerInput(Unit) {
-                        awaitPointerEventScope {
-                            while (true) {
-                                val event = awaitPointerEvent()
-                                // Consume all changes so nothing propagates
-                                event.changes.forEach { it.consume() }
+                modifier =
+                    Modifier
+                        .fillMaxSize()
+                        .pointerInput(Unit) {
+                            awaitPointerEventScope {
+                                while (true) {
+                                    val event = awaitPointerEvent()
+                                    // Consume all changes so nothing propagates
+                                    event.changes.forEach { it.consume() }
+                                }
                             }
-                        }
-                    }
+                        },
             )
         }
     }

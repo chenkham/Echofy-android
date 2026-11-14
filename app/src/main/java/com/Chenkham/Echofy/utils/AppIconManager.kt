@@ -11,7 +11,6 @@ import timber.log.Timber
  * the rest. Android reads the enabled alias to decide which icon the launcher shows.
  */
 object AppIconManager {
-
     fun currentIcon(context: Context): AppIcon {
         val pm = context.packageManager
         return AppIcon.entries.firstOrNull { icon ->
@@ -25,7 +24,10 @@ object AppIconManager {
      * the others are disabled so the launcher never sees zero enabled entry points,
      * which on some OEM launchers drops the icon entirely.
      */
-    fun applyIcon(context: Context, icon: AppIcon) {
+    fun applyIcon(
+        context: Context,
+        icon: AppIcon,
+    ) {
         val pm = context.packageManager
         runCatching {
             pm.setComponentEnabledSetting(
@@ -43,6 +45,5 @@ object AppIconManager {
         }.onFailure { Timber.e(it, "Failed to switch launcher icon to $icon") }
     }
 
-    private fun AppIcon.component(context: Context) =
-        ComponentName(context.packageName, aliasName)
+    private fun AppIcon.component(context: Context) = ComponentName(context.packageName, aliasName)
 }

@@ -10,9 +10,9 @@ import android.content.Context
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.json.Json
-import kotlinx.serialization.encodeToString
 import kotlinx.serialization.decodeFromString
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
 import timber.log.Timber
 import java.io.File
 import java.util.concurrent.ConcurrentHashMap
@@ -27,11 +27,10 @@ data class CachedCanvas(
     val type: String,
     val cachedAt: Long,
     val expiresAt: Long,
-    val filePath: String
+    val filePath: String,
 )
 
 object CanvasCacheManager {
-
     private const val CACHE_DIR = "canvas_video_cache"
     private const val METADATA_FILE = "canvas_metadata.json"
 
@@ -41,11 +40,12 @@ object CanvasCacheManager {
     private val memoryCache = ConcurrentHashMap<String, CachedCanvas>()
     private val urlCache = ConcurrentHashMap<String, String>()
 
-    private val json = Json {
-        ignoreUnknownKeys = true
-        isLenient = true
-        explicitNulls = false
-    }
+    private val json =
+        Json {
+            ignoreUnknownKeys = true
+            isLenient = true
+            explicitNulls = false
+        }
 
     private var isInitialized = false
 
@@ -78,14 +78,14 @@ object CanvasCacheManager {
         album: String,
         song: String?,
         url: String,
-        videoData: ByteArray
+        videoData: ByteArray,
     ): Boolean {
         if (!ensureInitialized()) return false
 
         return withContext(Dispatchers.IO) {
             try {
                 val dir = cacheDir ?: return@withContext false
-                val fileName = "${id}.${getFileExtension(url)}"
+                val fileName = "$id.${getFileExtension(url)}"
                 val videoFile = File(dir, fileName)
 
                 videoFile.writeBytes(videoData)
@@ -93,17 +93,18 @@ object CanvasCacheManager {
                 // ✅ SIN EXPIRACIÓN
                 val expiresAt = Long.MAX_VALUE
 
-                val cached = CachedCanvas(
-                    id = id,
-                    artist = artist,
-                    album = album,
-                    song = song,
-                    url = url,
-                    type = getFileExtension(url),
-                    cachedAt = System.currentTimeMillis(),
-                    expiresAt = expiresAt,
-                    filePath = videoFile.absolutePath
-                )
+                val cached =
+                    CachedCanvas(
+                        id = id,
+                        artist = artist,
+                        album = album,
+                        song = song,
+                        url = url,
+                        type = getFileExtension(url),
+                        cachedAt = System.currentTimeMillis(),
+                        expiresAt = expiresAt,
+                        filePath = videoFile.absolutePath,
+                    )
 
                 memoryCache[id] = cached
                 urlCache[url] = id
@@ -249,9 +250,10 @@ object CanvasCacheManager {
                 val list = json.decodeFromString<List<CachedCanvas>>(jsonString)
 
                 val now = System.currentTimeMillis()
-                val valid = list.filter {
-                    it.expiresAt == Long.MAX_VALUE || it.expiresAt > now
-                }
+                val valid =
+                    list.filter {
+                        it.expiresAt == Long.MAX_VALUE || it.expiresAt > now
+                    }
 
                 valid.forEach { cached ->
                     val videoFile = File(cached.filePath)

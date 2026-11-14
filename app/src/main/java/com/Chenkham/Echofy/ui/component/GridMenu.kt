@@ -3,10 +3,8 @@ package com.Chenkham.Echofy.ui.component
 import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -17,14 +15,11 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ShapeDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -32,13 +27,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.media3.exoplayer.offline.Download
 import com.Chenkham.Echofy.R
 import com.Chenkham.Echofy.utils.makeTimeString
@@ -57,7 +49,7 @@ fun GridMenu(
     LazyColumn(
         modifier = modifier.fillMaxWidth(),
         contentPadding = contentPadding,
-        content = content
+        content = content,
     )
 }
 
@@ -74,20 +66,21 @@ fun SimpleGridMenuItem(
     onClick: () -> Unit,
 ) {
     Row(
-        modifier = modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(12.dp))
-            .height(GridMenuItemHeight)
-            .clickable(enabled = enabled, onClick = onClick)
-            .alpha(if (enabled) 1f else 0.5f)
-            .padding(horizontal = 16.dp),
-        verticalAlignment = Alignment.CenterVertically
+        modifier =
+            modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(12.dp))
+                .height(GridMenuItemHeight)
+                .clickable(enabled = enabled, onClick = onClick)
+                .alpha(if (enabled) 1f else 0.5f)
+                .padding(horizontal = 16.dp),
+        verticalAlignment = Alignment.CenterVertically,
     ) {
         Icon(
             painter = painterResource(icon),
             contentDescription = title,
             tint = tint,
-            modifier = Modifier.size(24.dp)
+            modifier = Modifier.size(24.dp),
         )
         Spacer(modifier = Modifier.width(16.dp))
         Text(
@@ -95,7 +88,7 @@ fun SimpleGridMenuItem(
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurface,
             maxLines = 1,
-            overflow = TextOverflow.Ellipsis
+            overflow = TextOverflow.Ellipsis,
         )
     }
 }
@@ -115,7 +108,7 @@ fun SimpleGridMenuItem(
         title = stringResource(title),
         tint = tint,
         enabled = enabled,
-        onClick = onClick
+        onClick = onClick,
     )
 }
 
@@ -133,12 +126,12 @@ fun LazyListScope.GridMenuItem(
             painter = painterResource(icon),
             tint = tint(),
             contentDescription = null,
-            modifier = Modifier.size(24.dp)
+            modifier = Modifier.size(24.dp),
         )
     },
     title = title,
     enabled = enabled,
-    onClick = onClick
+    onClick = onClick,
 )
 
 fun LazyListScope.GridMenuItem(
@@ -150,22 +143,23 @@ fun LazyListScope.GridMenuItem(
 ) {
     item {
         Row(
-            modifier = modifier
-                .fillMaxWidth()
-                .clip(RoundedCornerShape(12.dp))
-                .height(GridMenuItemHeight)
-                .clickable(
-                    enabled = enabled,
-                    onClick = onClick
-                )
-                .alpha(if (enabled) 1f else 0.5f)
-                .padding(horizontal = 16.dp),
-            verticalAlignment = Alignment.CenterVertically
+            modifier =
+                modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(12.dp))
+                    .height(GridMenuItemHeight)
+                    .clickable(
+                        enabled = enabled,
+                        onClick = onClick,
+                    )
+                    .alpha(if (enabled) 1f else 0.5f)
+                    .padding(horizontal = 16.dp),
+            verticalAlignment = Alignment.CenterVertically,
         ) {
             Box(
                 modifier = Modifier.size(24.dp),
                 contentAlignment = Alignment.Center,
-                content = icon
+                content = icon,
             )
             Spacer(modifier = Modifier.width(16.dp))
             Text(
@@ -173,12 +167,11 @@ fun LazyListScope.GridMenuItem(
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurface,
                 maxLines = 1,
-                overflow = TextOverflow.Ellipsis
+                overflow = TextOverflow.Ellipsis,
             )
         }
     }
 }
-
 
 fun LazyListScope.DownloadGridMenu(
     @Download.State state: Int?,
@@ -190,7 +183,7 @@ fun LazyListScope.DownloadGridMenu(
             GridMenuItem(
                 icon = R.drawable.offline,
                 title = R.string.remove_download,
-                onClick = onRemoveDownload
+                onClick = onRemoveDownload,
             )
         }
 
@@ -199,11 +192,11 @@ fun LazyListScope.DownloadGridMenu(
                 icon = {
                     CircularProgressIndicator(
                         modifier = Modifier.size(24.dp),
-                        strokeWidth = 2.dp
+                        strokeWidth = 2.dp,
                     )
                 },
                 title = R.string.downloading,
-                onClick = onRemoveDownload
+                onClick = onRemoveDownload,
             )
         }
 
@@ -211,7 +204,7 @@ fun LazyListScope.DownloadGridMenu(
             GridMenuItem(
                 icon = R.drawable.download,
                 title = R.string.download,
-                onClick = onDownload
+                onClick = onDownload,
             )
         }
     }
@@ -221,33 +214,40 @@ fun LazyListScope.SleepTimerGridMenu(
     modifier: Modifier = Modifier,
     sleepTimerTimeLeft: Long,
     enabled: Boolean = true,
-    onClick: () -> Unit
+    onClick: () -> Unit,
 ) {
     item {
         Row(
-            modifier = modifier
-                .fillMaxWidth()
-                .clip(RoundedCornerShape(12.dp))
-                .height(GridMenuItemHeight)
-                .clickable(onClick = onClick)
-                .padding(horizontal = 16.dp),
-            verticalAlignment = Alignment.CenterVertically
+            modifier =
+                modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(12.dp))
+                    .height(GridMenuItemHeight)
+                    .clickable(onClick = onClick)
+                    .padding(horizontal = 16.dp),
+            verticalAlignment = Alignment.CenterVertically,
         ) {
             Icon(
                 painterResource(R.drawable.bedtime),
                 contentDescription = null,
-                modifier = Modifier
-                    .size(24.dp)
-                    .alpha(if (enabled) 1f else 0.5f)
+                modifier =
+                    Modifier
+                        .size(24.dp)
+                        .alpha(if (enabled) 1f else 0.5f),
             )
             Spacer(modifier = Modifier.width(16.dp))
             Text(
-                text = if (enabled) makeTimeString(sleepTimerTimeLeft) else stringResource(
-                    id = R.string.sleep_timer
-                ),
+                text =
+                    if (enabled) {
+                        makeTimeString(sleepTimerTimeLeft)
+                    } else {
+                        stringResource(
+                            id = R.string.sleep_timer,
+                        )
+                    },
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurface,
-                maxLines = 1
+                maxLines = 1,
             )
         }
     }

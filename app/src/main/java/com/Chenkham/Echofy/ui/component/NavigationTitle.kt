@@ -35,19 +35,20 @@ fun NavigationTitle(
     Row(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(12.dp),
-        modifier = modifier
-            .fillMaxWidth()
-            .windowInsetsPadding(WindowInsets.systemBars.only(WindowInsetsSides.Horizontal))
-            .clickable(enabled = onClick != null) {
-                onClick?.invoke()
-            }
-            .padding(horizontal = 16.dp, vertical = 10.dp)
+        modifier =
+            modifier
+                .fillMaxWidth()
+                .windowInsetsPadding(WindowInsets.systemBars.only(WindowInsetsSides.Horizontal))
+                .clickable(enabled = onClick != null) {
+                    onClick?.invoke()
+                }
+                .padding(horizontal = 16.dp, vertical = 10.dp),
     ) {
         thumbnail?.invoke()
 
         Column(
             verticalArrangement = Arrangement.Center,
-            modifier = Modifier.weight(1f)
+            modifier = Modifier.weight(1f),
         ) {
             label?.takeIf { it.isNotBlank() }?.let { labelText ->
                 Text(
@@ -58,7 +59,7 @@ fun NavigationTitle(
                     letterSpacing = 1.sp,
                     overflow = TextOverflow.Ellipsis,
                     maxLines = 1,
-                    modifier = Modifier.padding(bottom = 2.dp)
+                    modifier = Modifier.padding(bottom = 2.dp),
                 )
             }
 
@@ -76,7 +77,7 @@ fun NavigationTitle(
             Icon(
                 painter = painterResource(R.drawable.arrow_forward),
                 contentDescription = null,
-                tint = MaterialTheme.colorScheme.primary.copy(alpha = 0.85f)
+                tint = MaterialTheme.colorScheme.primary.copy(alpha = 0.85f),
             )
         }
     }

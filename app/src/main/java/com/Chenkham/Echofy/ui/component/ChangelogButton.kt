@@ -89,7 +89,7 @@ data class ChangelogState(
     val isLoadingCommits: Boolean = true,
     val releasesError: String? = null,
     val commitsError: String? = null,
-    val lastUpdated: String? = null
+    val lastUpdated: String? = null,
 )
 
 data class Release(
@@ -99,7 +99,7 @@ data class Release(
     val publishedAt: String,
     val isPrerelease: Boolean,
     val htmlUrl: String,
-    val author: String? = null
+    val author: String? = null,
 )
 
 data class Commit(
@@ -108,25 +108,23 @@ data class Commit(
     val author: String,
     val date: String,
     val htmlUrl: String,
-    val shortSha: String = sha.take(7)
+    val shortSha: String = sha.take(7),
 )
 
 enum class ChangelogTab(val title: String) {
     RELEASES("Releases"),
-    COMMITS("Commits")
+    COMMITS("Commits"),
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ChangelogButton(
-    viewModel: ChangelogViewModel = viewModel()
-) {
+fun ChangelogButton(viewModel: ChangelogViewModel = viewModel()) {
     var showBottomSheet by remember { mutableStateOf(false) }
 
     SettingsCategoryItem(
         title = { Text(stringResource(R.string.Changelog)) },
         icon = painterResource(R.drawable.schedule),
-        onClick = { showBottomSheet = true }
+        onClick = { showBottomSheet = true },
     )
 
     if (showBottomSheet) {
@@ -137,20 +135,22 @@ fun ChangelogButton(
             contentColor = MaterialTheme.colorScheme.onSurface,
             dragHandle = {
                 Surface(
-                    modifier = Modifier
-                        .padding(vertical = 12.dp)
-                        .width(32.dp)
-                        .height(4.dp),
+                    modifier =
+                        Modifier
+                            .padding(vertical = 12.dp)
+                            .width(32.dp)
+                            .height(4.dp),
                     shape = RoundedCornerShape(2.dp),
-                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f)
+                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f),
                 ) {}
-            }
+            },
         ) {
             Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 8.dp)
-                    .verticalScroll(rememberScrollState())
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 8.dp)
+                        .verticalScroll(rememberScrollState()),
             ) {
                 ChangelogScreen(viewModel)
                 Spacer(Modifier.height(32.dp))
@@ -170,20 +170,20 @@ fun ChangelogScreen(viewModel: ChangelogViewModel = viewModel()) {
 
     Column(
         modifier = Modifier.fillMaxWidth(),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
+        verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
         // Header con tÃ­tulo principal
         Text(
             text = stringResource(R.string.changelogs),
             style = MaterialTheme.typography.headlineMedium,
             color = MaterialTheme.colorScheme.primary,
-            modifier = Modifier.padding(horizontal = 8.dp)
+            modifier = Modifier.padding(horizontal = 8.dp),
         )
 
         // Tabs mejoradas con Material Design 3
         ImprovedTabRow(
             selectedTab = selectedTab,
-            onTabSelected = { selectedTab = it }
+            onTabSelected = { selectedTab = it },
         )
 
         // Contenido basado en la tab seleccionada
@@ -194,7 +194,7 @@ fun ChangelogScreen(viewModel: ChangelogViewModel = viewModel()) {
                     isLoading = uiState.isLoadingReleases,
                     error = uiState.releasesError,
                     lastUpdated = uiState.lastUpdated,
-                    onRetry = { viewModel.loadChangelog("Arturo254", "Echofy") }
+                    onRetry = { viewModel.loadChangelog("Arturo254", "Echofy") },
                 )
             }
 
@@ -204,7 +204,7 @@ fun ChangelogScreen(viewModel: ChangelogViewModel = viewModel()) {
                     isLoading = uiState.isLoadingCommits,
                     error = uiState.commitsError,
                     lastUpdated = uiState.lastUpdated,
-                    onRetry = { viewModel.loadChangelog("Arturo254", "Echofy") }
+                    onRetry = { viewModel.loadChangelog("Arturo254", "Echofy") },
                 )
             }
         }
@@ -214,44 +214,51 @@ fun ChangelogScreen(viewModel: ChangelogViewModel = viewModel()) {
 @Composable
 private fun ImprovedTabRow(
     selectedTab: ChangelogTab,
-    onTabSelected: (ChangelogTab) -> Unit
+    onTabSelected: (ChangelogTab) -> Unit,
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceContainer
-        ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+        colors =
+            CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.surfaceContainer,
+            ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
     ) {
         Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(4.dp),
-            horizontalArrangement = Arrangement.spacedBy(4.dp)
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .padding(4.dp),
+            horizontalArrangement = Arrangement.spacedBy(4.dp),
         ) {
             ChangelogTab.values().forEach { tab ->
                 val isSelected = selectedTab == tab
                 Surface(
-                    modifier = Modifier
-                        .weight(1f)
-                        .clip(RoundedCornerShape(8.dp))
-                        .clickable { onTabSelected(tab) },
-                    color = if (isSelected)
-                        MaterialTheme.colorScheme.primary
-                    else
-                        Color.Transparent,
-                    shape = RoundedCornerShape(8.dp)
+                    modifier =
+                        Modifier
+                            .weight(1f)
+                            .clip(RoundedCornerShape(8.dp))
+                            .clickable { onTabSelected(tab) },
+                    color =
+                        if (isSelected) {
+                            MaterialTheme.colorScheme.primary
+                        } else {
+                            Color.Transparent
+                        },
+                    shape = RoundedCornerShape(8.dp),
                 ) {
                     Text(
                         text = tab.title,
                         modifier = Modifier.padding(vertical = 12.dp, horizontal = 16.dp),
                         style = MaterialTheme.typography.labelLarge,
-                        color = if (isSelected)
-                            MaterialTheme.colorScheme.onPrimary
-                        else
-                            MaterialTheme.colorScheme.onSurfaceVariant,
+                        color =
+                            if (isSelected) {
+                                MaterialTheme.colorScheme.onPrimary
+                            } else {
+                                MaterialTheme.colorScheme.onSurfaceVariant
+                            },
                         textAlign = TextAlign.Center,
-                        fontWeight = if (isSelected) FontWeight.Medium else FontWeight.Normal
+                        fontWeight = if (isSelected) FontWeight.Medium else FontWeight.Normal,
                     )
                 }
             }
@@ -265,7 +272,7 @@ private fun ReleasesContent(
     isLoading: Boolean,
     error: String?,
     lastUpdated: String?,
-    onRetry: () -> Unit
+    onRetry: () -> Unit,
 ) {
     when {
         isLoading -> LoadingIndicator("Cargando releases...")
@@ -281,7 +288,7 @@ private fun CommitsContent(
     isLoading: Boolean,
     error: String?,
     lastUpdated: String?,
-    onRetry: () -> Unit
+    onRetry: () -> Unit,
 ) {
     when {
         isLoading -> LoadingIndicator("Cargando commits...")
@@ -295,29 +302,31 @@ private fun CommitsContent(
 private fun LoadingIndicator(message: String) {
     Card(
         modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceContainerLowest
-        ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+        colors =
+            CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.surfaceContainerLowest,
+            ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
     ) {
         Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(32.dp),
-            contentAlignment = Alignment.Center
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .padding(32.dp),
+            contentAlignment = Alignment.Center,
         ) {
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(16.dp)
+                verticalArrangement = Arrangement.spacedBy(16.dp),
             ) {
                 CircularProgressIndicator(
                     color = MaterialTheme.colorScheme.primary,
-                    strokeWidth = 3.dp
+                    strokeWidth = 3.dp,
                 )
                 Text(
                     text = message,
                     style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
         }
@@ -325,41 +334,46 @@ private fun LoadingIndicator(message: String) {
 }
 
 @Composable
-private fun ErrorContent(error: String, onRetry: () -> Unit) {
+private fun ErrorContent(
+    error: String,
+    onRetry: () -> Unit,
+) {
     Card(
         modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.errorContainer
-        ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+        colors =
+            CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.errorContainer,
+            ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
     ) {
         Column(
             modifier = Modifier.padding(20.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
+            verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
             Icon(
                 painter = painterResource(R.drawable.schedule), // Cambiar por icono de error
                 contentDescription = null,
                 tint = MaterialTheme.colorScheme.onErrorContainer,
-                modifier = Modifier.size(24.dp)
+                modifier = Modifier.size(24.dp),
             )
             Text(
                 text = "Error al cargar",
                 style = MaterialTheme.typography.titleMedium,
-                color = MaterialTheme.colorScheme.onErrorContainer
+                color = MaterialTheme.colorScheme.onErrorContainer,
             )
             Text(
                 text = error,
                 style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onErrorContainer
+                color = MaterialTheme.colorScheme.onErrorContainer,
             )
             Button(
                 onClick = onRetry,
                 modifier = Modifier.align(Alignment.End),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = MaterialTheme.colorScheme.error,
-                    contentColor = MaterialTheme.colorScheme.onError
-                )
+                colors =
+                    ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.error,
+                        contentColor = MaterialTheme.colorScheme.onError,
+                    ),
             ) {
                 Text("Reintentar")
             }
@@ -371,29 +385,31 @@ private fun ErrorContent(error: String, onRetry: () -> Unit) {
 private fun EmptyContent(message: String) {
     Card(
         modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceContainerLow
-        ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+        colors =
+            CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
+            ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
     ) {
         Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(32.dp),
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .padding(32.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(12.dp)
+            verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
             Icon(
                 painter = painterResource(R.drawable.schedule), // Cambiar por icono apropiado
                 contentDescription = null,
                 tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.size(48.dp)
+                modifier = Modifier.size(48.dp),
             )
             Text(
                 text = message,
                 style = MaterialTheme.typography.bodyLarge,
                 textAlign = TextAlign.Center,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
     }
@@ -402,7 +418,7 @@ private fun EmptyContent(message: String) {
 @Composable
 private fun SuccessReleasesContent(
     releases: List<Release>,
-    lastUpdated: String?
+    lastUpdated: String?,
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
         LastUpdatedIndicator(lastUpdated)
@@ -415,7 +431,7 @@ private fun SuccessReleasesContent(
 @Composable
 private fun SuccessCommitsContent(
     commits: List<Commit>,
-    lastUpdated: String?
+    lastUpdated: String?,
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         LastUpdatedIndicator(lastUpdated)
@@ -430,13 +446,13 @@ private fun LastUpdatedIndicator(lastUpdated: String?) {
     lastUpdated?.let {
         Surface(
             color = MaterialTheme.colorScheme.primaryContainer,
-            shape = RoundedCornerShape(16.dp)
+            shape = RoundedCornerShape(16.dp),
         ) {
             Text(
                 text = "Ãšltima actualizaciÃ³n: $it",
                 style = MaterialTheme.typography.labelMedium,
                 color = MaterialTheme.colorScheme.onPrimaryContainer,
-                modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
+                modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
             )
         }
     }
@@ -446,39 +462,41 @@ private fun LastUpdatedIndicator(lastUpdated: String?) {
 private fun CommitCard(commit: Commit) {
     Card(
         modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceContainerLow
-        ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+        colors =
+            CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
+            ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.Top
+                verticalAlignment = Alignment.Top,
             ) {
                 Column(modifier = Modifier.weight(1f)) {
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
                     ) {
                         Surface(
                             shape = RoundedCornerShape(6.dp),
-                            color = MaterialTheme.colorScheme.tertiaryContainer
+                            color = MaterialTheme.colorScheme.tertiaryContainer,
                         ) {
                             Text(
                                 text = commit.shortSha,
-                                style = MaterialTheme.typography.labelSmall.copy(
-                                    fontFamily = FontFamily.Monospace
-                                ),
+                                style =
+                                    MaterialTheme.typography.labelSmall.copy(
+                                        fontFamily = FontFamily.Monospace,
+                                    ),
                                 color = MaterialTheme.colorScheme.onTertiaryContainer,
-                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
                             )
                         }
                         Text(
                             text = commit.author,
                             style = MaterialTheme.typography.labelMedium,
-                            color = MaterialTheme.colorScheme.primary
+                            color = MaterialTheme.colorScheme.primary,
                         )
                     }
                     Spacer(modifier = Modifier.height(8.dp))
@@ -487,13 +505,13 @@ private fun CommitCard(commit: Commit) {
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurface,
                         maxLines = 2,
-                        overflow = TextOverflow.Ellipsis
+                        overflow = TextOverflow.Ellipsis,
                     )
                 }
                 Text(
                     text = formatDate(commit.date),
                     style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
         }
@@ -505,44 +523,48 @@ private fun ReleaseCard(release: Release) {
     var expanded by remember { mutableStateOf(false) }
 
     Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable { expanded = !expanded },
-        colors = CardDefaults.cardColors(
-            containerColor = if (release.isPrerelease)
-                MaterialTheme.colorScheme.tertiaryContainer
-            else
-                MaterialTheme.colorScheme.surfaceContainerLow
-        ),
-        elevation = CardDefaults.cardElevation(defaultElevation = if (expanded) 4.dp else 1.dp)
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .clickable { expanded = !expanded },
+        colors =
+            CardDefaults.cardColors(
+                containerColor =
+                    if (release.isPrerelease) {
+                        MaterialTheme.colorScheme.tertiaryContainer
+                    } else {
+                        MaterialTheme.colorScheme.surfaceContainerLow
+                    },
+            ),
+        elevation = CardDefaults.cardElevation(defaultElevation = if (expanded) 4.dp else 1.dp),
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
+                verticalAlignment = Alignment.CenterVertically,
             ) {
                 Column(modifier = Modifier.weight(1f)) {
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
                     ) {
                         Text(
                             text = release.tagName,
                             style = MaterialTheme.typography.titleMedium,
                             color = MaterialTheme.colorScheme.primary,
-                            fontWeight = FontWeight.SemiBold
+                            fontWeight = FontWeight.SemiBold,
                         )
                         if (release.isPrerelease) {
                             Surface(
                                 shape = RoundedCornerShape(12.dp),
-                                color = MaterialTheme.colorScheme.tertiary
+                                color = MaterialTheme.colorScheme.tertiary,
                             ) {
                                 Text(
                                     text = "Pre-release",
                                     style = MaterialTheme.typography.labelSmall,
                                     color = MaterialTheme.colorScheme.onTertiary,
-                                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
                                 )
                             }
                         }
@@ -552,7 +574,7 @@ private fun ReleaseCard(release: Release) {
                             text = release.name,
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            modifier = Modifier.padding(top = 2.dp)
+                            modifier = Modifier.padding(top = 2.dp),
                         )
                     }
                     release.author?.let { author ->
@@ -560,7 +582,7 @@ private fun ReleaseCard(release: Release) {
                             text = "por $author",
                             style = MaterialTheme.typography.labelSmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            modifier = Modifier.padding(top = 4.dp)
+                            modifier = Modifier.padding(top = 4.dp),
                         )
                     }
                 }
@@ -568,40 +590,46 @@ private fun ReleaseCard(release: Release) {
                     Text(
                         text = formatDate(release.publishedAt),
                         style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                     Icon(
-                        painter = painterResource(
-                            if (expanded) R.drawable.schedule else R.drawable.schedule // Cambiar por iconos de expandir/contraer
-                        ),
+                        painter =
+                            painterResource(
+                                if (expanded) R.drawable.schedule else R.drawable.schedule, // Cambiar por iconos de expandir/contraer
+                            ),
                         contentDescription = if (expanded) "Contraer" else "Expandir",
                         tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier
-                            .size(20.dp)
-                            .padding(top = 4.dp)
+                        modifier =
+                            Modifier
+                                .size(20.dp)
+                                .padding(top = 4.dp),
                     )
                 }
             }
 
             AnimatedVisibility(
                 visible = expanded,
-                enter = fadeIn(animationSpec = tween(300)) + expandVertically(
-                    animationSpec = tween(300)
-                ),
-                exit = fadeOut(animationSpec = tween(300)) + shrinkVertically(
-                    animationSpec = tween(300)
-                )
+                enter =
+                    fadeIn(animationSpec = tween(300)) +
+                        expandVertically(
+                            animationSpec = tween(300),
+                        ),
+                exit =
+                    fadeOut(animationSpec = tween(300)) +
+                        shrinkVertically(
+                            animationSpec = tween(300),
+                        ),
             ) {
                 Column {
                     Spacer(modifier = Modifier.height(16.dp))
                     HorizontalDivider(
                         color = MaterialTheme.colorScheme.outline.copy(alpha = 0.2f),
-                        thickness = 1.dp
+                        thickness = 1.dp,
                     )
                     Spacer(modifier = Modifier.height(16.dp))
                     AdvancedMarkdownText(
                         markdown = release.body,
-                        modifier = Modifier.fillMaxWidth()
+                        modifier = Modifier.fillMaxWidth(),
                     )
                 }
             }
@@ -613,7 +641,7 @@ private fun ReleaseCard(release: Release) {
 @Composable
 fun AdvancedMarkdownText(
     markdown: String,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
 ) {
     val cleanedMarkdown = cleanMarkdown(markdown)
     val lines = cleanedMarkdown.lines()
@@ -639,7 +667,7 @@ fun AdvancedMarkdownText(
                     if (inCodeBlock) {
                         CodeBlock(
                             code = codeBlockContent.trimEnd(),
-                            language = codeBlockLanguage
+                            language = codeBlockLanguage,
                         )
                         codeBlockContent = ""
                         codeBlockLanguage = ""
@@ -733,27 +761,30 @@ private fun cleanMarkdown(markdown: String): String {
 
     cleaned = cleaned.replace(Regex("<[^>]+>"), "")
     cleaned = cleaned.replace(Regex("!\\[([^\\]]*)\\]\\([^)]*\\)"), "")
-    cleaned = cleaned.replace(Regex("\\[([^\\]]+)\\]\\([^)]*\\)")) { matchResult ->
-        matchResult.groupValues[1]
-    }
-    cleaned = cleaned.replace(Regex("\\[([^\\]]+)\\]\\[[^\\]]*\\]")) { matchResult ->
-        matchResult.groupValues[1]
-    }
+    cleaned =
+        cleaned.replace(Regex("\\[([^\\]]+)\\]\\([^)]*\\)")) { matchResult ->
+            matchResult.groupValues[1]
+        }
+    cleaned =
+        cleaned.replace(Regex("\\[([^\\]]+)\\]\\[[^\\]]*\\]")) { matchResult ->
+            matchResult.groupValues[1]
+        }
     cleaned = cleaned.replace(Regex("^\\[[^\\]]+\\]:.*$", RegexOption.MULTILINE), "")
 
-    val htmlEntities = mapOf(
-        "&amp;" to "&",
-        "&lt;" to "<",
-        "&gt;" to ">",
-        "&quot;" to "\"",
-        "&apos;" to "'",
-        "&nbsp;" to " ",
-        "&#39;" to "'",
-        "&#x27;" to "'",
-        "&hellip;" to "...",
-        "&mdash;" to "â€”",
-        "&ndash;" to "â€“"
-    )
+    val htmlEntities =
+        mapOf(
+            "&amp;" to "&",
+            "&lt;" to "<",
+            "&gt;" to ">",
+            "&quot;" to "\"",
+            "&apos;" to "'",
+            "&nbsp;" to " ",
+            "&#39;" to "'",
+            "&#x27;" to "'",
+            "&hellip;" to "...",
+            "&mdash;" to "â€”",
+            "&ndash;" to "â€“",
+        )
 
     for ((entity, replacement) in htmlEntities) {
         cleaned = cleaned.replace(entity, replacement)
@@ -764,37 +795,43 @@ private fun cleanMarkdown(markdown: String): String {
 }
 
 @Composable
-private fun HeaderText(text: String, level: Int) {
-    val style = when (level) {
-        1 -> MaterialTheme.typography.headlineLarge
-        2 -> MaterialTheme.typography.headlineMedium
-        3 -> MaterialTheme.typography.headlineSmall
-        4 -> MaterialTheme.typography.titleLarge
-        else -> MaterialTheme.typography.titleMedium
-    }
+private fun HeaderText(
+    text: String,
+    level: Int,
+) {
+    val style =
+        when (level) {
+            1 -> MaterialTheme.typography.headlineLarge
+            2 -> MaterialTheme.typography.headlineMedium
+            3 -> MaterialTheme.typography.headlineSmall
+            4 -> MaterialTheme.typography.titleLarge
+            else -> MaterialTheme.typography.titleMedium
+        }
 
     Text(
         text = text,
         style = style,
         color = MaterialTheme.colorScheme.primary,
-        modifier = Modifier.padding(vertical = (12 - level * 2).coerceAtLeast(4).dp)
+        modifier = Modifier.padding(vertical = (12 - level * 2).coerceAtLeast(4).dp),
     )
 }
 
 @Composable
 private fun ListContainer(items: List<String>) {
     Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 4.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceContainerLowest
-        ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .padding(vertical = 4.dp),
+        colors =
+            CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.surfaceContainerLowest,
+            ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
     ) {
         Column(
             modifier = Modifier.padding(12.dp),
-            verticalArrangement = Arrangement.spacedBy(4.dp)
+            verticalArrangement = Arrangement.spacedBy(4.dp),
         ) {
             items.forEach { item ->
                 UnorderedListItem(item)
@@ -807,19 +844,20 @@ private fun ListContainer(items: List<String>) {
 private fun UnorderedListItem(content: String) {
     Row(
         modifier = Modifier.padding(vertical = 2.dp),
-        verticalAlignment = Alignment.Top
+        verticalAlignment = Alignment.Top,
     ) {
         Surface(
-            modifier = Modifier
-                .size(6.dp)
-                .padding(top = 8.dp),
+            modifier =
+                Modifier
+                    .size(6.dp)
+                    .padding(top = 8.dp),
             shape = RoundedCornerShape(3.dp),
-            color = MaterialTheme.colorScheme.primary
+            color = MaterialTheme.colorScheme.primary,
         ) {}
         Spacer(modifier = Modifier.width(12.dp))
         FormattedText(
             text = content,
-            modifier = Modifier.weight(1f)
+            modifier = Modifier.weight(1f),
         )
     }
 }
@@ -827,65 +865,75 @@ private fun UnorderedListItem(content: String) {
 @Composable
 private fun BlockQuote(content: String) {
     Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 4.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceVariant
-        ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .padding(vertical = 4.dp),
+        colors =
+            CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.surfaceVariant,
+            ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
     ) {
         Row {
             Box(
-                modifier = Modifier
-                    .width(4.dp)
-                    .height(40.dp)
-                    .background(MaterialTheme.colorScheme.primary)
+                modifier =
+                    Modifier
+                        .width(4.dp)
+                        .height(40.dp)
+                        .background(MaterialTheme.colorScheme.primary),
             )
             FormattedText(
                 text = content,
                 modifier = Modifier.padding(16.dp),
-                style = MaterialTheme.typography.bodyMedium.copy(
-                    fontStyle = FontStyle.Italic
-                ),
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+                style =
+                    MaterialTheme.typography.bodyMedium.copy(
+                        fontStyle = FontStyle.Italic,
+                    ),
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
     }
 }
 
 @Composable
-private fun CodeBlock(code: String, language: String) {
+private fun CodeBlock(
+    code: String,
+    language: String,
+) {
     Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 4.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceContainerHighest
-        ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .padding(vertical = 4.dp),
+        colors =
+            CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.surfaceContainerHighest,
+            ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
     ) {
         Column {
             if (language.isNotEmpty()) {
                 Surface(
                     color = MaterialTheme.colorScheme.primary,
-                    shape = RoundedCornerShape(topStart = 12.dp, topEnd = 12.dp)
+                    shape = RoundedCornerShape(topStart = 12.dp, topEnd = 12.dp),
                 ) {
                     Text(
                         text = language,
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onPrimary,
-                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
+                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
                     )
                 }
             }
             Text(
                 text = code.trimEnd(),
-                style = MaterialTheme.typography.bodySmall.copy(
-                    fontFamily = FontFamily.Monospace
-                ),
+                style =
+                    MaterialTheme.typography.bodySmall.copy(
+                        fontFamily = FontFamily.Monospace,
+                    ),
                 color = MaterialTheme.colorScheme.onSurface,
-                modifier = Modifier.padding(16.dp)
+                modifier = Modifier.padding(16.dp),
             )
         }
     }
@@ -894,11 +942,12 @@ private fun CodeBlock(code: String, language: String) {
 @Composable
 private fun HorizontalRule() {
     HorizontalDivider(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 16.dp),
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .padding(vertical = 16.dp),
         thickness = 1.dp,
-        color = MaterialTheme.colorScheme.outline
+        color = MaterialTheme.colorScheme.outline,
     )
 }
 
@@ -907,91 +956,97 @@ private fun FormattedText(
     text: String,
     modifier: Modifier = Modifier,
     style: androidx.compose.ui.text.TextStyle = MaterialTheme.typography.bodyMedium,
-    color: Color = MaterialTheme.colorScheme.onSurface
+    color: Color = MaterialTheme.colorScheme.onSurface,
 ) {
-    val annotatedString = buildAnnotatedString {
-        parseMarkdownText(text, this)
-    }
+    val annotatedString =
+        buildAnnotatedString {
+            parseMarkdownText(text, this)
+        }
 
     Text(
         text = annotatedString,
         style = style,
         color = color,
-        modifier = modifier.padding(vertical = 2.dp)
+        modifier = modifier.padding(vertical = 2.dp),
     )
 }
 
-private fun parseMarkdownText(text: String, builder: AnnotatedString.Builder) {
+private fun parseMarkdownText(
+    text: String,
+    builder: AnnotatedString.Builder,
+) {
     var currentIndex = 0
     val processedText = text.trim()
 
-    val patterns = listOf(
-        Triple(
-            Regex("`([^`]+)`"),
-            { match: MatchResult ->
-                builder.withStyle(
-                    SpanStyle(
-                        fontFamily = FontFamily.Monospace,
-                        fontSize = 13.sp,
-                    )
-                ) {
-                    append(match.groupValues[1])
-                }
-            },
-            1
-        ),
-        Triple(
-            Regex("\\*\\*([^*]+)\\*\\*"),
-            { match: MatchResult ->
-                builder.withStyle(SpanStyle(fontWeight = FontWeight.Bold)) {
-                    append(match.groupValues[1])
-                }
-            },
-            2
-        ),
-        Triple(
-            Regex("__([^_]+)__"),
-            { match: MatchResult ->
-                builder.withStyle(SpanStyle(fontWeight = FontWeight.Bold)) {
-                    append(match.groupValues[1])
-                }
-            },
-            2
-        ),
-        Triple(
-            Regex("(?<!\\*)\\*([^*\\s][^*]*[^*\\s])\\*(?!\\*)"),
-            { match: MatchResult ->
-                builder.withStyle(SpanStyle(fontStyle = FontStyle.Italic)) {
-                    append(match.groupValues[1])
-                }
-            },
-            3
-        ),
-        Triple(
-            Regex("(?<!_)_([^_\\s][^_]*[^_\\s])_(?!_)"),
-            { match: MatchResult ->
-                builder.withStyle(SpanStyle(fontStyle = FontStyle.Italic)) {
-                    append(match.groupValues[1])
-                }
-            },
-            3
-        ),
-        Triple(
-            Regex("~~([^~]+)~~"),
-            { match: MatchResult ->
-                builder.withStyle(SpanStyle(textDecoration = TextDecoration.LineThrough)) {
-                    append(match.groupValues[1])
-                }
-            },
-            4
+    val patterns =
+        listOf(
+            Triple(
+                Regex("`([^`]+)`"),
+                { match: MatchResult ->
+                    builder.withStyle(
+                        SpanStyle(
+                            fontFamily = FontFamily.Monospace,
+                            fontSize = 13.sp,
+                        ),
+                    ) {
+                        append(match.groupValues[1])
+                    }
+                },
+                1,
+            ),
+            Triple(
+                Regex("\\*\\*([^*]+)\\*\\*"),
+                { match: MatchResult ->
+                    builder.withStyle(SpanStyle(fontWeight = FontWeight.Bold)) {
+                        append(match.groupValues[1])
+                    }
+                },
+                2,
+            ),
+            Triple(
+                Regex("__([^_]+)__"),
+                { match: MatchResult ->
+                    builder.withStyle(SpanStyle(fontWeight = FontWeight.Bold)) {
+                        append(match.groupValues[1])
+                    }
+                },
+                2,
+            ),
+            Triple(
+                Regex("(?<!\\*)\\*([^*\\s][^*]*[^*\\s])\\*(?!\\*)"),
+                { match: MatchResult ->
+                    builder.withStyle(SpanStyle(fontStyle = FontStyle.Italic)) {
+                        append(match.groupValues[1])
+                    }
+                },
+                3,
+            ),
+            Triple(
+                Regex("(?<!_)_([^_\\s][^_]*[^_\\s])_(?!_)"),
+                { match: MatchResult ->
+                    builder.withStyle(SpanStyle(fontStyle = FontStyle.Italic)) {
+                        append(match.groupValues[1])
+                    }
+                },
+                3,
+            ),
+            Triple(
+                Regex("~~([^~]+)~~"),
+                { match: MatchResult ->
+                    builder.withStyle(SpanStyle(textDecoration = TextDecoration.LineThrough)) {
+                        append(match.groupValues[1])
+                    }
+                },
+                4,
+            ),
         )
-    )
 
-    val allMatches = patterns.flatMap { (pattern, handler, priority) ->
-        pattern.findAll(processedText).map { match ->
-            Triple(match, handler, priority)
-        }
-    }.sortedWith(compareBy({ it.first.range.first }, { it.third }))
+    val allMatches =
+        patterns.flatMap { (pattern, handler, priority) ->
+            pattern.findAll(processedText).map { match ->
+                Triple(match, handler, priority)
+            }
+        }.sortedWith(compareBy({ it.first.range.first }, { it.third }))
 
     val processedRanges = mutableListOf<IntRange>()
 
@@ -1045,7 +1100,10 @@ class ChangelogViewModel : ViewModel() {
     private val cache = ConcurrentHashMap<String, Pair<Any, Long>>()
     private val cacheTimeMs = 30 * 60 * 1000 // 30 minutos
 
-    fun loadChangelog(repoOwner: String, repoName: String) {
+    fun loadChangelog(
+        repoOwner: String,
+        repoName: String,
+    ) {
         viewModelScope.launch {
             // Cargar releases y commits en paralelo
             launch { loadReleases(repoOwner, repoName) }
@@ -1053,7 +1111,10 @@ class ChangelogViewModel : ViewModel() {
         }
     }
 
-    private suspend fun loadReleases(repoOwner: String, repoName: String) {
+    private suspend fun loadReleases(
+        repoOwner: String,
+        repoName: String,
+    ) {
         _uiState.update { it.copy(isLoadingReleases = true, releasesError = null) }
 
         try {
@@ -1065,7 +1126,7 @@ class ChangelogViewModel : ViewModel() {
                     it.copy(
                         releases = cachedData,
                         isLoadingReleases = false,
-                        lastUpdated = getCurrentTimestamp()
+                        lastUpdated = getCurrentTimestamp(),
                     )
                 }
                 return
@@ -1078,7 +1139,7 @@ class ChangelogViewModel : ViewModel() {
                 it.copy(
                     releases = releases,
                     isLoadingReleases = false,
-                    lastUpdated = getCurrentTimestamp()
+                    lastUpdated = getCurrentTimestamp(),
                 )
             }
         } catch (e: Exception) {
@@ -1086,13 +1147,16 @@ class ChangelogViewModel : ViewModel() {
             _uiState.update {
                 it.copy(
                     isLoadingReleases = false,
-                    releasesError = "Error al cargar releases: ${e.message}"
+                    releasesError = "Error al cargar releases: ${e.message}",
                 )
             }
         }
     }
 
-    private suspend fun loadCommits(repoOwner: String, repoName: String) {
+    private suspend fun loadCommits(
+        repoOwner: String,
+        repoName: String,
+    ) {
         _uiState.update { it.copy(isLoadingCommits = true, commitsError = null) }
 
         try {
@@ -1104,7 +1168,7 @@ class ChangelogViewModel : ViewModel() {
                     it.copy(
                         commits = cachedData,
                         isLoadingCommits = false,
-                        lastUpdated = getCurrentTimestamp()
+                        lastUpdated = getCurrentTimestamp(),
                     )
                 }
                 return
@@ -1117,7 +1181,7 @@ class ChangelogViewModel : ViewModel() {
                 it.copy(
                     commits = commits,
                     isLoadingCommits = false,
-                    lastUpdated = getCurrentTimestamp()
+                    lastUpdated = getCurrentTimestamp(),
                 )
             }
         } catch (e: Exception) {
@@ -1125,7 +1189,7 @@ class ChangelogViewModel : ViewModel() {
             _uiState.update {
                 it.copy(
                     isLoadingCommits = false,
-                    commitsError = "Error al cargar commits: ${e.message}"
+                    commitsError = "Error al cargar commits: ${e.message}",
                 )
             }
         }
@@ -1144,11 +1208,17 @@ class ChangelogViewModel : ViewModel() {
         return data as? T
     }
 
-    private fun cacheData(key: String, data: Any) {
+    private fun cacheData(
+        key: String,
+        data: Any,
+    ) {
         cache[key] = data to System.currentTimeMillis()
     }
 
-    private suspend fun fetchReleases(owner: String, repo: String): List<Release> =
+    private suspend fun fetchReleases(
+        owner: String,
+        repo: String,
+    ): List<Release> =
         withContext(Dispatchers.IO) {
             repeat(3) { attempt ->
                 try {
@@ -1181,8 +1251,8 @@ class ChangelogViewModel : ViewModel() {
                                 publishedAt = releaseJson.optString("published_at", ""),
                                 isPrerelease = releaseJson.optBoolean("prerelease", false),
                                 htmlUrl = releaseJson.optString("html_url", ""),
-                                author = author
-                            )
+                                author = author,
+                            ),
                         )
                     }
 
@@ -1196,7 +1266,10 @@ class ChangelogViewModel : ViewModel() {
             throw IOException("No se pudo obtener la informaciÃ³n despuÃ©s de los reintentos")
         }
 
-    private suspend fun fetchCommits(owner: String, repo: String): List<Commit> =
+    private suspend fun fetchCommits(
+        owner: String,
+        repo: String,
+    ): List<Commit> =
         withContext(Dispatchers.IO) {
             repeat(3) { attempt ->
                 try {
@@ -1228,8 +1301,8 @@ class ChangelogViewModel : ViewModel() {
                                 message = commitData.optString("message", ""),
                                 author = author.optString("name", "Unknown"),
                                 date = author.optString("date", ""),
-                                htmlUrl = commitJson.optString("html_url", "")
-                            )
+                                htmlUrl = commitJson.optString("html_url", ""),
+                            ),
                         )
                     }
 

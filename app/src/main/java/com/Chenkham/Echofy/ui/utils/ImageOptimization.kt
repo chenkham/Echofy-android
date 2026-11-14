@@ -26,7 +26,6 @@ import coil.size.Size
  */
 @Stable
 object ImageOptimization {
-
     // Pre-computed cache key prefixes for different contexts
     private const val THUMBNAIL_PREFIX = "thumb_"
     private const val PLAYER_PREFIX = "player_"
@@ -41,7 +40,7 @@ object ImageOptimization {
     fun rememberOptimizedThumbnailRequest(
         url: String?,
         size: Int = ThumbnailSizes.MEDIUM, // Default thumbnail size
-        crossfade: Boolean = false // Disable crossfade for instant display
+        crossfade: Boolean = false, // Disable crossfade for instant display
     ): ImageRequest {
         val context = LocalContext.current
         return remember(url, size) {
@@ -56,7 +55,7 @@ object ImageOptimization {
         context: Context,
         url: String?,
         size: Int = ThumbnailSizes.MEDIUM,
-        crossfade: Boolean = false
+        crossfade: Boolean = false,
     ): ImageRequest {
         val cacheKey = "$THUMBNAIL_PREFIX${size}_$url"
         return ImageRequest.Builder(context)
@@ -78,7 +77,7 @@ object ImageOptimization {
     @Composable
     fun rememberOptimizedListRequest(
         url: String?,
-        crossfade: Boolean = false
+        crossfade: Boolean = false,
     ): ImageRequest {
         val context = LocalContext.current
         return remember(url) {
@@ -89,7 +88,7 @@ object ImageOptimization {
     fun createOptimizedListRequest(
         context: Context,
         url: String?,
-        crossfade: Boolean = false
+        crossfade: Boolean = false,
     ): ImageRequest {
         val cacheKey = "$LIST_PREFIX$url"
         return ImageRequest.Builder(context)
@@ -111,7 +110,7 @@ object ImageOptimization {
     @Composable
     fun rememberOptimizedGridRequest(
         url: String?,
-        crossfade: Boolean = false
+        crossfade: Boolean = false,
     ): ImageRequest {
         val context = LocalContext.current
         return remember(url) {
@@ -122,7 +121,7 @@ object ImageOptimization {
     fun createOptimizedGridRequest(
         context: Context,
         url: String?,
-        crossfade: Boolean = false
+        crossfade: Boolean = false,
     ): ImageRequest {
         val cacheKey = "$GRID_PREFIX$url"
         return ImageRequest.Builder(context)
@@ -145,7 +144,7 @@ object ImageOptimization {
     @Composable
     fun rememberOptimizedPlayerArtRequest(
         url: String?,
-        crossfade: Boolean = true
+        crossfade: Boolean = true,
     ): ImageRequest {
         val context = LocalContext.current
         return remember(url) {
@@ -156,7 +155,7 @@ object ImageOptimization {
     fun createOptimizedPlayerArtRequest(
         context: Context,
         url: String?,
-        crossfade: Boolean = true
+        crossfade: Boolean = true,
     ): ImageRequest {
         val cacheKey = "$PLAYER_PREFIX$url"
         return ImageRequest.Builder(context)
@@ -178,7 +177,7 @@ object ImageOptimization {
      */
     fun createOptimizedRequestBuilder(
         context: Context,
-        url: String?
+        url: String?,
     ): ImageRequest.Builder {
         return ImageRequest.Builder(context)
             .data(url)
@@ -197,12 +196,12 @@ object ImageOptimization {
  */
 @Stable
 object ThumbnailSizes {
-    const val TINY = 64    // For very small icons
-    const val SMALL = 120  // For small list items (ListThumbnailSize)
+    const val TINY = 64 // For very small icons
+    const val SMALL = 120 // For small list items (ListThumbnailSize)
     const val MEDIUM = 256 // For medium items
-    const val LARGE = 544  // For grid items (GridThumbnailHeight)
+    const val LARGE = 544 // For grid items (GridThumbnailHeight)
     const val PLAYER = 720 // For player artwork
-    const val FULL = 1080  // For full-screen images
+    const val FULL = 1080 // For full-screen images
 }
 
 /**
@@ -218,17 +217,18 @@ fun OptimizedAsyncImage(
     crossfade: Boolean = false, // Default: no crossfade for instant display
     placeholderPainter: Painter? = null,
     errorPainter: Painter? = null,
-    contentScale: ContentScale = ContentScale.Crop
+    contentScale: ContentScale = ContentScale.Crop,
 ) {
     val context = LocalContext.current
-    val request = remember(url, size) {
-        ImageOptimization.createOptimizedThumbnailRequest(
-            context = context,
-            url = url,
-            size = size,
-            crossfade = crossfade
-        )
-    }
+    val request =
+        remember(url, size) {
+            ImageOptimization.createOptimizedThumbnailRequest(
+                context = context,
+                url = url,
+                size = size,
+                crossfade = crossfade,
+            )
+        }
 
     AsyncImage(
         model = request,
@@ -236,7 +236,7 @@ fun OptimizedAsyncImage(
         modifier = modifier,
         placeholder = placeholderPainter,
         error = errorPainter,
-        contentScale = contentScale
+        contentScale = contentScale,
     )
 }
 
@@ -248,7 +248,7 @@ suspend fun prewarmImageCache(
     context: Context,
     imageLoader: coil.ImageLoader,
     urls: List<String?>,
-    size: Int = ThumbnailSizes.MEDIUM
+    size: Int = ThumbnailSizes.MEDIUM,
 ) {
     urls.filterNotNull().take(10).forEach { url ->
         try {
@@ -259,4 +259,3 @@ suspend fun prewarmImageCache(
         }
     }
 }
-

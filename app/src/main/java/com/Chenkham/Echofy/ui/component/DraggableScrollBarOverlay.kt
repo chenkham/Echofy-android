@@ -4,8 +4,6 @@
  * Licensed Under GPL-3.0 | see git history for contributors
  */
 
-
-
 package com.Chenkham.Echofy.ui.component
 
 import androidx.compose.animation.core.Animatable
@@ -16,15 +14,14 @@ import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyListState
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.LocalContentColor
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -55,7 +52,7 @@ fun DraggableScrollbar(
     trackWidth: Dp = 24.dp,
     minItemCountForScroll: Int = 15,
     minScrollRangeForDrag: Int = 5,
-    headerItems: Int = 0
+    headerItems: Int = 0,
 ) {
     val density = LocalDensity.current
     val coroutineScope = rememberCoroutineScope()
@@ -84,78 +81,82 @@ fun DraggableScrollbar(
     var lastTargetIndex by remember { mutableIntStateOf(-1) }
 
     BoxWithConstraints(
-        modifier = modifier
-            .width(trackWidth)
-            .fillMaxHeight()
-            .pointerInput(scrollState) {
-                detectDragGestures(
-                    onDragStart = { offset ->
-                        isDragging = true
-                        lastTargetIndex = -1
+        modifier =
+            modifier
+                .width(trackWidth)
+                .fillMaxHeight()
+                .pointerInput(scrollState) {
+                    detectDragGestures(
+                        onDragStart = { offset ->
+                            isDragging = true
+                            lastTargetIndex = -1
+                            val viewportHeight = size.height.toFloat()
+                            val constThumbHeight = with(density) { thumbHeight.toPx() }
+                            val maxThumbY = viewportHeight - constThumbHeight
+                            smoothedThumbY = (offset.y - constThumbHeight / 2).coerceIn(0f, maxThumbY)
+                        },
+                        onDragEnd = {
+                            isDragging = false
+                        },
+                        onDragCancel = {
+                            isDragging = false
+                        },
+                    ) { change, _ ->
                         val viewportHeight = size.height.toFloat()
                         val constThumbHeight = with(density) { thumbHeight.toPx() }
                         val maxThumbY = viewportHeight - constThumbHeight
-                        smoothedThumbY = (offset.y - constThumbHeight / 2).coerceIn(0f, maxThumbY)
-                    },
-                    onDragEnd = { 
-                        isDragging = false
-                    },
-                    onDragCancel = { 
-                        isDragging = false 
-                    }
-                ) { change, _ ->
-                    val viewportHeight = size.height.toFloat()
-                    val constThumbHeight = with(density) { thumbHeight.toPx() }
-                    val maxThumbY = viewportHeight - constThumbHeight
-                    
-                    val targetThumbY = (change.position.y - constThumbHeight / 2).coerceIn(0f, maxThumbY)
-                    
-                    val layoutInfo = scrollState.layoutInfo
-                    val totalContentItems = layoutInfo.totalItemsCount - headerItems
-                    
-                    val thumbSmoothingFactor = when {
-                        totalContentItems < 20 -> 0.4f
-                        totalContentItems < 50 -> 0.6f
-                        else -> 0.8f
-                    }
 
-                    smoothedThumbY = smoothedThumbY * (1f - thumbSmoothingFactor) + targetThumbY * thumbSmoothingFactor
+                        val targetThumbY = (change.position.y - constThumbHeight / 2).coerceIn(0f, maxThumbY)
 
-                    val visibleItems = layoutInfo.visibleItemsInfo
-                    if (visibleItems.isEmpty()) return@detectDragGestures
+                        val layoutInfo = scrollState.layoutInfo
+                        val totalContentItems = layoutInfo.totalItemsCount - headerItems
 
-                    val maxScrollIndex = max(1, totalContentItems - visibleItems.size)
+                        val thumbSmoothingFactor =
+                            when {
+                                totalContentItems < 20 -> 0.4f
+                                totalContentItems < 50 -> 0.6f
+                                else -> 0.8f
+                            }
 
-                    if (maxScrollIndex > minScrollRangeForDrag) {
-                        val touchProgress = (change.position.y / size.height).coerceIn(0f, 1f)
-                        
-                        val listSmoothingFactor = when {
-                            totalContentItems < 20 -> 0.2f
-                            totalContentItems < 50 -> 0.5f
-                            else -> 0.8f
-                        }
-                        
-                        smoothedY = smoothedY * (1f - listSmoothingFactor) + touchProgress * listSmoothingFactor
-                        
-                        val targetFractionalIndex = smoothedY * maxScrollIndex
-                        val targetIndex = (headerItems + targetFractionalIndex.toInt())
-                            .coerceIn(headerItems, layoutInfo.totalItemsCount - 1)
+                        smoothedThumbY = smoothedThumbY * (1f - thumbSmoothingFactor) + targetThumbY * thumbSmoothingFactor
 
-                        if (abs(targetIndex - lastTargetIndex) >= 1) {
-                            lastTargetIndex = targetIndex
-                            coroutineScope.launch {
-                                try {
-                                    scrollState.scrollToItem(
-                                        index = targetIndex,
-                                        scrollOffset = 0
-                                    )
-                                } catch (e: Exception) {
+                        val visibleItems = layoutInfo.visibleItemsInfo
+                        if (visibleItems.isEmpty()) return@detectDragGestures
+
+                        val maxScrollIndex = max(1, totalContentItems - visibleItems.size)
+
+                        if (maxScrollIndex > minScrollRangeForDrag) {
+                            val touchProgress = (change.position.y / size.height).coerceIn(0f, 1f)
+
+                            val listSmoothingFactor =
+                                when {
+                                    totalContentItems < 20 -> 0.2f
+                                    totalContentItems < 50 -> 0.5f
+                                    else -> 0.8f
+                                }
+
+                            smoothedY = smoothedY * (1f - listSmoothingFactor) + touchProgress * listSmoothingFactor
+
+                            val targetFractionalIndex = smoothedY * maxScrollIndex
+                            val targetIndex =
+                                (headerItems + targetFractionalIndex.toInt())
+                                    .coerceIn(headerItems, layoutInfo.totalItemsCount - 1)
+
+                            if (abs(targetIndex - lastTargetIndex) >= 1) {
+                                lastTargetIndex = targetIndex
+                                coroutineScope.launch {
+                                    try {
+                                        scrollState.scrollToItem(
+                                            index = targetIndex,
+                                            scrollOffset = 0,
+                                        )
+                                    } catch (e: Exception) {
+                                    }
                                 }
                             }
                         }
                     }
-                }
-            }
+                },
     ) {
         val viewportHeight = with(density) { this@BoxWithConstraints.maxHeight.toPx() }
         val constThumbHeight = with(density) { thumbHeight.toPx() }
@@ -187,7 +188,7 @@ fun DraggableScrollbar(
         LaunchedEffect(targetThumbY, isDragging, isUserScrolling, smoothedThumbY) {
             val layoutInfo = scrollState.layoutInfo
             val totalContentItems = layoutInfo.totalItemsCount - headerItems
-            
+
             when {
                 isDragging -> {
                     if (totalContentItems < 50) {
@@ -206,20 +207,22 @@ fun DraggableScrollbar(
                 else -> {
                     animatedThumbY.animateTo(
                         targetValue = targetThumbY,
-                        animationSpec = spring(
-                            stiffness = if (totalContentItems < 30) 80f else 150f,
-                            dampingRatio = if (totalContentItems < 30) 1.5f else 0.9f
-                        )
+                        animationSpec =
+                            spring(
+                                stiffness = if (totalContentItems < 30) 80f else 150f,
+                                dampingRatio = if (totalContentItems < 30) 1.5f else 0.9f,
+                            ),
                     )
                 }
             }
         }
 
         Canvas(
-            modifier = Modifier
-                .width(thumbWidth)
-                .fillMaxHeight()
-                .align(Alignment.CenterEnd)
+            modifier =
+                Modifier
+                    .width(thumbWidth)
+                    .fillMaxHeight()
+                    .align(Alignment.CenterEnd),
         ) {
             val color = if (isDragging) thumbColorActive else thumbColor
             val cornerRadiusPx = thumbCornerRadius.toPx()
@@ -228,7 +231,7 @@ fun DraggableScrollbar(
                 color = color,
                 topLeft = Offset(0f, animatedThumbY.value),
                 size = Size(this.size.width, constThumbHeight),
-                cornerRadius = CornerRadius(cornerRadiusPx)
+                cornerRadius = CornerRadius(cornerRadiusPx),
             )
         }
     }

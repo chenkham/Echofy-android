@@ -40,18 +40,19 @@ object Mixcloud {
     }
 
     /** Genre tags surfaced as browsing chips. */
-    val TAGS = linkedMapOf(
-        "house" to "House",
-        "techno" to "Techno",
-        "hip-hop" to "Hip Hop",
-        "disco" to "Disco",
-        "drum-and-bass" to "Drum & Bass",
-        "ambient" to "Ambient",
-        "jazz" to "Jazz",
-        "funk" to "Funk",
-        "chillout" to "Chillout",
-        "electronic" to "Electronic",
-    )
+    val TAGS =
+        linkedMapOf(
+            "house" to "House",
+            "techno" to "Techno",
+            "hip-hop" to "Hip Hop",
+            "disco" to "Disco",
+            "drum-and-bass" to "Drum & Bass",
+            "ambient" to "Ambient",
+            "jazz" to "Jazz",
+            "funk" to "Funk",
+            "chillout" to "Chillout",
+            "electronic" to "Electronic",
+        )
 
     /**
      * Search mixes by free text.
@@ -88,25 +89,28 @@ object Mixcloud {
     /**
      * Currently popular mixes across Mixcloud.
      */
-    suspend fun getPopular(limit: Int = 30) = runCatching {
-        client
-            .get("popular/") {
-                parameter("limit", limit)
-            }.body<MixcloudResponse>()
-            .data
-            .map { it.toDjMix() }
-    }
+    suspend fun getPopular(limit: Int = 30) =
+        runCatching {
+            client
+                .get("popular/") {
+                    parameter("limit", limit)
+                }.body<MixcloudResponse>()
+                .data
+                .map { it.toDjMix() }
+        }
 
-    private fun MixcloudCloudcast.toDjMix() = DjMix(
-        key = key,
-        title = name,
-        artistName = user?.name.orEmpty(),
-        durationSeconds = audioLength,
-        thumbnailUrl = pictures?.extraLarge
-            ?: pictures?.large
-            ?: pictures?.medium,
-        playCount = playCount,
-        tags = tags.map { it.name },
-        webUrl = url,
-    )
+    private fun MixcloudCloudcast.toDjMix() =
+        DjMix(
+            key = key,
+            title = name,
+            artistName = user?.name.orEmpty(),
+            durationSeconds = audioLength,
+            thumbnailUrl =
+                pictures?.extraLarge
+                    ?: pictures?.large
+                    ?: pictures?.medium,
+            playCount = playCount,
+            tags = tags.map { it.name },
+            webUrl = url,
+        )
 }

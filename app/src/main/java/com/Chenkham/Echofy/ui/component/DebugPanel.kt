@@ -4,12 +4,8 @@
  * Licensed Under GPL-3.0 | see git history for contributors
  */
 
-
-
 package com.Chenkham.Echofy.ui.component
 
-import androidx.compose.material3.Icon
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.res.painterResource
 import com.Chenkham.Echofy.R
@@ -22,13 +18,13 @@ import com.Chenkham.Echofy.R
 fun DebugPanelItem(
     title: @Composable () -> Unit,
     description: (@Composable () -> Unit)? = null,
-    trailingContent: (@Composable () -> Unit)? = null
+    trailingContent: (@Composable () -> Unit)? = null,
 ): Material3SettingsItem {
     return Material3SettingsItem(
         icon = painterResource(R.drawable.info),
         title = title,
         description = description,
         trailingContent = trailingContent,
-        isHighlighted = true
+        isHighlighted = true,
     )
 }

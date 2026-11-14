@@ -75,11 +75,10 @@ object LrcLib {
         var plain = 0
         tracks.forEach {
             if (count <= 4) {
-                if (it.syncedLyrics != null && duration == -1)
-                    {
-                        count++
-                        it.syncedLyrics.let(callback)
-                    } else {
+                if (it.syncedLyrics != null && duration == -1) {
+                    count++
+                    it.syncedLyrics.let(callback)
+                } else {
                     val matchesDuration = it.duration?.let { d -> abs(d - duration) <= 2 } == true
                     if (it.syncedLyrics != null && matchesDuration) {
                         count++

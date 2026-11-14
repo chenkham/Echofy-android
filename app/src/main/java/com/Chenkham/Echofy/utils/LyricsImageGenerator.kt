@@ -34,8 +34,11 @@ import java.io.File
 import java.io.FileOutputStream
 
 object ComposeToImage {
-
-    fun saveBitmapAsFile(context: Context, bitmap: Bitmap, fileName: String): Uri {
+    fun saveBitmapAsFile(
+        context: Context,
+        bitmap: Bitmap,
+        fileName: String,
+    ): Uri {
         return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
             saveToMediaStore(context, bitmap, fileName)
         } else {
@@ -44,12 +47,17 @@ object ComposeToImage {
     }
 
     @RequiresApi(Build.VERSION_CODES.Q)
-    private fun saveToMediaStore(context: Context, bitmap: Bitmap, fileName: String): Uri {
+    private fun saveToMediaStore(
+        context: Context,
+        bitmap: Bitmap,
+        fileName: String,
+    ): Uri {
         val contentValues = buildContentValues(fileName)
-        val uri = context.contentResolver.insert(
-            MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
-            contentValues
-        ) ?: throw IllegalStateException("Failed to create new MediaStore record")
+        val uri =
+            context.contentResolver.insert(
+                MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
+                contentValues,
+            ) ?: throw IllegalStateException("Failed to create new MediaStore record")
 
         context.contentResolver.openOutputStream(uri)?.use { outputStream ->
             bitmap.compress(Bitmap.CompressFormat.PNG, 100, outputStream)
@@ -57,13 +65,18 @@ object ComposeToImage {
         return uri
     }
 
-    private fun buildContentValues(fileName: String): ContentValues = ContentValues().apply {
-        put(MediaStore.MediaColumns.DISPLAY_NAME, "$fileName.png")
-        put(MediaStore.MediaColumns.MIME_TYPE, "image/png")
-        put(MediaStore.MediaColumns.RELATIVE_PATH, Environment.DIRECTORY_PICTURES + "/Echofy")
-    }
+    private fun buildContentValues(fileName: String): ContentValues =
+        ContentValues().apply {
+            put(MediaStore.MediaColumns.DISPLAY_NAME, "$fileName.png")
+            put(MediaStore.MediaColumns.MIME_TYPE, "image/png")
+            put(MediaStore.MediaColumns.RELATIVE_PATH, Environment.DIRECTORY_PICTURES + "/Echofy")
+        }
 
-    private fun saveToCache(context: Context, bitmap: Bitmap, fileName: String): Uri {
+    private fun saveToCache(
+        context: Context,
+        bitmap: Bitmap,
+        fileName: String,
+    ): Uri {
         val cachePath = File(context.cacheDir, "images")
         cachePath.mkdirs()
         val imageFile = File(cachePath, "$fileName.png")
@@ -75,7 +88,7 @@ object ComposeToImage {
         return FileProvider.getUriForFile(
             context,
             "${context.packageName}.FileProvider",
-            imageFile
+            imageFile,
         )
     }
 
@@ -107,104 +120,107 @@ object ComposeToImage {
         borderEnabled: Boolean = false,
         borderColor: Int? = null,
         borderWidth: Float = 2f,
-        logoSize: String = "MEDIUM"
-    ): Bitmap = withContext(Dispatchers.Default) {
-        val imageSize = 1080
-        val bitmap = createBitmap(imageSize, imageSize)
-        val canvas = Canvas(bitmap)
+        logoSize: String = "MEDIUM",
+    ): Bitmap =
+        withContext(Dispatchers.Default) {
+            val imageSize = 1080
+            val bitmap = createBitmap(imageSize, imageSize)
+            val canvas = Canvas(bitmap)
 
-        val bgColor = backgroundColor ?: 0xFF0A0A0A.toInt()
-        val mainTextColor = textColor ?: 0xFFFFFFFF.toInt()
-        val secTextColor = secondaryTextColor ?: 0xFFB0B0B0.toInt()
-        val bColor = borderColor ?: mainTextColor
+            val bgColor = backgroundColor ?: 0xFF0A0A0A.toInt()
+            val mainTextColor = textColor ?: 0xFFFFFFFF.toInt()
+            val secTextColor = secondaryTextColor ?: 0xFFB0B0B0.toInt()
+            val bColor = borderColor ?: mainTextColor
 
-        val outerPadding = imageSize * (padding / 380f)
-        val thumbnailSize = imageSize * 0.21f
-        val logoSizeMultiplier = when (logoSize) {
-            "SMALL" -> 0.7f
-            "MEDIUM" -> 1f
-            "LARGE" -> 1.3f
-            else -> 1f
-        }
-        val logoSizePx = imageSize * 0.073f * logoSizeMultiplier
-        val cornerRadiusPx = (cornerRadius / 28f) * (imageSize * 0.073f)
+            val outerPadding = imageSize * (padding / 380f)
+            val thumbnailSize = imageSize * 0.21f
+            val logoSizeMultiplier =
+                when (logoSize) {
+                    "SMALL" -> 0.7f
+                    "MEDIUM" -> 1f
+                    "LARGE" -> 1.3f
+                    else -> 1f
+                }
+            val logoSizePx = imageSize * 0.073f * logoSizeMultiplier
+            val cornerRadiusPx = (cornerRadius / 28f) * (imageSize * 0.073f)
 
-        val bgRect = RectF(0f, 0f, imageSize.toFloat(), imageSize.toFloat())
-        renderBackground(
-            canvas,
-            bgRect,
-            cornerRadiusPx,
-            bgColor,
-            mainTextColor,
-            backgroundStyle,
-            gradientColors,
-            patternOpacity,
-            imageSize
-        )
+            val bgRect = RectF(0f, 0f, imageSize.toFloat(), imageSize.toFloat())
+            renderBackground(
+                canvas,
+                bgRect,
+                cornerRadiusPx,
+                bgColor,
+                mainTextColor,
+                backgroundStyle,
+                gradientColors,
+                patternOpacity,
+                imageSize,
+            )
 
-        if (borderEnabled) {
-            val borderPaint = Paint().apply {
-                color = bColor
-                style = Paint.Style.STROKE
-                strokeWidth = borderWidth * (imageSize / 380f)
-                isAntiAlias = true
+            if (borderEnabled) {
+                val borderPaint =
+                    Paint().apply {
+                        color = bColor
+                        style = Paint.Style.STROKE
+                        strokeWidth = borderWidth * (imageSize / 380f)
+                        isAntiAlias = true
+                    }
+                canvas.drawRoundRect(bgRect, cornerRadiusPx, cornerRadiusPx, borderPaint)
             }
-            canvas.drawRoundRect(bgRect, cornerRadiusPx, cornerRadiusPx, borderPaint)
-        }
 
-        if (showCoverArt) {
-            val coverArt = loadCoverArtwork(context, coverArtUrl)
-            renderCoverArtHighRes(
+            if (showCoverArt) {
+                val coverArt = loadCoverArtwork(context, coverArtUrl)
+                renderCoverArtHighRes(
+                    canvas,
+                    coverArt,
+                    outerPadding,
+                    thumbnailSize,
+                    mainTextColor,
+                )
+                renderSongMetadataHighRes(
+                    canvas,
+                    songTitle,
+                    artistName,
+                    outerPadding,
+                    thumbnailSize,
+                    imageSize,
+                    mainTextColor,
+                    secTextColor,
+                    fontStyle,
+                    showSongTitle,
+                    showArtistName,
+                )
+            }
+
+            renderLyricsHighRes(
                 canvas,
-                coverArt,
-                outerPadding,
-                thumbnailSize,
-                mainTextColor
-            )
-            renderSongMetadataHighRes(
-                canvas,
-                songTitle,
-                artistName,
-                outerPadding,
-                thumbnailSize,
+                lyrics,
                 imageSize,
+                outerPadding,
+                thumbnailSize,
                 mainTextColor,
-                secTextColor,
+                bgColor,
                 fontStyle,
-                showSongTitle,
-                showArtistName
+                showCoverArt,
+                textAlignment,
+                textShadowEnabled,
             )
+
+            if (showLogo && logoPosition != "NONE") {
+                renderAppLogoHighRes(
+                    context,
+                    canvas,
+                    imageSize,
+                    outerPadding,
+                    logoSizePx,
+                    mainTextColor,
+                    logoPosition,
+                    logoSizeMultiplier,
+                )
+            }
+
+            bitmap
         }
-
-        renderLyricsHighRes(
-            canvas,
-            lyrics,
-            imageSize,
-            outerPadding,
-            thumbnailSize,
-            mainTextColor,
-            bgColor,
-            fontStyle,
-            showCoverArt,
-            textAlignment,
-            textShadowEnabled
-        )
-
-        if (showLogo && logoPosition != "NONE") {
-            renderAppLogoHighRes(
-                context,
-                canvas,
-                imageSize,
-                outerPadding,
-                logoSizePx,
-                mainTextColor,
-                logoPosition,
-                logoSizeMultiplier
-            )
-        }
-
-        bitmap
-    }
 
     private fun renderBackground(
         canvas: Canvas,
@@ -215,48 +231,54 @@ object ComposeToImage {
         backgroundStyle: String,
         gradientColors: IntArray?,
         patternOpacity: Float,
-        imageSize: Int
+        imageSize: Int,
     ) {
         when (backgroundStyle) {
             "SOLID" -> {
-                val paint = Paint().apply {
-                    color = backgroundColor
-                    isAntiAlias = true
-                }
+                val paint =
+                    Paint().apply {
+                        color = backgroundColor
+                        isAntiAlias = true
+                    }
                 canvas.drawRoundRect(rect, cornerRadius, cornerRadius, paint)
             }
             "GRADIENT" -> {
                 val colors = gradientColors ?: intArrayOf(backgroundColor, backgroundColor)
-                val paint = Paint().apply {
-                    isAntiAlias = true
-                    shader = LinearGradient(
-                        0f, 0f,
-                        rect.width(), rect.height(),
-                        colors,
-                        null,
-                        Shader.TileMode.CLAMP
-                    )
-                }
+                val paint =
+                    Paint().apply {
+                        isAntiAlias = true
+                        shader =
+                            LinearGradient(
+                                0f, 0f,
+                                rect.width(), rect.height(),
+                                colors,
+                                null,
+                                Shader.TileMode.CLAMP,
+                            )
+                    }
                 canvas.drawRoundRect(rect, cornerRadius, cornerRadius, paint)
             }
             "PATTERN" -> {
-                val paint = Paint().apply {
-                    color = backgroundColor
-                    isAntiAlias = true
-                }
+                val paint =
+                    Paint().apply {
+                        color = backgroundColor
+                        isAntiAlias = true
+                    }
                 canvas.drawRoundRect(rect, cornerRadius, cornerRadius, paint)
 
-                val clipPath = Path().apply {
-                    addRoundRect(rect, cornerRadius, cornerRadius, Path.Direction.CW)
-                }
+                val clipPath =
+                    Path().apply {
+                        addRoundRect(rect, cornerRadius, cornerRadius, Path.Direction.CW)
+                    }
                 canvas.save()
                 canvas.clipPath(clipPath)
 
-                val patternPaint = Paint().apply {
-                    color = textColor
-                    alpha = (patternOpacity * 255).toInt()
-                    isAntiAlias = true
-                }
+                val patternPaint =
+                    Paint().apply {
+                        color = textColor
+                        alpha = (patternOpacity * 255).toInt()
+                        isAntiAlias = true
+                    }
                 val pattern = imageSize * 0.037f
                 val radius = imageSize * 0.00185f
                 var x = 0f
@@ -273,15 +295,19 @@ object ComposeToImage {
         }
     }
 
-    private suspend fun loadCoverArtwork(context: Context, coverArtUrl: String?): Bitmap? {
+    private suspend fun loadCoverArtwork(
+        context: Context,
+        coverArtUrl: String?,
+    ): Bitmap? {
         if (coverArtUrl.isNullOrEmpty()) return null
         return try {
             val imageLoader = ImageLoader(context)
-            val request = ImageRequest.Builder(context)
-                .data(coverArtUrl)
-                .size(800, 800)
-                .allowHardware(false)
-                .build()
+            val request =
+                ImageRequest.Builder(context)
+                    .data(coverArtUrl)
+                    .size(800, 800)
+                    .allowHardware(false)
+                    .build()
             val result = imageLoader.execute(request)
             result.drawable?.toBitmap(800, 800, Bitmap.Config.ARGB_8888)
         } catch (e: Exception) {
@@ -295,38 +321,42 @@ object ComposeToImage {
         coverArt: Bitmap?,
         padding: Float,
         size: Float,
-        textColor: Int
+        textColor: Int,
     ) {
         coverArt?.let { artwork ->
             val rect = RectF(padding, padding, padding + size, padding + size)
             val cornerRadius = size * 0.25f
 
-            val bgPaint = Paint().apply {
-                color = textColor
-                alpha = 25
-                isAntiAlias = true
-            }
+            val bgPaint =
+                Paint().apply {
+                    color = textColor
+                    alpha = 25
+                    isAntiAlias = true
+                }
             canvas.drawRoundRect(rect, cornerRadius, cornerRadius, bgPaint)
 
-            val paint = Paint().apply {
-                isAntiAlias = true
-                isFilterBitmap = true
-            }
-            val clipPath = Path().apply {
-                addRoundRect(rect, cornerRadius, cornerRadius, Path.Direction.CW)
-            }
+            val paint =
+                Paint().apply {
+                    isAntiAlias = true
+                    isFilterBitmap = true
+                }
+            val clipPath =
+                Path().apply {
+                    addRoundRect(rect, cornerRadius, cornerRadius, Path.Direction.CW)
+                }
             canvas.save()
             canvas.clipPath(clipPath)
             canvas.drawBitmap(artwork, null, rect, paint)
             canvas.restore()
 
-            val borderPaint = Paint().apply {
-                color = textColor
-                alpha = 51
-                style = Paint.Style.STROKE
-                strokeWidth = 2f
-                isAntiAlias = true
-            }
+            val borderPaint =
+                Paint().apply {
+                    color = textColor
+                    alpha = 51
+                    style = Paint.Style.STROKE
+                    strokeWidth = 2f
+                    isAntiAlias = true
+                }
             canvas.drawRoundRect(rect, cornerRadius, cornerRadius, borderPaint)
         }
     }
@@ -342,55 +372,72 @@ object ComposeToImage {
         secondaryTextColor: Int,
         fontStyle: String,
         showSongTitle: Boolean,
-        showArtistName: Boolean
+        showArtistName: Boolean,
     ) {
         val spacing = imageSize * 0.042f
         val startX = padding + thumbnailSize + spacing
         val maxWidth = (imageSize - startX - padding).toInt()
 
-        val titleTypeface = when (fontStyle) {
-            "REGULAR" -> Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
-            "BOLD" -> Typeface.create("sans-serif-black", Typeface.NORMAL)
-            "EXTRA_BOLD" -> Typeface.create("sans-serif-black", Typeface.BOLD)
-            else -> Typeface.create("sans-serif-black", Typeface.BOLD)
-        }
+        val titleTypeface =
+            when (fontStyle) {
+                "REGULAR" -> Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
+                "BOLD" -> Typeface.create("sans-serif-black", Typeface.NORMAL)
+                "EXTRA_BOLD" -> Typeface.create("sans-serif-black", Typeface.BOLD)
+                else -> Typeface.create("sans-serif-black", Typeface.BOLD)
+            }
 
-        val titlePaint = TextPaint().apply {
-            color = mainTextColor
-            textSize = imageSize * 0.0526f
-            typeface = titleTypeface
-            isAntiAlias = true
-            letterSpacing = -0.025f
-        }
+        val titlePaint =
+            TextPaint().apply {
+                color = mainTextColor
+                textSize = imageSize * 0.0526f
+                typeface = titleTypeface
+                isAntiAlias = true
+                letterSpacing = -0.025f
+            }
 
-        val artistPaint = TextPaint().apply {
-            color = secondaryTextColor
-            textSize = imageSize * 0.042f
-            typeface = Typeface.create("sans-serif-medium", Typeface.NORMAL)
-            isAntiAlias = true
-            letterSpacing = 0.0125f
-        }
+        val artistPaint =
+            TextPaint().apply {
+                color = secondaryTextColor
+                textSize = imageSize * 0.042f
+                typeface = Typeface.create("sans-serif-medium", Typeface.NORMAL)
+                isAntiAlias = true
+                letterSpacing = 0.0125f
+            }
 
-        val titleLayout = if (showSongTitle) {
-            StaticLayout.Builder.obtain(
-                songTitle, 0, songTitle.length, titlePaint, maxWidth
-            )
-                .setAlignment(Layout.Alignment.ALIGN_NORMAL)
-                .setMaxLines(2)
-                .setLineSpacing(0f, 1.2f)
-                .setEllipsize(android.text.TextUtils.TruncateAt.END)
-                .build()
-        } else null
+        val titleLayout =
+            if (showSongTitle) {
+                StaticLayout.Builder.obtain(
+                    songTitle,
+                    0,
+                    songTitle.length,
+                    titlePaint,
+                    maxWidth,
+                )
+                    .setAlignment(Layout.Alignment.ALIGN_NORMAL)
+                    .setMaxLines(2)
+                    .setLineSpacing(0f, 1.2f)
+                    .setEllipsize(android.text.TextUtils.TruncateAt.END)
+                    .build()
+            } else {
+                null
+            }
 
-        val artistLayout = if (showArtistName) {
-            StaticLayout.Builder.obtain(
-                artistName, 0, artistName.length, artistPaint, maxWidth
-            )
-                .setAlignment(Layout.Alignment.ALIGN_NORMAL)
-                .setMaxLines(1)
-                .setEllipsize(android.text.TextUtils.TruncateAt.END)
-                .build()
-        } else null
+        val artistLayout =
+            if (showArtistName) {
+                StaticLayout.Builder.obtain(
+                    artistName,
+                    0,
+                    artistName.length,
+                    artistPaint,
+                    maxWidth,
+                )
+                    .setAlignment(Layout.Alignment.ALIGN_NORMAL)
+                    .setMaxLines(1)
+                    .setEllipsize(android.text.TextUtils.TruncateAt.END)
+                    .build()
+            } else {
+                null
+            }
 
         val centerY = padding + thumbnailSize / 2f
         val titleHeight = titleLayout?.height ?: 0
@@ -419,21 +466,23 @@ object ComposeToImage {
         fontStyle: String,
         showCoverArt: Boolean,
         textAlignment: String,
-        textShadowEnabled: Boolean
+        textShadowEnabled: Boolean,
     ) {
-        val lyricsTypeface = when (fontStyle) {
-            "REGULAR" -> Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
-            "BOLD" -> Typeface.create("sans-serif-black", Typeface.NORMAL)
-            "EXTRA_BOLD" -> Typeface.create("sans-serif-black", Typeface.BOLD)
-            else -> Typeface.create("sans-serif-black", Typeface.BOLD)
-        }
+        val lyricsTypeface =
+            when (fontStyle) {
+                "REGULAR" -> Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
+                "BOLD" -> Typeface.create("sans-serif-black", Typeface.NORMAL)
+                "EXTRA_BOLD" -> Typeface.create("sans-serif-black", Typeface.BOLD)
+                else -> Typeface.create("sans-serif-black", Typeface.BOLD)
+            }
 
-        val alignment = when (textAlignment) {
-            "LEFT" -> Layout.Alignment.ALIGN_NORMAL
-            "CENTER" -> Layout.Alignment.ALIGN_CENTER
-            "RIGHT" -> Layout.Alignment.ALIGN_OPPOSITE
-            else -> Layout.Alignment.ALIGN_CENTER
-        }
+        val alignment =
+            when (textAlignment) {
+                "LEFT" -> Layout.Alignment.ALIGN_NORMAL
+                "CENTER" -> Layout.Alignment.ALIGN_CENTER
+                "RIGHT" -> Layout.Alignment.ALIGN_OPPOSITE
+                else -> Layout.Alignment.ALIGN_CENTER
+            }
 
         val maxWidth = (imageSize * 0.85f).toInt()
         val headerHeight = if (showCoverArt) padding + thumbnailSize + (imageSize * 0.084f) else padding
@@ -443,41 +492,44 @@ object ComposeToImage {
         var textSize = imageSize * 0.055f
         val minTextSize = imageSize * 0.037f
 
-        val paint = TextPaint().apply {
-            color = textColor
-            typeface = lyricsTypeface
-            isAntiAlias = true
-            letterSpacing = 0.015f
-        }
+        val paint =
+            TextPaint().apply {
+                color = textColor
+                typeface = lyricsTypeface
+                isAntiAlias = true
+                letterSpacing = 0.015f
+            }
 
         if (textShadowEnabled) {
             paint.setShadowLayer(
                 imageSize * 0.0037f,
                 imageSize * 0.00185f,
                 imageSize * 0.00185f,
-                backgroundColor
+                backgroundColor,
             )
         }
 
         var layout: StaticLayout
         do {
             paint.textSize = textSize
-            layout = StaticLayout.Builder.obtain(lyrics, 0, lyrics.length, paint, maxWidth)
-                .setAlignment(alignment)
-                .setIncludePad(false)
-                .setLineSpacing(0f, 1.3f)
-                .build()
+            layout =
+                StaticLayout.Builder.obtain(lyrics, 0, lyrics.length, paint, maxWidth)
+                    .setAlignment(alignment)
+                    .setIncludePad(false)
+                    .setLineSpacing(0f, 1.3f)
+                    .build()
             if (layout.height <= maxHeight) break
             textSize -= imageSize * 0.0028f
         } while (textSize > minTextSize)
 
         if (textSize < minTextSize) {
             paint.textSize = minTextSize
-            layout = StaticLayout.Builder.obtain(lyrics, 0, lyrics.length, paint, maxWidth)
-                .setAlignment(alignment)
-                .setIncludePad(false)
-                .setLineSpacing(0f, 1.3f)
-                .build()
+            layout =
+                StaticLayout.Builder.obtain(lyrics, 0, lyrics.length, paint, maxWidth)
+                    .setAlignment(alignment)
+                    .setIncludePad(false)
+                    .setLineSpacing(0f, 1.3f)
+                    .build()
         }
 
         val posX = (imageSize - layout.width) / 2f
@@ -497,63 +549,71 @@ object ComposeToImage {
         logoSize: Float,
         textColor: Int,
         logoPosition: String,
-        logoSizeMultiplier: Float
+        logoSizeMultiplier: Float,
     ) {
-        val logoBitmap = getBitmapFromVectorDrawable(
-            context, R.drawable.echofy, logoSize.toInt(), logoSize.toInt()
-        ) ?: return
+        val logoBitmap =
+            getBitmapFromVectorDrawable(
+                context, R.drawable.echofy, logoSize.toInt(), logoSize.toInt(),
+            ) ?: return
 
-        val (logoX, logoY) = when (logoPosition) {
-            "BOTTOM_LEFT" -> Pair(padding, imageSize - padding - logoSize * 1.29f)
-            "BOTTOM_RIGHT" -> Pair(
-                imageSize - padding - logoSize - (imageSize * 0.185f * logoSizeMultiplier),
-                imageSize - padding - logoSize * 1.29f
-            )
-            "TOP_LEFT" -> Pair(padding, padding)
-            "TOP_RIGHT" -> Pair(
-                imageSize - padding - logoSize - (imageSize * 0.185f * logoSizeMultiplier),
-                padding
-            )
-            else -> Pair(padding, imageSize - padding - logoSize * 1.29f)
-        }
+        val (logoX, logoY) =
+            when (logoPosition) {
+                "BOTTOM_LEFT" -> Pair(padding, imageSize - padding - logoSize * 1.29f)
+                "BOTTOM_RIGHT" ->
+                    Pair(
+                        imageSize - padding - logoSize - (imageSize * 0.185f * logoSizeMultiplier),
+                        imageSize - padding - logoSize * 1.29f,
+                    )
+                "TOP_LEFT" -> Pair(padding, padding)
+                "TOP_RIGHT" ->
+                    Pair(
+                        imageSize - padding - logoSize - (imageSize * 0.185f * logoSizeMultiplier),
+                        padding,
+                    )
+                else -> Pair(padding, imageSize - padding - logoSize * 1.29f)
+            }
 
         val circleRadius = logoSize * 1.29f
         val circleCenterX = logoX + circleRadius / 2f
         val circleCenterY = logoY + circleRadius / 2f
 
-        val circleBgPaint = Paint().apply {
-            color = textColor
-            alpha = 38
-            isAntiAlias = true
-        }
+        val circleBgPaint =
+            Paint().apply {
+                color = textColor
+                alpha = 38
+                isAntiAlias = true
+            }
         canvas.drawCircle(circleCenterX, circleCenterY, circleRadius / 2f, circleBgPaint)
 
-        val circleBorderPaint = Paint().apply {
-            color = textColor
-            alpha = 76
-            style = Paint.Style.STROKE
-            strokeWidth = imageSize * 0.00093f
-            isAntiAlias = true
-        }
+        val circleBorderPaint =
+            Paint().apply {
+                color = textColor
+                alpha = 76
+                style = Paint.Style.STROKE
+                strokeWidth = imageSize * 0.00093f
+                isAntiAlias = true
+            }
         canvas.drawCircle(circleCenterX, circleCenterY, circleRadius / 2f, circleBorderPaint)
 
-        val paint = Paint().apply {
-            colorFilter = PorterDuffColorFilter(textColor, PorterDuff.Mode.SRC_IN)
-            isAntiAlias = true
-        }
+        val paint =
+            Paint().apply {
+                colorFilter = PorterDuffColorFilter(textColor, PorterDuff.Mode.SRC_IN)
+                isAntiAlias = true
+            }
 
         val logoOffsetX = logoX + (circleRadius - logoSize) / 2f
         val logoOffsetY = logoY + (circleRadius - logoSize) / 2f
         canvas.drawBitmap(logoBitmap, logoOffsetX, logoOffsetY, paint)
 
         val appName = context.getString(R.string.app_name)
-        val textPaint = TextPaint().apply {
-            color = textColor
-            textSize = imageSize * 0.0395f * logoSizeMultiplier
-            typeface = Typeface.create("sans-serif-medium", Typeface.NORMAL)
-            isAntiAlias = true
-            letterSpacing = 0.02f
-        }
+        val textPaint =
+            TextPaint().apply {
+                color = textColor
+                textSize = imageSize * 0.0395f * logoSizeMultiplier
+                typeface = Typeface.create("sans-serif-medium", Typeface.NORMAL)
+                isAntiAlias = true
+                letterSpacing = 0.02f
+            }
 
         val textBounds = Rect()
         textPaint.getTextBounds(appName, 0, appName.length, textBounds)
@@ -569,7 +629,7 @@ object ComposeToImage {
         context: Context,
         drawableId: Int,
         width: Int,
-        height: Int
+        height: Int,
     ): Bitmap? {
         val drawable = context.getDrawable(drawableId) ?: return null
         val bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)

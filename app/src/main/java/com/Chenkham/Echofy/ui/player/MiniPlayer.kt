@@ -4,8 +4,6 @@ import android.content.res.Configuration
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.LinearEasing
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.isActive
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateFloat
@@ -18,7 +16,6 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
 import androidx.compose.foundation.basicMarquee
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.isSystemInDarkTheme
@@ -48,7 +45,6 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -82,29 +78,26 @@ import coil.compose.AsyncImage
 import com.Chenkham.Echofy.LocalPlayerConnection
 import com.Chenkham.Echofy.R
 import com.Chenkham.Echofy.constants.DarkModeKey
-import com.Chenkham.Echofy.constants.MiniPlayerThumbnailShapeKey
 import com.Chenkham.Echofy.constants.DefaultMiniPlayerThumbnailShape
+import com.Chenkham.Echofy.constants.MiniPlayerStyle
+import com.Chenkham.Echofy.constants.MiniPlayerStyleKey
+import com.Chenkham.Echofy.constants.MiniPlayerThumbnailShapeKey
 import com.Chenkham.Echofy.constants.PureBlackKey
-import com.Chenkham.Echofy.constants.ThumbnailCornerRadius
 import com.Chenkham.Echofy.extensions.togglePlayPause
-import com.Chenkham.Echofy.models.MediaMetadata
 import com.Chenkham.Echofy.ui.screens.settings.DarkMode
 import com.Chenkham.Echofy.utils.getMiniPlayerThumbnailShape
 import com.Chenkham.Echofy.utils.rememberEnumPreference
 import com.Chenkham.Echofy.utils.rememberPreference
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlin.math.absoluteValue
 import kotlin.math.exp
 import kotlin.math.roundToInt
 
-import com.Chenkham.Echofy.constants.MiniPlayerStyle
-import com.Chenkham.Echofy.constants.MiniPlayerStyleKey
-
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun MiniPlayer(
-    modifier: Modifier = Modifier,
-) {
+fun MiniPlayer(modifier: Modifier = Modifier) {
     val playerConnection = LocalPlayerConnection.current ?: return
     val isPlaying by playerConnection.isPlaying.collectAsState()
     val playbackState by playerConnection.playbackState.collectAsState()
@@ -135,53 +128,58 @@ fun MiniPlayer(
     val darkTheme by rememberEnumPreference(DarkModeKey, defaultValue = DarkMode.AUTO)
     val pureBlack by rememberPreference(PureBlackKey, defaultValue = false)
 
-    val useDarkTheme = remember(darkTheme, isSystemInDarkTheme) {
-        if (darkTheme == DarkMode.AUTO) isSystemInDarkTheme else darkTheme == DarkMode.ON
-    }
+    val useDarkTheme =
+        remember(darkTheme, isSystemInDarkTheme) {
+            if (darkTheme == DarkMode.AUTO) isSystemInDarkTheme else darkTheme == DarkMode.ON
+        }
 
-    val (miniPlayerStyle, _) = rememberEnumPreference(
-        key = MiniPlayerStyleKey,
-        defaultValue = MiniPlayerStyle.Slim
-    )
+    val (miniPlayerStyle, _) =
+        rememberEnumPreference(
+            key = MiniPlayerStyleKey,
+            defaultValue = MiniPlayerStyle.Slim,
+        )
 
     // Obtener la forma del thumbnail del MiniPlayer
-    val miniPlayerThumbnailShapeState = rememberPreference(
-        key = MiniPlayerThumbnailShapeKey,
-        defaultValue = DefaultMiniPlayerThumbnailShape
-    )
+    val miniPlayerThumbnailShapeState =
+        rememberPreference(
+            key = MiniPlayerThumbnailShapeKey,
+            defaultValue = DefaultMiniPlayerThumbnailShape,
+        )
 
-    val miniPlayerThumbnailShape = remember(miniPlayerThumbnailShapeState.value, isPlaying) {
-        if (isPlaying) {
-            getMiniPlayerThumbnailShape(miniPlayerThumbnailShapeState.value)
-        } else {
-            CircleShape
+    val miniPlayerThumbnailShape =
+        remember(miniPlayerThumbnailShapeState.value, isPlaying) {
+            if (isPlaying) {
+                getMiniPlayerThumbnailShape(miniPlayerThumbnailShapeState.value)
+            } else {
+                CircleShape
+            }
         }
-    }
 
     // Calcular el color de fondo correcto
-    val miniPlayerBackgroundColor = when {
-        useDarkTheme && pureBlack -> Color.Black.copy(alpha = 0.95f)
-        else -> MaterialTheme.colorScheme.surfaceContainer.copy(alpha = 0.95f)
-    }
+    val miniPlayerBackgroundColor =
+        when {
+            useDarkTheme && pureBlack -> Color.Black.copy(alpha = 0.95f)
+            else -> MaterialTheme.colorScheme.surfaceContainer.copy(alpha = 0.95f)
+        }
 
     val currentView = LocalView.current
     val layoutDirection = LocalLayoutDirection.current
     val coroutineScope = rememberCoroutineScope()
 
     val configuration = LocalConfiguration.current
-    val isTabletLandscape = configuration.screenWidthDp >= 600 &&
+    val isTabletLandscape =
+        configuration.screenWidthDp >= 600 &&
             configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
 
     val offsetXAnimatable = remember { Animatable(0f) }
     var dragStartTime by remember { mutableLongStateOf(0L) }
     var totalDragDistance by remember { mutableFloatStateOf(0f) }
 
-    val animationSpec = spring<Float>(
-        dampingRatio = Spring.DampingRatioNoBouncy,
-        stiffness = Spring.StiffnessLow
-    )
-
-
+    val animationSpec =
+        spring<Float>(
+            dampingRatio = Spring.DampingRatioNoBouncy,
+            stiffness = Spring.StiffnessLow,
+        )
 
     // Animación INFINITA de rotación para el thumbnail
     // Se ejecuta continuamente mientras isPlaying = true
@@ -189,14 +187,16 @@ fun MiniPlayer(
     val thumbnailRotation by infiniteTransition.animateFloat(
         initialValue = 0f,
         targetValue = 360f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(
-                durationMillis = 8000, // 8 segundos para una rotación completa (velocidad lenta)
-                easing = LinearEasing
+        animationSpec =
+            infiniteRepeatable(
+                animation =
+                    tween(
+                        durationMillis = 8000, // 8 segundos para una rotación completa (velocidad lenta)
+                        easing = LinearEasing,
+                    ),
+                repeatMode = RepeatMode.Restart,
             ),
-            repeatMode = RepeatMode.Restart
-        ),
-        label = "rotation"
+        label = "rotation",
     )
 
     // Use the same shape whether playing or paused
@@ -210,115 +210,119 @@ fun MiniPlayer(
     }
     val autoSwipeThreshold = calculateAutoSwipeThreshold(0.73f)
 
-
     val playerHeight = if (miniPlayerStyle == MiniPlayerStyle.Slim) 64.dp else 80.dp
     val playerPaddingVertical = if (miniPlayerStyle == MiniPlayerStyle.Slim) 0.dp else 8.dp
     val playerPaddingHorizontal = if (miniPlayerStyle == MiniPlayerStyle.Slim) 0.dp else 16.dp
     val playerShape = if (miniPlayerStyle == MiniPlayerStyle.Slim) RoundedCornerShape(0.dp) else RoundedCornerShape(32.dp)
 
     Box(
-        modifier = modifier
-            .fillMaxWidth()
-            .height(playerHeight)
-            .windowInsetsPadding(WindowInsets.systemBars.only(WindowInsetsSides.Horizontal))
-            .padding(horizontal = playerPaddingHorizontal, vertical = playerPaddingVertical)
-            .background(Color.Transparent)
+        modifier =
+            modifier
+                .fillMaxWidth()
+                .height(playerHeight)
+                .windowInsetsPadding(WindowInsets.systemBars.only(WindowInsetsSides.Horizontal))
+                .padding(horizontal = playerPaddingHorizontal, vertical = playerPaddingVertical)
+                .background(Color.Transparent),
     ) {
         Surface(
-            modifier = Modifier
-                .then(
-                    if (isTabletLandscape) {
-                        Modifier
-                            .width(480.dp)
-                            .align(Alignment.CenterEnd)
-                    } else {
-                        Modifier.fillMaxWidth()
-                    }
-                )
-                .height(64.dp)
-                .offset { IntOffset(offsetXAnimatable.value.roundToInt(), 0) }
-                .shadow(
-                    elevation = if (miniPlayerStyle == MiniPlayerStyle.Slim) 0.dp else 8.dp,
-                    shape = playerShape,
-                    clip = false
-                ),
+            modifier =
+                Modifier
+                    .then(
+                        if (isTabletLandscape) {
+                            Modifier
+                                .width(480.dp)
+                                .align(Alignment.CenterEnd)
+                        } else {
+                            Modifier.fillMaxWidth()
+                        },
+                    )
+                    .height(64.dp)
+                    .offset { IntOffset(offsetXAnimatable.value.roundToInt(), 0) }
+                    .shadow(
+                        elevation = if (miniPlayerStyle == MiniPlayerStyle.Slim) 0.dp else 8.dp,
+                        shape = playerShape,
+                        clip = false,
+                    ),
             tonalElevation = 2.dp,
             shape = playerShape,
-            color = Color.Transparent
+            color = Color.Transparent,
         ) {
             Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .background(miniPlayerBackgroundColor)
-                    .pointerInput(Unit) {
-                        detectHorizontalDragGestures(
-                            onDragStart = {
-                                dragStartTime = System.currentTimeMillis()
-                                totalDragDistance = 0f
-                            },
-                            onDragCancel = {
-                                coroutineScope.launch {
-                                    offsetXAnimatable.animateTo(
-                                        targetValue = 0f,
-                                        animationSpec = animationSpec
-                                    )
-                                }
-                            },
-                            onHorizontalDrag = { _, dragAmount ->
-                                val adjustedDragAmount =
-                                    if (layoutDirection == LayoutDirection.Rtl) -dragAmount else dragAmount
-                                val allowLeft = adjustedDragAmount < 0 && canSkipNext
-                                val allowRight = adjustedDragAmount > 0 && canSkipPrevious
-                                if (allowLeft || allowRight) {
-                                    totalDragDistance += adjustedDragAmount.absoluteValue
+                modifier =
+                    Modifier
+                        .fillMaxSize()
+                        .background(miniPlayerBackgroundColor)
+                        .pointerInput(Unit) {
+                            detectHorizontalDragGestures(
+                                onDragStart = {
+                                    dragStartTime = System.currentTimeMillis()
+                                    totalDragDistance = 0f
+                                },
+                                onDragCancel = {
                                     coroutineScope.launch {
-                                        offsetXAnimatable.snapTo(offsetXAnimatable.value + adjustedDragAmount)
+                                        offsetXAnimatable.animateTo(
+                                            targetValue = 0f,
+                                            animationSpec = animationSpec,
+                                        )
                                     }
-                                }
-                            },
-                            onDragEnd = {
-                                val dragDuration = System.currentTimeMillis() - dragStartTime
-                                val velocity =
-                                    if (dragDuration > 0) totalDragDistance / dragDuration else 0f
-                                val currentOffset = offsetXAnimatable.value
+                                },
+                                onHorizontalDrag = { _, dragAmount ->
+                                    val adjustedDragAmount =
+                                        if (layoutDirection == LayoutDirection.Rtl) -dragAmount else dragAmount
+                                    val allowLeft = adjustedDragAmount < 0 && canSkipNext
+                                    val allowRight = adjustedDragAmount > 0 && canSkipPrevious
+                                    if (allowLeft || allowRight) {
+                                        totalDragDistance += adjustedDragAmount.absoluteValue
+                                        coroutineScope.launch {
+                                            offsetXAnimatable.snapTo(offsetXAnimatable.value + adjustedDragAmount)
+                                        }
+                                    }
+                                },
+                                onDragEnd = {
+                                    val dragDuration = System.currentTimeMillis() - dragStartTime
+                                    val velocity =
+                                        if (dragDuration > 0) totalDragDistance / dragDuration else 0f
+                                    val currentOffset = offsetXAnimatable.value
 
-                                val minDistanceThreshold = 50f
-                                val velocityThreshold = (0.73f * -8.25f) + 8.5f
+                                    val minDistanceThreshold = 50f
+                                    val velocityThreshold = (0.73f * -8.25f) + 8.5f
 
-                                val shouldChangeSong = (
-                                        currentOffset.absoluteValue > minDistanceThreshold &&
+                                    val shouldChangeSong =
+                                        (
+                                            currentOffset.absoluteValue > minDistanceThreshold &&
                                                 velocity > velocityThreshold
                                         ) || (currentOffset.absoluteValue > autoSwipeThreshold)
 
-                                if (shouldChangeSong) {
-                                    val isRightSwipe = currentOffset > 0
+                                    if (shouldChangeSong) {
+                                        val isRightSwipe = currentOffset > 0
 
-                                    if (isRightSwipe && canSkipPrevious) {
-                                        playerConnection.player.seekToPreviousMediaItem()
-                                    } else if (!isRightSwipe && canSkipNext) {
-                                        playerConnection.seekToNext()
+                                        if (isRightSwipe && canSkipPrevious) {
+                                            playerConnection.player.seekToPreviousMediaItem()
+                                        } else if (!isRightSwipe && canSkipNext) {
+                                            playerConnection.seekToNext()
+                                        }
                                     }
-                                }
 
-                                coroutineScope.launch {
-                                    offsetXAnimatable.animateTo(
-                                        targetValue = 0f,
-                                        animationSpec = animationSpec
-                                    )
-                                }
-                            }
-                        )
-                    }
+                                    coroutineScope.launch {
+                                        offsetXAnimatable.animateTo(
+                                            targetValue = 0f,
+                                            animationSpec = animationSpec,
+                                        )
+                                    }
+                                },
+                            )
+                        },
             ) {
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(horizontal = 12.dp, vertical = 8.dp),
+                    modifier =
+                        Modifier
+                            .fillMaxSize()
+                            .padding(horizontal = 12.dp, vertical = 8.dp),
                 ) {
                     Box(
                         contentAlignment = Alignment.Center,
-                        modifier = Modifier.size(48.dp)
+                        modifier = Modifier.size(48.dp),
                     ) {
                         if (duration > 0) {
                             CircularProgressIndicator(
@@ -326,33 +330,35 @@ fun MiniPlayer(
                                 modifier = Modifier.size(48.dp),
                                 color = MaterialTheme.colorScheme.primary,
                                 strokeWidth = 3.dp,
-                                trackColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.2f)
+                                trackColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.2f),
                             )
                         }
 
                         Box(
                             contentAlignment = Alignment.Center,
-                            modifier = Modifier
-                                .size(40.dp)
-                                .rotate(if (isPlaying) thumbnailRotation else 0f) // Solo rota cuando está reproduciendo
-                                .clip(currentThumbnailShape)
-                                .clickable {
-                                    if (playbackState == Player.STATE_ENDED) {
-                                        playerConnection.player.seekTo(0, 0)
-                                        playerConnection.player.playWhenReady = true
-                                    } else {
-                                        playerConnection.togglePlayPause()
-                                    }
-                                }
+                            modifier =
+                                Modifier
+                                    .size(40.dp)
+                                    .rotate(if (isPlaying) thumbnailRotation else 0f) // Solo rota cuando está reproduciendo
+                                    .clip(currentThumbnailShape)
+                                    .clickable {
+                                        if (playbackState == Player.STATE_ENDED) {
+                                            playerConnection.player.seekTo(0, 0)
+                                            playerConnection.player.playWhenReady = true
+                                        } else {
+                                            playerConnection.togglePlayPause()
+                                        }
+                                    },
                         ) {
                             mediaMetadata?.let { metadata ->
                                 AsyncImage(
                                     model = metadata.thumbnailUrl,
                                     contentDescription = stringResource(R.string.song_cover),
                                     contentScale = ContentScale.Crop,
-                                    modifier = Modifier
-                                        .fillMaxSize()
-                                        .clip(currentThumbnailShape)
+                                    modifier =
+                                        Modifier
+                                            .fillMaxSize()
+                                            .clip(currentThumbnailShape),
                                 )
                             }
                         }
@@ -362,7 +368,7 @@ fun MiniPlayer(
 
                     Column(
                         modifier = Modifier.weight(1f),
-                        verticalArrangement = Arrangement.Center
+                        verticalArrangement = Arrangement.Center,
                     ) {
                         mediaMetadata?.let { metadata ->
                             AnimatedContent(
@@ -418,32 +424,37 @@ fun MiniPlayer(
 
                     IconButton(
                         onClick = { playerConnection.toggleLike() },
-                        modifier = Modifier.size(36.dp)
+                        modifier = Modifier.size(36.dp),
                     ) {
                         Icon(
-                            painter = painterResource(
-                                if (currentSong?.song?.liked == true) R.drawable.heart_fill else R.drawable.heart
-                            ),
-                            contentDescription = stringResource(if (currentSong?.song?.liked == true) R.string.acc_unfavorite else R.string.acc_favorite),
-                            tint = if (currentSong?.song?.liked == true) {
-                                MaterialTheme.colorScheme.error
-                            } else {
-                                MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
-                            },
-                            modifier = Modifier.size(18.dp)
+                            painter =
+                                painterResource(
+                                    if (currentSong?.song?.liked == true) R.drawable.heart_fill else R.drawable.heart,
+                                ),
+                            contentDescription =
+                                stringResource(
+                                    if (currentSong?.song?.liked == true) R.string.acc_unfavorite else R.string.acc_favorite,
+                                ),
+                            tint =
+                                if (currentSong?.song?.liked == true) {
+                                    MaterialTheme.colorScheme.error
+                                } else {
+                                    MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
+                                },
+                            modifier = Modifier.size(18.dp),
                         )
                     }
 
                     IconButton(
                         enabled = canSkipNext,
                         onClick = { playerConnection.seekToNext() },
-                        modifier = Modifier.size(36.dp)
+                        modifier = Modifier.size(36.dp),
                     ) {
                         Icon(
                             painter = painterResource(R.drawable.skip_next),
                             contentDescription = stringResource(R.string.acc_skip_next),
                             tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
-                            modifier = Modifier.size(18.dp)
+                            modifier = Modifier.size(18.dp),
                         )
                     }
                 }
@@ -452,22 +463,27 @@ fun MiniPlayer(
 
         if (offsetXAnimatable.value.absoluteValue > 50f) {
             Box(
-                modifier = Modifier
-                    .align(if (offsetXAnimatable.value > 0) Alignment.CenterStart else Alignment.CenterEnd)
-                    .padding(horizontal = 24.dp)
+                modifier =
+                    Modifier
+                        .align(if (offsetXAnimatable.value > 0) Alignment.CenterStart else Alignment.CenterEnd)
+                        .padding(horizontal = 24.dp),
             ) {
                 Icon(
-                    painter = painterResource(
-                        if (offsetXAnimatable.value > 0) R.drawable.skip_previous else R.drawable.skip_next
-                    ),
-                    contentDescription = stringResource(if (offsetXAnimatable.value > 0) R.string.acc_skip_prev else R.string.acc_skip_next),
-                    tint = MaterialTheme.colorScheme.primary.copy(
-                        alpha = (offsetXAnimatable.value.absoluteValue / autoSwipeThreshold).coerceIn(0f, 1f)
-                    ),
-                    modifier = Modifier.size(24.dp)
+                    painter =
+                        painterResource(
+                            if (offsetXAnimatable.value > 0) R.drawable.skip_previous else R.drawable.skip_next,
+                        ),
+                    contentDescription =
+                        stringResource(
+                            if (offsetXAnimatable.value > 0) R.string.acc_skip_prev else R.string.acc_skip_next,
+                        ),
+                    tint =
+                        MaterialTheme.colorScheme.primary.copy(
+                            alpha = (offsetXAnimatable.value.absoluteValue / autoSwipeThreshold).coerceIn(0f, 1f),
+                        ),
+                    modifier = Modifier.size(24.dp),
                 )
             }
         }
     }
 }
-

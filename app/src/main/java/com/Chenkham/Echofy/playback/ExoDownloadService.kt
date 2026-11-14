@@ -17,19 +17,22 @@ import com.Chenkham.Echofy.R
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
 
-
 @AndroidEntryPoint
 class ExoDownloadService : DownloadService(
     NOTIFICATION_ID,
     1000L,
     CHANNEL_ID,
     R.string.download,
-    0
+    0,
 ) {
     @Inject
     lateinit var downloadUtil: DownloadUtil
 
-    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+    override fun onStartCommand(
+        intent: Intent?,
+        flags: Int,
+        startId: Int,
+    ): Int {
         if (intent?.action == REMOVE_ALL_PENDING_DOWNLOADS) {
             downloadManager.currentDownloads.forEach { download ->
                 downloadManager.removeDownload(download.request.id)
@@ -44,18 +47,22 @@ class ExoDownloadService : DownloadService(
 
     override fun getForegroundNotification(
         downloads: MutableList<Download>,
-        notMetRequirements: Int
+        notMetRequirements: Int,
     ): Notification =
         Notification.Builder.recoverBuilder(
-            this, downloadUtil.downloadNotificationHelper.buildProgressNotification(
+            this,
+            downloadUtil.downloadNotificationHelper.buildProgressNotification(
                 this,
                 R.drawable.download,
                 null,
-                if (downloads.size == 1) Util.fromUtf8Bytes(downloads[0].request.data)
-                else resources.getQuantityString(R.plurals.n_song, downloads.size, downloads.size),
+                if (downloads.size == 1) {
+                    Util.fromUtf8Bytes(downloads[0].request.data)
+                } else {
+                    resources.getQuantityString(R.plurals.n_song, downloads.size, downloads.size)
+                },
                 downloads,
-                notMetRequirements
-            )
+                notMetRequirements,
+            ),
         ).addAction(
             Notification.Action.Builder(
                 Icon.createWithResource(this, R.drawable.close),
@@ -64,13 +71,12 @@ class ExoDownloadService : DownloadService(
                     this,
                     0,
                     Intent(this, ExoDownloadService::class.java).setAction(
-                        REMOVE_ALL_PENDING_DOWNLOADS
+                        REMOVE_ALL_PENDING_DOWNLOADS,
                     ),
-                    PendingIntent.FLAG_IMMUTABLE
-                )
-            ).build()
+                    PendingIntent.FLAG_IMMUTABLE,
+                ),
+            ).build(),
         ).build()
-
 
     /**
      * This helper will outlive the lifespan of a single instance of
@@ -87,12 +93,13 @@ class ExoDownloadService : DownloadService(
             finalException: Exception?,
         ) {
             if (download.state == Download.STATE_FAILED) {
-                val notification = notificationHelper.buildDownloadFailedNotification(
-                    context,
-                    R.drawable.error,
-                    null,
-                    Util.fromUtf8Bytes(download.request.data)
-                )
+                val notification =
+                    notificationHelper.buildDownloadFailedNotification(
+                        context,
+                        R.drawable.error,
+                        null,
+                        Util.fromUtf8Bytes(download.request.data),
+                    )
                 NotificationUtil.setNotification(context, nextNotificationId++, notification)
             }
         }

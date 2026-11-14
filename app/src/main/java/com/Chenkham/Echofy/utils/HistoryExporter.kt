@@ -12,7 +12,6 @@ import java.time.format.DateTimeFormatter
  * so a long history never has to be held in memory as one large string.
  */
 object HistoryExporter {
-
     enum class Format(val mimeType: String, val extension: String) {
         CSV("text/csv", "csv"),
         JSON("application/json", "json"),

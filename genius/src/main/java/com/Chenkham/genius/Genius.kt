@@ -89,8 +89,9 @@ object Genius {
         accessToken: String,
     ) = runCatching {
         val matches = search(title, artist, accessToken).getOrThrow()
-        val best = pickBestMatch(matches, title, artist)
-            ?: error("No Genius match for \"$title\"")
+        val best =
+            pickBestMatch(matches, title, artist)
+                ?: error("No Genius match for \"$title\"")
 
         val html = client.get(best.url).bodyAsText()
         val lyrics = extractLyricsFromHtml(html)
@@ -135,9 +136,10 @@ object Genius {
      * blocks. Pull those out and convert the inline markup back to plain text.
      */
     private fun extractLyricsFromHtml(html: String): String? {
-        val containers = LYRICS_CONTAINER_REGEX.findAll(html)
-            .map { it.groupValues[1] }
-            .toList()
+        val containers =
+            LYRICS_CONTAINER_REGEX.findAll(html)
+                .map { it.groupValues[1] }
+                .toList()
 
         if (containers.isEmpty()) return null
 

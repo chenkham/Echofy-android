@@ -96,22 +96,25 @@ fun CachePlaylistScreen(
 
     val playerCache = LocalPlayerConnection.current?.service?.playerCache
 
-    val cachedSongIds = remember(playerCache) {
-        playerCache?.keys?.mapNotNull { it.toString() }?.toSet() ?: emptySet()
-    }
-
-    val allSongs = remember(events, cachedSongIds) {
-        events.values.flatten()
-            .map { it.song }
-            .distinctBy { it.id }
-            .filter { it.id in cachedSongIds }
-    }
-
-    val wrappedSongs = remember(allSongs) {
-        mutableStateListOf<ItemWrapper<Song>>().apply {
-            addAll(allSongs.map { ItemWrapper(it) })
+    val cachedSongIds =
+        remember(playerCache) {
+            playerCache?.keys?.mapNotNull { it.toString() }?.toSet() ?: emptySet()
         }
-    }
+
+    val allSongs =
+        remember(events, cachedSongIds) {
+            events.values.flatten()
+                .map { it.song }
+                .distinctBy { it.id }
+                .filter { it.id in cachedSongIds }
+        }
+
+    val wrappedSongs =
+        remember(allSongs) {
+            mutableStateListOf<ItemWrapper<Song>>().apply {
+                addAll(allSongs.map { ItemWrapper(it) })
+            }
+        }
 
     var selection by remember { mutableStateOf(false) }
     var isSearching by remember { mutableStateOf(false) }
@@ -125,14 +128,18 @@ fun CachePlaylistScreen(
         }
     }
 
-    val filteredSongs = remember(wrappedSongs, query) {
-        if (query.text.isEmpty()) wrappedSongs
-        else wrappedSongs.filter { wrapper ->
-            val song = wrapper.item
-            song.title.contains(query.text, true) ||
-                    song.artists.any { it.name.contains(query.text, true) }
+    val filteredSongs =
+        remember(wrappedSongs, query) {
+            if (query.text.isEmpty()) {
+                wrappedSongs
+            } else {
+                wrappedSongs.filter { wrapper ->
+                    val song = wrapper.item
+                    song.title.contains(query.text, true) ||
+                        song.artists.any { it.name.contains(query.text, true) }
+                }
+            }
         }
-    }
 
     val state = rememberLazyListState()
 
@@ -147,7 +154,7 @@ fun CachePlaylistScreen(
                 item {
                     EmptyPlaceholder(
                         icon = R.drawable.music_note,
-                        text = stringResource(R.string.playlist_is_empty)
+                        text = stringResource(R.string.playlist_is_empty),
                     )
                 }
             } else {
@@ -163,16 +170,18 @@ fun CachePlaylistScreen(
                             ) {
                                 Box(
                                     contentAlignment = Alignment.Center,
-                                    modifier = Modifier
-                                        .size(AlbumThumbnailSize)
-                                        .clip(RoundedCornerShape(ThumbnailCornerRadius))
+                                    modifier =
+                                        Modifier
+                                            .size(AlbumThumbnailSize)
+                                            .clip(RoundedCornerShape(ThumbnailCornerRadius)),
                                 ) {
                                     AsyncImage(
                                         model = filteredSongs.first().item.thumbnailUrl,
                                         contentDescription = null,
-                                        modifier = Modifier
-                                            .fillMaxWidth()
-                                            .clip(RoundedCornerShape(ThumbnailCornerRadius)),
+                                        modifier =
+                                            Modifier
+                                                .fillMaxWidth()
+                                                .clip(RoundedCornerShape(ThumbnailCornerRadius)),
                                     )
                                 }
                                 Column(
@@ -181,16 +190,17 @@ fun CachePlaylistScreen(
                                     Text(
                                         stringResource(R.string.cached_playlist),
                                         style = MaterialTheme.typography.titleLarge,
-                                        fontWeight = FontWeight.Bold
+                                        fontWeight = FontWeight.Bold,
                                     )
 
                                     Text(
-                                        text = pluralStringResource(
-                                            id = R.plurals.n_song,
-                                            count = filteredSongs.size,
-                                            filteredSongs.size
-                                        ),
-                                        style = MaterialTheme.typography.bodyMedium
+                                        text =
+                                            pluralStringResource(
+                                                id = R.plurals.n_song,
+                                                count = filteredSongs.size,
+                                                filteredSongs.size,
+                                            ),
+                                        style = MaterialTheme.typography.bodyMedium,
                                     )
                                 }
                             }
@@ -202,7 +212,7 @@ fun CachePlaylistScreen(
                                             ListQueue(
                                                 title = "Cache Songs",
                                                 items = filteredSongs.map { it.item.toMediaItem() },
-                                            )
+                                            ),
                                         )
                                     },
                                     contentPadding = ButtonDefaults.ButtonWithIconContentPadding,
@@ -222,9 +232,10 @@ fun CachePlaylistScreen(
                                         playerConnection.playQueue(
                                             ListQueue(
                                                 title = "Cache Songs",
-                                                items = filteredSongs.shuffled()
-                                                    .map { it.item.toMediaItem() },
-                                            )
+                                                items =
+                                                    filteredSongs.shuffled()
+                                                        .map { it.item.toMediaItem() },
+                                            ),
                                         )
                                     },
                                     contentPadding = ButtonDefaults.ButtonWithIconContentPadding,
@@ -245,7 +256,8 @@ fun CachePlaylistScreen(
 
                 itemsIndexed(
                     filteredSongs,
-                    key = { _, song -> song.item.id }) { index, songWrapper ->
+                    key = { _, song -> song.item.id },
+                ) { index, songWrapper ->
                     SongListItem(
                         song = songWrapper.item,
                         isActive = songWrapper.item.id == mediaMetadata?.id,
@@ -262,39 +274,44 @@ fun CachePlaylistScreen(
                                     )
                                 }
                             }) {
-                                Icon(painter = painterResource(R.drawable.more_vert), tint = MaterialTheme.colorScheme.onSurface, contentDescription = null)
+                                Icon(
+                                    painter = painterResource(R.drawable.more_vert),
+                                    tint = MaterialTheme.colorScheme.onSurface,
+                                    contentDescription = null,
+                                )
                             }
                         },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .combinedClickable(
-                                onClick = {
-                                    if (!selection) {
-                                        if (songWrapper.item.id == mediaMetadata?.id) {
-                                            playerConnection.togglePlayPause()
-                                        } else {
-                                            playerConnection.playQueue(
-                                                ListQueue(
-                                                    title = "Cache Songs",
-                                                    items = filteredSongs.map { it.item.toMediaItem() },
-                                                    startIndex = index
+                        modifier =
+                            Modifier
+                                .fillMaxWidth()
+                                .combinedClickable(
+                                    onClick = {
+                                        if (!selection) {
+                                            if (songWrapper.item.id == mediaMetadata?.id) {
+                                                playerConnection.togglePlayPause()
+                                            } else {
+                                                playerConnection.playQueue(
+                                                    ListQueue(
+                                                        title = "Cache Songs",
+                                                        items = filteredSongs.map { it.item.toMediaItem() },
+                                                        startIndex = index,
+                                                    ),
                                                 )
-                                            )
+                                            }
+                                        } else {
+                                            songWrapper.isSelected = !songWrapper.isSelected
                                         }
-                                    } else {
-                                        songWrapper.isSelected = !songWrapper.isSelected
-                                    }
-                                },
-                                onLongClick = {
-                                    haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                                    if (!selection) {
-                                        selection = true
-                                        wrappedSongs.forEach { it.isSelected = false }
-                                        songWrapper.isSelected = true
-                                    }
-                                }
-                            )
-                            .animateItem()
+                                    },
+                                    onLongClick = {
+                                        haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                        if (!selection) {
+                                            selection = true
+                                            wrappedSongs.forEach { it.isSelected = false }
+                                            songWrapper.isSelected = true
+                                        }
+                                    },
+                                )
+                                .animateItem(),
                     )
                 }
             }
@@ -308,7 +325,7 @@ fun CachePlaylistScreen(
                         val count = wrappedSongs.count { it.isSelected }
                         Text(
                             text = pluralStringResource(R.plurals.n_song, count, count),
-                            style = MaterialTheme.typography.titleLarge
+                            style = MaterialTheme.typography.titleLarge,
                         )
                     }
 
@@ -319,29 +336,31 @@ fun CachePlaylistScreen(
                             placeholder = {
                                 Text(
                                     text = stringResource(R.string.search),
-                                    style = MaterialTheme.typography.titleLarge
+                                    style = MaterialTheme.typography.titleLarge,
                                 )
                             },
                             singleLine = true,
                             textStyle = MaterialTheme.typography.titleLarge,
                             keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
-                            colors = TextFieldDefaults.colors(
-                                focusedContainerColor = Color.Transparent,
-                                unfocusedContainerColor = Color.Transparent,
-                                focusedIndicatorColor = Color.Transparent,
-                                unfocusedIndicatorColor = Color.Transparent,
-                                disabledIndicatorColor = Color.Transparent,
-                            ),
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .focusRequester(focusRequester)
+                            colors =
+                                TextFieldDefaults.colors(
+                                    focusedContainerColor = Color.Transparent,
+                                    unfocusedContainerColor = Color.Transparent,
+                                    focusedIndicatorColor = Color.Transparent,
+                                    unfocusedIndicatorColor = Color.Transparent,
+                                    disabledIndicatorColor = Color.Transparent,
+                                ),
+                            modifier =
+                                Modifier
+                                    .fillMaxWidth()
+                                    .focusRequester(focusRequester),
                         )
                     }
 
                     else -> {
                         Text(
                             stringResource(R.string.cached_playlist),
-                            style = MaterialTheme.typography.titleLarge
+                            style = MaterialTheme.typography.titleLarge,
                         )
                     }
                 }
@@ -369,10 +388,11 @@ fun CachePlaylistScreen(
                     }
                 }) {
                     Icon(
-                        painter = painterResource(
-                            if (selection) R.drawable.close else R.drawable.arrow_back
-                        ),
-                        contentDescription = null
+                        painter =
+                            painterResource(
+                                if (selection) R.drawable.close else R.drawable.arrow_back,
+                            ),
+                        contentDescription = null,
                     )
                 }
             },
@@ -387,34 +407,40 @@ fun CachePlaylistScreen(
                         }
                     }) {
                         Icon(
-                            painter = painterResource(
-                                if (count == wrappedSongs.size) R.drawable.deselect else R.drawable.select_all
-                            ),
-                            contentDescription = null
+                            painter =
+                                painterResource(
+                                    if (count == wrappedSongs.size) R.drawable.deselect else R.drawable.select_all,
+                                ),
+                            contentDescription = null,
                         )
                     }
 
                     IconButton(onClick = {
                         menuState.show {
                             SelectionSongMenu(
-                                songSelection = wrappedSongs.filter { it.isSelected }
-                                    .map { it.item },
+                                songSelection =
+                                    wrappedSongs.filter { it.isSelected }
+                                        .map { it.item },
                                 onDismiss = menuState::dismiss,
-                                clearAction = { selection = false }
+                                clearAction = { selection = false },
                             )
                         }
                     }) {
-                        Icon(painter = painterResource(R.drawable.more_vert), tint = MaterialTheme.colorScheme.onSurface, contentDescription = null)
+                        Icon(
+                            painter = painterResource(R.drawable.more_vert),
+                            tint = MaterialTheme.colorScheme.onSurface,
+                            contentDescription = null,
+                        )
                     }
                 } else if (!isSearching) {
                     IconButton(onClick = { isSearching = true }) {
                         Icon(
                             painter = painterResource(R.drawable.search),
-                            contentDescription = null
+                            contentDescription = null,
                         )
                     }
                 }
-            }
+            },
         )
     }
 }

@@ -9,7 +9,6 @@ package com.arturo254.opentune.innertube.models.response
 import com.arturo254.opentune.innertube.models.AccountInfo
 import com.arturo254.opentune.innertube.models.Runs
 import com.arturo254.opentune.innertube.models.Thumbnails
-import com.arturo254.opentune.innertube.models.Thumbnail
 import kotlinx.serialization.Serializable
 
 @Serializable

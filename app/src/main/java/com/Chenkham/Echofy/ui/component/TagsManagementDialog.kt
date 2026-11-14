@@ -4,11 +4,8 @@
  * Licensed Under GPL-3.0 | see git history for contributors
  */
 
-
-
 package com.Chenkham.Echofy.ui.component
 
-import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
@@ -24,7 +21,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -62,10 +58,10 @@ import com.Chenkham.Echofy.db.entities.TagEntity
 @Composable
 fun TagsManagementDialog(
     database: MusicDatabase,
-    onDismiss: () -> Unit
+    onDismiss: () -> Unit,
 ) {
     val allTags by database.allTags().collectAsState(initial = emptyList())
-    
+
     var showAddTagDialog by remember { mutableStateOf(false) }
     var tagToEdit by remember { mutableStateOf<TagEntity?>(null) }
     var showColorPicker by remember { mutableStateOf<TagEntity?>(null) }
@@ -89,7 +85,7 @@ fun TagsManagementDialog(
                 }
                 showAddTagDialog = false
                 tagToEdit = null
-            }
+            },
         )
     }
 
@@ -102,40 +98,42 @@ fun TagsManagementDialog(
                     update(tag.copy(color = color))
                 }
                 showColorPicker = null
-            }
+            },
         )
     }
 
     Dialog(
         onDismissRequest = onDismiss,
-        properties = DialogProperties(usePlatformDefaultWidth = false)
+        properties = DialogProperties(usePlatformDefaultWidth = false),
     ) {
         Surface(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(24.dp),
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .padding(24.dp),
             shape = AlertDialogDefaults.shape,
             color = AlertDialogDefaults.containerColor,
-            tonalElevation = AlertDialogDefaults.TonalElevation
+            tonalElevation = AlertDialogDefaults.TonalElevation,
         ) {
             Column(
-                modifier = Modifier.padding(24.dp)
+                modifier = Modifier.padding(24.dp),
             ) {
                 Text(
                     text = stringResource(R.string.manage_tags),
                     style = MaterialTheme.typography.headlineSmall,
-                    color = MaterialTheme.colorScheme.onSurface
+                    color = MaterialTheme.colorScheme.onSurface,
                 )
 
                 Spacer(modifier = Modifier.height(16.dp))
 
                 FlowRow(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .weight(1f, fill = false)
-                        .verticalScroll(rememberScrollState()),
+                    modifier =
+                        Modifier
+                            .fillMaxWidth()
+                            .weight(1f, fill = false)
+                            .verticalScroll(rememberScrollState()),
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
                     allTags.forEach { tag ->
                         EditableTagChip(
@@ -151,28 +149,29 @@ fun TagsManagementDialog(
                                 database.transaction {
                                     delete(tag)
                                 }
-                            }
+                            },
                         )
                     }
 
                     Surface(
-                        modifier = Modifier
-                            .size(40.dp)
-                            .clip(CircleShape)
-                            .clickable { showAddTagDialog = true },
+                        modifier =
+                            Modifier
+                                .size(40.dp)
+                                .clip(CircleShape)
+                                .clickable { showAddTagDialog = true },
                         shape = CircleShape,
                         color = MaterialTheme.colorScheme.surfaceVariant,
-                        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline)
+                        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
                     ) {
                         Box(
                             contentAlignment = Alignment.Center,
-                            modifier = Modifier.size(40.dp)
+                            modifier = Modifier.size(40.dp),
                         ) {
                             Icon(
                                 painter = painterResource(R.drawable.add),
                                 contentDescription = stringResource(R.string.add_tag),
                                 tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                                modifier = Modifier.size(20.dp)
+                                modifier = Modifier.size(20.dp),
                             )
                         }
                     }
@@ -182,7 +181,7 @@ fun TagsManagementDialog(
 
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.End
+                    horizontalArrangement = Arrangement.End,
                 ) {
                     Button(onClick = onDismiss) {
                         Text(stringResource(android.R.string.ok))
@@ -197,7 +196,7 @@ fun TagsManagementDialog(
 private fun AddEditTagDialog(
     tag: TagEntity?,
     onDismiss: () -> Unit,
-    onSave: (String, String) -> Unit
+    onSave: (String, String) -> Unit,
 ) {
     var tagName by remember(tag) { mutableStateOf(tag?.name ?: "") }
     var selectedColor by remember(tag) { mutableStateOf(tag?.color ?: TagEntity.DEFAULT_COLORS[0]) }
@@ -210,7 +209,7 @@ private fun AddEditTagDialog(
             onColorSelected = {
                 selectedColor = it
                 showColorPicker = false
-            }
+            },
         )
     }
 
@@ -224,34 +223,35 @@ private fun AddEditTagDialog(
                     onValueChange = { tagName = it },
                     label = { Text(stringResource(R.string.tag_name)) },
                     singleLine = true,
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier.fillMaxWidth(),
                 )
 
                 Spacer(modifier = Modifier.height(16.dp))
 
                 Text(
                     text = stringResource(R.string.tag_color),
-                    style = MaterialTheme.typography.labelLarge
+                    style = MaterialTheme.typography.labelLarge,
                 )
 
                 Spacer(modifier = Modifier.height(8.dp))
 
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
                     Box(
-                        modifier = Modifier
-                            .size(40.dp)
-                            .clip(CircleShape)
-                            .background(Color(selectedColor.toColorInt()))
-                            .clickable { showColorPicker = true }
+                        modifier =
+                            Modifier
+                                .size(40.dp)
+                                .clip(CircleShape)
+                                .background(Color(selectedColor.toColorInt()))
+                                .clickable { showColorPicker = true },
                     )
-                    
+
                     Text(
                         text = stringResource(R.string.tap_to_change_color),
                         style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                 }
             }
@@ -259,7 +259,7 @@ private fun AddEditTagDialog(
         confirmButton = {
             Button(
                 onClick = { onSave(tagName, selectedColor) },
-                enabled = tagName.isNotBlank()
+                enabled = tagName.isNotBlank(),
             ) {
                 Text(stringResource(R.string.save))
             }
@@ -268,7 +268,7 @@ private fun AddEditTagDialog(
             TextButton(onClick = onDismiss) {
                 Text(stringResource(android.R.string.cancel))
             }
-        }
+        },
     )
 }
 
@@ -277,7 +277,7 @@ private fun AddEditTagDialog(
 private fun ColorPickerDialog(
     currentColor: String,
     onDismiss: () -> Unit,
-    onColorSelected: (String) -> Unit
+    onColorSelected: (String) -> Unit,
 ) {
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -286,26 +286,27 @@ private fun ColorPickerDialog(
             FlowRow(
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp),
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth(),
             ) {
                 TagEntity.DEFAULT_COLORS.forEach { color ->
                     val isSelected = color == currentColor
                     val size by animateDpAsState(if (isSelected) 48.dp else 40.dp, label = "colorSize")
-                    
+
                     Box(
-                        modifier = Modifier
-                            .size(size)
-                            .clip(CircleShape)
-                            .background(Color(color.toColorInt()))
-                            .clickable { onColorSelected(color) },
-                        contentAlignment = Alignment.Center
+                        modifier =
+                            Modifier
+                                .size(size)
+                                .clip(CircleShape)
+                                .background(Color(color.toColorInt()))
+                                .clickable { onColorSelected(color) },
+                        contentAlignment = Alignment.Center,
                     ) {
                         if (isSelected) {
                             Icon(
                                 painter = painterResource(R.drawable.check),
                                 contentDescription = null,
                                 tint = Color.White,
-                                modifier = Modifier.size(24.dp)
+                                modifier = Modifier.size(24.dp),
                             )
                         }
                     }
@@ -316,7 +317,7 @@ private fun ColorPickerDialog(
             TextButton(onClick = onDismiss) {
                 Text(stringResource(android.R.string.ok))
             }
-        }
+        },
     )
 }
 
@@ -325,56 +326,61 @@ private fun EditableTagChip(
     tag: TagEntity,
     onEdit: () -> Unit,
     onColorClick: () -> Unit,
-    onRemove: () -> Unit
+    onRemove: () -> Unit,
 ) {
-    val backgroundColor = remember(tag.color) {
-        Color(tag.color.toColorInt()).copy(alpha = 0.2f)
-    }
-    val contentColor = remember(tag.color) {
-        Color(tag.color.toColorInt())
-    }
+    val backgroundColor =
+        remember(tag.color) {
+            Color(tag.color.toColorInt()).copy(alpha = 0.2f)
+        }
+    val contentColor =
+        remember(tag.color) {
+            Color(tag.color.toColorInt())
+        }
 
     Surface(
         shape = RoundedCornerShape(20.dp),
         color = backgroundColor,
-        border = BorderStroke(1.5.dp, contentColor)
+        border = BorderStroke(1.5.dp, contentColor),
     ) {
         Row(
             modifier = Modifier.padding(start = 4.dp, end = 4.dp, top = 6.dp, bottom = 6.dp),
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(4.dp)
+            horizontalArrangement = Arrangement.spacedBy(4.dp),
         ) {
             Box(
-                modifier = Modifier
-                    .size(20.dp)
-                    .clip(CircleShape)
-                    .background(contentColor)
-                    .clickable(onClick = onColorClick)
+                modifier =
+                    Modifier
+                        .size(20.dp)
+                        .clip(CircleShape)
+                        .background(contentColor)
+                        .clickable(onClick = onColorClick),
             )
 
             Text(
                 text = tag.name,
                 style = MaterialTheme.typography.bodyMedium,
                 color = contentColor,
-                modifier = Modifier
-                    .clip(RoundedCornerShape(4.dp))
-                    .clickable(onClick = onEdit)
-                    .padding(horizontal = 4.dp)
+                modifier =
+                    Modifier
+                        .clip(RoundedCornerShape(4.dp))
+                        .clickable(onClick = onEdit)
+                        .padding(horizontal = 4.dp),
             )
 
             Box(
-                modifier = Modifier
-                    .size(24.dp)
-                    .clip(CircleShape)
-                    .clickable(onClick = onRemove)
-                    .background(contentColor.copy(alpha = 0.2f)),
-                contentAlignment = Alignment.Center
+                modifier =
+                    Modifier
+                        .size(24.dp)
+                        .clip(CircleShape)
+                        .clickable(onClick = onRemove)
+                        .background(contentColor.copy(alpha = 0.2f)),
+                contentAlignment = Alignment.Center,
             ) {
                 Icon(
                     painter = painterResource(R.drawable.close),
                     contentDescription = null,
                     tint = contentColor,
-                    modifier = Modifier.size(14.dp)
+                    modifier = Modifier.size(14.dp),
                 )
             }
         }

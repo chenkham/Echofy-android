@@ -35,7 +35,7 @@ fun PlaybackError(
     retry: () -> Unit,
 ) {
     var countdown by remember { mutableIntStateOf(3) }
-    
+
     // Auto-retry after countdown
     LaunchedEffect(error) {
         countdown = 3
@@ -45,64 +45,68 @@ fun PlaybackError(
         }
         retry()
     }
-    
+
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center,
-        modifier = Modifier.padding(16.dp)
+        modifier = Modifier.padding(16.dp),
     ) {
         Icon(
             painter = painterResource(R.drawable.info),
             contentDescription = null,
             tint = MaterialTheme.colorScheme.error,
-            modifier = Modifier.size(32.dp)
+            modifier = Modifier.size(32.dp),
         )
-        
+
         Spacer(modifier = Modifier.height(12.dp))
-        
+
         Text(
             text = stringResource(R.string.error_playback),
             style = MaterialTheme.typography.titleMedium,
-            color = MaterialTheme.colorScheme.error
+            color = MaterialTheme.colorScheme.error,
         )
-        
+
         Spacer(modifier = Modifier.height(8.dp))
-        
+
         Text(
-            text = error.cause?.cause?.message 
-                ?: error.cause?.message 
-                ?: stringResource(R.string.error_unknown),
+            text =
+                error.cause?.cause?.message
+                    ?: error.cause?.message
+                    ?: stringResource(R.string.error_unknown),
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
-            textAlign = TextAlign.Center
+            textAlign = TextAlign.Center,
         )
-        
+
         Spacer(modifier = Modifier.height(16.dp))
-        
+
         Button(
-            onClick = { 
+            onClick = {
                 countdown = 0
-                retry() 
+                retry()
             },
             shape = RoundedCornerShape(8.dp),
-            colors = ButtonDefaults.buttonColors(
-                containerColor = MaterialTheme.colorScheme.primary
-            )
+            colors =
+                ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.primary,
+                ),
         ) {
             Row(
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
-                verticalAlignment = Alignment.CenterVertically
+                verticalAlignment = Alignment.CenterVertically,
             ) {
                 Icon(
                     painter = painterResource(R.drawable.refresh),
                     contentDescription = null,
-                    modifier = Modifier.size(18.dp)
+                    modifier = Modifier.size(18.dp),
                 )
                 Text(
-                    text = if (countdown > 0) 
-                        stringResource(R.string.retry_in_seconds, countdown)
-                    else 
-                        stringResource(R.string.retry)
+                    text =
+                        if (countdown > 0) {
+                            stringResource(R.string.retry_in_seconds, countdown)
+                        } else {
+                            stringResource(R.string.retry)
+                        },
                 )
             }
         }

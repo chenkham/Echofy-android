@@ -10,7 +10,7 @@ data class BuiltInWallpaper(
     val id: String,
     @DrawableRes val resourceId: Int,
     val category: WallpaperCategory,
-    val name: String
+    val name: String,
 )
 
 /**
@@ -18,15 +18,15 @@ data class BuiltInWallpaper(
  */
 object BuiltInWallpapers {
     val all: List<BuiltInWallpaper> = emptyList()
-    
+
     fun getByCategory(category: WallpaperCategory): List<BuiltInWallpaper> {
         return all.filter { it.category == category }
     }
-    
+
     fun getById(id: String): BuiltInWallpaper? {
         return all.find { it.id == id }
     }
-    
+
     val categories: List<WallpaperCategory>
         get() = all.map { it.category }.distinct()
 }

@@ -39,8 +39,8 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.toMutableStateList
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.toMutableStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -69,7 +69,6 @@ import androidx.media3.exoplayer.offline.DownloadService
 import androidx.navigation.NavController
 import coil.compose.AsyncImage
 import com.Chenkham.Echofy.LocalDownloadUtil
-import com.Chenkham.Echofy.ui.component.LocalAdManager
 import com.Chenkham.Echofy.LocalPlayerAwareWindowInsets
 import com.Chenkham.Echofy.LocalPlayerConnection
 import com.Chenkham.Echofy.R
@@ -86,6 +85,7 @@ import com.Chenkham.Echofy.ui.component.DefaultDialog
 import com.Chenkham.Echofy.ui.component.EmptyPlaceholder
 import com.Chenkham.Echofy.ui.component.FontSizeRange
 import com.Chenkham.Echofy.ui.component.IconButton
+import com.Chenkham.Echofy.ui.component.LocalAdManager
 import com.Chenkham.Echofy.ui.component.LocalMenuState
 import com.Chenkham.Echofy.ui.component.SongListItem
 import com.Chenkham.Echofy.ui.component.SortHeader
@@ -122,9 +122,10 @@ fun TopPlaylistScreen(
             songs?.fastSumBy { it.song.duration } ?: 0
         }
 
-    val wrappedSongs = remember(songs) {
-        songs?.map { item -> ItemWrapper(item) }?.toMutableStateList()
-    }
+    val wrappedSongs =
+        remember(songs) {
+            songs?.map { item -> ItemWrapper(item) }?.toMutableStateList()
+        }
 
     var searchQuery by remember {
         mutableStateOf(TextFieldValue(""))
@@ -162,8 +163,8 @@ fun TopPlaylistScreen(
                     Download.STATE_COMPLETED
                 } else if (songs?.all {
                         downloads[it.song.id]?.state == Download.STATE_QUEUED ||
-                                downloads[it.song.id]?.state == Download.STATE_DOWNLOADING ||
-                                downloads[it.song.id]?.state == Download.STATE_COMPLETED
+                            downloads[it.song.id]?.state == Download.STATE_DOWNLOADING ||
+                            downloads[it.song.id]?.state == Download.STATE_COMPLETED
                     } == true
                 ) {
                     Download.STATE_DOWNLOADING
@@ -243,17 +244,19 @@ fun TopPlaylistScreen(
                                 ) {
                                     Box(
                                         contentAlignment = Alignment.Center,
-                                        modifier = Modifier
-                                            .size(AlbumThumbnailSize)
-                                            .clip(RoundedCornerShape(ThumbnailCornerRadius))
-                                            .fillMaxWidth(),
+                                        modifier =
+                                            Modifier
+                                                .size(AlbumThumbnailSize)
+                                                .clip(RoundedCornerShape(ThumbnailCornerRadius))
+                                                .fillMaxWidth(),
                                     ) {
                                         AsyncImage(
                                             model = songs!![0].song.thumbnailUrl,
                                             contentDescription = null,
-                                            modifier = Modifier
-                                                .fillMaxWidth()
-                                                .clip(RoundedCornerShape(ThumbnailCornerRadius)),
+                                            modifier =
+                                                Modifier
+                                                    .fillMaxWidth()
+                                                    .clip(RoundedCornerShape(ThumbnailCornerRadius)),
                                         )
                                     }
                                     Column(
@@ -392,8 +395,9 @@ fun TopPlaylistScreen(
                                             playerConnection.playQueue(
                                                 ListQueue(
                                                     title = name,
-                                                    items = songs!!.shuffled()
-                                                        .map { it.toMediaItem() },
+                                                    items =
+                                                        songs!!.shuffled()
+                                                            .map { it.toMediaItem() },
                                                 ),
                                             )
                                         },
@@ -442,17 +446,18 @@ fun TopPlaylistScreen(
                 }
 
                 val searchQueryStr = (searchQuery.text.trim())
-                val filteredSongs = if (searchQueryStr.isEmpty()) {
-                    wrappedSongs?.toList()
-                } else {
-                    wrappedSongs?.filter {
-                        (it.item.song.title).contains(searchQueryStr, ignoreCase = true) or
+                val filteredSongs =
+                    if (searchQueryStr.isEmpty()) {
+                        wrappedSongs?.toList()
+                    } else {
+                        wrappedSongs?.filter {
+                            (it.item.song.title).contains(searchQueryStr, ignoreCase = true) or
                                 (it.item.artists.joinToString("").trim()).contains(
                                     searchQueryStr,
-                                    ignoreCase = true
+                                    ignoreCase = true,
                                 )
+                        }
                     }
-                }
 
                 if (filteredSongs != null) {
                     itemsIndexed(
@@ -477,7 +482,11 @@ fun TopPlaylistScreen(
                                         }
                                     },
                                 ) {
-                                    Icon(painter = painterResource(R.drawable.more_vert), tint = MaterialTheme.colorScheme.onSurface, contentDescription = null)
+                                    Icon(
+                                        painter = painterResource(R.drawable.more_vert),
+                                        tint = MaterialTheme.colorScheme.onSurface,
+                                        contentDescription = null,
+                                    )
                                 }
                             },
                             isSelected = songWrapper.isSelected && selection,
@@ -511,7 +520,7 @@ fun TopPlaylistScreen(
                                             songWrapper.isSelected = true
                                         },
                                     )
-                                    .animateItem()
+                                    .animateItem(),
                         )
                     }
                 }
@@ -525,7 +534,7 @@ fun TopPlaylistScreen(
                     val count = wrappedSongs?.count { it.isSelected } ?: 0
                     Text(
                         text = pluralStringResource(R.plurals.n_song, count, count),
-                        style = MaterialTheme.typography.titleLarge
+                        style = MaterialTheme.typography.titleLarge,
                     )
                 } else if (isSearching) {
                     TextField(
@@ -534,22 +543,24 @@ fun TopPlaylistScreen(
                         placeholder = {
                             Text(
                                 text = stringResource(R.string.search),
-                                style = MaterialTheme.typography.titleLarge
+                                style = MaterialTheme.typography.titleLarge,
                             )
                         },
                         singleLine = true,
                         textStyle = MaterialTheme.typography.titleLarge,
                         keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
-                        colors = TextFieldDefaults.colors(
-                            focusedContainerColor = Color.Transparent,
-                            unfocusedContainerColor = Color.Transparent,
-                            focusedIndicatorColor = Color.Transparent,
-                            unfocusedIndicatorColor = Color.Transparent,
-                            disabledIndicatorColor = Color.Transparent,
-                        ),
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .focusRequester(focusRequester)
+                        colors =
+                            TextFieldDefaults.colors(
+                                focusedContainerColor = Color.Transparent,
+                                unfocusedContainerColor = Color.Transparent,
+                                focusedIndicatorColor = Color.Transparent,
+                                unfocusedIndicatorColor = Color.Transparent,
+                                disabledIndicatorColor = Color.Transparent,
+                            ),
+                        modifier =
+                            Modifier
+                                .fillMaxWidth()
+                                .focusRequester(focusRequester),
                     )
                 } else {
                     Text(
@@ -573,13 +584,14 @@ fun TopPlaylistScreen(
                         if (!isSearching) {
                             navController.backToMain()
                         }
-                    }
+                    },
                 ) {
                     Icon(
-                        painter = painterResource(
-                            if (selection) R.drawable.close else R.drawable.arrow_back
-                        ),
-                        contentDescription = null
+                        painter =
+                            painterResource(
+                                if (selection) R.drawable.close else R.drawable.arrow_back,
+                            ),
+                        contentDescription = null,
                     )
                 }
             },
@@ -596,10 +608,11 @@ fun TopPlaylistScreen(
                         },
                     ) {
                         Icon(
-                            painter = painterResource(
-                                if (count == wrappedSongs?.size) R.drawable.deselect else R.drawable.select_all
-                            ),
-                            contentDescription = null
+                            painter =
+                                painterResource(
+                                    if (count == wrappedSongs?.size) R.drawable.deselect else R.drawable.select_all,
+                                ),
+                            contentDescription = null,
                         )
                     }
 
@@ -607,27 +620,32 @@ fun TopPlaylistScreen(
                         onClick = {
                             menuState.show {
                                 SelectionSongMenu(
-                                    songSelection = wrappedSongs?.filter { it.isSelected }!!
-                                        .map { it.item },
+                                    songSelection =
+                                        wrappedSongs?.filter { it.isSelected }!!
+                                            .map { it.item },
                                     onDismiss = menuState::dismiss,
                                     clearAction = { selection = false },
                                 )
                             }
                         },
                     ) {
-                        Icon(painter = painterResource(R.drawable.more_vert), tint = MaterialTheme.colorScheme.onSurface, contentDescription = null)
+                        Icon(
+                            painter = painterResource(R.drawable.more_vert),
+                            tint = MaterialTheme.colorScheme.onSurface,
+                            contentDescription = null,
+                        )
                     }
                 } else if (!isSearching) {
                     IconButton(
-                        onClick = { isSearching = true }
+                        onClick = { isSearching = true },
                     ) {
                         Icon(
                             painter = painterResource(R.drawable.search),
-                            contentDescription = null
+                            contentDescription = null,
                         )
                     }
                 }
-            }
+            },
         )
     }
 }

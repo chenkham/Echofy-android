@@ -18,5 +18,4 @@ dependencies {
 
     // If you also need interceptors for logging (optional)
     implementation(libs.logging.interceptor)
-
 }

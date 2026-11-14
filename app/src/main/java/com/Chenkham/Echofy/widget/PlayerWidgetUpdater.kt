@@ -21,7 +21,7 @@ object PlayerWidgetUpdater {
                 updateAppWidgetState(
                     context,
                     PreferencesGlanceStateDefinition,
-                    glanceId
+                    glanceId,
                 ) { preferences ->
                     preferences.toMutablePreferences().apply {
                         this[PlayerWidgetStateKeys.Title] = state.title

@@ -89,10 +89,11 @@ object Discogs {
         require(token.isNotBlank()) { "Discogs token is required" }
         rateLimit()
 
-        val release = client
-            .get("releases/$releaseId") {
-                header("Authorization", "Discogs token=$token")
-            }.body<DiscogsRelease>()
+        val release =
+            client
+                .get("releases/$releaseId") {
+                    header("Authorization", "Discogs token=$token")
+                }.body<DiscogsRelease>()
 
         release.toReleaseInfo()
     }
@@ -110,30 +111,33 @@ object Discogs {
         getRelease(best.id, token).getOrThrow()
     }
 
-    private fun DiscogsRelease.toReleaseInfo() = ReleaseInfo(
-        id = id,
-        title = title,
-        year = year?.takeIf { it > 0 },
-        country = country?.takeIf { it.isNotBlank() },
-        genres = genres,
-        styles = styles,
-        labelName = labels.firstOrNull()?.name,
-        catalogNumber = labels.firstOrNull()?.catno?.takeIf { it.isNotBlank() && it != "none" },
-        formats = formats.mapNotNull { format ->
-            val descriptors = format.descriptions.joinToString(", ")
-            listOfNotNull(
-                format.name?.takeIf { it.isNotBlank() },
-                descriptors.takeIf { it.isNotBlank() },
-            ).joinToString(" - ").takeIf { it.isNotBlank() }
-        },
-        coverImages = images.mapNotNull { it.uri?.takeIf { uri -> uri.isNotBlank() } },
-        tracklist = tracklist.map {
-            ReleaseTrack(
-                position = it.position.orEmpty(),
-                title = it.title.orEmpty(),
-                duration = it.duration.orEmpty(),
-            )
-        },
-        discogsUrl = uri?.takeIf { it.isNotBlank() },
-    )
+    private fun DiscogsRelease.toReleaseInfo() =
+        ReleaseInfo(
+            id = id,
+            title = title,
+            year = year?.takeIf { it > 0 },
+            country = country?.takeIf { it.isNotBlank() },
+            genres = genres,
+            styles = styles,
+            labelName = labels.firstOrNull()?.name,
+            catalogNumber = labels.firstOrNull()?.catno?.takeIf { it.isNotBlank() && it != "none" },
+            formats =
+                formats.mapNotNull { format ->
+                    val descriptors = format.descriptions.joinToString(", ")
+                    listOfNotNull(
+                        format.name?.takeIf { it.isNotBlank() },
+                        descriptors.takeIf { it.isNotBlank() },
+                    ).joinToString(" - ").takeIf { it.isNotBlank() }
+                },
+            coverImages = images.mapNotNull { it.uri?.takeIf { uri -> uri.isNotBlank() } },
+            tracklist =
+                tracklist.map {
+                    ReleaseTrack(
+                        position = it.position.orEmpty(),
+                        title = it.title.orEmpty(),
+                        duration = it.duration.orEmpty(),
+                    )
+                },
+            discogsUrl = uri?.takeIf { it.isNotBlank() },
+        )
 }

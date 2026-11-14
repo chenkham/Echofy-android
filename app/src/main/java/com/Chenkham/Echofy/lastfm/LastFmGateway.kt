@@ -120,30 +120,41 @@ object LastFmGateway {
 
     val supportedMethods: List<LastFmMethod> = LastFmMethod.entries
 
-    fun buildAuthorizationUrl(apiKey: String, token: String): String =
-        "$AUTH_URL?api_key=${apiKey.urlEncoded()}&token=${token.urlEncoded()}"
+    fun buildAuthorizationUrl(
+        apiKey: String,
+        token: String,
+    ): String = "$AUTH_URL?api_key=${apiKey.urlEncoded()}&token=${token.urlEncoded()}"
 
-    suspend fun getToken(apiKey: String, apiSecret: String): String {
-        val response = call(
-            method = LastFmMethod.AUTH_GET_TOKEN,
-            apiKey = apiKey,
-            apiSecret = apiSecret,
-            signed = true,
-        )
+    suspend fun getToken(
+        apiKey: String,
+        apiSecret: String,
+    ): String {
+        val response =
+            call(
+                method = LastFmMethod.AUTH_GET_TOKEN,
+                apiKey = apiKey,
+                apiSecret = apiSecret,
+                signed = true,
+            )
         return response.optString("token").ifBlank {
             throw LastFmException(0, "Last.fm did not return an auth token")
         }
     }
 
-    suspend fun getSession(apiKey: String, apiSecret: String, token: String): LastFmSession {
-        val response = call(
-            method = LastFmMethod.AUTH_GET_SESSION,
-            apiKey = apiKey,
-            apiSecret = apiSecret,
-            parameters = mapOf("token" to token),
-            signed = true,
-            forcePost = true,
-        )
+    suspend fun getSession(
+        apiKey: String,
+        apiSecret: String,
+        token: String,
+    ): LastFmSession {
+        val response =
+            call(
+                method = LastFmMethod.AUTH_GET_SESSION,
+                apiKey = apiKey,
+                apiSecret = apiSecret,
+                parameters = mapOf("token" to token),
+                signed = true,
+                forcePost = true,
+            )
         val session = response.getJSONObject("session")
         return LastFmSession(
             username = session.optString("name"),
@@ -152,15 +163,19 @@ object LastFmGateway {
         )
     }
 
-    suspend fun getMobileSession(username: String, password: String): LastFmSession {
-        val response = call(
-            method = LastFmMethod.AUTH_GET_MOBILE_SESSION,
-            apiKey = BuildConfig.LASTFM_API_KEY,
-            apiSecret = BuildConfig.LASTFM_SECRET,
-            parameters = mapOf("username" to username, "password" to password),
-            signed = true,
-            forcePost = true,
-        )
+    suspend fun getMobileSession(
+        username: String,
+        password: String,
+    ): LastFmSession {
+        val response =
+            call(
+                method = LastFmMethod.AUTH_GET_MOBILE_SESSION,
+                apiKey = BuildConfig.LASTFM_API_KEY,
+                apiSecret = BuildConfig.LASTFM_SECRET,
+                parameters = mapOf("username" to username, "password" to password),
+                signed = true,
+                forcePost = true,
+            )
         val session = response.getJSONObject("session")
         return LastFmSession(
             username = session.optString("name"),
@@ -172,43 +187,55 @@ object LastFmGateway {
     suspend fun updateNowPlaying(
         credentials: LastFmCredentials,
         track: LastFmTrack,
-    ): JSONObject = call(
-        method = LastFmMethod.TRACK_UPDATE_NOW_PLAYING,
-        credentials = credentials,
-        parameters = track.toParameters(includeDuration = true),
-        signed = true,
-        forcePost = true,
-    )
+    ): JSONObject =
+        call(
+            method = LastFmMethod.TRACK_UPDATE_NOW_PLAYING,
+            credentials = credentials,
+            parameters = track.toParameters(includeDuration = true),
+            signed = true,
+            forcePost = true,
+        )
 
     suspend fun scrobble(
         credentials: LastFmCredentials,
         track: LastFmTrack,
         timestampSeconds: Long,
-    ): JSONObject = call(
-        method = LastFmMethod.TRACK_SCROBBLE,
-        credentials = credentials,
-        parameters = track.toParameters(includeDuration = true) + mapOf(
-            "timestamp" to timestampSeconds.toString()
-        ),
-        signed = true,
-        forcePost = true,
-    )
+    ): JSONObject =
+        call(
+            method = LastFmMethod.TRACK_SCROBBLE,
+            credentials = credentials,
+            parameters =
+                track.toParameters(includeDuration = true) +
+                    mapOf(
+                        "timestamp" to timestampSeconds.toString(),
+                    ),
+            signed = true,
+            forcePost = true,
+        )
 
-    suspend fun love(credentials: LastFmCredentials, track: LastFmTrack): JSONObject = call(
-        method = LastFmMethod.TRACK_LOVE,
-        credentials = credentials,
-        parameters = track.toParameters(includeDuration = false),
-        signed = true,
-        forcePost = true,
-    )
+    suspend fun love(
+        credentials: LastFmCredentials,
+        track: LastFmTrack,
+    ): JSONObject =
+        call(
+            method = LastFmMethod.TRACK_LOVE,
+            credentials = credentials,
+            parameters = track.toParameters(includeDuration = false),
+            signed = true,
+            forcePost = true,
+        )
 
-    suspend fun unlove(credentials: LastFmCredentials, track: LastFmTrack): JSONObject = call(
-        method = LastFmMethod.TRACK_UNLOVE,
-        credentials = credentials,
-        parameters = track.toParameters(includeDuration = false),
-        signed = true,
-        forcePost = true,
-    )
+    suspend fun unlove(
+        credentials: LastFmCredentials,
+        track: LastFmTrack,
+    ): JSONObject =
+        call(
+            method = LastFmMethod.TRACK_UNLOVE,
+            credentials = credentials,
+            parameters = track.toParameters(includeDuration = false),
+            signed = true,
+            forcePost = true,
+        )
 
     suspend fun call(
         method: LastFmMethod,
@@ -216,15 +243,16 @@ object LastFmGateway {
         parameters: Map<String, String?> = emptyMap(),
         signed: Boolean = method.requiresSession || method.write,
         forcePost: Boolean? = null,
-    ): JSONObject = call(
-        method = method,
-        apiKey = credentials.apiKey,
-        apiSecret = credentials.apiSecret,
-        sessionKey = credentials.sessionKey,
-        parameters = parameters,
-        signed = signed,
-        forcePost = forcePost,
-    )
+    ): JSONObject =
+        call(
+            method = method,
+            apiKey = credentials.apiKey,
+            apiSecret = credentials.apiSecret,
+            sessionKey = credentials.sessionKey,
+            parameters = parameters,
+            signed = signed,
+            forcePost = forcePost,
+        )
 
     suspend fun call(
         method: LastFmMethod,
@@ -234,53 +262,59 @@ object LastFmGateway {
         parameters: Map<String, String?> = emptyMap(),
         signed: Boolean = method.requiresSession || method.write,
         forcePost: Boolean? = null,
-    ): JSONObject = withContext(Dispatchers.IO) {
-        if (apiKey.isBlank()) throw LastFmException(10, "Last.fm API key is required")
-        if (method.requiresSession && sessionKey.isBlank()) {
-            throw LastFmException(9, "Last.fm session key is required")
-        }
-        if (signed && apiSecret.isBlank()) {
-            throw LastFmException(13, "Last.fm API secret is required for signed calls")
-        }
-
-        val requestParameters = linkedMapOf<String, String>()
-        requestParameters["method"] = method.apiName
-        requestParameters["api_key"] = apiKey
-        requestParameters["format"] = "json"
-        parameters.forEach { (key, value) ->
-            if (!value.isNullOrBlank()) {
-                requestParameters[key] = value
+    ): JSONObject =
+        withContext(Dispatchers.IO) {
+            if (apiKey.isBlank()) throw LastFmException(10, "Last.fm API key is required")
+            if (method.requiresSession && sessionKey.isBlank()) {
+                throw LastFmException(9, "Last.fm session key is required")
             }
-        }
-        if (method.requiresSession && "sk" !in requestParameters) {
-            requestParameters["sk"] = sessionKey
-        }
-        if (signed) {
-            requestParameters["api_sig"] = createSignature(requestParameters, apiSecret)
+            if (signed && apiSecret.isBlank()) {
+                throw LastFmException(13, "Last.fm API secret is required for signed calls")
+            }
+
+            val requestParameters = linkedMapOf<String, String>()
+            requestParameters["method"] = method.apiName
+            requestParameters["api_key"] = apiKey
+            requestParameters["format"] = "json"
+            parameters.forEach { (key, value) ->
+                if (!value.isNullOrBlank()) {
+                    requestParameters[key] = value
+                }
+            }
+            if (method.requiresSession && "sk" !in requestParameters) {
+                requestParameters["sk"] = sessionKey
+            }
+            if (signed) {
+                requestParameters["api_sig"] = createSignature(requestParameters, apiSecret)
+            }
+
+            execute(
+                parameters = requestParameters,
+                post = forcePost ?: (method.write || method.requiresSession || method == LastFmMethod.AUTH_GET_SESSION),
+            )
         }
 
-        execute(
-            parameters = requestParameters,
-            post = forcePost ?: (method.write || method.requiresSession || method == LastFmMethod.AUTH_GET_SESSION),
-        )
-    }
-
-    private fun execute(parameters: Map<String, String>, post: Boolean): JSONObject {
-        val body = parameters.entries.joinToString("&") { (key, value) ->
-            "${key.urlEncoded()}=${value.urlEncoded()}"
-        }
+    private fun execute(
+        parameters: Map<String, String>,
+        post: Boolean,
+    ): JSONObject {
+        val body =
+            parameters.entries.joinToString("&") { (key, value) ->
+                "${key.urlEncoded()}=${value.urlEncoded()}"
+            }
         val url = if (post) BASE_URL else "$BASE_URL?$body"
-        val connection = (URL(url).openConnection() as HttpURLConnection).apply {
-            requestMethod = if (post) "POST" else "GET"
-            connectTimeout = 15_000
-            readTimeout = 20_000
-            setRequestProperty("User-Agent", USER_AGENT)
-            setRequestProperty("Accept", "application/json")
-            if (post) {
-                doOutput = true
-                setRequestProperty("Content-Type", "application/x-www-form-urlencoded; charset=UTF-8")
+        val connection =
+            (URL(url).openConnection() as HttpURLConnection).apply {
+                requestMethod = if (post) "POST" else "GET"
+                connectTimeout = 15_000
+                readTimeout = 20_000
+                setRequestProperty("User-Agent", USER_AGENT)
+                setRequestProperty("Accept", "application/json")
+                if (post) {
+                    doOutput = true
+                    setRequestProperty("Content-Type", "application/x-www-form-urlencoded; charset=UTF-8")
+                }
             }
-        }
 
         if (post) {
             connection.outputStream.use { output ->
@@ -291,9 +325,10 @@ object LastFmGateway {
         val statusCode = connection.responseCode
         val stream = if (statusCode in 200..299) connection.inputStream else connection.errorStream
         val responseBody = stream?.bufferedReader(Charsets.UTF_8)?.use { it.readText() }.orEmpty()
-        val responseJson = runCatching { JSONObject(responseBody) }.getOrElse {
-            throw LastFmException(statusCode, responseBody.ifBlank { "Empty response from Last.fm" })
-        }
+        val responseJson =
+            runCatching { JSONObject(responseBody) }.getOrElse {
+                throw LastFmException(statusCode, responseBody.ifBlank { "Empty response from Last.fm" })
+            }
 
         if (responseJson.has("error")) {
             throw LastFmException(
@@ -308,31 +343,35 @@ object LastFmGateway {
         return responseJson
     }
 
-    private fun createSignature(parameters: Map<String, String>, apiSecret: String): String {
-        val signatureBase = buildString {
-            parameters
-                .filterKeys { it != "format" && it != "callback" && it != "api_sig" }
-                .toSortedMap()
-                .forEach { (key, value) ->
-                    append(key)
-                    append(value)
-                }
-            append(apiSecret)
-        }
+    private fun createSignature(
+        parameters: Map<String, String>,
+        apiSecret: String,
+    ): String {
+        val signatureBase =
+            buildString {
+                parameters
+                    .filterKeys { it != "format" && it != "callback" && it != "api_sig" }
+                    .toSortedMap()
+                    .forEach { (key, value) ->
+                        append(key)
+                        append(value)
+                    }
+                append(apiSecret)
+            }
 
         val bytes = MessageDigest.getInstance("MD5").digest(signatureBase.toByteArray(Charsets.UTF_8))
         return bytes.joinToString("") { "%02x".format(Locale.US, it.toInt() and 0xff) }
     }
 
-    private fun LastFmTrack.toParameters(includeDuration: Boolean): Map<String, String?> = mapOf(
-        "artist" to artist,
-        "track" to track,
-        "album" to album,
-        "albumArtist" to albumArtist,
-        "duration" to durationSeconds?.takeIf { includeDuration && it > 0 }?.toString(),
-        "mbid" to musicBrainzId,
-    )
+    private fun LastFmTrack.toParameters(includeDuration: Boolean): Map<String, String?> =
+        mapOf(
+            "artist" to artist,
+            "track" to track,
+            "album" to album,
+            "albumArtist" to albumArtist,
+            "duration" to durationSeconds?.takeIf { includeDuration && it > 0 }?.toString(),
+            "mbid" to musicBrainzId,
+        )
 
-    private fun String.urlEncoded(): String =
-        URLEncoder.encode(this, Charsets.UTF_8.name()).replace("+", "%20")
+    private fun String.urlEncoded(): String = URLEncoder.encode(this, Charsets.UTF_8.name()).replace("+", "%20")
 }

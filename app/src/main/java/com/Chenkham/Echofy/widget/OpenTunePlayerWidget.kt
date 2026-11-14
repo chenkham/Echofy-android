@@ -2,7 +2,6 @@ package com.Chenkham.Echofy.widget
 
 import android.annotation.SuppressLint
 import android.content.Context
-import android.graphics.Bitmap
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -16,7 +15,6 @@ import androidx.glance.GlanceTheme
 import androidx.glance.Image
 import androidx.glance.ImageProvider
 import androidx.glance.LocalContext
-import androidx.glance.LocalSize
 import androidx.glance.action.Action
 import androidx.glance.action.clickable
 import androidx.glance.appwidget.GlanceAppWidget
@@ -48,10 +46,12 @@ import com.Chenkham.Echofy.R
 import com.Chenkham.Echofy.constants.WidgetBackgroundMode
 
 class EchofyPlayerWidget : GlanceAppWidget() {
-
     override var stateDefinition: GlanceStateDefinition<*> = PreferencesGlanceStateDefinition
 
-    override suspend fun provideGlance(context: Context, id: GlanceId) {
+    override suspend fun provideGlance(
+        context: Context,
+        id: GlanceId,
+    ) {
         provideContent {
             GlanceTheme {
                 val preferences = currentState<androidx.datastore.preferences.core.Preferences>()
@@ -68,12 +68,13 @@ class EchofyPlayerWidget : GlanceAppWidget() {
 
                 PlayerWidgetContent(
                     state = state,
-                    uiPrefs = WidgetUiPreferences(
-                        backgroundMode = backgroundMode,
-                        scrimOpacity = scrimOpacity,
-                        cornerRadius = cornerRadius,
-                        showProgressBar = showProgressBar,
-                    ),
+                    uiPrefs =
+                        WidgetUiPreferences(
+                            backgroundMode = backgroundMode,
+                            scrimOpacity = scrimOpacity,
+                            cornerRadius = cornerRadius,
+                            showProgressBar = showProgressBar,
+                        ),
                 )
             }
         }
@@ -98,24 +99,27 @@ private fun PlayerWidgetContent(
     val artist = state.artist.ifBlank { context.getString(R.string.tap_to_open) }
 
     Box(
-        modifier = GlanceModifier
-            .fillMaxSize()
-            .cornerRadius(uiPrefs.cornerRadius.dp)
-            .clickable(actionStartActivity(PlayerWidgetActions.openAppIntent(context))),
+        modifier =
+            GlanceModifier
+                .fillMaxSize()
+                .cornerRadius(uiPrefs.cornerRadius.dp)
+                .clickable(actionStartActivity(PlayerWidgetActions.openAppIntent(context))),
         contentAlignment = Alignment.Center,
     ) {
         WidgetBackground(state = state, mode = uiPrefs.backgroundMode)
 
         Box(
-            modifier = GlanceModifier
-                .fillMaxSize()
-                .background(ColorProvider(Color.Black.copy(alpha = uiPrefs.scrimOpacity))),
+            modifier =
+                GlanceModifier
+                    .fillMaxSize()
+                    .background(ColorProvider(Color.Black.copy(alpha = uiPrefs.scrimOpacity))),
         ) {}
 
         Column(
-            modifier = GlanceModifier
-                .fillMaxSize()
-                .padding(14.dp),
+            modifier =
+                GlanceModifier
+                    .fillMaxSize()
+                    .padding(14.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Row(
@@ -141,20 +145,22 @@ private fun PlayerWidgetContent(
                     Text(
                         text = title,
                         maxLines = 1,
-                        style = TextStyle(
-                            color = ColorProvider(Color.White),
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 16.sp,
-                        ),
+                        style =
+                            TextStyle(
+                                color = ColorProvider(Color.White),
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 16.sp,
+                            ),
                     )
                     Spacer(modifier = GlanceModifier.height(3.dp))
                     Text(
                         text = artist,
                         maxLines = 1,
-                        style = TextStyle(
-                            color = ColorProvider(Color.White.copy(alpha = 0.78f)),
-                            fontSize = 13.sp,
-                        ),
+                        style =
+                            TextStyle(
+                                color = ColorProvider(Color.White.copy(alpha = 0.78f)),
+                                fontSize = 13.sp,
+                            ),
                     )
                 }
 
@@ -195,7 +201,10 @@ private fun PlayerWidgetContent(
 
 @SuppressLint("RestrictedApi")
 @Composable
-private fun WidgetBackground(state: PlayerWidgetState, mode: WidgetBackgroundMode) {
+private fun WidgetBackground(
+    state: PlayerWidgetState,
+    mode: WidgetBackgroundMode,
+) {
     val artwork = state.artworkBitmap
     val blur = state.backgroundBlurBitmap
     val dominant = state.dominantColor
@@ -239,9 +248,10 @@ private fun WidgetBackground(state: PlayerWidgetState, mode: WidgetBackgroundMod
 @Composable
 private fun SolidBackground(color: ColorProvider) {
     Box(
-        modifier = GlanceModifier
-            .fillMaxSize()
-            .background(color),
+        modifier =
+            GlanceModifier
+                .fillMaxSize()
+                .background(color),
     ) {}
 }
 
@@ -250,18 +260,20 @@ private fun SolidBackground(color: ColorProvider) {
 private fun ProgressBar(progress: Float) {
     val clamped = progress.coerceIn(0f, 1f)
     Box(
-        modifier = GlanceModifier
-            .fillMaxWidth()
-            .height(3.dp)
-            .cornerRadius(1.5.dp)
-            .background(ColorProvider(Color.White.copy(alpha = 0.25f))),
-    ) {
-        Box(
-            modifier = GlanceModifier
+        modifier =
+            GlanceModifier
                 .fillMaxWidth()
                 .height(3.dp)
                 .cornerRadius(1.5.dp)
-                .background(ColorProvider(Color.White)),
+                .background(ColorProvider(Color.White.copy(alpha = 0.25f))),
+    ) {
+        Box(
+            modifier =
+                GlanceModifier
+                    .fillMaxWidth()
+                    .height(3.dp)
+                    .cornerRadius(1.5.dp)
+                    .background(ColorProvider(Color.White)),
         ) {}
     }
 }
@@ -270,11 +282,12 @@ private fun ProgressBar(progress: Float) {
 @Composable
 private fun PlayPauseButton(isPlaying: Boolean) {
     Box(
-        modifier = GlanceModifier
-            .size(48.dp)
-            .background(ColorProvider(Color.White))
-            .cornerRadius(24.dp)
-            .clickable(actionRunCallback<PlayPauseWidgetAction>()),
+        modifier =
+            GlanceModifier
+                .size(48.dp)
+                .background(ColorProvider(Color.White))
+                .cornerRadius(24.dp)
+                .clickable(actionRunCallback<PlayPauseWidgetAction>()),
         contentAlignment = Alignment.Center,
     ) {
         Image(
@@ -294,19 +307,21 @@ private fun ControlButton(
     enabled: Boolean,
     action: Action,
 ) {
-    val tint = if (enabled) {
-        ColorProvider(Color.White)
-    } else {
-        ColorProvider(Color.White.copy(alpha = 0.35f))
-    }
-    Box(
-        modifier = if (enabled) {
-            GlanceModifier
-                .size(32.dp)
-                .clickable(action)
+    val tint =
+        if (enabled) {
+            ColorProvider(Color.White)
         } else {
-            GlanceModifier.size(32.dp)
-        },
+            ColorProvider(Color.White.copy(alpha = 0.35f))
+        }
+    Box(
+        modifier =
+            if (enabled) {
+                GlanceModifier
+                    .size(32.dp)
+                    .clickable(action)
+            } else {
+                GlanceModifier.size(32.dp)
+            },
         contentAlignment = Alignment.Center,
     ) {
         Image(

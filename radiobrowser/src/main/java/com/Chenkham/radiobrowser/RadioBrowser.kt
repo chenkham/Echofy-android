@@ -105,28 +105,30 @@ object RadioBrowser {
     /**
      * Get top voted stations (most popular).
      */
-    suspend fun getTopStations(limit: Int = 50) = runCatching {
-        client
-            .get("stations/topvote/$limit")
-            .body<List<RadioStation>>()
-    }
+    suspend fun getTopStations(limit: Int = 50) =
+        runCatching {
+            client
+                .get("stations/topvote/$limit")
+                .body<List<RadioStation>>()
+        }
 
     /**
      * Get trending stations (most clicks recently).
      */
-    suspend fun getTrendingStations(limit: Int = 50) = runCatching {
-        client
-            .get("stations/topclick/$limit")
-            .body<List<RadioStation>>()
-    }
+    suspend fun getTrendingStations(limit: Int = 50) =
+        runCatching {
+            client
+                .get("stations/topclick/$limit")
+                .body<List<RadioStation>>()
+        }
 
     /**
      * Notify Radio Browser that a station was clicked/played.
      * This helps keep usage statistics accurate for the community.
      */
-    suspend fun registerClick(stationUuid: String) = runCatching {
-        client.post("url/$stationUuid")
-        Unit
-    }
+    suspend fun registerClick(stationUuid: String) =
+        runCatching {
+            client.post("url/$stationUuid")
+            Unit
+        }
 }
-

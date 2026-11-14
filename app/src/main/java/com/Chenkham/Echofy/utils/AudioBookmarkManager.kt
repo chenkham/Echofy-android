@@ -10,7 +10,7 @@ import org.json.JSONObject
 data class AudioBookmark(
     val positionMs: Long,
     val formattedTime: String,
-    val note: String = ""
+    val note: String = "",
 )
 
 object AudioBookmarkManager {
@@ -23,7 +23,10 @@ object AudioBookmarkManager {
         }.asStateFlow()
     }
 
-    fun loadBookmarks(context: Context, songId: String) {
+    fun loadBookmarks(
+        context: Context,
+        songId: String,
+    ) {
         val flow = bookmarksCache.getOrPut(songId) { MutableStateFlow(emptyList()) }
         val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
         val raw = prefs.getString(songId, null) ?: return
@@ -43,7 +46,12 @@ object AudioBookmarkManager {
         }
     }
 
-    fun addBookmark(context: Context, songId: String, positionMs: Long, note: String = ""): AudioBookmark {
+    fun addBookmark(
+        context: Context,
+        songId: String,
+        positionMs: Long,
+        note: String = "",
+    ): AudioBookmark {
         val flow = bookmarksCache.getOrPut(songId) { MutableStateFlow(emptyList()) }
         val formatted = formatMs(positionMs)
         val newBookmark = AudioBookmark(positionMs, formatted, note)
@@ -56,7 +64,11 @@ object AudioBookmarkManager {
         return newBookmark
     }
 
-    fun deleteBookmark(context: Context, songId: String, positionMs: Long) {
+    fun deleteBookmark(
+        context: Context,
+        songId: String,
+        positionMs: Long,
+    ) {
         val flow = bookmarksCache.getOrPut(songId) { MutableStateFlow(emptyList()) }
         val currentList = flow.value.toMutableList()
         currentList.removeAll { it.positionMs == positionMs }
@@ -64,7 +76,11 @@ object AudioBookmarkManager {
         saveToPrefs(context, songId, currentList)
     }
 
-    private fun saveToPrefs(context: Context, songId: String, list: List<AudioBookmark>) {
+    private fun saveToPrefs(
+        context: Context,
+        songId: String,
+        list: List<AudioBookmark>,
+    ) {
         val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
         val array = JSONArray()
         list.forEach { bm ->

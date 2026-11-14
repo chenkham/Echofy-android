@@ -33,27 +33,29 @@ fun ReleaseNotesCard() {
     }
 
     Card(
-        modifier = Modifier
-            .padding(horizontal = 16.dp)
-            .fillMaxWidth(),
+        modifier =
+            Modifier
+                .padding(horizontal = 16.dp)
+                .fillMaxWidth(),
         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceColorAtElevation(6.dp)
-        )
+        colors =
+            CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.surfaceColorAtElevation(6.dp),
+            ),
     ) {
         Column(
-            modifier = Modifier.padding(16.dp)
+            modifier = Modifier.padding(16.dp),
         ) {
             Text(
                 text = stringResource(R.string.release_notes),
-                style = MaterialTheme.typography.titleLarge
+                style = MaterialTheme.typography.titleLarge,
             )
             Spacer(modifier = Modifier.height(8.dp))
             releaseNotes.forEach { note ->
                 Text(
                     text = "â€¢ $note",
                     style = MaterialTheme.typography.bodyMedium,
-                    modifier = Modifier.padding(vertical = 2.dp)
+                    modifier = Modifier.padding(vertical = 2.dp),
                 )
             }
         }
@@ -69,9 +71,10 @@ suspend fun fetchReleaseNotesText(): List<String> {
             val changelogElement = document.selectFirst(".markdown-body")
             val htmlContent = changelogElement?.html() ?: "No release notes found"
 
-            val textContent = htmlContent
-                .replace(Regex("<br.*?>|</p>"), "\n")
-                .replace(Regex("<.*?>"), "")
+            val textContent =
+                htmlContent
+                    .replace(Regex("<br.*?>|</p>"), "\n")
+                    .replace(Regex("<.*?>"), "")
 
             textContent.split("\n")
                 .map { it.trim() }

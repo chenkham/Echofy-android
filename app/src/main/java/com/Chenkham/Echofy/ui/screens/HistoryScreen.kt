@@ -17,7 +17,6 @@ import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -30,7 +29,6 @@ import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
-import androidx.compose.ui.graphics.Color
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -43,6 +41,7 @@ import androidx.compose.runtime.toMutableStateList
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
@@ -53,7 +52,6 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
-import com.arturo254.opentune.innertube.utils.parseCookieString
 import com.Chenkham.Echofy.LocalDatabase
 import com.Chenkham.Echofy.LocalPlayerAwareWindowInsets
 import com.Chenkham.Echofy.LocalPlayerConnection
@@ -84,6 +82,7 @@ import com.Chenkham.Echofy.utils.HistoryExporter
 import com.Chenkham.Echofy.utils.rememberPreference
 import com.Chenkham.Echofy.viewmodels.DateAgo
 import com.Chenkham.Echofy.viewmodels.HistoryViewModel
+import com.arturo254.opentune.innertube.utils.parseCookieString
 import java.time.format.DateTimeFormatter
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
@@ -134,46 +133,49 @@ fun HistoryScreen(
     // A generic MIME type keeps one launcher valid for both formats. Rebuilding the
     // contract from exportFormat would lag a frame behind the user's choice, because the
     // launcher is remembered before the click that changes the format.
-    val exportLauncher = rememberLauncherForActivityResult(
-        ActivityResultContracts.CreateDocument("application/octet-stream")
-    ) { uri ->
-        if (uri != null) {
-            val rows = events.values.flatten()
-            val written = HistoryExporter.export(context, uri, rows, exportFormat)
-            Toast.makeText(
-                context,
-                if (written != null) {
-                    context.getString(R.string.export_history_success, written)
-                } else {
-                    context.getString(R.string.export_history_failed)
-                },
-                Toast.LENGTH_SHORT
-            ).show()
+    val exportLauncher =
+        rememberLauncherForActivityResult(
+            ActivityResultContracts.CreateDocument("application/octet-stream"),
+        ) { uri ->
+            if (uri != null) {
+                val rows = events.values.flatten()
+                val written = HistoryExporter.export(context, uri, rows, exportFormat)
+                Toast.makeText(
+                    context,
+                    if (written != null) {
+                        context.getString(R.string.export_history_success, written)
+                    } else {
+                        context.getString(R.string.export_history_failed)
+                    },
+                    Toast.LENGTH_SHORT,
+                ).show()
+            }
         }
-    }
 
     if (showExportDialog) {
         DefaultDialog(
             onDismiss = { showExportDialog = false },
-            title = { Text(stringResource(R.string.export_history)) }
+            title = { Text(stringResource(R.string.export_history)) },
         ) {
             HistoryExporter.Format.entries.forEach { format ->
                 ListItem(
                     headlineContent = { Text(format.name) },
-                    modifier = Modifier.clickable {
-                        showExportDialog = false
-                        exportFormat = format
-                        exportLauncher.launch("echofy_history.${format.extension}")
-                    }
+                    modifier =
+                        Modifier.clickable {
+                            showExportDialog = false
+                            exportFormat = format
+                            exportLauncher.launch("echofy_history.${format.extension}")
+                        },
                 )
             }
         }
     }
 
     val innerTubeCookie by rememberPreference(InnerTubeCookieKey, "")
-    val isLoggedIn = remember(innerTubeCookie) {
-        "SAPISID" in parseCookieString(innerTubeCookie)
-    }
+    val isLoggedIn =
+        remember(innerTubeCookie) {
+            "SAPISID" in parseCookieString(innerTubeCookie)
+        }
 
     fun dateAgoToString(dateAgo: DateAgo): String {
         return when (dateAgo) {
@@ -189,71 +191,80 @@ fun HistoryScreen(
         var isSelected by mutableStateOf(false)
     }
 
-    val filteredEvents = remember(events, query) {
-        if (query.text.isEmpty()) {
-            events
-        } else {
-            events.mapValues { (_, songs) ->
-                songs.filter { event ->
-                    event.song.song.title.contains(query.text, ignoreCase = true) ||
+    val filteredEvents =
+        remember(events, query) {
+            if (query.text.isEmpty()) {
+                events
+            } else {
+                events.mapValues { (_, songs) ->
+                    songs.filter { event ->
+                        event.song.song.title.contains(query.text, ignoreCase = true) ||
                             event.song.artists.any {
                                 it.name.contains(
                                     query.text,
-                                    ignoreCase = true
+                                    ignoreCase = true,
                                 )
                             }
-                }
-            }.filterValues { it.isNotEmpty() }
-        }
-    }
-
-    val filteredRemoteContent = remember(historyPage, query) {
-        if (query.text.isEmpty()) {
-            historyPage?.sections
-        } else {
-            historyPage?.sections?.map { section ->
-                section.copy(
-                    songs = section.songs.filter { song ->
-                        song.title.contains(query.text, ignoreCase = true) ||
-                                song.artists.any { it.name.contains(query.text, ignoreCase = true) }
                     }
-                )
-            }?.filter { it.songs.isNotEmpty() }
+                }.filterValues { it.isNotEmpty() }
+            }
         }
-    }
 
-    val wrappedItems = remember(filteredEvents) {
-        filteredEvents.flatMap { it.value }.map { WrappedHistoryItem(it) }
-    }.toMutableStateList()
+    val filteredRemoteContent =
+        remember(historyPage, query) {
+            if (query.text.isEmpty()) {
+                historyPage?.sections
+            } else {
+                historyPage?.sections?.map { section ->
+                    section.copy(
+                        songs =
+                            section.songs.filter { song ->
+                                song.title.contains(query.text, ignoreCase = true) ||
+                                    song.artists.any { it.name.contains(query.text, ignoreCase = true) }
+                            },
+                    )
+                }?.filter { it.songs.isNotEmpty() }
+            }
+        }
+
+    val wrappedItems =
+        remember(filteredEvents) {
+            filteredEvents.flatMap { it.value }.map { WrappedHistoryItem(it) }
+        }.toMutableStateList()
 
     val lazyListState = rememberLazyListState()
 
     Box(Modifier.fillMaxSize()) {
         LazyColumn(
             state = lazyListState,
-            contentPadding = LocalPlayerAwareWindowInsets.current.only(WindowInsetsSides.Horizontal + WindowInsetsSides.Bottom)
-                .asPaddingValues(),
-            modifier = Modifier.windowInsetsPadding(
-                LocalPlayerAwareWindowInsets.current.only(
-                    WindowInsetsSides.Top
-                )
-            )
+            contentPadding =
+                LocalPlayerAwareWindowInsets.current.only(WindowInsetsSides.Horizontal + WindowInsetsSides.Bottom)
+                    .asPaddingValues(),
+            modifier =
+                Modifier.windowInsetsPadding(
+                    LocalPlayerAwareWindowInsets.current.only(
+                        WindowInsetsSides.Top,
+                    ),
+                ),
         ) {
             item {
                 ChipsRow(
-                    chips = if (isLoggedIn) listOf(
-                        HistorySource.LOCAL to stringResource(R.string.local_history),
-                        HistorySource.REMOTE to stringResource(R.string.remote_history),
-                    ) else {
-                        listOf(HistorySource.LOCAL to stringResource(R.string.local_history))
-                    },
+                    chips =
+                        if (isLoggedIn) {
+                            listOf(
+                                HistorySource.LOCAL to stringResource(R.string.local_history),
+                                HistorySource.REMOTE to stringResource(R.string.remote_history),
+                            )
+                        } else {
+                            listOf(HistorySource.LOCAL to stringResource(R.string.local_history))
+                        },
                     currentValue = historySource,
                     onValueUpdate = {
                         viewModel.historySource.value = it
                         if (it == HistorySource.REMOTE) {
                             viewModel.fetchRemoteHistory()
                         }
-                    }
+                    },
                 )
             }
 
@@ -262,19 +273,20 @@ fun HistoryScreen(
                     stickyHeader {
                         NavigationTitle(
                             title = section.title,
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .background(MaterialTheme.colorScheme.background)
+                            modifier =
+                                Modifier
+                                    .fillMaxWidth()
+                                    .background(MaterialTheme.colorScheme.background),
                         )
                     }
 
                     items(
                         items = section.songs,
-                        key = { "${section.title}_${it.id}" }
+                        key = { "${section.title}_${it.id}" },
                     ) { song ->
                         // INSTANT PLAYBACK: Prefetch URL when song becomes visible
                         PrefetchOnVisible(mediaId = song.id)
-                        
+
                         YouTubeListItem(
                             item = song,
                             isActive = song.id == mediaMetadata?.id,
@@ -286,37 +298,42 @@ fun HistoryScreen(
                                             YouTubeSongMenu(
                                                 song = song,
                                                 navController = navController,
-                                                onDismiss = menuState::dismiss
-                                            )
-                                        }
-                                    }
-                                ) {
-                                    Icon(painter = painterResource(R.drawable.more_vert), tint = MaterialTheme.colorScheme.onSurface, contentDescription = null)
-                                }
-                            },
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .combinedClickable(
-                                    onClick = {
-                                        if (song.id == mediaMetadata?.id) {
-                                            playerConnection.togglePlayPause()
-                                        } else {
-                                            playerConnection.playQueue(
-                                                YouTubeQueue.radio(song.toMediaMetadata())
+                                                onDismiss = menuState::dismiss,
                                             )
                                         }
                                     },
-                                    onLongClick = {
-                                        menuState.show {
-                                            YouTubeSongMenu(
-                                                song = song,
-                                                navController = navController,
-                                                onDismiss = menuState::dismiss
-                                            )
-                                        }
-                                    }
-                                )
-                                .animateItem()
+                                ) {
+                                    Icon(
+                                        painter = painterResource(R.drawable.more_vert),
+                                        tint = MaterialTheme.colorScheme.onSurface,
+                                        contentDescription = null,
+                                    )
+                                }
+                            },
+                            modifier =
+                                Modifier
+                                    .fillMaxWidth()
+                                    .combinedClickable(
+                                        onClick = {
+                                            if (song.id == mediaMetadata?.id) {
+                                                playerConnection.togglePlayPause()
+                                            } else {
+                                                playerConnection.playQueue(
+                                                    YouTubeQueue.radio(song.toMediaMetadata()),
+                                                )
+                                            }
+                                        },
+                                        onLongClick = {
+                                            menuState.show {
+                                                YouTubeSongMenu(
+                                                    song = song,
+                                                    navController = navController,
+                                                    onDismiss = menuState::dismiss,
+                                                )
+                                            }
+                                        },
+                                    )
+                                    .animateItem(),
                         )
                     }
                 }
@@ -325,27 +342,27 @@ fun HistoryScreen(
                     stickyHeader {
                         NavigationTitle(
                             title = dateAgoToString(dateAgo),
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .background(MaterialTheme.colorScheme.surface)
+                            modifier =
+                                Modifier
+                                    .fillMaxWidth()
+                                    .background(MaterialTheme.colorScheme.surface),
                         )
                     }
 
                     items(
                         items = wrappedItems.filter { it.item in events },
-                        key = { it.item.event.id }
+                        key = { it.item.event.id },
                     ) { wrappedItem ->
                         val event = wrappedItem.item
                         // INSTANT PLAYBACK: Prefetch URL when song becomes visible
                         PrefetchOnVisible(mediaId = event.song.id)
-                        
+
                         SongListItem(
                             song = event.song,
                             isActive = event.song.id == mediaMetadata?.id,
                             isPlaying = isPlaying,
                             showInLibraryIcon = true,
                             isSelected = wrappedItem.isSelected && selection,
-
                             trailingContent = {
                                 IconButton(
                                     onClick = {
@@ -355,45 +372,50 @@ fun HistoryScreen(
                                                     originalSong = event.song,
                                                     event = event.event,
                                                     navController = navController,
-                                                    onDismiss = menuState::dismiss
+                                                    onDismiss = menuState::dismiss,
                                                 )
                                             }
-                                        }
-                                    }
-                                ) {
-                                    Icon(painter = painterResource(R.drawable.more_vert), tint = MaterialTheme.colorScheme.onSurface, contentDescription = null)
-                                }
-                            },
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .combinedClickable(
-                                    onClick = {
-                                        if (!selection) {
-                                            if (event.song.id == mediaMetadata?.id) {
-                                                playerConnection.togglePlayPause()
-                                            } else {
-                                                playerConnection.playQueue(
-                                                    ListQueue(
-                                                        title = dateAgoToString(dateAgo),
-                                                    items = wrappedItems.map { it.item.song.toMediaItem() },
-                                                        startIndex = wrappedItems.indexOf(wrappedItem)
-                                                    )
-                                                )
-                                            }
-                                        } else {
-                                            wrappedItem.isSelected = !wrappedItem.isSelected
                                         }
                                     },
-                                    onLongClick = {
-                                        haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                                        if (!selection) {
-                                            selection = true
-                                            wrappedItems.forEach { it.isSelected = false }
-                                            wrappedItem.isSelected = true
-                                        }
-                                    }
-                                )
-                                .animateItem()
+                                ) {
+                                    Icon(
+                                        painter = painterResource(R.drawable.more_vert),
+                                        tint = MaterialTheme.colorScheme.onSurface,
+                                        contentDescription = null,
+                                    )
+                                }
+                            },
+                            modifier =
+                                Modifier
+                                    .fillMaxWidth()
+                                    .combinedClickable(
+                                        onClick = {
+                                            if (!selection) {
+                                                if (event.song.id == mediaMetadata?.id) {
+                                                    playerConnection.togglePlayPause()
+                                                } else {
+                                                    playerConnection.playQueue(
+                                                        ListQueue(
+                                                            title = dateAgoToString(dateAgo),
+                                                            items = wrappedItems.map { it.item.song.toMediaItem() },
+                                                            startIndex = wrappedItems.indexOf(wrappedItem),
+                                                        ),
+                                                    )
+                                                }
+                                            } else {
+                                                wrappedItem.isSelected = !wrappedItem.isSelected
+                                            }
+                                        },
+                                        onLongClick = {
+                                            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                            if (!selection) {
+                                                selection = true
+                                                wrappedItems.forEach { it.isSelected = false }
+                                                wrappedItem.isSelected = true
+                                            }
+                                        },
+                                    )
+                                    .animateItem(),
                         )
                     }
                 }
@@ -401,11 +423,12 @@ fun HistoryScreen(
         }
 
         HideOnScrollFAB(
-            visible = if (historySource == HistorySource.REMOTE) {
-                filteredRemoteContent?.any { it.songs.isNotEmpty() } == true
-            } else {
-                wrappedItems.isNotEmpty()
-            },
+            visible =
+                if (historySource == HistorySource.REMOTE) {
+                    filteredRemoteContent?.any { it.songs.isNotEmpty() } == true
+                } else {
+                    wrappedItems.isNotEmpty()
+                },
             lazyListState = lazyListState,
             icon = R.drawable.shuffle,
             onClick = {
@@ -415,30 +438,30 @@ fun HistoryScreen(
                         playerConnection.playQueue(
                             ListQueue(
                                 title = context.getString(R.string.history),
-                                items = songs.map { it.toMediaItem() }.shuffled()
-                            )
+                                items = songs.map { it.toMediaItem() }.shuffled(),
+                            ),
                         )
                     }
                 } else {
                     playerConnection.playQueue(
                         ListQueue(
                             title = context.getString(R.string.history),
-                            items = wrappedItems.map { it.item.song.toMediaItem() }.shuffled()
-                        )
+                            items = wrappedItems.map { it.item.song.toMediaItem() }.shuffled(),
+                        ),
                     )
                 }
-            }
+            },
         )
     }
 
     TopAppBar(
-            colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent, scrolledContainerColor = Color.Transparent),
+        colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent, scrolledContainerColor = Color.Transparent),
         title = {
             if (selection) {
                 val count = wrappedItems.count { it.isSelected }
                 Text(
                     text = pluralStringResource(R.plurals.n_song, count, count),
-                    style = MaterialTheme.typography.titleLarge
+                    style = MaterialTheme.typography.titleLarge,
                 )
             } else if (isSearching) {
                 TextField(
@@ -447,22 +470,24 @@ fun HistoryScreen(
                     placeholder = {
                         Text(
                             text = stringResource(R.string.search),
-                            style = MaterialTheme.typography.titleLarge
+                            style = MaterialTheme.typography.titleLarge,
                         )
                     },
                     singleLine = true,
                     textStyle = MaterialTheme.typography.titleLarge,
                     keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
-                    colors = TextFieldDefaults.colors(
-                        focusedContainerColor = Color.Transparent,
-                        unfocusedContainerColor = Color.Transparent,
-                        focusedIndicatorColor = Color.Transparent,
-                        unfocusedIndicatorColor = Color.Transparent,
-                        disabledIndicatorColor = Color.Transparent,
-                    ),
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .focusRequester(focusRequester)
+                    colors =
+                        TextFieldDefaults.colors(
+                            focusedContainerColor = Color.Transparent,
+                            unfocusedContainerColor = Color.Transparent,
+                            focusedIndicatorColor = Color.Transparent,
+                            unfocusedIndicatorColor = Color.Transparent,
+                            disabledIndicatorColor = Color.Transparent,
+                        ),
+                    modifier =
+                        Modifier
+                            .fillMaxWidth()
+                            .focusRequester(focusRequester),
                 )
             } else {
                 Text(stringResource(R.string.history))
@@ -490,13 +515,14 @@ fun HistoryScreen(
                     if (!isSearching && !selection) {
                         navController.backToMain()
                     }
-                }
+                },
             ) {
                 Icon(
-                    painter = painterResource(
-                        if (selection) R.drawable.close else R.drawable.arrow_back
-                    ),
-                    contentDescription = null
+                    painter =
+                        painterResource(
+                            if (selection) R.drawable.close else R.drawable.arrow_back,
+                        ),
+                    contentDescription = null,
                 )
             }
         },
@@ -510,49 +536,55 @@ fun HistoryScreen(
                         } else {
                             wrappedItems.forEach { it.isSelected = true }
                         }
-                    }
+                    },
                 ) {
                     Icon(
-                        painter = painterResource(
-                            if (count == wrappedItems.size) R.drawable.deselect else R.drawable.select_all
-                        ),
-                        contentDescription = null
+                        painter =
+                            painterResource(
+                                if (count == wrappedItems.size) R.drawable.deselect else R.drawable.select_all,
+                            ),
+                        contentDescription = null,
                     )
                 }
                 IconButton(
                     onClick = {
                         menuState.show {
                             SelectionMediaMetadataMenu(
-                                songSelection = wrappedItems
-                                    .filter { it.isSelected }
-                                    .map { it.item.song.toMediaItem().metadata!! },
+                                songSelection =
+                                    wrappedItems
+                                        .filter { it.isSelected }
+                                        .map { it.item.song.toMediaItem().metadata!! },
                                 onDismiss = menuState::dismiss,
                                 clearAction = { selection = false },
-                                currentItems = emptyList()
+                                currentItems = emptyList(),
                             )
                         }
-                    }
+                    },
                 ) {
-                    Icon(painter = painterResource(R.drawable.more_vert), tint = MaterialTheme.colorScheme.onSurface, contentDescription = null)
+                    Icon(
+                        painter = painterResource(R.drawable.more_vert),
+                        tint = MaterialTheme.colorScheme.onSurface,
+                        contentDescription = null,
+                    )
                 }
             } else if (!isSearching) {
                 IconButton(
-                    onClick = { showExportDialog = true }
+                    onClick = { showExportDialog = true },
                 ) {
                     Icon(
                         painter = painterResource(R.drawable.share),
-                        contentDescription = stringResource(R.string.export_history)
+                        contentDescription = stringResource(R.string.export_history),
                     )
                 }
                 IconButton(
-                    onClick = { isSearching = true }
+                    onClick = { isSearching = true },
                 ) {
                     Icon(
                         painter = painterResource(R.drawable.search),
-                        contentDescription = null
+                        contentDescription = null,
                     )
                 }
             }
-        }
+        },
     )
 }

@@ -4,8 +4,6 @@
  * Licensed Under GPL-3.0 | see git history for contributors
  */
 
-
-
 package com.Chenkham.Echofy.viewmodels
 
 import android.content.Context
@@ -25,20 +23,20 @@ import javax.inject.Inject
 
 @HiltViewModel
 class TopPlaylistViewModel
-@Inject
-constructor(
-    @ApplicationContext context: Context,
-    database: MusicDatabase,
-    savedStateHandle: SavedStateHandle,
-) : ViewModel() {
-    val top = savedStateHandle.get<String>("top")!!
+    @Inject
+    constructor(
+        @ApplicationContext context: Context,
+        database: MusicDatabase,
+        savedStateHandle: SavedStateHandle,
+    ) : ViewModel() {
+        val top = savedStateHandle.get<String>("top")!!
 
-    val topPeriod = MutableStateFlow(MyTopFilter.ALL_TIME)
+        val topPeriod = MutableStateFlow(MyTopFilter.ALL_TIME)
 
-    @OptIn(ExperimentalCoroutinesApi::class)
-    val topSongs =
-        topPeriod
-            .flatMapLatest { period ->
-                database.mostPlayedSongs(period.toTimeMillis(), top.toInt())
-            }.stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
-}
+        @OptIn(ExperimentalCoroutinesApi::class)
+        val topSongs =
+            topPeriod
+                .flatMapLatest { period ->
+                    database.mostPlayedSongs(period.toTimeMillis(), top.toInt())
+                }.stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
+    }

@@ -48,7 +48,7 @@ class AppwriteTogetherSessionManager(
     private val appContext = context.applicationContext
     private val participantId by lazy { loadOrCreateParticipantId() }
 
-    private val _sessionState  = MutableStateFlow(JamSessionState())
+    private val _sessionState = MutableStateFlow(JamSessionState())
     val sessionState: StateFlow<JamSessionState> = _sessionState.asStateFlow()
 
     private val _remotePlayback = MutableStateFlow<JamPlaybackSnapshot?>(null)
@@ -82,16 +82,18 @@ class AppwriteTogetherSessionManager(
     private var pendingGuestActivation: JamActiveSession? = null
     private var currentRoomDocId: String? = null
     private var currentRoomId: String? = null
-    private val roomPermissions = listOf(
-        Permission.read(Role.any()),
-        Permission.write(Role.any()),
-        Permission.delete(Role.any()),
-    )
-    private val presencePermissions = listOf(
-        Permission.read(Role.any()),
-        Permission.write(Role.any()),
-        Permission.delete(Role.any()),
-    )
+    private val roomPermissions =
+        listOf(
+            Permission.read(Role.any()),
+            Permission.write(Role.any()),
+            Permission.delete(Role.any()),
+        )
+    private val presencePermissions =
+        listOf(
+            Permission.read(Role.any()),
+            Permission.write(Role.any()),
+            Permission.delete(Role.any()),
+        )
 
     init {
         scope.launch { configRepository.refresh(forceRefresh = false) }
@@ -104,16 +106,18 @@ class AppwriteTogetherSessionManager(
     // ─── Session lifecycle ────────────────────────────────────────────────
 
     suspend fun createHostedSession(displayName: String? = null): Result<JamActiveSession> {
-        val shard = registry.value.pickShardForNewRoom()
-            ?: return Result.failure(IllegalStateException("No active shard configured"))
+        val shard =
+            registry.value.pickShardForNewRoom()
+                ?: return Result.failure(IllegalStateException("No active shard configured"))
         repeat(HOST_CREATE_MAX_ATTEMPTS) { attempt ->
             val roomCode = JamRoomCode.create(shard.id)
-            val session = JamActiveSession(
-                roomCode = roomCode,
-                participantId = participantId,
-                role = JamParticipantRole.HOST,
-                displayName = displayName,
-            )
+            val session =
+                JamActiveSession(
+                    roomCode = roomCode,
+                    participantId = participantId,
+                    role = JamParticipantRole.HOST,
+                    displayName = displayName,
+                )
             val result = attachToSession(session)
             val failure = result.exceptionOrNull()
             if (failure !is RoomIdConflictException) return result
@@ -128,19 +132,26 @@ class AppwriteTogetherSessionManager(
         return Result.failure(IllegalStateException("Unable to allocate a unique room id"))
     }
 
-    suspend fun joinSession(rawRoomCode: String, displayName: String? = null): Result<JamActiveSession> {
-        val roomCode = JamRoomCode.parse(rawRoomCode)
-            ?: return Result.failure(IllegalArgumentException("Invalid room code"))
-        val shard = registry.value.findShard(roomCode.shardId)
-            ?: return Result.failure(IllegalStateException("Shard ${roomCode.shardId} not configured"))
-        if (!shard.canJoinRooms)
+    suspend fun joinSession(
+        rawRoomCode: String,
+        displayName: String? = null,
+    ): Result<JamActiveSession> {
+        val roomCode =
+            JamRoomCode.parse(rawRoomCode)
+                ?: return Result.failure(IllegalArgumentException("Invalid room code"))
+        val shard =
+            registry.value.findShard(roomCode.shardId)
+                ?: return Result.failure(IllegalStateException("Shard ${roomCode.shardId} not configured"))
+        if (!shard.canJoinRooms) {
             return Result.failure(IllegalStateException("Shard not accepting joins"))
-        val session = JamActiveSession(
-            roomCode = roomCode,
-            participantId = participantId,
-            role = JamParticipantRole.GUEST,
-            displayName = displayName,
-        )
+        }
+        val session =
+            JamActiveSession(
+                roomCode = roomCode,
+                participantId = participantId,
+                role = JamParticipantRole.GUEST,
+                displayName = displayName,
+            )
         return attachToSession(session)
     }
 
@@ -152,11 +163,11 @@ class AppwriteTogetherSessionManager(
             scope.launch(Dispatchers.IO) { deletePresence(session) }
         }
         teardown()
-        _sessionState.value  = JamSessionState()
+        _sessionState.value = JamSessionState()
         _remotePlayback.value = null
-        _queueSnapshot.value  = emptyList()
-        _participants.value   = emptyList()
-        _roomMeta.value       = null
+        _queueSnapshot.value = emptyList()
+        _participants.value = emptyList()
+        _roomMeta.value = null
     }
 
     fun shutdown() = leaveSession()
@@ -189,23 +200,24 @@ class AppwriteTogetherSessionManager(
             val docId = currentRoomDocId ?: currentRoomId ?: return@launch
             runCatching {
                 AppwriteClientProvider.databases(appContext).updateDocument(
-                    databaseId   = AppwriteConfig.DATABASE_ID,
+                    databaseId = AppwriteConfig.DATABASE_ID,
                     collectionId = AppwriteConfig.COL_ROOMS,
-                    documentId   = docId,
-                    data = mapOf(
-                        "mediaId"               to mediaId,
-                        "title"                 to title,
-                        "artist"                to artist,
-                        "thumbnailUrl"          to thumbnailUrl,
-                        "durationSeconds"       to durationSeconds,
-                        "playbackState"         to playbackState.name,
-                        "playbackSpeed"         to playbackSpeed.toDouble(),
-                        "positionMs"            to positionMs,
-                        "updatedAtEpochMs"      to now,
-                        "stateVersion"          to version,
-                        "issuedByParticipantId" to session.participantId,
-                        "lastActivityAtEpochMs" to now,
-                    ),
+                    documentId = docId,
+                    data =
+                        mapOf(
+                            "mediaId" to mediaId,
+                            "title" to title,
+                            "artist" to artist,
+                            "thumbnailUrl" to thumbnailUrl,
+                            "durationSeconds" to durationSeconds,
+                            "playbackState" to playbackState.name,
+                            "playbackSpeed" to playbackSpeed.toDouble(),
+                            "positionMs" to positionMs,
+                            "updatedAtEpochMs" to now,
+                            "stateVersion" to version,
+                            "issuedByParticipantId" to session.participantId,
+                            "lastActivityAtEpochMs" to now,
+                        ),
                 )
             }.onFailure { Timber.tag(TAG).w(it, "Failed to publish playback") }
         }
@@ -214,15 +226,23 @@ class AppwriteTogetherSessionManager(
     // ─── Stubs for queue API — kept so MusicService compiles unchanged ─────
 
     fun publishQueueSnapshot(items: List<JamQueueItem>) { /* no-op: queue removed */ }
-    fun reconcileHostQueue(seeds: List<JamQueueSeed>)   { /* no-op: queue removed */ }
+
+    fun reconcileHostQueue(seeds: List<JamQueueSeed>) { /* no-op: queue removed */ }
+
     fun enqueueSong(mediaMetadata: MediaMetadata): Result<JamQueueItem> =
         Result.failure(UnsupportedOperationException("Queue removed — song sync is automatic"))
+
     fun enqueueNextSong(mediaMetadata: MediaMetadata): Result<JamQueueItem> =
         Result.failure(UnsupportedOperationException("Queue removed — song sync is automatic"))
-    fun removeQueueItem(itemId: String)  { /* no-op */ }
-    fun moveQueueItemUp(itemId: String)  { /* no-op */ }
-    fun moveQueueItemDown(itemId: String){ /* no-op */ }
+
+    fun removeQueueItem(itemId: String) { /* no-op */ }
+
+    fun moveQueueItemUp(itemId: String) { /* no-op */ }
+
+    fun moveQueueItemDown(itemId: String)  { /* no-op */ }
+
     fun replaceQueue(items: List<MediaMetadata>) { /* no-op */ }
+
     fun popNextQueueItem(): JamQueueSelection? = null
 
     fun setAllowGuestControls(enabled: Boolean) {
@@ -235,10 +255,10 @@ class AppwriteTogetherSessionManager(
             val docId = currentRoomDocId ?: currentRoomId ?: return@launch
             runCatching {
                 AppwriteClientProvider.databases(appContext).updateDocument(
-                    databaseId   = AppwriteConfig.DATABASE_ID,
+                    databaseId = AppwriteConfig.DATABASE_ID,
                     collectionId = AppwriteConfig.COL_ROOMS,
-                    documentId   = docId,
-                    data         = mapOf("allowGuestControls" to enabled),
+                    documentId = docId,
+                    data = mapOf("allowGuestControls" to enabled),
                 )
             }.onFailure { Timber.tag(TAG).w(it, "Failed to update guestControls") }
         }
@@ -254,10 +274,10 @@ class AppwriteTogetherSessionManager(
             val docId = currentRoomDocId ?: currentRoomId ?: return@launch
             runCatching {
                 AppwriteClientProvider.databases(appContext).updateDocument(
-                    databaseId   = AppwriteConfig.DATABASE_ID,
+                    databaseId = AppwriteConfig.DATABASE_ID,
                     collectionId = AppwriteConfig.COL_ROOMS,
-                    documentId   = docId,
-                    data         = mapOf("requireApproval" to enabled),
+                    documentId = docId,
+                    data = mapOf("requireApproval" to enabled),
                 )
             }.onFailure { Timber.tag(TAG).w(it, "Failed to update requireApproval") }
         }
@@ -283,7 +303,7 @@ class AppwriteTogetherSessionManager(
                     if (resolved.authUid.isNullOrBlank()) {
                         error(
                             AppwriteSessionAuth.lastFailureMessage()
-                                ?: "Unable to authenticate with Appwrite"
+                                ?: "Unable to authenticate with Appwrite",
                         )
                     }
                     if (resolved.role == JamParticipantRole.HOST) {
@@ -340,11 +360,12 @@ class AppwriteTogetherSessionManager(
                 _remotePlayback.value = null
                 _queueSnapshot.value = emptyList()
                 _participants.value = emptyList()
-                _sessionState.value = JamSessionState(
-                    phase = JamSessionPhase.ERROR,
-                    session = null,
-                    lastError = result.exceptionOrNull()?.message,
-                )
+                _sessionState.value =
+                    JamSessionState(
+                        phase = JamSessionPhase.ERROR,
+                        session = null,
+                        lastError = result.exceptionOrNull()?.message,
+                    )
             }
         }
     }
@@ -352,34 +373,35 @@ class AppwriteTogetherSessionManager(
     // ─── Appwrite writes ──────────────────────────────────────────────────
 
     private suspend fun writeRoomDoc(session: JamActiveSession): String {
-        val db  = AppwriteClientProvider.databases(appContext)
+        val db = AppwriteClientProvider.databases(appContext)
         val now = System.currentTimeMillis()
         val roomId = session.roomCode.roomId
-        val data = mapOf(
-            "roomCode"              to session.roomCode.roomCode,
-            "roomId"                to roomId,
-            "hostParticipantId"     to session.participantId,
-            "shardId"               to session.roomCode.shardId,
-            "hostAuthUid"           to (session.authUid ?: ""),
-            "hostName"              to (session.displayName ?: ""),
-            "requireApproval"       to false,
-            "allowGuestControls"    to true,
-            "status"                to "active",
-            "schemaVersion"         to 1,
-            "createdAtEpochMs"      to now,
-            "lastActivityAtEpochMs" to now,
-            "mediaId"               to "",
-            "title"                 to "",
-            "artist"                to "",
-            "thumbnailUrl"          to "",
-            "durationSeconds"       to -1,
-            "playbackState"         to "PAUSED",
-            "playbackSpeed"         to 1.0,
-            "positionMs"            to 0,
-            "updatedAtEpochMs"      to now,
-            "stateVersion"          to 0,
-            "issuedByParticipantId" to session.participantId,
-        )
+        val data =
+            mapOf(
+                "roomCode" to session.roomCode.roomCode,
+                "roomId" to roomId,
+                "hostParticipantId" to session.participantId,
+                "shardId" to session.roomCode.shardId,
+                "hostAuthUid" to (session.authUid ?: ""),
+                "hostName" to (session.displayName ?: ""),
+                "requireApproval" to false,
+                "allowGuestControls" to true,
+                "status" to "active",
+                "schemaVersion" to 1,
+                "createdAtEpochMs" to now,
+                "lastActivityAtEpochMs" to now,
+                "mediaId" to "",
+                "title" to "",
+                "artist" to "",
+                "thumbnailUrl" to "",
+                "durationSeconds" to -1,
+                "playbackState" to "PAUSED",
+                "playbackSpeed" to 1.0,
+                "positionMs" to 0,
+                "updatedAtEpochMs" to now,
+                "stateVersion" to 0,
+                "issuedByParticipantId" to session.participantId,
+            )
         return try {
             db.createDocument(
                 AppwriteConfig.DATABASE_ID,
@@ -401,10 +423,10 @@ class AppwriteTogetherSessionManager(
         val docId = currentRoomDocId ?: currentRoomId ?: return
         runCatching {
             AppwriteClientProvider.databases(appContext).updateDocument(
-                databaseId   = AppwriteConfig.DATABASE_ID,
+                databaseId = AppwriteConfig.DATABASE_ID,
                 collectionId = AppwriteConfig.COL_ROOMS,
-                documentId   = docId,
-                data         = mapOf("status" to "closed"),
+                documentId = docId,
+                data = mapOf("status" to "closed"),
             )
         }.onFailure { Timber.tag(TAG).w(it, "Failed to mark room closed") }
     }
@@ -413,16 +435,17 @@ class AppwriteTogetherSessionManager(
         val docId = "${session.roomCode.roomId}_${session.participantId}"
         val now = System.currentTimeMillis()
         val resolvedName = session.displayName ?: session.role.name.lowercase().replaceFirstChar(Char::uppercase)
-        val data  = mapOf(
-            "roomId"            to session.roomCode.roomId,
-            "participantId"     to session.participantId,
-            "displayName"       to resolvedName,
-            "nameInitial"       to (resolvedName.firstOrNull()?.uppercase() ?: "?"),
-            "role"              to session.role.name,
-            "authUid"           to (session.authUid ?: ""),
-            "joinedAtEpochMs"   to now,
-            "lastSeenAtEpochMs" to now,
-        )
+        val data =
+            mapOf(
+                "roomId" to session.roomCode.roomId,
+                "participantId" to session.participantId,
+                "displayName" to resolvedName,
+                "nameInitial" to (resolvedName.firstOrNull()?.uppercase() ?: "?"),
+                "role" to session.role.name,
+                "authUid" to (session.authUid ?: ""),
+                "joinedAtEpochMs" to now,
+                "lastSeenAtEpochMs" to now,
+            )
         runCatching {
             AppwriteClientProvider.databases(appContext)
                 .createDocument(
@@ -460,24 +483,27 @@ class AppwriteTogetherSessionManager(
 
     private suspend fun fetchRoomDoc(roomId: String): JamRoomMeta? =
         runCatching {
-            val doc = AppwriteClientProvider.databases(appContext).getDocument(
-                databaseId   = AppwriteConfig.DATABASE_ID,
-                collectionId = AppwriteConfig.COL_ROOMS,
-                documentId   = roomId,
-            )
+            val doc =
+                AppwriteClientProvider.databases(appContext).getDocument(
+                    databaseId = AppwriteConfig.DATABASE_ID,
+                    collectionId = AppwriteConfig.COL_ROOMS,
+                    documentId = roomId,
+                )
             JamRoomMeta.fromMap(doc.data)
         }.onFailure { Timber.tag(TAG).d("fetchRoomDoc failed: %s", it.message) }
             .getOrNull()
 
     private suspend fun fetchAndApplyPresence(roomId: String) {
         runCatching {
-            val result = AppwriteClientProvider.databases(appContext).listDocuments(
-                databaseId   = AppwriteConfig.DATABASE_ID,
-                collectionId = AppwriteConfig.COL_PRESENCE,
-                queries      = listOf(Query.equal("roomId", roomId), Query.limit(50)),
-            )
-            val list = result.documents.mapNotNull { JamParticipant.fromMap(it.data) }
-                .sortedWith(compareBy<JamParticipant> { it.role != JamParticipantRole.HOST }.thenBy { it.joinedAtEpochMs })
+            val result =
+                AppwriteClientProvider.databases(appContext).listDocuments(
+                    databaseId = AppwriteConfig.DATABASE_ID,
+                    collectionId = AppwriteConfig.COL_PRESENCE,
+                    queries = listOf(Query.equal("roomId", roomId), Query.limit(50)),
+                )
+            val list =
+                result.documents.mapNotNull { JamParticipant.fromMap(it.data) }
+                    .sortedWith(compareBy<JamParticipant> { it.role != JamParticipantRole.HOST }.thenBy { it.joinedAtEpochMs })
             _participants.value = list
         }.onFailure { Timber.tag(TAG).w(it, "Failed to fetch presence") }
     }
@@ -487,40 +513,42 @@ class AppwriteTogetherSessionManager(
     private fun subscribeToRoom(session: JamActiveSession) {
         val rt = AppwriteClientProvider.realtime(appContext)
         val channel = "databases.${AppwriteConfig.DATABASE_ID}.collections.${AppwriteConfig.COL_ROOMS}.documents.${session.roomCode.roomId}"
-        roomSub = rt.subscribe(channel) { event ->
-            val payload = event.payload as? Map<*, *> ?: return@subscribe
-            val meta = JamRoomMeta.fromMap(payload) ?: return@subscribe
-            latestRoomMeta = meta
-            _roomMeta.value = meta
+        roomSub =
+            rt.subscribe(channel) { event ->
+                val payload = event.payload as? Map<*, *> ?: return@subscribe
+                val meta = JamRoomMeta.fromMap(payload) ?: return@subscribe
+                latestRoomMeta = meta
+                _roomMeta.value = meta
 
-            if (session.role != JamParticipantRole.HOST) {
-                when {
-                    meta.status == "closed" -> handleSessionFailure("The host ended this Together session")
-                    meta.isStale()          -> handleSessionFailure("Host connection was lost")
-                    meta.isJoinable         -> {
-                        // Activate pending guest if not yet active
-                        if (_sessionState.value.phase == JamSessionPhase.CONNECTING) {
-                            pendingGuestActivation = null
-                            scope.launch(Dispatchers.IO) {
-                                activateSession(session)
-                                startGuestHealthMonitor(session)
-                                fetchAndApplyPresence(session.roomCode.roomId)
+                if (session.role != JamParticipantRole.HOST) {
+                    when {
+                        meta.status == "closed" -> handleSessionFailure("The host ended this Together session")
+                        meta.isStale() -> handleSessionFailure("Host connection was lost")
+                        meta.isJoinable -> {
+                            // Activate pending guest if not yet active
+                            if (_sessionState.value.phase == JamSessionPhase.CONNECTING) {
+                                pendingGuestActivation = null
+                                scope.launch(Dispatchers.IO) {
+                                    activateSession(session)
+                                    startGuestHealthMonitor(session)
+                                    fetchAndApplyPresence(session.roomCode.roomId)
+                                }
                             }
+                            // Apply playback from this event
+                            applyRoomDocToPlayback(meta, session)
                         }
-                        // Apply playback from this event
-                        applyRoomDocToPlayback(meta, session)
                     }
                 }
             }
-        }
     }
 
     private fun subscribeToPresence(session: JamActiveSession) {
         val rt = AppwriteClientProvider.realtime(appContext)
         val channel = "databases.${AppwriteConfig.DATABASE_ID}.collections.${AppwriteConfig.COL_PRESENCE}.documents"
-        presenceSub = rt.subscribe(channel) { _ ->
-            scope.launch(Dispatchers.IO) { fetchAndApplyPresence(session.roomCode.roomId) }
-        }
+        presenceSub =
+            rt.subscribe(channel) { _ ->
+                scope.launch(Dispatchers.IO) { fetchAndApplyPresence(session.roomCode.roomId) }
+            }
         // Initial fetch immediately
         scope.launch(Dispatchers.IO) { fetchAndApplyPresence(session.roomCode.roomId) }
     }
@@ -531,26 +559,31 @@ class AppwriteTogetherSessionManager(
      * Converts a room doc snapshot into a JamPlaybackSnapshot and pushes it to remotePlayback.
      * MusicService's existing collector picks this up and applies it to the player.
      */
-    private fun applyRoomDocToPlayback(meta: JamRoomMeta, session: JamActiveSession) {
+    private fun applyRoomDocToPlayback(
+        meta: JamRoomMeta,
+        session: JamActiveSession,
+    ) {
         // Don't apply our own writes back to ourselves
         if (meta.issuedByParticipantId == session.participantId) return
         if (meta.mediaId.isBlank()) return
 
-        val snapshot = JamPlaybackSnapshot(
-            mediaId               = meta.mediaId,
-            title                 = meta.title,
-            artist                = meta.artist,
-            thumbnailUrl          = meta.thumbnailUrl,
-            durationSeconds       = meta.durationSeconds,
-            playbackState         = runCatching {
-                JamPlaybackTransportState.valueOf(meta.playbackState)
-            }.getOrDefault(JamPlaybackTransportState.PAUSED),
-            basePositionMs        = meta.positionMs,
-            playbackSpeed         = meta.playbackSpeed,
-            updatedAtEpochMs      = meta.updatedAtEpochMs,
-            stateVersion          = meta.stateVersion,
-            issuedByParticipantId = meta.issuedByParticipantId,
-        )
+        val snapshot =
+            JamPlaybackSnapshot(
+                mediaId = meta.mediaId,
+                title = meta.title,
+                artist = meta.artist,
+                thumbnailUrl = meta.thumbnailUrl,
+                durationSeconds = meta.durationSeconds,
+                playbackState =
+                    runCatching {
+                        JamPlaybackTransportState.valueOf(meta.playbackState)
+                    }.getOrDefault(JamPlaybackTransportState.PAUSED),
+                basePositionMs = meta.positionMs,
+                playbackSpeed = meta.playbackSpeed,
+                updatedAtEpochMs = meta.updatedAtEpochMs,
+                stateVersion = meta.stateVersion,
+                issuedByParticipantId = meta.issuedByParticipantId,
+            )
         _remotePlayback.value = snapshot
     }
 
@@ -560,10 +593,11 @@ class AppwriteTogetherSessionManager(
         writePresence(session)
         startPresenceHeartbeat(session)
         withContext(Dispatchers.Main) {
-            _sessionState.value = JamSessionState(
-                phase = if (session.role == JamParticipantRole.HOST) JamSessionPhase.HOSTING else JamSessionPhase.JOINED,
-                session = session,
-            )
+            _sessionState.value =
+                JamSessionState(
+                    phase = if (session.role == JamParticipantRole.HOST) JamSessionPhase.HOSTING else JamSessionPhase.JOINED,
+                    session = session,
+                )
         }
     }
 
@@ -574,88 +608,102 @@ class AppwriteTogetherSessionManager(
         ready: CompletableDeferred<Result<JamActiveSession>>,
     ) {
         guestJoinValidationJob?.cancel()
-        guestJoinValidationJob = scope.launch {
-            delay(GUEST_JOIN_VALIDATION_TIMEOUT_MS)
-            val active = _sessionState.value.session
-            if (active?.roomCode?.roomId != session.roomCode.roomId) return@launch
+        guestJoinValidationJob =
+            scope.launch {
+                delay(GUEST_JOIN_VALIDATION_TIMEOUT_MS)
+                val active = _sessionState.value.session
+                if (active?.roomCode?.roomId != session.roomCode.roomId) return@launch
 
-            // One more DB fetch before giving up
-            val fresh = withContext(Dispatchers.IO) { fetchRoomDoc(session.roomCode.roomId) }
-            when {
-                fresh == null ->
-                    ready.complete(Result.failure(IllegalStateException("Room not found")))
-                fresh.status == "closed" ->
-                    ready.complete(Result.failure(IllegalStateException("This room has ended")))
-                fresh.isJoinable -> {
-                    latestRoomMeta = fresh
-                    _roomMeta.value = fresh
-                    pendingGuestActivation = null
-                    withContext(Dispatchers.IO) {
-                        activateSession(session)
-                        startGuestHealthMonitor(session)
-                        fetchAndApplyPresence(session.roomCode.roomId)
-                        applyRoomDocToPlayback(fresh, session)
+                // One more DB fetch before giving up
+                val fresh = withContext(Dispatchers.IO) { fetchRoomDoc(session.roomCode.roomId) }
+                when {
+                    fresh == null ->
+                        ready.complete(Result.failure(IllegalStateException("Room not found")))
+                    fresh.status == "closed" ->
+                        ready.complete(Result.failure(IllegalStateException("This room has ended")))
+                    fresh.isJoinable -> {
+                        latestRoomMeta = fresh
+                        _roomMeta.value = fresh
+                        pendingGuestActivation = null
+                        withContext(Dispatchers.IO) {
+                            activateSession(session)
+                            startGuestHealthMonitor(session)
+                            fetchAndApplyPresence(session.roomCode.roomId)
+                            applyRoomDocToPlayback(fresh, session)
+                        }
+                        ready.complete(Result.success(session))
                     }
-                    ready.complete(Result.success(session))
+                    else ->
+                        ready.complete(Result.failure(IllegalStateException("Room not accepting joins")))
                 }
-                else ->
-                    ready.complete(Result.failure(IllegalStateException("Room not accepting joins")))
             }
-        }
     }
 
     private fun startGuestHealthMonitor(session: JamActiveSession) {
         guestHealthJob?.cancel()
-        guestHealthJob = scope.launch {
-            while (isActive) {
-                delay(GUEST_HEALTH_CHECK_MS)
-                val meta = latestRoomMeta ?: continue
-                if (meta.roomId != session.roomCode.roomId) continue
-                if (meta.status == "closed") { handleSessionFailure("The host ended this Together session"); break }
-                if (meta.isStale()) { handleSessionFailure("Host connection was lost"); break }
+        guestHealthJob =
+            scope.launch {
+                while (isActive) {
+                    delay(GUEST_HEALTH_CHECK_MS)
+                    val meta = latestRoomMeta ?: continue
+                    if (meta.roomId != session.roomCode.roomId) continue
+                    if (meta.status == "closed") {
+                        handleSessionFailure("The host ended this Together session")
+                        break
+                    }
+                    if (meta.isStale()) {
+                        handleSessionFailure("Host connection was lost")
+                        break
+                    }
+                }
             }
-        }
     }
 
     // ─── Heartbeat ────────────────────────────────────────────────────────
 
     private fun startPresenceHeartbeat(session: JamActiveSession) {
         presenceHeartbeatJob?.cancel()
-        presenceHeartbeatJob = scope.launch(Dispatchers.IO) {
-            while (isActive) {
-                delay(PRESENCE_HEARTBEAT_MS)
-                if (_sessionState.value.phase == JamSessionPhase.CONNECTING) continue
-                val now = System.currentTimeMillis()
-                val presenceDocId = "${session.roomCode.roomId}_${session.participantId}"
-                runCatching {
-                    val db = AppwriteClientProvider.databases(appContext)
-                    db.updateDocument(
-                        AppwriteConfig.DATABASE_ID, AppwriteConfig.COL_PRESENCE,
-                        presenceDocId, mapOf("lastSeenAtEpochMs" to now),
-                    )
-                    if (session.role == JamParticipantRole.HOST) {
-                        val roomDocId = currentRoomDocId ?: session.roomCode.roomId
+        presenceHeartbeatJob =
+            scope.launch(Dispatchers.IO) {
+                while (isActive) {
+                    delay(PRESENCE_HEARTBEAT_MS)
+                    if (_sessionState.value.phase == JamSessionPhase.CONNECTING) continue
+                    val now = System.currentTimeMillis()
+                    val presenceDocId = "${session.roomCode.roomId}_${session.participantId}"
+                    runCatching {
+                        val db = AppwriteClientProvider.databases(appContext)
                         db.updateDocument(
-                            AppwriteConfig.DATABASE_ID, AppwriteConfig.COL_ROOMS,
-                            roomDocId, mapOf("lastActivityAtEpochMs" to now),
+                            AppwriteConfig.DATABASE_ID, AppwriteConfig.COL_PRESENCE,
+                            presenceDocId, mapOf("lastSeenAtEpochMs" to now),
                         )
-                    }
-                }.onFailure { Timber.tag(TAG).w(it, "Heartbeat failed") }
+                        if (session.role == JamParticipantRole.HOST) {
+                            val roomDocId = currentRoomDocId ?: session.roomCode.roomId
+                            db.updateDocument(
+                                AppwriteConfig.DATABASE_ID, AppwriteConfig.COL_ROOMS,
+                                roomDocId, mapOf("lastActivityAtEpochMs" to now),
+                            )
+                        }
+                    }.onFailure { Timber.tag(TAG).w(it, "Heartbeat failed") }
+                }
             }
-        }
     }
 
     // ─── Teardown & error handling ────────────────────────────────────────
 
     private fun teardown() {
-        guestJoinValidationJob?.cancel(); guestJoinValidationJob = null
-        guestHealthJob?.cancel();         guestHealthJob = null
-        presenceHeartbeatJob?.cancel();   presenceHeartbeatJob = null
-        runCatching { roomSub?.close() };     roomSub = null
-        runCatching { presenceSub?.close() }; presenceSub = null
+        guestJoinValidationJob?.cancel()
+        guestJoinValidationJob = null
+        guestHealthJob?.cancel()
+        guestHealthJob = null
+        presenceHeartbeatJob?.cancel()
+        presenceHeartbeatJob = null
+        runCatching { roomSub?.close() }
+        roomSub = null
+        runCatching { presenceSub?.close() }
+        presenceSub = null
         currentRoomDocId = null
-        currentRoomId    = null
-        latestRoomMeta   = null
+        currentRoomId = null
+        latestRoomMeta = null
         pendingGuestActivation = null
         _roomMeta.value = null
     }
@@ -663,10 +711,10 @@ class AppwriteTogetherSessionManager(
     private fun handleSessionFailure(message: String) {
         teardown()
         _remotePlayback.value = null
-        _queueSnapshot.value  = emptyList()
-        _participants.value   = emptyList()
-        _roomMeta.value       = null
-        _sessionState.value   = JamSessionState(phase = JamSessionPhase.ERROR, session = null, lastError = message)
+        _queueSnapshot.value = emptyList()
+        _participants.value = emptyList()
+        _roomMeta.value = null
+        _sessionState.value = JamSessionState(phase = JamSessionPhase.ERROR, session = null, lastError = message)
     }
 
     // ─── Helpers ──────────────────────────────────────────────────────────

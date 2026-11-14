@@ -26,75 +26,80 @@ fun RadioSettings(
     navController: NavController,
     scrollBehavior: TopAppBarScrollBehavior,
 ) {
-    val (radioEnabled, onRadioEnabledChange) = rememberPreference(
-        key = RadioEnabledKey,
-        defaultValue = true
-    )
-    val (defaultCountry, onDefaultCountryChange) = rememberPreference(
-        key = RadioDefaultCountryKey,
-        defaultValue = "all"
-    )
-    val (minBitrate, onMinBitrateChange) = rememberPreference(
-        key = RadioMinBitrateKey,
-        defaultValue = "any"
-    )
-    val (hideBroken, onHideBrokenChange) = rememberPreference(
-        key = RadioHideBrokenKey,
-        defaultValue = false
-    )
+    val (radioEnabled, onRadioEnabledChange) =
+        rememberPreference(
+            key = RadioEnabledKey,
+            defaultValue = true,
+        )
+    val (defaultCountry, onDefaultCountryChange) =
+        rememberPreference(
+            key = RadioDefaultCountryKey,
+            defaultValue = "all",
+        )
+    val (minBitrate, onMinBitrateChange) =
+        rememberPreference(
+            key = RadioMinBitrateKey,
+            defaultValue = "any",
+        )
+    val (hideBroken, onHideBrokenChange) =
+        rememberPreference(
+            key = RadioHideBrokenKey,
+            defaultValue = false,
+        )
 
     SettingsPage(
         title = stringResource(R.string.radio),
         navController = navController,
-        scrollBehavior = scrollBehavior
+        scrollBehavior = scrollBehavior,
     ) {
         SettingsGeneralCategory(
             title = stringResource(R.string.general),
-            items = listOf(
-                {
-                    SwitchPreference(
-                        title = { Text("Enable Radio Tab") },
-                        icon = { Icon(painterResource(R.drawable.radio), null) },
-                        checked = radioEnabled,
-                        onCheckedChange = onRadioEnabledChange,
-                    )
-                },
-                {
-                    ListPreference(
-                        title = { Text("Default Country") },
-                        icon = { Icon(painterResource(R.drawable.location_on), null) },
-                        selectedValue = defaultCountry,
-                        values = listOf("all") + CountryCodeToName.keys.toList(),
-                        valueText = {
-                            if (it == "all") "All Countries" else CountryCodeToName.getOrElse(it) { it }
-                        },
-                        onValueSelected = onDefaultCountryChange,
-                    )
-                },
-                {
-                    ListPreference(
-                        title = { Text("Minimum Bitrate") },
-                        icon = { Icon(painterResource(R.drawable.wifi_proxy), null) },
-                        selectedValue = minBitrate,
-                        values = listOf("any", "64", "128", "256"),
-                        valueText = {
-                            when (it) {
-                                "any" -> "Any Quality"
-                                else -> "$it kbps"
-                            }
-                        },
-                        onValueSelected = onMinBitrateChange,
-                    )
-                },
-                {
-                    SwitchPreference(
-                        title = { Text("Hide Broken Stations") },
-                        icon = { Icon(painterResource(R.drawable.error), null) },
-                        checked = hideBroken,
-                        onCheckedChange = onHideBrokenChange,
-                    )
-                },
-            )
+            items =
+                listOf(
+                    {
+                        SwitchPreference(
+                            title = { Text("Enable Radio Tab") },
+                            icon = { Icon(painterResource(R.drawable.radio), null) },
+                            checked = radioEnabled,
+                            onCheckedChange = onRadioEnabledChange,
+                        )
+                    },
+                    {
+                        ListPreference(
+                            title = { Text("Default Country") },
+                            icon = { Icon(painterResource(R.drawable.location_on), null) },
+                            selectedValue = defaultCountry,
+                            values = listOf("all") + CountryCodeToName.keys.toList(),
+                            valueText = {
+                                if (it == "all") "All Countries" else CountryCodeToName.getOrElse(it) { it }
+                            },
+                            onValueSelected = onDefaultCountryChange,
+                        )
+                    },
+                    {
+                        ListPreference(
+                            title = { Text("Minimum Bitrate") },
+                            icon = { Icon(painterResource(R.drawable.wifi_proxy), null) },
+                            selectedValue = minBitrate,
+                            values = listOf("any", "64", "128", "256"),
+                            valueText = {
+                                when (it) {
+                                    "any" -> "Any Quality"
+                                    else -> "$it kbps"
+                                }
+                            },
+                            onValueSelected = onMinBitrateChange,
+                        )
+                    },
+                    {
+                        SwitchPreference(
+                            title = { Text("Hide Broken Stations") },
+                            icon = { Icon(painterResource(R.drawable.error), null) },
+                            checked = hideBroken,
+                            onCheckedChange = onHideBrokenChange,
+                        )
+                    },
+                ),
         )
     }
 }

@@ -33,11 +33,8 @@ import androidx.compose.material3.FilledTonalIconButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
@@ -209,34 +206,37 @@ public fun MediaHero(
             // Acciones
             if (customActions != null) {
                 Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(top = 12.dp),
+                    modifier =
+                        Modifier
+                            .fillMaxWidth()
+                            .padding(top = 12.dp),
                     horizontalArrangement = Arrangement.spacedBy(12.dp, Alignment.CenterHorizontally),
-                    verticalAlignment = Alignment.CenterVertically
+                    verticalAlignment = Alignment.CenterVertically,
                 ) {
                     customActions(this, heroContentColor)
                 }
             } else {
                 // Acciones predeterminadas
                 Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(top = 12.dp),
+                    modifier =
+                        Modifier
+                            .fillMaxWidth()
+                            .padding(top = 12.dp),
                     horizontalArrangement = Arrangement.spacedBy(12.dp, Alignment.CenterHorizontally),
-                    verticalAlignment = Alignment.CenterVertically
+                    verticalAlignment = Alignment.CenterVertically,
                 ) {
                     onShuffle?.let { shuffle ->
                         FilledTonalIconButton(
                             onClick = shuffle,
                             shape = CircleShape,
-                            colors = IconButtonDefaults.filledTonalIconButtonColors(
-                                containerColor = heroContentColor.copy(alpha = 0.16f),
-                                contentColor = heroContentColor,
-                                disabledContainerColor = heroContentColor.copy(alpha = 0.08f),
-                                disabledContentColor = heroContentColor.copy(alpha = 0.38f),
-                            ),
-                            modifier = Modifier.size(52.dp)
+                            colors =
+                                IconButtonDefaults.filledTonalIconButtonColors(
+                                    containerColor = heroContentColor.copy(alpha = 0.16f),
+                                    contentColor = heroContentColor,
+                                    disabledContainerColor = heroContentColor.copy(alpha = 0.08f),
+                                    disabledContentColor = heroContentColor.copy(alpha = 0.38f),
+                                ),
+                            modifier = Modifier.size(52.dp),
                         ) {
                             Icon(
                                 painter = painterResource(R.drawable.shuffle),
@@ -250,10 +250,11 @@ public fun MediaHero(
                         Button(
                             onClick = play,
                             shape = RoundedCornerShape(percent = 50),
-                            colors = ButtonDefaults.buttonColors(
-                                containerColor = heroContentColor,
-                                contentColor = surfaceColor,
-                            ),
+                            colors =
+                                ButtonDefaults.buttonColors(
+                                    containerColor = heroContentColor,
+                                    contentColor = surfaceColor,
+                                ),
                             contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 24.dp, vertical = 12.dp),
                             modifier = Modifier.heightIn(min = 48.dp),
                         ) {
@@ -275,19 +276,21 @@ public fun MediaHero(
                         FilledTonalIconButton(
                             onClick = toggleAdd,
                             shape = CircleShape,
-                            colors = IconButtonDefaults.filledTonalIconButtonColors(
-                                containerColor = heroContentColor.copy(alpha = 0.16f),
-                                contentColor = heroContentColor,
-                                disabledContainerColor = heroContentColor.copy(alpha = 0.08f),
-                                disabledContentColor = heroContentColor.copy(alpha = 0.38f),
-                            ),
-                            modifier = Modifier.size(52.dp)
+                            colors =
+                                IconButtonDefaults.filledTonalIconButtonColors(
+                                    containerColor = heroContentColor.copy(alpha = 0.16f),
+                                    contentColor = heroContentColor,
+                                    disabledContainerColor = heroContentColor.copy(alpha = 0.08f),
+                                    disabledContentColor = heroContentColor.copy(alpha = 0.38f),
+                                ),
+                            modifier = Modifier.size(52.dp),
                         ) {
                             Icon(
                                 painter = painterResource(if (isAdded) R.drawable.done else R.drawable.add),
-                                contentDescription = stringResource(
-                                    if (isAdded) removeContentDescription else addContentDescription
-                                ),
+                                contentDescription =
+                                    stringResource(
+                                        if (isAdded) removeContentDescription else addContentDescription,
+                                    ),
                                 modifier = Modifier.size(22.dp),
                             )
                         }

@@ -53,8 +53,6 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.arturo254.opentune.innertube.YouTube
-import com.arturo254.opentune.innertube.models.MediaInfo
 import com.Chenkham.Echofy.LocalDatabase
 import com.Chenkham.Echofy.LocalPlayerConnection
 import com.Chenkham.Echofy.R
@@ -62,6 +60,8 @@ import com.Chenkham.Echofy.models.MediaMetadata
 import com.Chenkham.Echofy.models.toMediaMetadata
 import com.Chenkham.Echofy.ui.component.shimmer.ShimmerHost
 import com.Chenkham.Echofy.ui.component.shimmer.TextPlaceholder
+import com.arturo254.opentune.innertube.YouTube
+import com.arturo254.opentune.innertube.models.MediaInfo
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
@@ -76,18 +76,19 @@ fun ShowMediaInfo(
     val database = LocalDatabase.current
     val playerConnection = LocalPlayerConnection.current
 
-    val currentMediaMetadata = mediaMetadata ?: remember(songId) {
-        mutableStateOf<MediaMetadata?>(null)
-    }.let { state ->
-        LaunchedEffect(songId) {
-            if (songId != null) {
-                database.song(songId).collect { songEntity ->
-                    state.value = songEntity?.toMediaMetadata()
+    val currentMediaMetadata =
+        mediaMetadata ?: remember(songId) {
+            mutableStateOf<MediaMetadata?>(null)
+        }.let { state ->
+            LaunchedEffect(songId) {
+                if (songId != null) {
+                    database.song(songId).collect { songEntity ->
+                        state.value = songEntity?.toMediaMetadata()
+                    }
                 }
             }
+            state.value
         }
-        state.value
-    }
 
     val id = currentMediaMetadata?.id ?: songId ?: return
 
@@ -106,15 +107,19 @@ fun ShowMediaInfo(
                 mediaInfo = it
             }
             if (mediaInfo?.description.isNullOrBlank()) {
-                val shortDesc = runCatching {
-                    YouTube.player(videoId = id, client = com.arturo254.opentune.innertube.models.YouTubeClient.WEB).getOrNull()?.videoDetails?.shortDescription
-                }.getOrNull()
+                val shortDesc =
+                    runCatching {
+                        YouTube.player(
+                            videoId = id,
+                            client = com.arturo254.opentune.innertube.models.YouTubeClient.WEB,
+                        ).getOrNull()?.videoDetails?.shortDescription
+                    }.getOrNull()
                 if (!shortDesc.isNullOrBlank()) {
                     mediaInfo = mediaInfo?.copy(description = shortDesc) ?: MediaInfo(
                         videoId = id,
                         title = currentMediaMetadata?.title,
                         author = currentMediaMetadata?.artists?.joinToString { a -> a.name },
-                        description = shortDesc
+                        description = shortDesc,
                     )
                 }
             }
@@ -129,15 +134,17 @@ fun ShowMediaInfo(
         Toast.makeText(context, context.getString(R.string.copied), Toast.LENGTH_SHORT).show()
     }
 
-    val titleText = currentMediaMetadata?.title
-        ?: song?.song?.title
-        ?: mediaInfo?.title
-        ?: stringResource(R.string.song_title)
+    val titleText =
+        currentMediaMetadata?.title
+            ?: song?.song?.title
+            ?: mediaInfo?.title
+            ?: stringResource(R.string.song_title)
 
-    val artistsText = mediaInfo?.author?.takeIf { it.isNotBlank() }
-        ?: currentMediaMetadata?.artists?.joinToString { it.name }
-        ?: song?.artists?.joinToString { it.name }
-        ?: stringResource(R.string.unknown)
+    val artistsText =
+        mediaInfo?.author?.takeIf { it.isNotBlank() }
+            ?: currentMediaMetadata?.artists?.joinToString { it.name }
+            ?: song?.artists?.joinToString { it.name }
+            ?: stringResource(R.string.unknown)
 
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
 
@@ -147,10 +154,11 @@ fun ShowMediaInfo(
         containerColor = MaterialTheme.colorScheme.surfaceContainerLowest,
         dragHandle = {
             Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(top = 16.dp, bottom = 8.dp),
-                horizontalAlignment = Alignment.CenterHorizontally
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .padding(top = 16.dp, bottom = 8.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
             ) {
                 Text(
                     text = stringResource(R.string.now_playing),
@@ -167,90 +175,101 @@ fun ShowMediaInfo(
                     modifier = Modifier.padding(horizontal = 24.dp),
                     textAlign = TextAlign.Center,
                     maxLines = 2,
-                    overflow = TextOverflow.Ellipsis
+                    overflow = TextOverflow.Ellipsis,
                 )
                 Spacer(Modifier.height(14.dp))
                 Box(
-                    modifier = Modifier
-                        .width(36.dp)
-                        .height(4.dp)
-                        .clip(RoundedCornerShape(2.dp))
-                        .background(MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.3f))
+                    modifier =
+                        Modifier
+                            .width(36.dp)
+                            .height(4.dp)
+                            .clip(RoundedCornerShape(2.dp))
+                            .background(MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.3f)),
                 )
             }
-        }
+        },
     ) {
         LazyColumn(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 20.dp),
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 20.dp),
             contentPadding = PaddingValues(bottom = 32.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
+            verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
             // ── Top Audio Format Stats Card ─────────────────────────
             item {
-                val bitrate = currentFormat?.bitrate?.let { "${it / 1000} Kbps" }
-                    ?: (song?.song?.duration?.let { dur ->
-                        currentFormat?.contentLength?.let { len ->
-                            if (dur > 0) "${(len * 8 / dur / 1000)} Kbps" else null
-                        }
-                    }) ?: "150 Kbps"
+                val bitrate =
+                    currentFormat?.bitrate?.let { "${it / 1000} Kbps" }
+                        ?: (
+                            song?.song?.duration?.let { dur ->
+                                currentFormat?.contentLength?.let { len ->
+                                    if (dur > 0) "${(len * 8 / dur / 1000)} Kbps" else null
+                                }
+                            }
+                        ) ?: "150 Kbps"
 
-                val sampleRate = currentFormat?.sampleRate?.let { "$it Hz" }
-                    ?: "48000 Hz"
+                val sampleRate =
+                    currentFormat?.sampleRate?.let { "$it Hz" }
+                        ?: "48000 Hz"
 
-                val volume = playerConnection?.player?.let { player ->
-                    "${(player.volume * 100).toInt()}%"
-                } ?: "100%"
+                val volume =
+                    playerConnection?.player?.let { player ->
+                        "${(player.volume * 100).toInt()}%"
+                    } ?: "100%"
 
-                val fileSize = currentFormat?.contentLength?.let {
-                    Formatter.formatShortFileSize(context, it)
-                } ?: song?.song?.duration?.let { dur ->
-                    Formatter.formatShortFileSize(context, (dur * 18750L))
-                } ?: "3.4 MB"
+                val fileSize =
+                    currentFormat?.contentLength?.let {
+                        Formatter.formatShortFileSize(context, it)
+                    } ?: song?.song?.duration?.let { dur ->
+                        Formatter.formatShortFileSize(context, (dur * 18750L))
+                    } ?: "3.4 MB"
 
                 ElevatedCard(
                     shape = RoundedCornerShape(24.dp),
                     modifier = Modifier.fillMaxWidth(),
-                    colors = CardDefaults.elevatedCardColors(
-                        containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
-                    ),
-                    elevation = CardDefaults.elevatedCardElevation(
-                        defaultElevation = 0.dp
-                    )
+                    colors =
+                        CardDefaults.elevatedCardColors(
+                            containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+                        ),
+                    elevation =
+                        CardDefaults.elevatedCardElevation(
+                            defaultElevation = 0.dp,
+                        ),
                 ) {
                     Column(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 20.dp, vertical = 18.dp),
-                        verticalArrangement = Arrangement.spacedBy(14.dp)
+                        modifier =
+                            Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 20.dp, vertical = 18.dp),
+                        verticalArrangement = Arrangement.spacedBy(14.dp),
                     ) {
                         AudioStatRow(
                             icon = R.drawable.graphic_eq,
                             label = stringResource(R.string.bitrate),
                             value = bitrate,
-                            onClick = { copy(bitrate) }
+                            onClick = { copy(bitrate) },
                         )
 
                         AudioStatRow(
                             icon = R.drawable.equalizer,
                             label = stringResource(R.string.sample_rate),
                             value = sampleRate,
-                            onClick = { copy(sampleRate) }
+                            onClick = { copy(sampleRate) },
                         )
 
                         AudioStatRow(
                             icon = R.drawable.volume_up,
                             label = "Volume",
                             value = volume,
-                            onClick = { copy(volume) }
+                            onClick = { copy(volume) },
                         )
 
                         AudioStatRow(
                             icon = R.drawable.folder,
                             label = stringResource(R.string.file_size),
                             value = fileSize,
-                            onClick = { copy(fileSize) }
+                            onClick = { copy(fileSize) },
                         )
                     }
                 }
@@ -261,32 +280,34 @@ fun ShowMediaInfo(
                 ElevatedCard(
                     shape = RoundedCornerShape(24.dp),
                     modifier = Modifier.fillMaxWidth(),
-                    colors = CardDefaults.elevatedCardColors(
-                        containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
-                    ),
-                    elevation = CardDefaults.elevatedCardElevation(defaultElevation = 0.dp)
+                    colors =
+                        CardDefaults.elevatedCardColors(
+                            containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+                        ),
+                    elevation = CardDefaults.elevatedCardElevation(defaultElevation = 0.dp),
                 ) {
                     Column(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(20.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally
+                        modifier =
+                            Modifier
+                                .fillMaxWidth()
+                                .padding(20.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally,
                     ) {
                         Row(
                             verticalAlignment = Alignment.CenterVertically,
-                            modifier = Modifier.fillMaxWidth()
+                            modifier = Modifier.fillMaxWidth(),
                         ) {
                             Icon(
                                 painter = painterResource(R.drawable.discover_tune),
                                 contentDescription = null,
                                 tint = MaterialTheme.colorScheme.primary,
-                                modifier = Modifier.size(22.dp)
+                                modifier = Modifier.size(22.dp),
                             )
                             Spacer(Modifier.width(10.dp))
                             Text(
                                 text = "Song DNA & Acoustic Vibe",
                                 style = MaterialTheme.typography.titleMedium,
-                                fontWeight = FontWeight.Bold
+                                fontWeight = FontWeight.Bold,
                             )
                         }
 
@@ -303,9 +324,10 @@ fun ShowMediaInfo(
                         val dynamics = remember(hash) { 0.5f + ((hash / 13) % 45) / 100f }
 
                         androidx.compose.foundation.Canvas(
-                            modifier = Modifier
-                                .size(200.dp)
-                                .padding(12.dp)
+                            modifier =
+                                Modifier
+                                    .size(200.dp)
+                                    .padding(12.dp),
                         ) {
                             val center = androidx.compose.ui.geometry.Offset(size.width / 2, size.height / 2)
                             val radius = size.minDimension / 2
@@ -326,7 +348,7 @@ fun ShowMediaInfo(
                                 drawPath(
                                     path = webPath,
                                     color = androidx.compose.ui.graphics.Color.Gray.copy(alpha = 0.2f),
-                                    style = androidx.compose.ui.graphics.drawscope.Stroke(width = 1.dp.toPx())
+                                    style = androidx.compose.ui.graphics.drawscope.Stroke(width = 1.dp.toPx()),
                                 )
                             }
 
@@ -344,24 +366,26 @@ fun ShowMediaInfo(
 
                             drawPath(
                                 path = dataPath,
-                                brush = androidx.compose.ui.graphics.Brush.radialGradient(
-                                    colors = listOf(primaryColor.copy(alpha = 0.65f), secondaryColor.copy(alpha = 0.35f)),
-                                    center = center,
-                                    radius = radius
-                                )
+                                brush =
+                                    androidx.compose.ui.graphics.Brush.radialGradient(
+                                        colors = listOf(primaryColor.copy(alpha = 0.65f), secondaryColor.copy(alpha = 0.35f)),
+                                        center = center,
+                                        radius = radius,
+                                    ),
                             )
                             drawPath(
                                 path = dataPath,
                                 color = primaryColor,
-                                style = androidx.compose.ui.graphics.drawscope.Stroke(width = 2.5.dp.toPx())
+                                style = androidx.compose.ui.graphics.drawscope.Stroke(width = 2.5.dp.toPx()),
                             )
                         }
 
                         Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(top = 8.dp),
-                            horizontalArrangement = Arrangement.SpaceEvenly
+                            modifier =
+                                Modifier
+                                    .fillMaxWidth()
+                                    .padding(top = 8.dp),
+                            horizontalArrangement = Arrangement.SpaceEvenly,
                         ) {
                             Text("⚡ Energy ${(energy * 100).toInt()}%", style = MaterialTheme.typography.labelSmall)
                             Text("🥁 Rhythm ${(rhythm * 100).toInt()}%", style = MaterialTheme.typography.labelSmall)
@@ -375,20 +399,20 @@ fun ShowMediaInfo(
             item {
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier.padding(top = 8.dp)
+                    modifier = Modifier.padding(top = 8.dp),
                 ) {
                     Icon(
                         painter = painterResource(R.drawable.description),
                         contentDescription = null,
                         tint = MaterialTheme.colorScheme.primary,
-                        modifier = Modifier.size(24.dp)
+                        modifier = Modifier.size(24.dp),
                     )
                     Spacer(Modifier.width(10.dp))
                     Text(
                         text = stringResource(R.string.information),
                         style = MaterialTheme.typography.titleLarge,
                         fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onSurface
+                        color = MaterialTheme.colorScheme.onSurface,
                     )
                 }
             }
@@ -396,29 +420,30 @@ fun ShowMediaInfo(
             // ── Artists Item ─────────────────────────────────────────
             item {
                 Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clickable(
-                            interactionSource = remember { MutableInteractionSource() },
-                            indication = null,
-                            onClick = { copy(artistsText) }
-                        )
+                    modifier =
+                        Modifier
+                            .fillMaxWidth()
+                            .clickable(
+                                interactionSource = remember { MutableInteractionSource() },
+                                indication = null,
+                                onClick = { copy(artistsText) },
+                            ),
                 ) {
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(10.dp)
+                        horizontalArrangement = Arrangement.spacedBy(10.dp),
                     ) {
                         Icon(
                             painter = painterResource(R.drawable.person),
                             contentDescription = null,
                             tint = MaterialTheme.colorScheme.primary,
-                            modifier = Modifier.size(20.dp)
+                            modifier = Modifier.size(20.dp),
                         )
                         Text(
                             text = stringResource(R.string.artists),
                             style = MaterialTheme.typography.labelLarge,
                             fontWeight = FontWeight.Medium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
                     }
                     Spacer(Modifier.height(6.dp))
@@ -427,7 +452,7 @@ fun ShowMediaInfo(
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.onSurface,
-                        modifier = Modifier.padding(start = 30.dp)
+                        modifier = Modifier.padding(start = 30.dp),
                     )
                 }
             }
@@ -437,30 +462,31 @@ fun ShowMediaInfo(
                 val descriptionText = mediaInfo?.description?.takeIf { it.isNotBlank() }
 
                 Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clickable(
-                            enabled = descriptionText != null,
-                            interactionSource = remember { MutableInteractionSource() },
-                            indication = null,
-                            onClick = { descriptionText?.let { copy(it) } }
-                        )
+                    modifier =
+                        Modifier
+                            .fillMaxWidth()
+                            .clickable(
+                                enabled = descriptionText != null,
+                                interactionSource = remember { MutableInteractionSource() },
+                                indication = null,
+                                onClick = { descriptionText?.let { copy(it) } },
+                            ),
                 ) {
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(10.dp)
+                        horizontalArrangement = Arrangement.spacedBy(10.dp),
                     ) {
                         Icon(
                             painter = painterResource(R.drawable.description),
                             contentDescription = null,
                             tint = MaterialTheme.colorScheme.primary,
-                            modifier = Modifier.size(20.dp)
+                            modifier = Modifier.size(20.dp),
                         )
                         Text(
                             text = stringResource(R.string.description),
                             style = MaterialTheme.typography.labelLarge,
                             fontWeight = FontWeight.Medium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
                     }
                     Spacer(Modifier.height(6.dp))
@@ -472,7 +498,7 @@ fun ShowMediaInfo(
                             fontWeight = FontWeight.SemiBold,
                             color = MaterialTheme.colorScheme.onSurface,
                             modifier = Modifier.padding(start = 30.dp),
-                            lineHeight = 22.sp
+                            lineHeight = 22.sp,
                         )
                     } else if (isLoadingInfo) {
                         ShimmerHost(modifier = Modifier.padding(start = 30.dp)) {
@@ -487,7 +513,7 @@ fun ShowMediaInfo(
                             text = "No description available",
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
-                            modifier = Modifier.padding(start = 30.dp)
+                            modifier = Modifier.padding(start = 30.dp),
                         )
                     }
                 }
@@ -501,32 +527,33 @@ private fun AudioStatRow(
     icon: Int,
     label: String,
     value: String,
-    onClick: () -> Unit
+    onClick: () -> Unit,
 ) {
     Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable(
-                interactionSource = remember { MutableInteractionSource() },
-                indication = null,
-                onClick = onClick
-            )
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .clickable(
+                    interactionSource = remember { MutableInteractionSource() },
+                    indication = null,
+                    onClick = onClick,
+                ),
     ) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(10.dp)
+            horizontalArrangement = Arrangement.spacedBy(10.dp),
         ) {
             Icon(
                 painter = painterResource(icon),
                 contentDescription = null,
                 tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.size(18.dp)
+                modifier = Modifier.size(18.dp),
             )
             Text(
                 text = label,
                 style = MaterialTheme.typography.labelMedium,
                 fontWeight = FontWeight.Medium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
         Spacer(Modifier.height(4.dp))
@@ -535,7 +562,7 @@ private fun AudioStatRow(
             style = MaterialTheme.typography.titleMedium,
             fontWeight = FontWeight.Bold,
             color = MaterialTheme.colorScheme.onSurface,
-            modifier = Modifier.padding(start = 28.dp)
+            modifier = Modifier.padding(start = 28.dp),
         )
     }
 }

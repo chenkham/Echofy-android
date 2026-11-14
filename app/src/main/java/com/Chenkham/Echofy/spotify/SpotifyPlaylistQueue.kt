@@ -1,16 +1,16 @@
 package com.Chenkham.Echofy.spotify
 
 import androidx.media3.common.MediaItem
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.async
-import kotlinx.coroutines.awaitAll
-import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.withContext
 import com.Chenkham.Echofy.extensions.toMediaItem
 import com.Chenkham.Echofy.models.MediaMetadata
 import com.Chenkham.Echofy.playback.queues.Queue
 import com.arturo254.opentune.spotify.Spotify
 import com.arturo254.opentune.spotify.models.SpotifyTrack
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.withContext
 
 class SpotifyPlaylistQueue(
     private val playlistId: String,
@@ -44,7 +44,7 @@ class SpotifyPlaylistQueue(
                 return@withContext Queue.Status(
                     title = title,
                     items = emptyList(),
-                    mediaItemIndex = 0
+                    mediaItemIndex = 0,
                 )
             }
 
@@ -68,7 +68,7 @@ class SpotifyPlaylistQueue(
                 return@withContext Queue.Status(
                     title = title,
                     items = emptyList(),
-                    mediaItemIndex = 0
+                    mediaItemIndex = 0,
                 )
             }
 
@@ -94,8 +94,7 @@ class SpotifyPlaylistQueue(
             resolveTracks(batch)
         }
 
-    private suspend fun resolveTracks(tracks: List<SpotifyTrack>): List<MediaItem> =
-        resolveTrackEntries(tracks).map { it.second }
+    private suspend fun resolveTracks(tracks: List<SpotifyTrack>): List<MediaItem> = resolveTrackEntries(tracks).map { it.second }
 
     private suspend fun resolveTrackEntries(tracks: List<SpotifyTrack>): List<Pair<Int, MediaItem>> =
         buildList {

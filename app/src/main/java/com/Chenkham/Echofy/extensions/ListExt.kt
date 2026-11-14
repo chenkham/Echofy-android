@@ -4,12 +4,10 @@
  * Licensed Under GPL-3.0 | see git history for contributors
  */
 
-
-
 package com.Chenkham.Echofy.extensions
 
-import com.Chenkham.Echofy.db.entities.Song
 import com.Chenkham.Echofy.db.entities.Album
+import com.Chenkham.Echofy.db.entities.Song
 
 fun <T> List<T>.reversed(reversed: Boolean) = if (reversed) asReversed() else this
 

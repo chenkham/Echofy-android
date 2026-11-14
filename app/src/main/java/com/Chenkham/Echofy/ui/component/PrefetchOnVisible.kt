@@ -28,7 +28,7 @@ import com.Chenkham.Echofy.LocalPlayerConnection
 @Composable
 fun PrefetchOnVisible(mediaId: String) {
     val playerConnection = LocalPlayerConnection.current ?: return
-    
+
     LaunchedEffect(mediaId) {
         playerConnection.prefetch(mediaId)
     }
@@ -41,7 +41,7 @@ fun PrefetchOnVisible(mediaId: String) {
 @Composable
 fun PrefetchOnVisible(mediaIds: List<String>) {
     val playerConnection = LocalPlayerConnection.current ?: return
-    
+
     LaunchedEffect(mediaIds) {
         mediaIds.forEach { mediaId ->
             playerConnection.prefetch(mediaId)

@@ -8,7 +8,6 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -20,7 +19,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
@@ -32,7 +30,7 @@ import com.Chenkham.Echofy.audio.ChordsManager
 fun ChordDiagramDialog(
     initialChord: String,
     progression: List<String> = emptyList(),
-    onDismiss: () -> Unit
+    onDismiss: () -> Unit,
 ) {
     var selectedChord by remember { mutableStateOf(initialChord) }
     var instrument by remember { mutableStateOf("Guitar") } // "Guitar" or "Ukulele"
@@ -43,67 +41,72 @@ fun ChordDiagramDialog(
             shape = RoundedCornerShape(24.dp),
             color = MaterialTheme.colorScheme.surfaceColorAtElevation(3.dp),
             tonalElevation = 6.dp,
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp)
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp),
         ) {
             Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(20.dp),
-                horizontalAlignment = Alignment.CenterHorizontally
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .padding(20.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
             ) {
                 // Header
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
+                    verticalAlignment = Alignment.CenterVertically,
                 ) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Icon(
                             painter = painterResource(R.drawable.queue_music),
                             contentDescription = null,
                             tint = MaterialTheme.colorScheme.primary,
-                            modifier = Modifier
-                                .size(28.dp)
-                                .padding(end = 8.dp)
+                            modifier =
+                                Modifier
+                                    .size(28.dp)
+                                    .padding(end = 8.dp),
                         )
                         Column {
                             Text(
                                 text = "🎸 Chord Diagram",
                                 style = MaterialTheme.typography.titleMedium,
-                                fontWeight = FontWeight.Bold
+                                fontWeight = FontWeight.Bold,
                             )
                             Text(
                                 text = "Live Guitar & Ukulele Tabs",
                                 style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
                             )
                         }
                     }
 
                     // Instrument Selector
                     Row(
-                        modifier = Modifier
-                            .clip(RoundedCornerShape(12.dp))
-                            .background(MaterialTheme.colorScheme.surfaceVariant)
-                            .padding(2.dp)
+                        modifier =
+                            Modifier
+                                .clip(RoundedCornerShape(12.dp))
+                                .background(MaterialTheme.colorScheme.surfaceVariant)
+                                .padding(2.dp),
                     ) {
                         listOf("Guitar", "Ukulele").forEach { inst ->
                             val selected = instrument == inst
                             Box(
-                                modifier = Modifier
-                                    .clip(RoundedCornerShape(10.dp))
-                                    .background(if (selected) MaterialTheme.colorScheme.primary else Color.Transparent)
-                                    .clickable { instrument = inst }
-                                    .padding(horizontal = 8.dp, vertical = 4.dp),
-                                contentAlignment = Alignment.Center
+                                modifier =
+                                    Modifier
+                                        .clip(RoundedCornerShape(10.dp))
+                                        .background(if (selected) MaterialTheme.colorScheme.primary else Color.Transparent)
+                                        .clickable { instrument = inst }
+                                        .padding(horizontal = 8.dp, vertical = 4.dp),
+                                contentAlignment = Alignment.Center,
                             ) {
                                 Text(
                                     text = inst,
                                     fontSize = 11.sp,
                                     fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal,
-                                    color = if (selected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant
+                                    color = if (selected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant,
                                 )
                             }
                         }
@@ -116,7 +119,7 @@ fun ChordDiagramDialog(
                 if (progression.isNotEmpty()) {
                     LazyRow(
                         horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        modifier = Modifier.fillMaxWidth()
+                        modifier = Modifier.fillMaxWidth(),
                     ) {
                         items(progression.distinct()) { chord ->
                             val isCurrent = chord == selectedChord
@@ -124,13 +127,13 @@ fun ChordDiagramDialog(
                                 shape = RoundedCornerShape(12.dp),
                                 color = if (isCurrent) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceVariant,
                                 border = if (isCurrent) BorderStroke(1.5.dp, MaterialTheme.colorScheme.primary) else null,
-                                modifier = Modifier.clickable { selectedChord = chord }
+                                modifier = Modifier.clickable { selectedChord = chord },
                             ) {
                                 Text(
                                     text = chord,
                                     fontWeight = FontWeight.Bold,
                                     color = if (isCurrent) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurface,
-                                    modifier = Modifier.padding(horizontal = 14.dp, vertical = 6.dp)
+                                    modifier = Modifier.padding(horizontal = 14.dp, vertical = 6.dp),
                                 )
                             }
                         }
@@ -143,25 +146,26 @@ fun ChordDiagramDialog(
                     text = selectedChord,
                     style = MaterialTheme.typography.headlineLarge,
                     fontWeight = FontWeight.Black,
-                    color = MaterialTheme.colorScheme.primary
+                    color = MaterialTheme.colorScheme.primary,
                 )
 
                 Spacer(modifier = Modifier.height(12.dp))
 
                 // Canvas Fretboard Diagram
                 Box(
-                    modifier = Modifier
-                        .size(width = 180.dp, height = 210.dp)
-                        .clip(RoundedCornerShape(16.dp))
-                        .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
-                        .padding(12.dp),
-                    contentAlignment = Alignment.Center
+                    modifier =
+                        Modifier
+                            .size(width = 180.dp, height = 210.dp)
+                            .clip(RoundedCornerShape(16.dp))
+                            .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
+                            .padding(12.dp),
+                    contentAlignment = Alignment.Center,
                 ) {
                     FretboardCanvas(
                         fingering = fingering,
                         isUkulele = instrument == "Ukulele",
                         dotColor = MaterialTheme.colorScheme.primary,
-                        fretColor = MaterialTheme.colorScheme.outline
+                        fretColor = MaterialTheme.colorScheme.outline,
                     )
                 }
 
@@ -171,7 +175,7 @@ fun ChordDiagramDialog(
                 FilledTonalButton(
                     onClick = onDismiss,
                     shape = RoundedCornerShape(14.dp),
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier.fillMaxWidth(),
                 ) {
                     Text("Close")
                 }
@@ -186,7 +190,7 @@ fun FretboardCanvas(
     isUkulele: Boolean,
     dotColor: Color,
     fretColor: Color,
-    modifier: Modifier = Modifier.fillMaxSize()
+    modifier: Modifier = Modifier.fillMaxSize(),
 ) {
     val frets = if (isUkulele) fingering.ukeFrets else fingering.guitarFrets
     val stringCount = if (isUkulele) 4 else 6
@@ -210,7 +214,7 @@ fun FretboardCanvas(
             color = fretColor,
             start = Offset(sidePadding, topPadding),
             end = Offset(width - sidePadding, topPadding),
-            strokeWidth = 6.dp.toPx()
+            strokeWidth = 6.dp.toPx(),
         )
 
         // Fret lines
@@ -220,7 +224,7 @@ fun FretboardCanvas(
                 color = fretColor.copy(alpha = 0.6f),
                 start = Offset(sidePadding, y),
                 end = Offset(width - sidePadding, y),
-                strokeWidth = 2.dp.toPx()
+                strokeWidth = 2.dp.toPx(),
             )
         }
 
@@ -231,7 +235,7 @@ fun FretboardCanvas(
                 color = fretColor.copy(alpha = 0.8f),
                 start = Offset(x, topPadding),
                 end = Offset(x, topPadding + fretAreaHeight),
-                strokeWidth = if (i == 0 && !isUkulele) 3.dp.toPx() else 1.5.dp.toPx()
+                strokeWidth = if (i == 0 && !isUkulele) 3.dp.toPx() else 1.5.dp.toPx(),
             )
 
             // Draw mute (X) or open (O) or finger dot
@@ -243,13 +247,13 @@ fun FretboardCanvas(
                     color = Color.Red.copy(alpha = 0.8f),
                     start = Offset(x - 4.dp.toPx(), textY - 4.dp.toPx()),
                     end = Offset(x + 4.dp.toPx(), textY + 4.dp.toPx()),
-                    strokeWidth = 2.dp.toPx()
+                    strokeWidth = 2.dp.toPx(),
                 )
                 drawLine(
                     color = Color.Red.copy(alpha = 0.8f),
                     start = Offset(x + 4.dp.toPx(), textY - 4.dp.toPx()),
                     end = Offset(x - 4.dp.toPx(), textY + 4.dp.toPx()),
-                    strokeWidth = 2.dp.toPx()
+                    strokeWidth = 2.dp.toPx(),
                 )
             } else if (fretNum == 0) {
                 // O (Open string)
@@ -258,7 +262,7 @@ fun FretboardCanvas(
                     color = dotColor.copy(alpha = 0.8f),
                     radius = 4.dp.toPx(),
                     center = Offset(x, circleY),
-                    style = Stroke(width = 1.5.dp.toPx())
+                    style = Stroke(width = 1.5.dp.toPx()),
                 )
             } else if (fretNum in 1..fretCount) {
                 // Finger dot on fret
@@ -266,7 +270,7 @@ fun FretboardCanvas(
                 drawCircle(
                     color = dotColor,
                     radius = 8.dp.toPx(),
-                    center = Offset(x, dotY)
+                    center = Offset(x, dotY),
                 )
             }
         }

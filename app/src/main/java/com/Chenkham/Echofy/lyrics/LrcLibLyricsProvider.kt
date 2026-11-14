@@ -1,10 +1,10 @@
 ﻿package com.Chenkham.Echofy.lyrics
 
 import android.content.Context
-import com.Chenkham.lrclib.LrcLib
 import com.Chenkham.Echofy.constants.EnableLrcLibKey
 import com.Chenkham.Echofy.utils.dataStore
 import com.Chenkham.Echofy.utils.get
+import com.Chenkham.lrclib.LrcLib
 import timber.log.Timber
 
 object LrcLibLyricsProvider : LyricsProvider {
@@ -20,22 +20,22 @@ object LrcLibLyricsProvider : LyricsProvider {
     ): Result<String> {
         val cleanTitle = sanitizeTitle(title)
         val cleanArtist = sanitizeArtistName(artist)
-        
+
         Timber.d("LrcLib: Searching for '$cleanTitle' by '$cleanArtist' (Original: '$title' by '$artist')")
-        
+
         val result = LrcLib.getLyrics(cleanTitle, cleanArtist, duration)
-        
+
         // 1. Duration check generic function (reusable)
         fun checkDuration(lyrics: String): Boolean {
-             // [length:03:45] or [03:45]
+            // [length:03:45] or [03:45]
             val lengthRegex = Regex("""\[length:(\d+):(\d+)]""")
             val match = lengthRegex.find(lyrics)
-            
+
             if (match != null) {
                 val minutes = match.groupValues[1].toInt()
                 val seconds = match.groupValues[2].toInt()
                 val lyricsDuration = (minutes * 60) + seconds
-                
+
                 // Allow ±4 seconds tolerance
                 if (kotlin.math.abs(lyricsDuration - duration) > 4) {
                     Timber.d("LrcLib: Duration mismatch for '$cleanTitle'. Song: ${duration}s, Lyrics: ${lyricsDuration}s")
@@ -54,7 +54,7 @@ object LrcLibLyricsProvider : LyricsProvider {
             // 2. Fallback: Search with Title ONLY if strict search failed
             Timber.d("LrcLib: Strict search failed. Retrying with Title only: '$cleanTitle'")
             val fallbackResult = LrcLib.getLyrics(cleanTitle, "", duration).getOrThrow()
-            
+
             if (!checkDuration(fallbackResult)) {
                 throw Exception("Duration mismatch in fallback")
             }
@@ -71,9 +71,9 @@ object LrcLibLyricsProvider : LyricsProvider {
     ) {
         val cleanTitle = sanitizeTitle(title)
         val cleanArtist = sanitizeArtistName(artist)
-        
+
         Timber.d("LrcLib: Getting all lyrics for '$cleanTitle' by '$cleanArtist'")
-        
+
         LrcLib.getAllLyrics(cleanTitle, cleanArtist, duration, null, callback)
     }
 

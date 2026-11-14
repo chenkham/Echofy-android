@@ -1,14 +1,13 @@
 package com.Chenkham.Echofy.ui.menu
 
-import com.Chenkham.Echofy.db.insert
-import com.Chenkham.Echofy.db.update
-import com.Chenkham.Echofy.db.artistSongs
-
 import android.content.Intent
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.asPaddingValues
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.systemBars
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -16,21 +15,20 @@ import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import com.Chenkham.Echofy.LocalDatabase
 import com.Chenkham.Echofy.LocalPlayerConnection
 import com.Chenkham.Echofy.R
 import com.Chenkham.Echofy.constants.ArtistSongSortType
+import com.Chenkham.Echofy.db.artistSongs
 import com.Chenkham.Echofy.db.entities.Artist
+import com.Chenkham.Echofy.db.update
 import com.Chenkham.Echofy.extensions.toMediaItem
 import com.Chenkham.Echofy.playback.queues.ListQueue
 import com.Chenkham.Echofy.ui.component.ArtistListItem
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.layout.fillMaxWidth
 import com.Chenkham.Echofy.ui.component.GridMenuItem
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -50,12 +48,12 @@ fun ArtistMenu(
     val artistState = database.artist(originalArtist.id).collectAsState(initial = originalArtist)
     val artist = artistState.value ?: originalArtist
 
-
     LazyColumn(
         modifier = Modifier.fillMaxWidth(),
-        contentPadding = PaddingValues(
-            bottom = WindowInsets.systemBars.asPaddingValues().calculateBottomPadding() + 8.dp
-        ),
+        contentPadding =
+            PaddingValues(
+                bottom = WindowInsets.systemBars.asPaddingValues().calculateBottomPadding() + 8.dp,
+            ),
     ) {
         item {
             Column {
@@ -71,7 +69,10 @@ fun ArtistMenu(
                             },
                         ) {
                             Icon(
-                                painter = painterResource(if (artist.artist.bookmarkedAt != null) R.drawable.favorite else R.drawable.favorite_border),
+                                painter =
+                                    painterResource(
+                                        if (artist.artist.bookmarkedAt != null) R.drawable.favorite else R.drawable.favorite_border,
+                                    ),
                                 tint = if (artist.artist.bookmarkedAt != null) MaterialTheme.colorScheme.error else LocalContentColor.current,
                                 contentDescription = null,
                             )
@@ -142,8 +143,8 @@ fun ArtistMenu(
                             com.Chenkham.Echofy.utils.ShareUtils.buildArtistShareText(
                                 context = context,
                                 artistId = artist.id,
-                                name = artist.artist.name
-                            )
+                                name = artist.artist.name,
+                            ),
                         )
                     }
                 context.startActivity(Intent.createChooser(intent, null))

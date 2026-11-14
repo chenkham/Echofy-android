@@ -1,10 +1,8 @@
 package com.Chenkham.Echofy.ui.utils
 
-import android.view.animation.DecelerateInterpolator
 import androidx.compose.animation.core.AnimationSpec
 import androidx.compose.animation.core.CubicBezierEasing
 import androidx.compose.animation.core.spring
-import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.gestures.FlingBehavior
 import androidx.compose.foundation.gestures.ScrollableDefaults
 import androidx.compose.foundation.lazy.LazyListState
@@ -13,7 +11,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.dp
 import kotlin.math.abs
 
@@ -29,27 +26,29 @@ import kotlin.math.abs
  */
 @Stable
 object SmoothScrollBehavior {
-
     // Spotify/YT Music-like easing curves
     val smoothEasing = CubicBezierEasing(0.25f, 0.1f, 0.25f, 1.0f)
     val decelerateEasing = CubicBezierEasing(0.0f, 0.0f, 0.2f, 1.0f)
     val overshootEasing = CubicBezierEasing(0.34f, 1.56f, 0.64f, 1.0f)
 
     // Default animation specs for different scroll scenarios
-    val quickSnap: AnimationSpec<Float> = spring(
-        dampingRatio = 0.8f,
-        stiffness = 400f
-    )
+    val quickSnap: AnimationSpec<Float> =
+        spring(
+            dampingRatio = 0.8f,
+            stiffness = 400f,
+        )
 
-    val smoothSnap: AnimationSpec<Float> = spring(
-        dampingRatio = 0.85f,
-        stiffness = 300f
-    )
+    val smoothSnap: AnimationSpec<Float> =
+        spring(
+            dampingRatio = 0.85f,
+            stiffness = 300f,
+        )
 
-    val gentleSnap: AnimationSpec<Float> = spring(
-        dampingRatio = 0.9f,
-        stiffness = 200f
-    )
+    val gentleSnap: AnimationSpec<Float> =
+        spring(
+            dampingRatio = 0.9f,
+            stiffness = 200f,
+        )
 }
 
 /**
@@ -90,7 +89,10 @@ fun LazyGridState.isNearEnd(threshold: Int = 10): Boolean {
  * - FAST: Fast flinging (> 1500 px/s)
  */
 enum class ScrollVelocityCategory {
-    IDLE, SLOW, MEDIUM, FAST
+    IDLE,
+    SLOW,
+    MEDIUM,
+    FAST,
 }
 
 /**
@@ -132,4 +134,3 @@ fun rememberOptimalItemHeight(): Int {
         with(density) { 88.dp.roundToPx() }
     }
 }
-

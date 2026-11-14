@@ -1,6 +1,5 @@
 package com.Chenkham.Echofy
 
-import android.annotation.SuppressLint
 import android.app.PendingIntent
 import android.appwidget.AppWidgetManager
 import android.appwidget.AppWidgetProvider
@@ -15,16 +14,14 @@ import android.os.Looper
 import android.widget.RemoteViews
 import androidx.core.graphics.drawable.toBitmap
 import androidx.media3.common.Player
+import androidx.media3.session.MediaController
+import androidx.media3.session.SessionToken
 import coil.ImageLoader
 import coil.request.ImageRequest
 import com.Chenkham.Echofy.playback.PlayerConnection
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import java.util.concurrent.TimeUnit
-import androidx.media3.session.MediaController
-import androidx.media3.session.SessionToken
-import com.google.common.util.concurrent.ListenableFuture
 import kotlinx.coroutines.withContext
 
 class MusicWidget : AppWidgetProvider() {
@@ -35,7 +32,7 @@ class MusicWidget : AppWidgetProvider() {
     override fun onUpdate(
         context: Context,
         appWidgetManager: AppWidgetManager,
-        appWidgetIds: IntArray
+        appWidgetIds: IntArray,
     ) {
         appWidgetIds.forEach { appWidgetId ->
             updateWidget(context, appWidgetManager, appWidgetId)
@@ -51,10 +48,13 @@ class MusicWidget : AppWidgetProvider() {
         stopProgressUpdater()
     }
 
-    override fun onReceive(context: Context, intent: Intent) {
+    override fun onReceive(
+        context: Context,
+        intent: Intent,
+    ) {
         super.onReceive(context, intent)
         val action = intent.action ?: return
-        
+
         val player = PlayerConnection.instance?.player ?: com.Chenkham.Echofy.playback.MusicService.instance?.player
         if (player != null) {
             when (action) {
@@ -114,7 +114,11 @@ class MusicWidget : AppWidgetProvider() {
         }
     }
 
-    private fun handleActionWithMediaController(context: Context, action: String, pendingResult: PendingResult? = null) {
+    private fun handleActionWithMediaController(
+        context: Context,
+        action: String,
+        pendingResult: PendingResult? = null,
+    ) {
         if (action == ACTION_OPEN_APP) {
             openApp(context)
             pendingResult?.finish()
@@ -123,7 +127,8 @@ class MusicWidget : AppWidgetProvider() {
 
         CoroutineScope(Dispatchers.Main).launch {
             val tokenContext = context.applicationContext
-            val sessionToken = SessionToken(tokenContext, ComponentName(tokenContext, com.Chenkham.Echofy.playback.MusicService::class.java))
+            val sessionToken =
+                SessionToken(tokenContext, ComponentName(tokenContext, com.Chenkham.Echofy.playback.MusicService::class.java))
             val controllerFuture = MediaController.Builder(tokenContext, sessionToken).buildAsync()
 
             try {
@@ -172,44 +177,46 @@ class MusicWidget : AppWidgetProvider() {
         if (isUpdating) return
         isUpdating = true
 
-        runnable = object : Runnable {
-            override fun run() {
-                try {
-                    val appContext = context.applicationContext ?: context
-                    val appWidgetManager = AppWidgetManager.getInstance(appContext)
-                    val widgetIds = appWidgetManager.getAppWidgetIds(
-                        ComponentName(appContext, MusicWidget::class.java)
-                    )
+        runnable =
+            object : Runnable {
+                override fun run() {
+                    try {
+                        val appContext = context.applicationContext ?: context
+                        val appWidgetManager = AppWidgetManager.getInstance(appContext)
+                        val widgetIds =
+                            appWidgetManager.getAppWidgetIds(
+                                ComponentName(appContext, MusicWidget::class.java),
+                            )
 
-                    if (widgetIds.isNotEmpty()) {
-                        val playerConnection = PlayerConnection.instance
-                        if (playerConnection != null && playerConnection.player.isPlaying) {
-                            val currentPos = playerConnection.player.currentPosition
-                            val duration = playerConnection.player.duration
+                        if (widgetIds.isNotEmpty()) {
+                            val playerConnection = PlayerConnection.instance
+                            if (playerConnection != null && playerConnection.player.isPlaying) {
+                                val currentPos = playerConnection.player.currentPosition
+                                val duration = playerConnection.player.duration
 
-                            if (duration > 0 && duration != Long.MAX_VALUE) {
-                                val progress = (currentPos * 100 / duration).toInt()
-                                val showProgress = com.Chenkham.Echofy.widget.WidgetPreferences.cachedShowProgressBar
+                                if (duration > 0 && duration != Long.MAX_VALUE) {
+                                    val progress = (currentPos * 100 / duration).toInt()
+                                    val showProgress = com.Chenkham.Echofy.widget.WidgetPreferences.cachedShowProgressBar
 
-                                widgetIds.forEach { widgetId ->
-                                    val views = RemoteViews(appContext.packageName, R.layout.widget_music)
-                                    if (showProgress) {
-                                        views.setProgressBar(R.id.widget_progress_bar, 100, progress, false)
+                                    widgetIds.forEach { widgetId ->
+                                        val views = RemoteViews(appContext.packageName, R.layout.widget_music)
+                                        if (showProgress) {
+                                            views.setProgressBar(R.id.widget_progress_bar, 100, progress, false)
+                                        }
+                                        appWidgetManager.partiallyUpdateAppWidget(widgetId, views)
                                     }
-                                    appWidgetManager.partiallyUpdateAppWidget(widgetId, views)
                                 }
                             }
                         }
+                    } catch (e: Exception) {
+                        // Ignore transient exceptions
                     }
-                } catch (e: Exception) {
-                    // Ignore transient exceptions
-                }
 
-                if (isUpdating) {
-                    handler.postDelayed(this, 1000)
+                    if (isUpdating) {
+                        handler.postDelayed(this, 1000)
+                    }
                 }
             }
-        }
         handler.post(runnable)
     }
 
@@ -242,9 +249,10 @@ class MusicWidget : AppWidgetProvider() {
         fun updateAllWidgets(context: Context) {
             val appContext = context.applicationContext ?: context
             val appWidgetManager = AppWidgetManager.getInstance(appContext)
-            val widgetIds = appWidgetManager.getAppWidgetIds(
-                ComponentName(appContext, MusicWidget::class.java)
-            )
+            val widgetIds =
+                appWidgetManager.getAppWidgetIds(
+                    ComponentName(appContext, MusicWidget::class.java),
+                )
             if (widgetIds.isNotEmpty()) {
                 val activePlayer = PlayerConnection.instance?.player ?: com.Chenkham.Echofy.playback.MusicService.instance?.player
                 val isLiked = PlayerConnection.instance?.isCurrentSongLiked() ?: false
@@ -267,7 +275,7 @@ class MusicWidget : AppWidgetProvider() {
             appWidgetManager: AppWidgetManager,
             appWidgetId: Int,
             player: Player?,
-            isLiked: Boolean
+            isLiked: Boolean,
         ) {
             val views = RemoteViews(context.packageName, R.layout.widget_music)
             setPendingIntents(context, views)
@@ -282,7 +290,7 @@ class MusicWidget : AppWidgetProvider() {
             views.setInt(
                 R.id.widget_scrim_overlay,
                 "setBackgroundColor",
-                android.graphics.Color.argb((scrim * 255).toInt(), 0, 0, 0)
+                android.graphics.Color.argb((scrim * 255).toInt(), 0, 0, 0),
             )
 
             when (bgMode) {
@@ -301,10 +309,12 @@ class MusicWidget : AppWidgetProvider() {
             }
 
             player?.let { player ->
-                val songTitle = player.mediaMetadata.title?.toString()
-                    ?: context.getString(R.string.song_title)
-                val artist = player.mediaMetadata.artist?.toString()
-                    ?: context.getString(R.string.artist_name)
+                val songTitle =
+                    player.mediaMetadata.title?.toString()
+                        ?: context.getString(R.string.song_title)
+                val artist =
+                    player.mediaMetadata.artist?.toString()
+                        ?: context.getString(R.string.artist_name)
 
                 views.setTextViewText(R.id.widget_song_title, songTitle)
                 views.setTextViewText(R.id.widget_artist, artist)
@@ -321,9 +331,12 @@ class MusicWidget : AppWidgetProvider() {
                 val currentPos = player.currentPosition
                 val duration = player.duration
 
-                val progress = if (duration > 0 && duration != Long.MAX_VALUE) {
-                    (currentPos * 100 / duration).toInt()
-                } else 0
+                val progress =
+                    if (duration > 0 && duration != Long.MAX_VALUE) {
+                        (currentPos * 100 / duration).toInt()
+                    } else {
+                        0
+                    }
 
                 if (showProgress && duration > 0 && duration != Long.MAX_VALUE) {
                     views.setProgressBar(R.id.widget_progress_bar, 100, progress, false)
@@ -337,10 +350,11 @@ class MusicWidget : AppWidgetProvider() {
                     CoroutineScope(Dispatchers.IO).launch {
                         try {
                             val appContext = context.applicationContext
-                            val request = ImageRequest.Builder(appContext)
-                                .data(thumbnailUrl)
-                                .size(400, 300)
-                                .build()
+                            val request =
+                                ImageRequest.Builder(appContext)
+                                    .data(thumbnailUrl)
+                                    .size(400, 300)
+                                    .build()
                             val drawable = widgetImageLoader(appContext).execute(request).drawable
                             drawable?.let {
                                 val bmp = it.toBitmap()
@@ -363,7 +377,10 @@ class MusicWidget : AppWidgetProvider() {
             appWidgetManager.updateAppWidget(appWidgetId, views)
         }
 
-        private fun setPendingIntents(context: Context, views: RemoteViews) {
+        private fun setPendingIntents(
+            context: Context,
+            views: RemoteViews,
+        ) {
             val playPausePendingIntent = getBroadcastPendingIntent(context, ACTION_PLAY_PAUSE)
             val prevPendingIntent = getBroadcastPendingIntent(context, ACTION_PREV)
             val nextPendingIntent = getBroadcastPendingIntent(context, ACTION_NEXT)
@@ -384,42 +401,53 @@ class MusicWidget : AppWidgetProvider() {
             views.setOnClickPendingIntent(R.id.widget_artist, openAppPendingIntent)
         }
 
-        private fun getBroadcastPendingIntent(context: Context, action: String): PendingIntent {
-            val intent = Intent(context, MusicWidget::class.java).apply {
-                this.action = action
-            }
+        private fun getBroadcastPendingIntent(
+            context: Context,
+            action: String,
+        ): PendingIntent {
+            val intent =
+                Intent(context, MusicWidget::class.java).apply {
+                    this.action = action
+                }
 
-            val flags = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-            } else {
-                PendingIntent.FLAG_UPDATE_CURRENT
-            }
+            val flags =
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                    PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+                } else {
+                    PendingIntent.FLAG_UPDATE_CURRENT
+                }
 
             return PendingIntent.getBroadcast(context, action.hashCode(), intent, flags)
         }
 
         private fun getActivityPendingIntent(context: Context): PendingIntent {
-            val launchIntent = context.packageManager.getLaunchIntentForPackage(context.packageName)
-                ?: Intent(context, MainActivity::class.java)
+            val launchIntent =
+                context.packageManager.getLaunchIntentForPackage(context.packageName)
+                    ?: Intent(context, MainActivity::class.java)
             launchIntent.apply {
                 flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
             }
-            val flags = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-            } else {
-                PendingIntent.FLAG_UPDATE_CURRENT
-            }
+            val flags =
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                    PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+                } else {
+                    PendingIntent.FLAG_UPDATE_CURRENT
+                }
             return PendingIntent.getActivity(context, 0, launchIntent, flags)
         }
 
-        fun createRoundedBitmap(source: Bitmap, cornerRadiusPx: Float): Bitmap {
+        fun createRoundedBitmap(
+            source: Bitmap,
+            cornerRadiusPx: Float,
+        ): Bitmap {
             val output = Bitmap.createBitmap(source.width, source.height, Bitmap.Config.ARGB_8888)
             val canvas = android.graphics.Canvas(output)
             val paint = android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG)
             val rect = android.graphics.RectF(0f, 0f, source.width.toFloat(), source.height.toFloat())
-            val path = android.graphics.Path().apply {
-                addRoundRect(rect, cornerRadiusPx, cornerRadiusPx, android.graphics.Path.Direction.CW)
-            }
+            val path =
+                android.graphics.Path().apply {
+                    addRoundRect(rect, cornerRadiusPx, cornerRadiusPx, android.graphics.Path.Direction.CW)
+                }
             canvas.clipPath(path)
             canvas.drawBitmap(source, 0f, 0f, paint)
             return output

@@ -29,9 +29,10 @@ object WidgetPreferencesSync {
         runCatching {
             MusicWidget.updateAllWidgets(appContext)
             CompactMusicWidget.updateAllWidgets(appContext)
-            val lyricsIntent = Intent(appContext, LyricsWidget::class.java).apply {
-                action = LyricsWidget.ACTION_UPDATE_LYRICS
-            }
+            val lyricsIntent =
+                Intent(appContext, LyricsWidget::class.java).apply {
+                    action = LyricsWidget.ACTION_UPDATE_LYRICS
+                }
             appContext.sendBroadcast(lyricsIntent)
         }.onFailure {
             Timber.tag("WidgetPreferencesSync")

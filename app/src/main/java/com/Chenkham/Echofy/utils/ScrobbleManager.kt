@@ -10,7 +10,7 @@ class ScrobbleManager(
     private val scope: CoroutineScope,
     var minSongDuration: Int = 30,
     var scrobbleDelayPercent: Float = 0.5f,
-    var scrobbleDelaySeconds: Int = 180
+    var scrobbleDelaySeconds: Int = 180,
 ) {
     private var scrobbleJob: Job? = null
     private var scrobbleRemainingMillis: Long = 0L
@@ -27,7 +27,10 @@ class ScrobbleManager(
         songStarted = false
     }
 
-    fun onSongStart(metadata: MediaMetadata?, duration: Long? = null) {
+    fun onSongStart(
+        metadata: MediaMetadata?,
+        duration: Long? = null,
+    ) {
         if (metadata == null) return
         songStartedAt = System.currentTimeMillis() / 1000
         songStarted = true
@@ -50,7 +53,10 @@ class ScrobbleManager(
         songStarted = false
     }
 
-    private fun startScrobbleTimer(metadata: MediaMetadata, duration: Long? = null) {
+    private fun startScrobbleTimer(
+        metadata: MediaMetadata,
+        duration: Long? = null,
+    ) {
         scrobbleJob?.cancel()
         val duration = duration?.toInt()?.div(1000) ?: metadata.duration
 
@@ -64,11 +70,12 @@ class ScrobbleManager(
             return
         }
         scrobbleTimerStartedAt = System.currentTimeMillis()
-        scrobbleJob = scope.launch {
-            delay(scrobbleRemainingMillis)
-            scrobbleSong(metadata)
-            scrobbleJob = null
-        }
+        scrobbleJob =
+            scope.launch {
+                delay(scrobbleRemainingMillis)
+                scrobbleSong(metadata)
+                scrobbleJob = null
+            }
     }
 
     private fun pauseScrobbleTimer() {
@@ -85,11 +92,12 @@ class ScrobbleManager(
         if (scrobbleRemainingMillis <= 0) return
         scrobbleJob?.cancel()
         scrobbleTimerStartedAt = System.currentTimeMillis()
-        scrobbleJob = scope.launch {
-            delay(scrobbleRemainingMillis)
-            scrobbleSong(metadata)
-            scrobbleJob = null
-        }
+        scrobbleJob =
+            scope.launch {
+                delay(scrobbleRemainingMillis)
+                scrobbleSong(metadata)
+                scrobbleJob = null
+            }
     }
 
     private fun stopScrobbleTimer() {
@@ -108,7 +116,9 @@ class ScrobbleManager(
                     timestamp = songStartedAt,
                     album = metadata.album?.title,
                 )
-                Timber.tag("ScrobbleManager").d("Scrobbled: ${metadata.title} by ${metadata.artists.joinToString(", ") { artist -> artist.name }}")
+                Timber.tag(
+                    "ScrobbleManager",
+                ).d("Scrobbled: ${metadata.title} by ${metadata.artists.joinToString(", ") { artist -> artist.name }}")
             } catch (e: Exception) {
                 Timber.tag("ScrobbleManager").e(e, "Failed to scrobble: ${metadata.title}")
             }
@@ -122,7 +132,7 @@ class ScrobbleManager(
                     artist = metadata.artists.joinToString(", ") { artist -> artist.name },
                     track = metadata.title,
                     album = metadata.album?.title,
-                    duration = metadata.duration
+                    duration = metadata.duration,
                 )
                 Timber.tag("ScrobbleManager").d("Updated now playing: ${metadata.title}")
             } catch (e: Exception) {
@@ -131,7 +141,11 @@ class ScrobbleManager(
         }
     }
 
-    fun onPlayerStateChanged(isPlaying: Boolean, metadata: MediaMetadata?, duration: Long? = null) {
+    fun onPlayerStateChanged(
+        isPlaying: Boolean,
+        metadata: MediaMetadata?,
+        duration: Long? = null,
+    ) {
         if (metadata == null) return
         if (isPlaying) {
             if (!songStarted) {

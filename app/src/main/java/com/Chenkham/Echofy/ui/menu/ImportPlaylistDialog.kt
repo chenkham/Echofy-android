@@ -1,7 +1,5 @@
 ﻿package com.Chenkham.Echofy.ui.menu
 
-import com.Chenkham.Echofy.db.addSongToPlaylist
-
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -15,6 +13,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.TextFieldValue
 import com.Chenkham.Echofy.LocalDatabase
 import com.Chenkham.Echofy.R
+import com.Chenkham.Echofy.db.addSongToPlaylist
 import com.Chenkham.Echofy.db.entities.PlaylistEntity
 import com.Chenkham.Echofy.ui.component.TextFieldDialog
 import kotlinx.coroutines.Dispatchers
@@ -44,9 +43,10 @@ fun ImportPlaylistDialog(
             autoFocus = false,
             onDismiss = onDismiss,
             onDone = { finalName ->
-                val newPlaylist = PlaylistEntity(
-                    name = finalName
-                )
+                val newPlaylist =
+                    PlaylistEntity(
+                        name = finalName,
+                    )
                 database.query { insert(newPlaylist) }
 
                 coroutineScope.launch(Dispatchers.IO) {
@@ -59,7 +59,7 @@ fun ImportPlaylistDialog(
 
                     onDismiss()
                 }
-            }
+            },
         )
     }
 }

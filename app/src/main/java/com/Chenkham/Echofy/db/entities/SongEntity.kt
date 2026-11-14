@@ -16,9 +16,9 @@ import java.time.LocalDateTime
     tableName = "song",
     indices = [
         Index(
-            value = ["albumId"]
-        )
-    ]
+            value = ["albumId"],
+        ),
+    ],
 )
 data class SongEntity(
     @PrimaryKey val id: String,
@@ -46,10 +46,11 @@ data class SongEntity(
     @androidx.room.ColumnInfo(name = "uploadEntityId", defaultValue = "NULL")
     val uploadEntityId: String? = null,
 ) {
-    fun localToggleLike() = copy(
-        liked = !liked,
-        likedDate = if (!liked) LocalDateTime.now() else null,
-    )
+    fun localToggleLike() =
+        copy(
+            liked = !liked,
+            likedDate = if (!liked) LocalDateTime.now() else null,
+        )
 
     fun toggleLike(): SongEntity {
         if (isLocal) return localToggleLike()
@@ -57,7 +58,7 @@ data class SongEntity(
         return copy(
             liked = !liked,
             likedDate = if (!liked) LocalDateTime.now() else null,
-            inLibrary = if (!liked) inLibrary ?: LocalDateTime.now() else inLibrary
+            inLibrary = if (!liked) inLibrary ?: LocalDateTime.now() else inLibrary,
         ).also {
             CoroutineScope(Dispatchers.IO).launch {
                 YouTube.likeVideo(id, !liked)
@@ -66,13 +67,15 @@ data class SongEntity(
         }
     }
 
-    fun toggleLibrary() = copy(
-        liked = if (inLibrary == null) liked else false,
-        inLibrary = if (inLibrary == null) LocalDateTime.now() else null,
-        likedDate = if (inLibrary == null) likedDate else null
-    )
+    fun toggleLibrary() =
+        copy(
+            liked = if (inLibrary == null) liked else false,
+            inLibrary = if (inLibrary == null) LocalDateTime.now() else null,
+            likedDate = if (inLibrary == null) likedDate else null,
+        )
 
-    fun toggleUploaded() = copy(
-        isUploaded = !isUploaded
-    )
+    fun toggleUploaded() =
+        copy(
+            isUploaded = !isUploaded,
+        )
 }

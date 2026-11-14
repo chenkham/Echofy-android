@@ -4,8 +4,6 @@
  * Licensed Under GPL-3.0 | see git history for contributors
  */
 
-
-
 package com.Chenkham.Echofy.utils
 
 import android.content.Context
@@ -34,9 +32,11 @@ import kotlinx.coroutines.withTimeoutOrNull
 import kotlin.properties.ReadOnlyProperty
 
 val Context.dataStore: DataStore<Preferences> by preferencesDataStore(name = "settings")
+
 object PreferenceStore {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     private val _prefs = MutableStateFlow<Preferences?>(null)
+
     @Volatile private var started = false
 
     fun start(context: Context) {
@@ -93,8 +93,7 @@ operator fun <T> DataStore<Preferences>.get(
             }
         }
 
-suspend fun <T> DataStore<Preferences>.getAsync(key: Preferences.Key<T>): T? =
-    data.first()[key]
+suspend fun <T> DataStore<Preferences>.getAsync(key: Preferences.Key<T>): T? = data.first()[key]
 
 suspend fun <T> DataStore<Preferences>.getAsync(
     key: Preferences.Key<T>,

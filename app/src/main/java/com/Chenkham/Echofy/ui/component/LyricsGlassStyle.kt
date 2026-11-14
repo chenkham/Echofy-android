@@ -24,7 +24,6 @@ data class LyricsAccent(
 )
 
 object LyricsAccents {
-
     /** Se reemplaza en runtime por [fromPalette] usando el color dominante de la car├ítula. */
     val Auto = LyricsAccent("Auto", Color(0xFF6750A4))
 
@@ -41,11 +40,12 @@ object LyricsAccents {
 
     /** Extrae un acento a partir de la car├ítula del track (Palette de androidx.palette). */
     fun fromPalette(palette: Palette): LyricsAccent {
-        val swatch = palette.vibrantSwatch
-            ?: palette.lightVibrantSwatch
-            ?: palette.darkVibrantSwatch
-            ?: palette.dominantSwatch
-            ?: palette.mutedSwatch
+        val swatch =
+            palette.vibrantSwatch
+                ?: palette.lightVibrantSwatch
+                ?: palette.darkVibrantSwatch
+                ?: palette.dominantSwatch
+                ?: palette.mutedSwatch
         val color = swatch?.let { Color(it.rgb) } ?: Indigo.seed
         return LyricsAccent("Auto", color)
     }
@@ -57,7 +57,10 @@ object LyricsAccents {
 // ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ
 
 /** Interpola linealmente hacia [other]; ├║til para construir tonos contenedor. */
-fun Color.mixWith(other: Color, fraction: Float): Color {
+fun Color.mixWith(
+    other: Color,
+    fraction: Float,
+): Color {
     val t = fraction.coerceIn(0f, 1f)
     return Color(
         red = red + (other.red - red) * t,
@@ -81,12 +84,10 @@ fun Color.shiftHue(degrees: Float): Color {
 }
 
 /** Luminancia perceptual aproximada ÔÇö decide si el texto encima debe ser claro u oscuro. */
-fun Color.isPerceptuallyLight(): Boolean =
-    (0.299f * red + 0.587f * green + 0.114f * blue) > 0.62f
+fun Color.isPerceptuallyLight(): Boolean = (0.299f * red + 0.587f * green + 0.114f * blue) > 0.62f
 
 /** Color de texto legible sobre este color (blanco u oscuro casi negro). */
-fun Color.readableTextColor(): Color =
-    if (isPerceptuallyLight()) Color(0xFF201A14) else Color.White
+fun Color.readableTextColor(): Color = if (isPerceptuallyLight()) Color(0xFF201A14) else Color.White
 
 /** Tono "contenedor" M3-like: pastel claro (mezcla con blanco) a partir de la semilla. */
 fun Color.tonalContainer(amount: Float = 0.88f): Color = mixWith(Color.White, amount)
