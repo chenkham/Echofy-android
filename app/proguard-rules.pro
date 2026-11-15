@@ -270,6 +270,10 @@
     public *** send(...);
     public *** call(...);
 }
+-assumenosideeffects class io.appwrite.Client {
+    public *** setSelfSigned(...);
+}
+-dontwarn io.appwrite.Client$*
 -dontwarn io.appwrite.**
 
 # Gson optimizations
