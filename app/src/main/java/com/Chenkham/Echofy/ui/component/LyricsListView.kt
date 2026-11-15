@@ -1,6 +1,5 @@
 package com.Chenkham.Echofy.ui.component
 
-import androidx.compose.foundation.gestures.animateScrollBy
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
@@ -116,14 +115,20 @@ fun LyricsListView(
                         .nestedScroll(
                             remember {
                                 object : NestedScrollConnection {
-                                    override fun onPreScroll(available: Offset, source: NestedScrollSource): Offset {
+                                    override fun onPreScroll(
+                                        available: Offset,
+                                        source: NestedScrollSource,
+                                    ): Offset {
                                         if (source == NestedScrollSource.UserInput && !isSelectionModeActive) {
                                             onUserScrollStateChange(true)
                                         }
                                         return Offset.Zero
                                     }
 
-                                    override suspend fun onPostFling(consumed: Velocity, available: Velocity): Velocity {
+                                    override suspend fun onPostFling(
+                                        consumed: Velocity,
+                                        available: Velocity,
+                                    ): Velocity {
                                         if (!isSelectionModeActive) {
                                             kotlinx.coroutines.delay(4_000)
                                             onUserScrollStateChange(false)

@@ -48,7 +48,10 @@ fun LyricsDialogs(
                         currentSongId?.let { songId -> state.lyricsCache = state.lyricsCache.toMutableMap().also { it.remove(songId) } }
                         state.reloadTrigger++
                     },
-                    onAdjustSync = { state.showLyricsMenuDialog = false; state.showSyncDialog = true },
+                    onAdjustSync = {
+                        state.showLyricsMenuDialog = false
+                        state.showSyncDialog = true
+                    },
                 )
             }
         }
@@ -61,7 +64,10 @@ fun LyricsDialogs(
                 state.syncOffsetMs = newOffset
                 currentSongId?.let { songId ->
                     state.scope.launch(Dispatchers.IO) {
-                        state.context.dataStore.edit { p -> if (newOffset == 0L) p.remove(lyricsSyncOffsetKey(songId)) else p[lyricsSyncOffsetKey(songId)] = newOffset }
+                        state.context.dataStore.edit {
+                                p ->
+                            if (newOffset == 0L) p.remove(lyricsSyncOffsetKey(songId)) else p[lyricsSyncOffsetKey(songId)] = newOffset
+                        }
                     }
                 }
             },
@@ -72,10 +78,20 @@ fun LyricsDialogs(
     if (state.showChordDialogInLyrics) {
         mediaMetadata?.let { metadata ->
             val durationMs = playerConnection.player.duration.coerceAtLeast(60000L)
-            val timeline = remember(metadata.id) { ChordsManager.generateTimeline(metadata.id, metadata.title, metadata.artists.joinToString { it.name }, durationMs) }
+            val timeline =
+                remember(
+                    metadata.id,
+                ) { ChordsManager.generateTimeline(metadata.id, metadata.title, metadata.artists.joinToString { it.name }, durationMs) }
             val currentPos = playerConnection.player.currentPosition
             val activeChord = timeline.chords.find { currentPos in it.startMs..it.endMs }?.chord ?: timeline.key
-            ChordDiagramDialog(initialChord = activeChord, progression = timeline.chords.map { it.chord }, onDismiss = { state.showChordDialogInLyrics = false })
+            ChordDiagramDialog(
+                initialChord = activeChord,
+                progression =
+                    timeline.chords.map {
+                        it.chord
+                    },
+                onDismiss = { state.showChordDialogInLyrics = false },
+            )
         }
     }
 
@@ -90,8 +106,16 @@ fun LyricsDialogs(
                 state.scope.launch {
                     runCatching {
                         LyricsTranslationService.transliterateLines(lines.map { it.text })
-                            .onSuccess { lineMap -> state.translatedLines = lineMap; state.translatedLyrics = lineMap.values.joinToString("\n"); state.showTranslation = true }
-                            .onFailure { e -> Toast.makeText(state.context, "Romanization failed: ${e.message}", Toast.LENGTH_SHORT).show() }
+                            .onSuccess {
+                                    lineMap ->
+                                state.translatedLines = lineMap
+                                state.translatedLyrics = lineMap.values.joinToString("\n")
+                                state.showTranslation = true
+                            }
+                            .onFailure {
+                                    e ->
+                                Toast.makeText(state.context, "Romanization failed: ${e.message}", Toast.LENGTH_SHORT).show()
+                            }
                     }
                     state.isTranslating = false
                 }
@@ -112,15 +136,25 @@ fun LyricsDialogs(
                                     state.translatedLines = lineMap
                                     state.translatedLyrics = trans
                                     state.showTranslation = true
-                                } else Toast.makeText(state.context, "Translation alignment failed", Toast.LENGTH_SHORT).show()
+                                } else {
+                                    Toast.makeText(state.context, "Translation alignment failed", Toast.LENGTH_SHORT).show()
+                                }
                             }
                             .onFailure { e -> Toast.makeText(state.context, "Translation failed: ${e.message}", Toast.LENGTH_SHORT).show() }
                     }
                     state.isTranslating = false
                 }
             },
-            onToggleTranslation = { state.showTranslation = !state.showTranslation; state.showLanguageDialog = false },
-            onClearTranslation = { state.translatedLines = emptyMap(); state.translatedLyrics = null; state.showTranslation = false; state.showLanguageDialog = false },
+            onToggleTranslation = {
+                state.showTranslation = !state.showTranslation
+                state.showLanguageDialog = false
+            },
+            onClearTranslation = {
+                state.translatedLines = emptyMap()
+                state.translatedLyrics = null
+                state.showTranslation = false
+                state.showLanguageDialog = false
+            },
             onDismiss = { state.showLanguageDialog = false },
         )
     }
@@ -143,7 +177,10 @@ fun LyricsDialogs(
                     state.showProviderDialog = false
                 }
             },
-            onRefetchAll = { state.showProviderDialog = false; state.refetchTrigger++ },
+            onRefetchAll = {
+                state.showProviderDialog = false
+                state.refetchTrigger++
+            },
             onDismiss = { state.showProviderDialog = false },
         )
     }
@@ -154,7 +191,10 @@ fun LyricsDialogs(
             songTitle = state.shareDialogData!!.second,
             artists = state.shareDialogData!!.third,
             mediaMetadata = mediaMetadata,
-            onDismiss = { state.showShareDialog = false; state.shareDialogData = null },
+            onDismiss = {
+                state.showShareDialog = false
+                state.shareDialogData = null
+            },
         )
     }
 }

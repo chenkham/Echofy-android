@@ -23,18 +23,24 @@ fun LyricsScrollHandler(
 ) {
     val lifecycleOwner = LocalLifecycleOwner.current
     DisposableEffect(lifecycleOwner) {
-        val observer = LifecycleEventObserver { _, event ->
-            if (event == Lifecycle.Event.ON_STOP) {
-                if (state.lazyListState.layoutInfo.visibleItemsInfo.any { it.index == state.currentLineIndex }) state.initialScrollDone = false
-                state.isAppMinimized = true
-            } else if (event == Lifecycle.Event.ON_START) state.isAppMinimized = false
-        }
+        val observer =
+            LifecycleEventObserver { _, event ->
+                if (event == Lifecycle.Event.ON_STOP) {
+                    if (state.lazyListState.layoutInfo.visibleItemsInfo.any { it.index == state.currentLineIndex }) state.initialScrollDone = false
+                    state.isAppMinimized = true
+                } else if (event == Lifecycle.Event.ON_START) {
+                    state.isAppMinimized = false
+                }
+            }
         lifecycleOwner.lifecycle.addObserver(observer)
         onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
     }
 
     LaunchedEffect(lyrics, state.syncOffsetMs) {
-        if (lyrics.isNullOrEmpty() || !lyrics.startsWith("[")) { state.currentLineIndex = -1; return@LaunchedEffect }
+        if (lyrics.isNullOrEmpty() || !lyrics.startsWith("[")) {
+            state.currentLineIndex = -1
+            return@LaunchedEffect
+        }
         while (isActive) {
             delay(50)
             state.isSeeking = false
@@ -44,7 +50,11 @@ fun LyricsScrollHandler(
 
     LaunchedEffect(state.currentLineIndex, state.lastPreviewTime, state.initialScrollDone) {
         if (!isSynced || state.isUserScrolling) return@LaunchedEffect
-        suspend fun smoothScroll(targetIndex: Int, dur: Int = 1500) {
+
+        suspend fun smoothScroll(
+            targetIndex: Int,
+            dur: Int = 1500,
+        ) {
             if (state.isAnimating) return
             state.isAnimating = true
             try {
@@ -53,8 +63,12 @@ fun LyricsScrollHandler(
                     val vh = state.lazyListState.layoutInfo.viewportEndOffset - state.lazyListState.layoutInfo.viewportStartOffset
                     val offset = (itemInfo.offset + itemInfo.size / 2) - (state.lazyListState.layoutInfo.viewportStartOffset + vh / 2)
                     if (kotlin.math.abs(offset) > 10) state.lazyListState.animateScrollBy(offset.toFloat(), tween(dur))
-                } else state.lazyListState.scrollToItem(targetIndex)
-            } finally { state.isAnimating = false }
+                } else {
+                    state.lazyListState.scrollToItem(targetIndex)
+                }
+            } finally {
+                state.isAnimating = false
+            }
         }
         if ((state.currentLineIndex == 0 && state.shouldScrollToFirstLine) || !state.initialScrollDone) {
             state.shouldScrollToFirstLine = false

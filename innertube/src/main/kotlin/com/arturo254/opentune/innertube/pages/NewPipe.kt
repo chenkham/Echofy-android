@@ -148,7 +148,27 @@ private class NewPipeDownloaderImpl(proxy: Proxy?) : Downloader() {
 
 object NewPipeUtils {
     init {
-        NewPipe.init(NewPipeDownloaderImpl(YouTube.proxy))
+        initNewPipeSecurely(NewPipeDownloaderImpl(YouTube.proxy))
+    }
+
+    /**
+     * Initializes NewPipeExtractor with our custom OkHttp Downloader without calling
+     * NewPipe.init(), which invokes the insecure trustEveryone() method (installing an
+     * all-trusting HostnameVerifier and TrustManager). Google Play Console flags that
+     * method under the "Device and Network Abuse policy: Unsafe Implementation of TrustManager
+     * and HostnameVerifier".
+     */
+    private fun initNewPipeSecurely(downloader: Downloader) {
+        runCatching {
+            val downloaderField = NewPipe::class.java.getDeclaredField("downloader").apply { isAccessible = true }
+            downloaderField.set(null, downloader)
+
+            val locField = NewPipe::class.java.getDeclaredField("preferredLocalization").apply { isAccessible = true }
+            locField.set(null, org.schabi.newpipe.extractor.localization.Localization.DEFAULT)
+
+            val countryField = NewPipe::class.java.getDeclaredField("preferredContentCountry").apply { isAccessible = true }
+            countryField.set(null, org.schabi.newpipe.extractor.localization.ContentCountry.DEFAULT)
+        }
     }
 
     fun getSignatureTimestamp(videoId: String): Result<Int> =

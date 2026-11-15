@@ -94,11 +94,16 @@ fun Lyrics(
         currentSongId?.let { state.fetchLyricsStreaming(it, state.refetchTrigger > 0) }
     }
 
-    val lines = remember(lyrics, state.scope) {
-        if (lyrics == null || lyrics == LYRICS_NOT_FOUND) emptyList()
-        else if (lyrics.startsWith("[")) listOf(LyricsEntry.HEAD_LYRICS_ENTRY) + parseLyrics(lyrics)
-        else lyrics.lines().mapIndexed { i, l -> LyricsEntry(i * 100L, l) }
-    }
+    val lines =
+        remember(lyrics, state.scope) {
+            if (lyrics == null || lyrics == LYRICS_NOT_FOUND) {
+                emptyList()
+            } else if (lyrics.startsWith("[")) {
+                listOf(LyricsEntry.HEAD_LYRICS_ENTRY) + parseLyrics(lyrics)
+            } else {
+                lyrics.lines().mapIndexed { i, l -> LyricsEntry(i * 100L, l) }
+            }
+        }
 
     LaunchedEffect(lines) {
         state.isSelectionModeActive = false
@@ -111,28 +116,50 @@ fun Lyrics(
     }
 
     val isSynced = remember(lyrics) { !lyrics.isNullOrEmpty() && lyrics.startsWith("[") }
-    val textColor = when (prefs.playerBackground) {
-        PlayerBackgroundStyle.DEFAULT -> MaterialTheme.colorScheme.secondary
-        else -> if (prefs.useDarkTheme) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onPrimary
-    }
-    val lyricsBackdropBrush = Brush.verticalGradient(0.0f to Color(0xFF03050B), 0.34f to Color(0xFF07131F), 0.68f to Color(0xFF130815), 1.0f to Color.Black)
-    val lyricsGlowBrush = Brush.linearGradient(listOf(Color(0xFF20D8FF).copy(0.30f), Color.Transparent, Color(0xFFFF4FCC).copy(0.22f), Color.Transparent))
+    val textColor =
+        when (prefs.playerBackground) {
+            PlayerBackgroundStyle.DEFAULT -> MaterialTheme.colorScheme.secondary
+            else -> if (prefs.useDarkTheme) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onPrimary
+        }
+    val lyricsBackdropBrush =
+        Brush.verticalGradient(
+            0.0f to Color(0xFF03050B),
+            0.34f to Color(0xFF07131F),
+            0.68f to Color(0xFF130815),
+            1.0f to Color.Black,
+        )
+    val lyricsGlowBrush =
+        Brush.linearGradient(
+            listOf(Color(0xFF20D8FF).copy(0.30f), Color.Transparent, Color(0xFFFF4FCC).copy(0.22f), Color.Transparent),
+        )
 
     var position by rememberSaveable(playbackState) { mutableLongStateOf(playerConnection.player.currentPosition) }
     var duration by rememberSaveable(playbackState) { mutableLongStateOf(playerConnection.player.duration) }
 
     BackHandler(enabled = state.isSelectionModeActive || isFullscreen) {
-        if (state.isSelectionModeActive) { state.isSelectionModeActive = false; state.selectedIndices.clear() }
-        else if (isFullscreen) onNavigateBack?.invoke()
+        if (state.isSelectionModeActive) {
+            state.isSelectionModeActive = false
+            state.selectedIndices.clear()
+        } else if (isFullscreen) {
+            onNavigateBack?.invoke()
+        }
     }
 
     LaunchedEffect(playbackState) {
         if (isFullscreen && playbackState == Player.STATE_READY) {
-            while (isActive) { delay(100); position = playerConnection.player.currentPosition; duration = playerConnection.player.duration }
+            while (isActive) {
+                delay(100)
+                position = playerConnection.player.currentPosition
+                duration = playerConnection.player.duration
+            }
         }
     }
 
-    val imageScale by animateFloatAsState(targetValue = if (state.showImageOverlay) 1f else 0.95f, animationSpec = spring(), label = "imageScale")
+    val imageScale by animateFloatAsState(
+        targetValue = if (state.showImageOverlay) 1f else 0.95f,
+        animationSpec = spring(),
+        label = "imageScale",
+    )
 
     LyricsScrollHandler(
         state = state,
@@ -143,9 +170,16 @@ fun Lyrics(
     )
 
     Box(
-        modifier = modifier.fillMaxSize().background(if (isFullscreen) MaterialTheme.colorScheme.background else Color.Transparent).then(
-            if (isFullscreen) Modifier.pointerInput(Unit) { detectTapGestures(onTap = { if (!state.isSelectionModeActive) state.showControls = !state.showControls }) } else Modifier,
-        ),
+        modifier =
+            modifier.fillMaxSize().background(if (isFullscreen) MaterialTheme.colorScheme.background else Color.Transparent).then(
+                if (isFullscreen) {
+                    Modifier.pointerInput(Unit) {
+                        detectTapGestures(onTap = { if (!state.isSelectionModeActive) state.showControls = !state.showControls })
+                    }
+                } else {
+                    Modifier
+                },
+            ),
     ) {
         if (isFullscreen) {
             LyricsFullscreenContainer(
@@ -169,7 +203,10 @@ fun Lyrics(
                 imageScale = imageScale,
                 playerConnection = playerConnection,
                 onNavigateBack = onNavigateBack,
-                onSeekTo = { playerConnection.player.seekTo(it); position = it },
+                onSeekTo = {
+                    playerConnection.player.seekTo(it)
+                    position = it
+                },
             )
         }
         LyricsListView(
@@ -194,7 +231,11 @@ fun Lyrics(
             onSeekToLine = { item, index -> state.seekToLine(item, index) },
             onSelectLine = { index -> state.selectLine(index) },
             onToggleSelectionMode = { index -> state.toggleSelectionMode(index) },
-            onUserScrollStateChange = { scrolling -> state.isUserScrolling = scrolling; state.lastPreviewTime = System.currentTimeMillis() },
+            onUserScrollStateChange = {
+                    scrolling ->
+                state.isUserScrolling = scrolling
+                state.lastPreviewTime = System.currentTimeMillis()
+            },
             onRetryLyrics = { state.retryLyrics(currentSongId) },
         )
         if (!isFullscreen) {
@@ -202,7 +243,10 @@ fun Lyrics(
                 isSelectionModeActive = state.isSelectionModeActive,
                 selectedCount = state.selectedIndices.size,
                 textColor = textColor,
-                onCloseSelection = { state.isSelectionModeActive = false; state.selectedIndices.clear() },
+                onCloseSelection = {
+                    state.isSelectionModeActive = false
+                    state.selectedIndices.clear()
+                },
                 onShareSelected = {
                     val txt = state.selectedIndices.sorted().mapNotNull { lines.getOrNull(it)?.text }.joinToString("\n")
                     if (txt.isNotBlank()) {

@@ -54,9 +54,10 @@ fun rememberMainThemeConfig(
     val pureBlack by rememberPreference(PureBlackKey, defaultValue = false)
     val isSystemInDarkTheme = isSystemInDarkTheme()
 
-    val useDarkTheme = remember(darkTheme, isSystemInDarkTheme) {
-        if (darkTheme == DarkMode.AUTO) isSystemInDarkTheme else darkTheme == DarkMode.ON
-    }
+    val useDarkTheme =
+        remember(darkTheme, isSystemInDarkTheme) {
+            if (darkTheme == DarkMode.AUTO) isSystemInDarkTheme else darkTheme == DarkMode.ON
+        }
 
     LaunchedEffect(useDarkTheme) {
         setSystemBarAppearance(activity.window, useDarkTheme)
@@ -72,19 +73,21 @@ fun rememberMainThemeConfig(
             return@LaunchedEffect
         }
         playerConnection.service.currentMediaMetadata.collectLatest { song ->
-            themeColor = if (song != null) {
-                withContext(Dispatchers.IO) {
-                    val result = activity.imageLoader.execute(
-                        ImageRequest.Builder(activity)
-                            .data(song.thumbnailUrl)
-                            .allowHardware(false)
-                            .build(),
-                    )
-                    (result.drawable as? BitmapDrawable)?.bitmap?.extractThemeColor() ?: DefaultThemeColor
+            themeColor =
+                if (song != null) {
+                    withContext(Dispatchers.IO) {
+                        val result =
+                            activity.imageLoader.execute(
+                                ImageRequest.Builder(activity)
+                                    .data(song.thumbnailUrl)
+                                    .allowHardware(false)
+                                    .build(),
+                            )
+                        (result.drawable as? BitmapDrawable)?.bitmap?.extractThemeColor() ?: DefaultThemeColor
+                    }
+                } else {
+                    DefaultThemeColor
                 }
-            } else {
-                DefaultThemeColor
-            }
         }
     }
 
@@ -100,7 +103,10 @@ fun rememberMainThemeConfig(
     )
 }
 
-fun setSystemBarAppearance(window: Window, isDark: Boolean) {
+fun setSystemBarAppearance(
+    window: Window,
+    isDark: Boolean,
+) {
     WindowCompat.getInsetsController(window, window.decorView.rootView).apply {
         isAppearanceLightStatusBars = !isDark
         isAppearanceLightNavigationBars = !isDark

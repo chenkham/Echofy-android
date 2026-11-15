@@ -34,8 +34,8 @@ import com.Chenkham.Echofy.ui.component.Lyrics
 import com.Chenkham.Echofy.ui.menu.YouTubeSongMenu
 import com.Chenkham.Echofy.ui.player.AppleBottomSheetPlayer
 import com.Chenkham.Echofy.ui.player.BottomSheetPlayer
-import com.Chenkham.Echofy.ui.screens.ai.GoogleAssistantVisualOverlay
 import com.Chenkham.Echofy.ui.screens.ai.DrivingModeBanner
+import com.Chenkham.Echofy.ui.screens.ai.GoogleAssistantVisualOverlay
 import com.arturo254.opentune.innertube.models.SongItem
 
 /**

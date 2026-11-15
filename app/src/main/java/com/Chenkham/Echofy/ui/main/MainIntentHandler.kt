@@ -82,7 +82,11 @@ class MainIntentHandler(
             val isEnabled = dataStore.data.first()[VoiceControlEnabledKey] ?: false
 
             if (!isEnabled) {
-                Toast.makeText(context, "Enable Google Assistant Integration in AI settings to use voice playback", Toast.LENGTH_LONG).show()
+                Toast.makeText(
+                    context,
+                    "Enable Google Assistant Integration in AI settings to use voice playback",
+                    Toast.LENGTH_LONG,
+                ).show()
                 return@launch
             }
 
@@ -192,9 +196,10 @@ class MainIntentHandler(
         scope.launch {
             Toast.makeText(context, "Searching for $query...", Toast.LENGTH_SHORT).show()
 
-            val result: Result<SearchResult> = withContext(Dispatchers.IO) {
-                YouTube.search(query, YouTube.SearchFilter.FILTER_SONG)
-            }
+            val result: Result<SearchResult> =
+                withContext(Dispatchers.IO) {
+                    YouTube.search(query, YouTube.SearchFilter.FILTER_SONG)
+                }
 
             result.onSuccess { searchResult ->
                 val firstSong = searchResult.items.firstNotNullOfOrNull { it as? SongItem }

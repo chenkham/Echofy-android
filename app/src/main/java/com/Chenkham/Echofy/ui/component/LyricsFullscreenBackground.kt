@@ -34,16 +34,22 @@ fun LyricsFullscreenBackground(
                 model = metadata.thumbnailUrl,
                 contentDescription = null,
                 contentScale = ContentScale.Crop,
-                modifier = Modifier.fillMaxSize().blur(15.dp).graphicsLayer {
-                    scaleX = 2.5f
-                    scaleY = 2.5f
-                    if (rotateBackground) {
-                        rotationZ = rotation
-                        transformOrigin = TransformOrigin.Center
-                    }
-                },
+                modifier =
+                    Modifier.fillMaxSize().blur(15.dp).graphicsLayer {
+                        scaleX = 2.5f
+                        scaleY = 2.5f
+                        if (rotateBackground) {
+                            rotationZ = rotation
+                            transformOrigin = TransformOrigin.Center
+                        }
+                    },
             )
-            Box(modifier = Modifier.fillMaxSize().background(lyricsBackdropBrush).background(lyricsGlowBrush).background(Color.Black.copy(0.38f)))
+            Box(
+                modifier =
+                    Modifier.fillMaxSize().background(
+                        lyricsBackdropBrush,
+                    ).background(lyricsGlowBrush).background(Color.Black.copy(0.38f)),
+            )
         }
     }
 }

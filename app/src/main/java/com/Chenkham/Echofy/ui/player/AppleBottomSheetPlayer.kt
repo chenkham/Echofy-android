@@ -641,7 +641,7 @@ fun AppleMainView(
                 val preferred =
                     devices.firstOrNull {
                         it.type == AudioDeviceInfo.TYPE_BLUETOOTH_A2DP ||
-                            it.type == AudioDeviceInfo.TYPE_BLE_HEADSET ||
+                            (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S && it.type == AudioDeviceInfo.TYPE_BLE_HEADSET) ||
                             it.type == AudioDeviceInfo.TYPE_WIRED_HEADSET ||
                             it.type == AudioDeviceInfo.TYPE_WIRED_HEADPHONES
                     }

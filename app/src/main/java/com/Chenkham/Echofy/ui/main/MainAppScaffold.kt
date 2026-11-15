@@ -96,14 +96,15 @@ fun MainAppScaffold(
         val searchBarFocusRequester = remember { FocusRequester() }
         val navBackStackEntry by navController.currentBackStackEntryAsState()
 
-        val state = rememberMainScaffoldState(
-            maxHeight = maxHeight,
-            navBackStackEntry = navBackStackEntry,
-            active = active,
-            navigationItems = navigationItems,
-            playerConnection = playerConnection,
-            onQuerySync = { query = it },
-        )
+        val state =
+            rememberMainScaffoldState(
+                maxHeight = maxHeight,
+                navBackStackEntry = navBackStackEntry,
+                active = active,
+                navigationItems = navigationItems,
+                playerConnection = playerConnection,
+                onQuerySync = { query = it },
+            )
 
         val onActiveChange: (Boolean) -> Unit = { newActive ->
             active = newActive
@@ -125,7 +126,9 @@ fun MainAppScaffold(
             }
         }
 
-        val aodTimeoutSecs by activity.dataStore.data.collectAsState(initial = null).value?.get(AodAutoActivationKey)?.let { mutableStateOf(it) } ?: rememberPreference(AodAutoActivationKey, 0)
+        val aodTimeoutSecs by activity.dataStore.data.collectAsState(initial = null).value?.get(AodAutoActivationKey)?.let {
+            mutableStateOf(it)
+        } ?: rememberPreference(AodAutoActivationKey, 0)
         val aodIsPlaying by playerConnection?.isPlaying?.collectAsState() ?: remember { mutableStateOf(false) }
         MainAodAutoController(
             aodTimeoutSecs = aodTimeoutSecs,
@@ -212,11 +215,12 @@ fun MainAppScaffold(
                     ) {
                         MainNavHost(
                             navController = navController,
-                            startDestinationRoute = when (shortcutDestinationTab ?: defaultOpenTab) {
-                                NavigationTab.HOME -> Screens.Home
-                                NavigationTab.EXPLORE -> Screens.Explore
-                                NavigationTab.LIBRARY -> Screens.Library
-                            }.route,
+                            startDestinationRoute =
+                                when (shortcutDestinationTab ?: defaultOpenTab) {
+                                    NavigationTab.HOME -> Screens.Home
+                                    NavigationTab.EXPLORE -> Screens.Explore
+                                    NavigationTab.LIBRARY -> Screens.Library
+                                }.route,
                             topLevelScreens = topLevelScreens,
                             navigationItems = navigationItems,
                             navBackStackEntry = navBackStackEntry,

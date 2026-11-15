@@ -123,7 +123,8 @@ fun rememberPlayerVisualState(
     val darkTheme by rememberEnumPreference(DarkModeKey, DarkMode.AUTO)
     val pureBlack by rememberPreference(PureBlackKey, false)
     val isSystemInDarkTheme = isSystemInDarkTheme()
-    val useDarkTheme = remember(darkTheme, isSystemInDarkTheme) { if (darkTheme == DarkMode.AUTO) isSystemInDarkTheme else darkTheme == DarkMode.ON }
+    val useDarkTheme =
+        remember(darkTheme, isSystemInDarkTheme) { if (darkTheme == DarkMode.AUTO) isSystemInDarkTheme else darkTheme == DarkMode.ON }
     val useBlackBackground = remember(isSystemInDarkTheme, darkTheme, pureBlack) { useDarkTheme && pureBlack }
 
     val onBackgroundColor =
@@ -212,8 +213,24 @@ fun rememberPlayerVisualState(
             PlayerBackgroundStyle.DEFAULT -> MaterialTheme.colorScheme.onBackground
             PlayerBackgroundStyle.BLUR -> Color.White
             else -> {
-                val whiteContrast = if (gradientColors.size >= 2) ColorUtils.calculateContrast(gradientColors.first().toArgb(), Color.White.toArgb()) else 2.0
-                val blackContrast = if (gradientColors.size >= 2) ColorUtils.calculateContrast(gradientColors.last().toArgb(), Color.Black.toArgb()) else 2.0
+                val whiteContrast =
+                    if (gradientColors.size >= 2) {
+                        ColorUtils.calculateContrast(
+                            gradientColors.first().toArgb(),
+                            Color.White.toArgb(),
+                        )
+                    } else {
+                        2.0
+                    }
+                val blackContrast =
+                    if (gradientColors.size >= 2) {
+                        ColorUtils.calculateContrast(
+                            gradientColors.last().toArgb(),
+                            Color.Black.toArgb(),
+                        )
+                    } else {
+                        2.0
+                    }
                 if (whiteContrast < 2f && blackContrast > 2f) Color.Black else Color.White
             }
         }

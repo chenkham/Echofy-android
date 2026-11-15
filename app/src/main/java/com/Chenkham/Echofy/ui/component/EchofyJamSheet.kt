@@ -73,31 +73,34 @@ fun EchofyJamSheet(
     val session = sessionState.session
     val roomCode = session?.roomCode?.roomCode.orEmpty()
     val inviteLink = remember(registry, roomCode) { buildInviteLink(registry, roomCode) }
-    val jamTitle = remember(participants, session, roomCode, roomMeta) {
-        val hostName = roomMeta?.hostName?.takeIf { it.isNotBlank() }
-            ?: participants.firstOrNull { it.role == JamParticipantRole.HOST }?.displayName
-            ?: session?.takeIf { it.role == JamParticipantRole.HOST }?.displayName
-        when {
-            hostName != null -> "$hostName's Together"
-            roomCode.isNotBlank() -> "Together Session"
-            else -> "Echofy Together"
+    val jamTitle =
+        remember(participants, session, roomCode, roomMeta) {
+            val hostName =
+                roomMeta?.hostName?.takeIf { it.isNotBlank() }
+                    ?: participants.firstOrNull { it.role == JamParticipantRole.HOST }?.displayName
+                    ?: session?.takeIf { it.role == JamParticipantRole.HOST }?.displayName
+            when {
+                hostName != null -> "$hostName's Together"
+                roomCode.isNotBlank() -> "Together Session"
+                else -> "Echofy Together"
+            }
         }
-    }
 
-    val launcher = remember(coroutineScope, context, playerConnection, database) {
-        JamSessionLauncher(
-            scope = coroutineScope,
-            context = context,
-            playerConnection = playerConnection,
-            database = database,
-            onWorkingState = { working, msg ->
-                isWorking = working
-                workingMessage = msg
-            },
-            onError = { transientError = it },
-            onSessionStarted = { screen = JamSheetScreen.ACTIVE },
-        )
-    }
+    val launcher =
+        remember(coroutineScope, context, playerConnection, database) {
+            JamSessionLauncher(
+                scope = coroutineScope,
+                context = context,
+                playerConnection = playerConnection,
+                database = database,
+                onWorkingState = { working, msg ->
+                    isWorking = working
+                    workingMessage = msg
+                },
+                onError = { transientError = it },
+                onSessionStarted = { screen = JamSheetScreen.ACTIVE },
+            )
+        }
 
     LaunchedEffect(initialRoomCode) {
         val normalizedCode = initialRoomCode?.trim()?.uppercase()?.takeIf { JamRoomCode.parse(it) != null } ?: return@LaunchedEffect
@@ -129,58 +132,66 @@ fun EchofyJamSheet(
                 modifier = Modifier.fillMaxSize(),
             ) { activeScreen ->
                 when (activeScreen) {
-                    JamSheetScreen.HOME -> JamHomeScreen(
-                        errorMessage = transientError ?: sessionState.lastError,
-                        onDismiss = onDismiss,
-                        onStart = { screen = JamSheetScreen.START },
-                        onJoin = { screen = JamSheetScreen.JOIN },
-                    )
-                    JamSheetScreen.START -> JamStartSetupScreen(
-                        currentSong = currentSong,
-                        hostDisplayName = hostDisplayName,
-                        selectedSeedOption = selectedSeedOption,
-                        isWorking = isWorking,
-                        playlistsAvailable = playlists.isNotEmpty() || spotifyPlaylists.isNotEmpty(),
-                        onBack = { screen = JamSheetScreen.HOME },
-                        onHostNameChange = { hostDisplayName = it },
-                        onSeedOptionChange = { selectedSeedOption = it },
-                        onPickPlaylist = { screen = JamSheetScreen.PLAYLISTS },
-                        onStart = {
-                            when (selectedSeedOption) {
-                                JamSeedOption.CURRENT_QUEUE -> launcher.launchFromCurrentQueue(hostDisplayName)
-                                JamSeedOption.PLAYLIST -> {
-                                    if (playlists.isEmpty() && spotifyPlaylists.isEmpty()) {
-                                        transientError = "Add or bookmark a playlist first, then start the Jam from it."
-                                    } else {
-                                        screen = JamSheetScreen.PLAYLISTS
+                    JamSheetScreen.HOME ->
+                        JamHomeScreen(
+                            errorMessage = transientError ?: sessionState.lastError,
+                            onDismiss = onDismiss,
+                            onStart = { screen = JamSheetScreen.START },
+                            onJoin = { screen = JamSheetScreen.JOIN },
+                        )
+                    JamSheetScreen.START ->
+                        JamStartSetupScreen(
+                            currentSong = currentSong,
+                            hostDisplayName = hostDisplayName,
+                            selectedSeedOption = selectedSeedOption,
+                            isWorking = isWorking,
+                            playlistsAvailable = playlists.isNotEmpty() || spotifyPlaylists.isNotEmpty(),
+                            onBack = { screen = JamSheetScreen.HOME },
+                            onHostNameChange = { hostDisplayName = it },
+                            onSeedOptionChange = { selectedSeedOption = it },
+                            onPickPlaylist = { screen = JamSheetScreen.PLAYLISTS },
+                            onStart = {
+                                when (selectedSeedOption) {
+                                    JamSeedOption.CURRENT_QUEUE -> launcher.launchFromCurrentQueue(hostDisplayName)
+                                    JamSeedOption.PLAYLIST -> {
+                                        if (playlists.isEmpty() && spotifyPlaylists.isEmpty()) {
+                                            transientError = "Add or bookmark a playlist first, then start the Jam from it."
+                                        } else {
+                                            screen = JamSheetScreen.PLAYLISTS
+                                        }
                                     }
                                 }
-                            }
-                        },
-                    )
-                    JamSheetScreen.PLAYLISTS -> PlaylistPickerScreen(
-                        playlists = playlists,
-                        spotifyPlaylists = spotifyPlaylists,
-                        isWorking = isWorking,
-                        onBack = { screen = JamSheetScreen.START },
-                        onPickPlaylist = { playlist -> launcher.launchFromPlaylist(playlist, hostDisplayName) },
-                        onPickSpotifyPlaylist = { spotifyPlaylist -> launcher.launchFromSpotifyPlaylist(spotifyPlaylist, hostDisplayName) },
-                    )
-                    JamSheetScreen.JOIN -> JoinJamScreen(
-                        roomCode = joinCode,
-                        guestDisplayName = guestDisplayName,
-                        isWorking = isWorking,
-                        lastError = transientError ?: sessionState.lastError,
-                        onBack = { screen = JamSheetScreen.HOME },
-                        onRoomCodeChange = { joinCode = it.uppercase() },
-                        onGuestNameChange = { guestDisplayName = it },
-                        onJoin = { launcher.joinRoom(joinCode, guestDisplayName) },
-                    )
+                            },
+                        )
+                    JamSheetScreen.PLAYLISTS ->
+                        PlaylistPickerScreen(
+                            playlists = playlists,
+                            spotifyPlaylists = spotifyPlaylists,
+                            isWorking = isWorking,
+                            onBack = { screen = JamSheetScreen.START },
+                            onPickPlaylist = { playlist -> launcher.launchFromPlaylist(playlist, hostDisplayName) },
+                            onPickSpotifyPlaylist = {
+                                    spotifyPlaylist ->
+                                launcher.launchFromSpotifyPlaylist(spotifyPlaylist, hostDisplayName)
+                            },
+                        )
+                    JamSheetScreen.JOIN ->
+                        JoinJamScreen(
+                            roomCode = joinCode,
+                            guestDisplayName = guestDisplayName,
+                            isWorking = isWorking,
+                            lastError = transientError ?: sessionState.lastError,
+                            onBack = { screen = JamSheetScreen.HOME },
+                            onRoomCodeChange = { joinCode = it.uppercase() },
+                            onGuestNameChange = { guestDisplayName = it },
+                            onJoin = { launcher.joinRoom(joinCode, guestDisplayName) },
+                        )
                     JamSheetScreen.ACTIVE -> {
                         val canControl = session?.role == JamParticipantRole.HOST || (roomMeta?.allowGuestControls ?: true)
-                        val isSyncing = session?.role == JamParticipantRole.GUEST &&
-                            remotePlayback != null &&
-                            currentSong?.id != remotePlayback?.mediaId
+                        val isSyncing =
+                            session?.role == JamParticipantRole.GUEST &&
+                                remotePlayback != null &&
+                                currentSong?.id != remotePlayback?.mediaId
 
                         if (isSyncing) {
                             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {

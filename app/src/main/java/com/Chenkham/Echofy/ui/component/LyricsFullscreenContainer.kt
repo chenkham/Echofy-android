@@ -75,7 +75,9 @@ fun BoxScope.LyricsFullscreenContainer(
         canSkipNext = canSkipNext,
         isLiked = isLiked,
         onSeekTo = onSeekTo,
-        onToggleRepeatMode = { playerConnection.player.repeatMode = if (playerConnection.player.repeatMode == Player.REPEAT_MODE_OFF) Player.REPEAT_MODE_ALL else Player.REPEAT_MODE_OFF },
+        onToggleRepeatMode = {
+            playerConnection.player.repeatMode = if (playerConnection.player.repeatMode == Player.REPEAT_MODE_OFF) Player.REPEAT_MODE_ALL else Player.REPEAT_MODE_OFF
+        },
         onSeekToPrevious = { playerConnection.seekToPrevious() },
         onTogglePlayPause = {
             if (playbackState == Player.STATE_ENDED) {

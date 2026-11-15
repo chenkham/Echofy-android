@@ -120,7 +120,12 @@ fun LyricsLineItem(
             )
         val elapsedLyricsBrush =
             Brush.linearGradient(
-                colors = listOf(Color(0xFFB879FF).copy(alpha = 0.92f), Color(0xFF00E5FF).copy(alpha = 0.86f), Color(0xFFFF7AD9).copy(alpha = 0.74f)),
+                colors =
+                    listOf(
+                        Color(0xFFB879FF).copy(alpha = 0.92f),
+                        Color(0xFF00E5FF).copy(alpha = 0.86f),
+                        Color(0xFFFF7AD9).copy(alpha = 0.74f),
+                    ),
             )
         val inactiveColor =
             animateColorAsState(
@@ -140,9 +145,19 @@ fun LyricsLineItem(
             fontSize = lyricsFontSize,
             style =
                 if (isActiveLine) {
-                    TextStyle(brush = activeLyricsBrush, fontSize = lyricsFontSize, fontWeight = FontWeight.ExtraBold, textAlign = textAlign)
+                    TextStyle(
+                        brush = activeLyricsBrush,
+                        fontSize = lyricsFontSize,
+                        fontWeight = FontWeight.ExtraBold,
+                        textAlign = textAlign,
+                    )
                 } else if (isElapsedLine) {
-                    TextStyle(brush = elapsedLyricsBrush, fontSize = lyricsFontSize, fontWeight = FontWeight.ExtraBold, textAlign = textAlign)
+                    TextStyle(
+                        brush = elapsedLyricsBrush,
+                        fontSize = lyricsFontSize,
+                        fontWeight = FontWeight.ExtraBold,
+                        textAlign = textAlign,
+                    )
                 } else {
                     TextStyle(color = inactiveColor, fontSize = lyricsFontSize, fontWeight = FontWeight.Bold, textAlign = textAlign)
                 },

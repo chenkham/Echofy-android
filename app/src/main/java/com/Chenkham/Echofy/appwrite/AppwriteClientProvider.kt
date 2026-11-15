@@ -18,7 +18,12 @@ object AppwriteClientProvider {
             client ?: Client(context.applicationContext)
                 .setEndpoint(AppwriteConfig.ENDPOINT)
                 .setProject(AppwriteConfig.PROJECT_ID)
-                .setSelfSigned(AppwriteConfig.SELF_SIGNED)
+                .apply {
+                    // Google Play Security Policy: Never enable self-signed in production release builds
+                    if (com.Chenkham.Echofy.BuildConfig.DEBUG && AppwriteConfig.SELF_SIGNED) {
+                        setSelfSigned(true)
+                    }
+                }
                 .also { client = it }
         }
 

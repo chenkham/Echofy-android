@@ -82,6 +82,13 @@
 
 ## Rules for NewPipeExtractor
 -keep class org.schabi.newpipe.extractor.timeago.patterns.** { *; }
+-keepclassmembers class org.schabi.newpipe.extractor.NewPipe {
+    private static org.schabi.newpipe.extractor.downloader.Downloader downloader;
+    private static org.schabi.newpipe.extractor.localization.Localization preferredLocalization;
+    private static org.schabi.newpipe.extractor.localization.ContentCountry preferredContentCountry;
+    public static org.schabi.newpipe.extractor.downloader.Downloader getDownloader();
+}
+-dontwarn org.schabi.newpipe.extractor.NewPipe$*
 -keep class org.mozilla.javascript.** { *; }
 -keep class org.mozilla.javascript.engine.** { *; }
 -dontwarn org.mozilla.javascript.JavaToJSONConverters
@@ -252,7 +259,17 @@
 -dontwarn com.google.firebase.**
 
 # Appwrite optimizations
--keep class io.appwrite.** { *; }
+# Appwrite optimizations (keep models/services, do not force-keep all-trusting TrustManager)
+-keep class io.appwrite.models.** { *; }
+-keep class io.appwrite.services.** { *; }
+-keep class io.appwrite.Client {
+    public <init>(...);
+    public *** setEndpoint(...);
+    public *** setProject(...);
+    public *** get*(...);
+    public *** send(...);
+    public *** call(...);
+}
 -dontwarn io.appwrite.**
 
 # Gson optimizations

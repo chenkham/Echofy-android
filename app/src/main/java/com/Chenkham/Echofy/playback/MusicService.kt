@@ -987,7 +987,10 @@ class MusicService :
                                 it.type == android.media.AudioDeviceInfo.TYPE_BLUETOOTH_SCO ||
                                 it.type == android.media.AudioDeviceInfo.TYPE_USB_HEADSET ||
                                 it.type == android.media.AudioDeviceInfo.TYPE_USB_DEVICE ||
-                                it.type == android.media.AudioDeviceInfo.TYPE_HEARING_AID
+                                (
+                                    android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.P &&
+                                        it.type == android.media.AudioDeviceInfo.TYPE_HEARING_AID
+                                )
                         } ?: false
                     if (hasHeadphones) {
                         scope.launch {

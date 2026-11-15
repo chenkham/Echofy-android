@@ -63,6 +63,14 @@ fun rememberLyricsPreferences(): LyricsPreferencesState {
     val useDarkTheme = remember(darkTheme, isSystemDark) { if (darkTheme == DarkMode.AUTO) isSystemDark else darkTheme == DarkMode.ON }
 
     return remember(changeLyrics, scrollLyrics, animateLyrics, lyricsFontSize, lyricsTextPosition, playerBackground, useDarkTheme) {
-        LyricsPreferencesState(changeLyrics, scrollLyrics, animateLyrics, lyricsFontSize, lyricsTextPosition, playerBackground, useDarkTheme)
+        LyricsPreferencesState(
+            changeLyrics,
+            scrollLyrics,
+            animateLyrics,
+            lyricsFontSize,
+            lyricsTextPosition,
+            playerBackground,
+            useDarkTheme,
+        )
     }
 }

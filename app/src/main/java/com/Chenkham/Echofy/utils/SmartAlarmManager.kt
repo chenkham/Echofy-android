@@ -25,6 +25,7 @@ class SmartAlarmReceiver : BroadcastReceiver() {
 }
 
 object SmartAlarmManager {
+    @android.annotation.SuppressLint("ScheduleExactAlarm")
     fun setAlarm(
         context: Context,
         hour: Int,

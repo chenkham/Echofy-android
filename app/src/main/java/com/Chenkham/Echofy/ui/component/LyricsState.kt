@@ -16,7 +16,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
-import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.platform.LocalContext
 import com.Chenkham.Echofy.LocalDatabase
 import com.Chenkham.Echofy.LocalPlayerConnection
@@ -86,7 +85,10 @@ class LyricsState(
     var streamingResults by mutableStateOf<List<LyricsResult>>(emptyList())
     var currentProvider by mutableStateOf<String?>(null)
 
-    fun seekToLine(item: LyricsEntry, index: Int) {
+    fun seekToLine(
+        item: LyricsEntry,
+        index: Int,
+    ) {
         playerConnection.player.seekTo(item.time)
         scope.launch {
             lazyListState.scrollToItem(index)
@@ -104,22 +106,35 @@ class LyricsState(
         if (selectedIndices.contains(index)) {
             selectedIndices.remove(index)
             if (selectedIndices.isEmpty()) isSelectionModeActive = false
-        } else if (selectedIndices.size < maxSelectionLimit) selectedIndices.add(index)
-        else Toast.makeText(context, context.getString(R.string.max_selection_limit, maxSelectionLimit), Toast.LENGTH_SHORT).show()
+        } else if (selectedIndices.size < maxSelectionLimit) {
+            selectedIndices.add(index)
+        } else {
+            Toast.makeText(context, context.getString(R.string.max_selection_limit, maxSelectionLimit), Toast.LENGTH_SHORT).show()
+        }
     }
 
     fun toggleSelectionMode(index: Int) {
-        if (!isSelectionModeActive) { isSelectionModeActive = true; selectedIndices.add(index) }
-        else if (!selectedIndices.contains(index) && selectedIndices.size < maxSelectionLimit) selectedIndices.add(index)
+        if (!isSelectionModeActive) {
+            isSelectionModeActive = true
+            selectedIndices.add(index)
+        } else if (!selectedIndices.contains(index) && selectedIndices.size < maxSelectionLimit) {
+            selectedIndices.add(index)
+        }
     }
 
     fun retryLyrics(songId: String?) {
         scope.launch(Dispatchers.IO) {
-            songId?.let { id -> runCatching { database.query { delete(LyricsEntity(id, "")) } }; refetchTrigger++ }
+            songId?.let { id ->
+                runCatching { database.query { delete(LyricsEntity(id, "")) } }
+                refetchTrigger++
+            }
         }
     }
 
-    fun fetchLyricsStreaming(songId: String, forceRefresh: Boolean) {
+    fun fetchLyricsStreaming(
+        songId: String,
+        forceRefresh: Boolean,
+    ) {
         isLoadingLyrics = true
         streamingResults = emptyList()
 
@@ -132,7 +147,11 @@ class LyricsState(
                     currentProvider = existing.providerName ?: "Saved"
                     isLoadingLyrics = false
                 } else {
-                    val entryPoint = EntryPointAccessors.fromApplication(context.applicationContext, com.Chenkham.Echofy.di.LyricsHelperEntryPoint::class.java)
+                    val entryPoint =
+                        EntryPointAccessors.fromApplication(
+                            context.applicationContext,
+                            com.Chenkham.Echofy.di.LyricsHelperEntryPoint::class.java,
+                        )
                     val lyricsHelper = entryPoint.lyricsHelper()
                     var firstResult = true
                     val allResults = mutableListOf<LyricsResult>()
@@ -185,9 +204,10 @@ fun rememberLyricsState(
     val database = LocalDatabase.current
     val playerConnection = LocalPlayerConnection.current ?: error("PlayerConnection missing")
 
-    val state = remember(currentSongId) {
-        LyricsState(context, scope, database, playerConnection, mediaMetadata, currentSongId)
-    }
+    val state =
+        remember(currentSongId) {
+            LyricsState(context, scope, database, playerConnection, mediaMetadata, currentSongId)
+        }
     state.lazyListState = rememberLazyListState()
     return state
 }

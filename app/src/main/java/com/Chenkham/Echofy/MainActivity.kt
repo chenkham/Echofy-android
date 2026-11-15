@@ -56,9 +56,13 @@ import javax.inject.Inject
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
     @Inject lateinit var database: MusicDatabase
+
     @Inject lateinit var downloadUtil: DownloadUtil
+
     @Inject lateinit var syncUtils: SyncUtils
+
     @Inject lateinit var adManager: AdManager
+
     @Inject lateinit var authRepository: com.Chenkham.Echofy.auth.AuthRepository
 
     private var playerConnection by mutableStateOf<PlayerConnection?>(null)
@@ -85,17 +89,22 @@ class MainActivity : ComponentActivity() {
         )
     }
 
-    private val serviceConnection = object : ServiceConnection {
-        override fun onServiceConnected(name: ComponentName?, service: IBinder?) {
-            if (service is MusicBinder) {
-                playerConnection = PlayerConnection(this@MainActivity, service, database, lifecycleScope)
+    private val serviceConnection =
+        object : ServiceConnection {
+            override fun onServiceConnected(
+                name: ComponentName?,
+                service: IBinder?,
+            ) {
+                if (service is MusicBinder) {
+                    playerConnection = PlayerConnection(this@MainActivity, service, database, lifecycleScope)
+                }
+            }
+
+            override fun onServiceDisconnected(name: ComponentName?) {
+                playerConnection?.dispose()
+                playerConnection = null
             }
         }
-        override fun onServiceDisconnected(name: ComponentName?) {
-            playerConnection?.dispose()
-            playerConnection = null
-        }
-    }
 
     override fun onUserInteraction() {
         super.onUserInteraction()
@@ -167,7 +176,10 @@ class MainActivity : ComponentActivity() {
         if (playerConnection?.isPlaying?.value == true && pipEnabled) pipHelper.enterPipMode()
     }
 
-    override fun onPictureInPictureModeChanged(isInPictureInPictureMode: Boolean, newConfig: Configuration) {
+    override fun onPictureInPictureModeChanged(
+        isInPictureInPictureMode: Boolean,
+        newConfig: Configuration,
+    ) {
         super.onPictureInPictureModeChanged(isInPictureInPictureMode, newConfig)
         pipHelper.onPictureInPictureModeChanged(isInPictureInPictureMode)
         isInPipMode = isInPictureInPictureMode
@@ -186,8 +198,11 @@ class MainActivity : ComponentActivity() {
 
         lifecycleScope.launch {
             dataStore.data.map { it[DisableScreenshotKey] ?: false }.distinctUntilChanged().collectLatest {
-                if (it) window.setFlags(WindowManager.LayoutParams.FLAG_SECURE, WindowManager.LayoutParams.FLAG_SECURE)
-                else window.clearFlags(WindowManager.LayoutParams.FLAG_SECURE)
+                if (it) {
+                    window.setFlags(WindowManager.LayoutParams.FLAG_SECURE, WindowManager.LayoutParams.FLAG_SECURE)
+                } else {
+                    window.clearFlags(WindowManager.LayoutParams.FLAG_SECURE)
+                }
             }
         }
         lifecycleScope.launch {
@@ -202,13 +217,15 @@ class MainActivity : ComponentActivity() {
         pipHelper.register(this)
 
         setContent {
-            val notificationPermissionLauncher = rememberLauncherForActivityResult(
-                contract = ActivityResultContracts.RequestPermission(),
-            ) { /* Logged internally */ }
+            val notificationPermissionLauncher =
+                rememberLauncherForActivityResult(
+                    contract = ActivityResultContracts.RequestPermission(),
+                ) { /* Logged internally */ }
 
             LaunchedEffect(Unit) {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
-                    checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
+                    checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED
+                ) {
                     notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
                 }
             }
@@ -227,7 +244,14 @@ class MainActivity : ComponentActivity() {
                 getLastInteractionTime = { lastUserInteractionTime },
                 onResetInteractionTime = { lastUserInteractionTime = System.currentTimeMillis() },
                 searchActionTriggered = intent?.action == ACTION_SEARCH,
-                shortcutDestinationTab = if (intent?.action == ACTION_LIBRARY) NavigationTab.LIBRARY else if (intent?.action == ACTION_EXPLORE) NavigationTab.EXPLORE else null,
+                shortcutDestinationTab =
+                    if (intent?.action == ACTION_LIBRARY) {
+                        NavigationTab.LIBRARY
+                    } else if (intent?.action == ACTION_EXPLORE) {
+                        NavigationTab.EXPLORE
+                    } else {
+                        null
+                    },
             )
         }
     }

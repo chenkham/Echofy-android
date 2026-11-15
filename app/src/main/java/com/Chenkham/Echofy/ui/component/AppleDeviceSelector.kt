@@ -297,6 +297,8 @@ fun DeviceSelectionBottomSheet(
 }
 
 // Funci├│n para obtener dispositivos disponibles
+private fun isBleHeadset(type: Int): Boolean = Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && type == AudioDeviceInfo.TYPE_BLE_HEADSET
+
 private fun getAvailableDevices(context: Context): List<AudioDeviceInfo> {
     val audioManager = context.getSystemService(Context.AUDIO_SERVICE) as AudioManager
     return audioManager.getDevices(AudioManager.GET_DEVICES_OUTPUTS)
@@ -304,22 +306,20 @@ private fun getAvailableDevices(context: Context): List<AudioDeviceInfo> {
             device.type == AudioDeviceInfo.TYPE_BUILTIN_SPEAKER ||
                 device.type == AudioDeviceInfo.TYPE_BLUETOOTH_A2DP ||
                 device.type == AudioDeviceInfo.TYPE_BLUETOOTH_SCO ||
-                device.type == AudioDeviceInfo.TYPE_BLE_HEADSET ||
+                isBleHeadset(device.type) ||
                 device.type == AudioDeviceInfo.TYPE_WIRED_HEADPHONES ||
                 device.type == AudioDeviceInfo.TYPE_WIRED_HEADSET
         }
         .sortedBy { device ->
-            when (device.type) {
-                AudioDeviceInfo.TYPE_BLUETOOTH_A2DP,
-                AudioDeviceInfo.TYPE_BLUETOOTH_SCO,
-                AudioDeviceInfo.TYPE_BLE_HEADSET,
-                -> 0
+            when {
+                device.type == AudioDeviceInfo.TYPE_BLUETOOTH_A2DP ||
+                    device.type == AudioDeviceInfo.TYPE_BLUETOOTH_SCO ||
+                    isBleHeadset(device.type) -> 0
 
-                AudioDeviceInfo.TYPE_WIRED_HEADPHONES,
-                AudioDeviceInfo.TYPE_WIRED_HEADSET,
-                -> 1
+                device.type == AudioDeviceInfo.TYPE_WIRED_HEADPHONES ||
+                    device.type == AudioDeviceInfo.TYPE_WIRED_HEADSET -> 1
 
-                AudioDeviceInfo.TYPE_BUILTIN_SPEAKER -> 2
+                device.type == AudioDeviceInfo.TYPE_BUILTIN_SPEAKER -> 2
                 else -> 3
             }
         }
@@ -337,7 +337,7 @@ private fun getActiveDevice(
         devices.filter {
             it.type == AudioDeviceInfo.TYPE_BLUETOOTH_A2DP ||
                 it.type == AudioDeviceInfo.TYPE_BLUETOOTH_SCO ||
-                it.type == AudioDeviceInfo.TYPE_BLE_HEADSET
+                isBleHeadset(it.type)
         }
 
     if (bluetoothDevices.isNotEmpty()) {

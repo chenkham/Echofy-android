@@ -68,14 +68,14 @@ class HapticManager(
                     HapticFeedbackConstants.KEYBOARD_TAP
 
                 HapticType.SegmentTick ->
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
                         HapticFeedbackConstants.SEGMENT_TICK
                     } else {
                         HapticFeedbackConstants.CLOCK_TICK
                     }
 
                 HapticType.SegmentFrequentTick ->
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
                         HapticFeedbackConstants.SEGMENT_FREQUENT_TICK
                     } else {
                         HapticFeedbackConstants.CLOCK_TICK

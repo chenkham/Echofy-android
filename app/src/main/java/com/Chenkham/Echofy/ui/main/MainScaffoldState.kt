@@ -39,18 +39,20 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.net.URLDecoder
 
-class MainScaffoldState @OptIn(ExperimentalMaterial3Api::class) constructor(
-    val isLandscape: Boolean,
-    val shouldShowBottomNav: Boolean,
-    val shouldShowNavigationRail: Boolean,
-    val navigationBarHeight: Dp,
-    val bottomInset: Dp,
-    val bottomInsetDp: Dp,
-    val playerBottomSheetState: BottomSheetState,
-    val playerAwareWindowInsets: WindowInsets,
-    val searchBarScrollBehavior: TopAppBarScrollBehavior,
-    val topAppBarScrollBehavior: TopAppBarScrollBehavior,
-)
+class MainScaffoldState
+    @OptIn(ExperimentalMaterial3Api::class)
+    constructor(
+        val isLandscape: Boolean,
+        val shouldShowBottomNav: Boolean,
+        val shouldShowNavigationRail: Boolean,
+        val navigationBarHeight: Dp,
+        val bottomInset: Dp,
+        val bottomInsetDp: Dp,
+        val playerBottomSheetState: BottomSheetState,
+        val playerAwareWindowInsets: WindowInsets,
+        val searchBarScrollBehavior: TopAppBarScrollBehavior,
+        val topAppBarScrollBehavior: TopAppBarScrollBehavior,
+    )
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -69,8 +71,9 @@ fun rememberMainScaffoldState(
 
     val configuration = LocalConfiguration.current
     val isLandscape = configuration.orientation == Configuration.ORIENTATION_LANDSCAPE || configuration.screenWidthDp > configuration.screenHeightDp
-    val shouldShowNavigationBar = navBackStackEntry?.destination?.route == null ||
-        (navigationItems.fastAny { it.route == navBackStackEntry?.destination?.route } && !active)
+    val shouldShowNavigationBar =
+        navBackStackEntry?.destination?.route == null ||
+            (navigationItems.fastAny { it.route == navBackStackEntry?.destination?.route } && !active)
     val shouldShowBottomNav = !isLandscape && shouldShowNavigationBar
     val shouldShowNavigationRail = isLandscape && shouldShowNavigationBar
 
@@ -80,30 +83,36 @@ fun rememberMainScaffoldState(
         label = "nav_bar_height",
     )
 
-    val playerBottomSheetState = rememberBottomSheetState(
-        dismissedBound = 0.dp,
-        collapsedBound = bottomInset + (if (shouldShowBottomNav) NavigationBarHeight else 0.dp) + MiniPlayerHeight,
-        expandedBound = maxHeight,
-    )
+    val playerBottomSheetState =
+        rememberBottomSheetState(
+            dismissedBound = 0.dp,
+            collapsedBound = bottomInset + (if (shouldShowBottomNav) NavigationBarHeight else 0.dp) + MiniPlayerHeight,
+            expandedBound = maxHeight,
+        )
 
-    val playerAwareWindowInsets = remember(bottomInset, shouldShowBottomNav, playerBottomSheetState.isDismissed) {
-        var bottom = bottomInset
-        if (shouldShowBottomNav) bottom += NavigationBarHeight
-        if (!playerBottomSheetState.isDismissed) bottom += MiniPlayerHeight
-        windowsInsets.only(WindowInsetsSides.Horizontal + WindowInsetsSides.Top).add(WindowInsets(top = AppBarHeight, bottom = bottom))
-    }
+    val playerAwareWindowInsets =
+        remember(bottomInset, shouldShowBottomNav, playerBottomSheetState.isDismissed) {
+            var bottom = bottomInset
+            if (shouldShowBottomNav) bottom += NavigationBarHeight
+            if (!playerBottomSheetState.isDismissed) bottom += MiniPlayerHeight
+            windowsInsets.only(WindowInsetsSides.Horizontal + WindowInsetsSides.Top).add(WindowInsets(top = AppBarHeight, bottom = bottom))
+        }
 
-    val searchBarScrollBehavior = appBarScrollBehavior(
-        canScroll = { navBackStackEntry?.destination?.route?.startsWith("search/") == false && (playerBottomSheetState.isCollapsed || playerBottomSheetState.isDismissed) },
-    )
+    val searchBarScrollBehavior =
+        appBarScrollBehavior(
+            canScroll = {
+                navBackStackEntry?.destination?.route?.startsWith("search/") == false && (playerBottomSheetState.isCollapsed || playerBottomSheetState.isDismissed)
+            },
+        )
     val topAppBarScrollBehavior = appBarScrollBehavior(canScroll = { false })
 
     LaunchedEffect(navBackStackEntry) {
         if (navBackStackEntry?.destination?.route?.startsWith("search/") == true) {
-            val searchQuery = withContext(Dispatchers.IO) {
-                val raw = navBackStackEntry?.arguments?.getString("query").orEmpty()
-                if (raw.contains("%")) raw else URLDecoder.decode(raw, "UTF-8")
-            }
+            val searchQuery =
+                withContext(Dispatchers.IO) {
+                    val raw = navBackStackEntry?.arguments?.getString("query").orEmpty()
+                    if (raw.contains("%")) raw else URLDecoder.decode(raw, "UTF-8")
+                }
             onQuerySync(TextFieldValue(searchQuery, TextRange(searchQuery.length)))
         } else if (navigationItems.fastAny { it.route == navBackStackEntry?.destination?.route }) {
             onQuerySync(TextFieldValue())
@@ -123,13 +132,17 @@ fun rememberMainScaffoldState(
 
     DisposableEffect(playerConnection, playerBottomSheetState) {
         val player = playerConnection?.player ?: return@DisposableEffect onDispose { }
-        val listener = object : Player.Listener {
-            override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
-                if (reason == Player.MEDIA_ITEM_TRANSITION_REASON_PLAYLIST_CHANGED && mediaItem != null && playerBottomSheetState.isDismissed) {
-                    playerBottomSheetState.collapseSoft()
+        val listener =
+            object : Player.Listener {
+                override fun onMediaItemTransition(
+                    mediaItem: MediaItem?,
+                    reason: Int,
+                ) {
+                    if (reason == Player.MEDIA_ITEM_TRANSITION_REASON_PLAYLIST_CHANGED && mediaItem != null && playerBottomSheetState.isDismissed) {
+                        playerBottomSheetState.collapseSoft()
+                    }
                 }
             }
-        }
         player.addListener(listener)
         onDispose { player.removeListener(listener) }
     }

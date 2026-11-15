@@ -53,7 +53,10 @@ class JamSessionLauncher(
         }
     }
 
-    fun launchFromPlaylist(playlist: Playlist, hostDisplayName: String) {
+    fun launchFromPlaylist(
+        playlist: Playlist,
+        hostDisplayName: String,
+    ) {
         scope.launch {
             onWorkingState(true, "Creating your room...")
             onError(null)
@@ -78,7 +81,10 @@ class JamSessionLauncher(
         }
     }
 
-    fun launchFromSpotifyPlaylist(spotifyPlaylist: SpotifyPlaylist, hostDisplayName: String) {
+    fun launchFromSpotifyPlaylist(
+        spotifyPlaylist: SpotifyPlaylist,
+        hostDisplayName: String,
+    ) {
         scope.launch {
             onWorkingState(true, "Fetching Spotify tracks...")
             onError(null)
@@ -106,7 +112,10 @@ class JamSessionLauncher(
         }
     }
 
-    fun joinRoom(roomCode: String, guestDisplayName: String) {
+    fun joinRoom(
+        roomCode: String,
+        guestDisplayName: String,
+    ) {
         scope.launch {
             onError(null)
             onWorkingState(true, "Finding room...")
