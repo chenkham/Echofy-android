@@ -149,6 +149,7 @@ fun BottomSheetPlayer(
                 liveFluidPalette = visualState.liveFluidPalette,
                 showLyrics = visualState.showLyrics,
                 isExpanded = state.isExpanded,
+                useBlackBackground = visualState.useBlackBackground,
             )
         },
         onDismiss = {
